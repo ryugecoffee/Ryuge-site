@@ -2,7 +2,7 @@ export default function LegalNotice() {
   return (
     <section className="legal-document">
       <p className="legal-eyebrow">Legal</p>
-      <h1>特定商取引法に基づく表記</h1>
+      <h1>特定商取引法に基づく表記 TEST</h1>
       <p className="legal-lead">
         Ryuge Coffee に関する通信販売上の表示です。
       </p>
