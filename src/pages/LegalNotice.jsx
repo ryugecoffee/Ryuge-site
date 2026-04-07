@@ -1,84 +1,130 @@
-export default function LegalNotice() {
+export default function LegalNotice({ lang = "ja" }) {
+  const content = {
+    ja: {
+      title: "特定商取引法に基づく表記",
+      lead: "Ryuge Coffee に関する通信販売上の表示です。",
+      labels: {
+        company: "販売事業者",
+        manager: "運営責任者",
+        address: "所在地",
+        phone: "電話番号",
+        email: "メールアドレス",
+        payment: "支払方法",
+        timing: "支払時期",
+        delivery: "引渡時期",
+        cancel: "返品・キャンセル",
+      },
+      values: {
+        company: "株式会社龍華",
+        manager: "今井 龍華",
+        address: "神奈川県鎌倉市山ノ内1543 円応寺",
+        phone: "090-6312-1717",
+        email: "ryugecoffee@gmail.com",
+        payment: "クレジットカード（Square）",
+        timing: "ご注文確定時に決済",
+        delivery: "ご注文から5日以内に発送",
+        cancel: "食品のため、お客様都合による返品・キャンセルはお受けしておりません。不良品・誤配送の場合はご連絡ください。",
+      },
+    },
+    en: {
+      title: "Legal Notice",
+      lead: "Information for mail-order sales of Ryuge Coffee.",
+      labels: {
+        company: "Business Operator",
+        manager: "Responsible Person",
+        address: "Address",
+        phone: "Phone",
+        email: "Email",
+        payment: "Payment Method",
+        timing: "Payment Timing",
+        delivery: "Delivery",
+        cancel: "Returns / Cancellation",
+      },
+      values: {
+        company: "Ryuge Co., Ltd.",
+        manager: "Ryuka Imai",
+        address: "Ennoji Temple, 1543 Yamanouchi, Kamakura, Kanagawa, Japan",
+        phone: "+81-90-6312-1717",
+        email: "ryugecoffee@gmail.com",
+        payment: "Credit Card (Square)",
+        timing: "Charged at checkout",
+        delivery: "Ships within 5 days from order",
+        cancel:
+          "Due to the nature of food products, returns or cancellations for customer convenience are not accepted. Please contact us in case of defective or incorrect delivery.",
+      },
+    },
+    es: {
+      title: "Aviso Legal",
+      lead: "Información de venta por comercio electrónico de Ryuge Coffee.",
+      labels: {
+        company: "Operador Comercial",
+        manager: "Responsable",
+        address: "Dirección",
+        phone: "Teléfono",
+        email: "Correo Electrónico",
+        payment: "Método de Pago",
+        timing: "Momento del Pago",
+        delivery: "Entrega",
+        cancel: "Devoluciones / Cancelación",
+      },
+      values: {
+        company: "Ryuge Co., Ltd.",
+        manager: "Ryuka Imai",
+        address: "Templo Ennoji, 1543 Yamanouchi, Kamakura, Kanagawa, Japón",
+        phone: "+81-90-6312-1717",
+        email: "ryugecoffee@gmail.com",
+        payment: "Tarjeta de crédito (Square)",
+        timing: "Cobro al finalizar la compra",
+        delivery: "Envío dentro de 5 días desde el pedido",
+        cancel:
+          "Debido a la naturaleza alimentaria del producto, no aceptamos devoluciones o cancelaciones por conveniencia del cliente. Contáctenos en caso de producto defectuoso o envío incorrecto.",
+      },
+    },
+  };
+
+  const c = content[lang] || content.ja;
+
   return (
     <section className="legal-document">
-      <p className="legal-eyebrow">Legal</p>
-      <h1>特定商取引法に基づく表記 TEST</h1>
-      <p className="legal-lead">
-        Ryuge Coffee に関する通信販売上の表示です。
-      </p>
+      <h1>{c.title}</h1>
+      <p className="legal-lead">{c.lead}</p>
 
       <div className="legal-table">
         <div className="legal-row">
-          <dt>販売事業者</dt>
-          <dd>株式会社龍華</dd>
+          <dt>{c.labels.company}</dt>
+          <dd>{c.values.company}</dd>
         </div>
-
         <div className="legal-row">
-          <dt>運営責任者</dt>
-          <dd>今井 龍華</dd>
+          <dt>{c.labels.manager}</dt>
+          <dd>{c.values.manager}</dd>
         </div>
-
         <div className="legal-row">
-          <dt>所在地</dt>
-          <dd>※ 事業所住所を記載してください</dd>
+          <dt>{c.labels.address}</dt>
+          <dd>{c.values.address}</dd>
         </div>
-
         <div className="legal-row">
-          <dt>電話番号</dt>
-          <dd>※ 電話番号を記載してください</dd>
+          <dt>{c.labels.phone}</dt>
+          <dd>{c.values.phone}</dd>
         </div>
-
         <div className="legal-row">
-          <dt>メールアドレス</dt>
-          <dd>ryugecoffee@gmail.com</dd>
+          <dt>{c.labels.email}</dt>
+          <dd>{c.values.email}</dd>
         </div>
-
         <div className="legal-row">
-          <dt>販売価格</dt>
-          <dd>各商品ページに表示された価格（税込）によります。</dd>
+          <dt>{c.labels.payment}</dt>
+          <dd>{c.values.payment}</dd>
         </div>
-
         <div className="legal-row">
-          <dt>商品代金以外の必要料金</dt>
-          <dd>送料、決済手数料等が発生する場合があります。詳細は購入手続き時に表示します。</dd>
+          <dt>{c.labels.timing}</dt>
+          <dd>{c.values.timing}</dd>
         </div>
-
         <div className="legal-row">
-          <dt>支払方法</dt>
-          <dd>クレジットカード決済、その他当サイトが定める方法</dd>
+          <dt>{c.labels.delivery}</dt>
+          <dd>{c.values.delivery}</dd>
         </div>
-
         <div className="legal-row">
-          <dt>支払時期</dt>
-          <dd>ご注文時に決済が確定します。詳細は各決済事業者の定めによります。</dd>
-        </div>
-
-        <div className="legal-row">
-          <dt>商品の引渡時期</dt>
-          <dd>ご注文確定後、通常〇営業日以内に発送します。予約商品や受注製造品は各商品ページに別途記載します。</dd>
-        </div>
-
-        <div className="legal-row">
-          <dt>申込みの有効期限</dt>
-          <dd>在庫状況によりご注文をキャンセルさせていただく場合があります。</dd>
-        </div>
-
-        <div className="legal-row">
-          <dt>返品・交換・キャンセル</dt>
-          <dd>
-            食品のため、お客様都合による返品・交換・キャンセルは原則としてお受けしておりません。
-            ただし、商品に不備・誤配送があった場合は、商品到着後〇日以内にご連絡ください。
-          </dd>
-        </div>
-
-        <div className="legal-row">
-          <dt>返品送料</dt>
-          <dd>当社不備による返品・交換の場合は当社負担、お客様都合の場合はお客様負担となります。</dd>
-        </div>
-
-        <div className="legal-row">
-          <dt>販売数量の制限等</dt>
-          <dd>限定商品については、販売数量・販売期間を設定する場合があります。詳細は各商品ページに表示します。</dd>
+          <dt>{c.labels.cancel}</dt>
+          <dd>{c.values.cancel}</dd>
         </div>
       </div>
     </section>

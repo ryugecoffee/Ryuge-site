@@ -1,32 +1,29 @@
-import { Link, Outlet } from "react-router-dom";
+import { Outlet, Link } from "react-router-dom";
 
-export default function SiteLayout() {
+export default function SiteLayout({ lang, setLang }) {
   return (
-    <div className="legal-page-shell">
-      <header className="legal-header">
-        <Link to="/" className="legal-brand">
+    <div>
+      <header className="site-header">
+        <Link to="/" className="site-logo">
           Ryuge Coffee
         </Link>
 
-        <nav className="legal-nav">
+        <nav className="site-nav">
           <Link to="/privacy">Privacy</Link>
           <Link to="/terms">Terms</Link>
           <Link to="/legal">Legal</Link>
         </nav>
+
+        <div className="lang-switch">
+          <button onClick={() => setLang("ja")}>JA</button>
+          <button onClick={() => setLang("en")}>EN</button>
+          <button onClick={() => setLang("es")}>ES</button>
+        </div>
       </header>
 
-      <main className="legal-main">
+      <main>
         <Outlet />
       </main>
-
-      <footer className="legal-footer">
-        <div>Another Day, Another Coffee</div>
-        <div className="legal-footer-links">
-          <Link to="/privacy">Privacy Policy</Link>
-          <Link to="/terms">Terms</Link>
-          <Link to="/legal">Legal Notice</Link>
-        </div>
-      </footer>
     </div>
   );
 }

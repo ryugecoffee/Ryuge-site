@@ -297,8 +297,7 @@ function useScrollMotion(rootRef) {
   }, [rootRef]);
 }
 
-export default function HomePage() {
-  const [lang, setLang] = useState("ja");
+export default function HomePage({ lang, setLang }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   const appRef = useRef(null);

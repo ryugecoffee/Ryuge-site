@@ -1,83 +1,102 @@
-export default function Terms() {
+export default function Terms({ lang = "ja" }) {
+  const content = {
+    ja: {
+      title: "利用規約",
+      intro:
+        "本サイトは、Ryuge Coffee に関する情報提供、商品案内、販売導線の提供を目的として運営されています。",
+      sections: [
+        {
+          heading: "適用範囲",
+          body: "本規約は、本サイトの閲覧、利用、問い合わせ、注文その他これに付随する行為に適用されます。",
+        },
+        {
+          heading: "禁止事項",
+          body: "法令または公序良俗に反する行為、虚偽情報の送信、サイト運営を妨げる行為、第三者または当方の権利を侵害する行為を禁止します。",
+        },
+        {
+          heading: "掲載情報について",
+          body: "本サイトの内容は、予告なく変更・修正・削除される場合があります。掲載情報の正確性には努めますが、完全性を保証するものではありません。",
+        },
+        {
+          heading: "免責事項",
+          body: "本サイトの利用により生じた損害について、当方に故意または重大な過失がある場合を除き、責任を負わないものとします。",
+        },
+        {
+          heading: "準拠法",
+          body: "本サイトおよび本規約の解釈には、日本法を適用します。",
+        },
+      ],
+    },
+    en: {
+      title: "Terms of Service",
+      intro:
+        "This website is operated to provide information, product guidance, and purchasing access for Ryuge Coffee.",
+      sections: [
+        {
+          heading: "Scope",
+          body: "These terms apply to browsing, using, contacting, ordering from, and otherwise interacting with this website.",
+        },
+        {
+          heading: "Prohibited Conduct",
+          body: "Users must not engage in unlawful acts, send false information, interfere with site operations, or infringe the rights of the operator or third parties.",
+        },
+        {
+          heading: "Site Content",
+          body: "The content of this website may be changed, revised, or removed without prior notice. We strive for accuracy, but do not guarantee completeness.",
+        },
+        {
+          heading: "Disclaimer",
+          body: "We are not liable for damages arising from the use of this website except in cases of willful misconduct or gross negligence.",
+        },
+        {
+          heading: "Governing Law",
+          body: "These terms and this website shall be governed by the laws of Japan.",
+        },
+      ],
+    },
+    es: {
+      title: "Términos de Servicio",
+      intro:
+        "Este sitio web se opera para ofrecer información, guía de productos y acceso de compra de Ryuge Coffee.",
+      sections: [
+        {
+          heading: "Alcance",
+          body: "Estos términos se aplican a la navegación, uso, contacto, pedidos y cualquier otra interacción con este sitio web.",
+        },
+        {
+          heading: "Conductas Prohibidas",
+          body: "No se permite realizar actos ilegales, enviar información falsa, interferir con el funcionamiento del sitio ni vulnerar derechos del operador o de terceros.",
+        },
+        {
+          heading: "Contenido del Sitio",
+          body: "El contenido de este sitio puede cambiarse, revisarse o eliminarse sin previo aviso. Procuramos exactitud, pero no garantizamos integridad total.",
+        },
+        {
+          heading: "Exención de Responsabilidad",
+          body: "No seremos responsables de daños derivados del uso de este sitio, salvo en casos de dolo o negligencia grave.",
+        },
+        {
+          heading: "Ley Aplicable",
+          body: "Estos términos y este sitio web se regirán por las leyes de Japón.",
+        },
+      ],
+    },
+  };
+
+  const c = content[lang] || content.ja;
+
   return (
     <section className="legal-document">
-      <p className="legal-eyebrow">Terms</p>
-      <h1>利用規約</h1>
-      <p className="legal-lead">
-        本サイトの利用条件を定めるものです。
-      </p>
+      <h1>{c.title}</h1>
+      <p className="legal-lead">{c.intro}</p>
 
-      <div className="legal-sections">
-        <section>
-          <h2>1. 適用</h2>
-          <p>
-            本規約は、Ryuge Coffee が提供する本サイトおよび関連サービスの利用に関して適用されます。
-          </p>
-        </section>
-
-        <section>
-          <h2>2. 禁止事項</h2>
-          <p>
-            利用者は、法令または公序良俗に反する行為、虚偽情報の入力、運営妨害、
-            他者の権利侵害、その他当社が不適切と判断する行為を行ってはなりません。
-          </p>
-        </section>
-
-        <section>
-          <h2>3. 商品情報について</h2>
-          <p>
-            商品の価格、仕様、販売期間、在庫状況等は予告なく変更される場合があります。
-            掲載内容には十分注意を払いますが、その完全性・正確性を保証するものではありません。
-          </p>
-        </section>
-
-        <section>
-          <h2>4. 注文成立</h2>
-          <p>
-            ご注文後、当社が受注を確認し、必要な手続きを完了した時点で売買契約が成立するものとします。
-            在庫不足、決済不備、入力情報不備等がある場合、注文をお受けできないことがあります。
-          </p>
-        </section>
-
-        <section>
-          <h2>5. 知的財産権</h2>
-          <p>
-            本サイトに掲載される文章、画像、ロゴ、デザインその他一切のコンテンツに関する権利は、
-            当社または正当な権利を有する第三者に帰属します。
-          </p>
-        </section>
-
-        <section>
-          <h2>6. 免責</h2>
-          <p>
-            当社は、本サイトの利用または利用不能により生じた損害について、
-            当社に故意または重過失がある場合を除き、責任を負いません。
-          </p>
-        </section>
-
-        <section>
-          <h2>7. サービス変更・停止</h2>
-          <p>
-            当社は、保守、障害対応、運営上の必要その他の理由により、
-            本サイトの全部または一部を変更、停止、終了することがあります。
-          </p>
-        </section>
-
-        <section>
-          <h2>8. 規約の変更</h2>
-          <p>
-            当社は、必要に応じて本規約を変更することができます。
-            変更後の内容は、本サイトに掲載した時点から効力を生じます。
-          </p>
-        </section>
-
-        <section>
-          <h2>9. 準拠法・管轄</h2>
-          <p>
-            本規約は日本法に準拠し、本サイトに関して生じる一切の紛争については、
-            当社本店所在地を管轄する裁判所を第一審の専属的合意管轄とします。
-          </p>
-        </section>
+      <div className="legal-stack">
+        {c.sections.map((section) => (
+          <div key={section.heading} className="legal-block">
+            <h2>{section.heading}</h2>
+            <p>{section.body}</p>
+          </div>
+        ))}
       </div>
     </section>
   );
