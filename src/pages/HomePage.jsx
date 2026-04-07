@@ -36,9 +36,13 @@ const UI = {
     email: "Email",
 
     footerBrand: "Ryuge Coffee",
-    footerTagline: "Another Day, Another Coffee",
+    footerTagline: "Quietly crafted in Kamakura",
     footer: "鎌倉にて丁寧に仕立てています",
     note: "静かな動き、静かな存在感。",
+
+    verticalTitle: "桃李成蹊",
+    verticalText: "静かに積み重ねたものは、やがて人を導く。",
+
     modalButton: "購入する",
     modalButtonSub: "安全な決済",
   },
@@ -78,9 +82,13 @@ const UI = {
     email: "Email",
 
     footerBrand: "Ryuge Coffee",
-    footerTagline: "Another Day, Another Coffee",
+    footerTagline: "Quietly crafted in Kamakura",
     footer: "Crafted in Kamakura, Japan",
     note: "Slow movement, quiet presence.",
+
+    verticalTitle: "桃李成蹊",
+    verticalText: "What is quietly cultivated will, in time, guide others.",
+
     modalButton: "Purchase",
     modalButtonSub: "Secure Checkout",
   },
@@ -120,9 +128,13 @@ const UI = {
     email: "Email",
 
     footerBrand: "Ryuge Coffee",
-    footerTagline: "Another Day, Another Coffee",
+    footerTagline: "Quietly crafted in Kamakura",
     footer: "Hecho en Kamakura, Japón",
     note: "Movimiento lento, presencia silenciosa.",
+
+    verticalTitle: "桃李成蹊",
+    verticalText: "Lo que se cultiva en silencio, con el tiempo, guía a los demás.",
+
     modalButton: "Comprar",
     modalButtonSub: "Pago seguro",
   },
@@ -134,8 +146,8 @@ const PRODUCTS = {
   ja: [
     {
       id: "enma",
-      name: "Enma",
-      subtitle: "Signature Bag",
+name: "閻魔",
+subtitle: "Enma",
       description:
         "龍華珈琲の象徴的な存在。印象的でありながら、空間に静かに馴染むパッケージと味わい。",
       detail:
@@ -146,8 +158,8 @@ const PRODUCTS = {
     },
     {
       id: "woodbox",
-      name: "Wood Box",
-      subtitle: "Quiet Gift Edition",
+name: "木函",
+subtitle: "Wooden Edition",
       description:
         "木という素材の温度を活かした、より深く印象に残るボックス仕様のコーヒー。",
       detail:
@@ -158,8 +170,8 @@ const PRODUCTS = {
     },
     {
       id: "seasonal",
-      name: "Seasonal",
-      subtitle: "Limited Selection",
+name: "折々",
+subtitle: "Seasonal Selection",
       description:
         "季節の流れとともに変化する限定ロット。短い時間の美しさをそのまま表現。",
       detail:
@@ -172,8 +184,8 @@ const PRODUCTS = {
   en: [
     {
       id: "enma",
-      name: "Enma",
-      subtitle: "Signature Bag",
+name: "閻魔",
+subtitle: "Enma",
       description:
         "A signature presence of Ryuge Coffee. Distinct, yet calm enough to belong quietly in a space.",
       detail:
@@ -184,8 +196,8 @@ const PRODUCTS = {
     },
     {
       id: "woodbox",
-      name: "Wood Box",
-      subtitle: "Quiet Gift Edition",
+name: "木函",
+subtitle: "Wooden Edition",
       description:
         "A deeper expression shaped through the warmth and tactility of wood.",
       detail:
@@ -196,8 +208,8 @@ const PRODUCTS = {
     },
     {
       id: "seasonal",
-      name: "Seasonal",
-      subtitle: "Limited Selection",
+name: "折々",
+subtitle: "Seasonal Selection",
       description:
         "A limited offering that shifts with the season, preserving the beauty of a short moment.",
       detail:
@@ -210,8 +222,8 @@ const PRODUCTS = {
   es: [
     {
       id: "enma",
-      name: "Enma",
-      subtitle: "Bolsa Signature",
+name: "閻魔",
+subtitle: "Enma",
       description:
         "La presencia emblemática de Ryuge Coffee. Distinta, pero silenciosa dentro del espacio.",
       detail:
@@ -222,8 +234,8 @@ const PRODUCTS = {
     },
     {
       id: "woodbox",
-      name: "Wood Box",
-      subtitle: "Edición de Regalo",
+name: "木函",
+subtitle: "Wooden Edition",
       description:
         "Una expresión más profunda creada con la calidez y la textura de la madera.",
       detail:
@@ -234,8 +246,8 @@ const PRODUCTS = {
     },
     {
       id: "seasonal",
-      name: "Seasonal",
-      subtitle: "Selección Limitada",
+name: "折々",
+subtitle: "Seasonal Selection",
       description:
         "Una selección limitada que cambia con la estación y conserva la belleza de un momento breve.",
       detail:
@@ -307,42 +319,42 @@ export default function HomePage({ lang, setLang }) {
   useScrollMotion(appRef);
 
   useEffect(() => {
-  const onScroll = () => {
-    const header = document.querySelector(".site-header");
-    if (!header) return;
+    const onScroll = () => {
+      const header = document.querySelector(".site-header");
+      if (!header) return;
 
-    if (window.scrollY > 40) {
-      header.classList.add("scrolled");
-    } else {
-      header.classList.remove("scrolled");
-    }
-  };
+      if (window.scrollY > 40) {
+        header.classList.add("scrolled");
+      } else {
+        header.classList.remove("scrolled");
+      }
+    };
 
-  window.addEventListener("scroll", onScroll);
-  return () => window.removeEventListener("scroll", onScroll);
-}, []);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
-useEffect(() => {
-  let lastScroll = 0;
+  useEffect(() => {
+    let lastScroll = 0;
 
-  const onScroll = () => {
-    const header = document.querySelector(".site-header");
-    if (!header) return;
+    const onScroll = () => {
+      const header = document.querySelector(".site-header");
+      if (!header) return;
 
-    const current = window.scrollY;
+      const current = window.scrollY;
 
-    if (current > lastScroll && current > 80) {
-      header.style.transform = "translateY(-100%)";
-    } else {
-      header.style.transform = "translateY(0)";
-    }
+      if (current > lastScroll && current > 80) {
+        header.style.transform = "translateY(-100%)";
+      } else {
+        header.style.transform = "translateY(0)";
+      }
 
-    lastScroll = current;
-  };
+      lastScroll = current;
+    };
 
-  window.addEventListener("scroll", onScroll);
-  return () => window.removeEventListener("scroll", onScroll);
-}, []);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const t = UI[lang];
   const products = useMemo(() => PRODUCTS[lang], [lang]);
@@ -443,12 +455,19 @@ useEffect(() => {
 
           <div className="container hero-inner">
             <p className="hero-eyebrow reveal delay-1">{t.heroEyebrow}</p>
-            <h1 className="hero-title reveal delay-2" style={{ whiteSpace: "pre-line" }}>
+            <h1
+              className="hero-title reveal delay-2"
+              style={{ whiteSpace: "pre-line" }}
+            >
               {t.heroTitle}
             </h1>
             <p className="hero-text reveal delay-3">{t.heroText}</p>
             <div className="hero-actions reveal delay-4">
-              <button className="hero-button" onClick={scrollToProducts} type="button">
+              <button
+                className="hero-button"
+                onClick={scrollToProducts}
+                type="button"
+              >
                 {t.heroButton}
               </button>
             </div>
@@ -482,7 +501,10 @@ useEffect(() => {
           <div className="container feature-grid">
             <div className="feature-main reveal">
               <div className="image-shell hero-shell image-parallax">
-                <img src="/images/atmosphere-1.jpg" alt="Ryuge Coffee atmosphere" />
+                <img
+                  src="/images/atmosphere-1.jpg"
+                  alt="Ryuge Coffee atmosphere"
+                />
               </div>
             </div>
 
@@ -505,14 +527,11 @@ useEffect(() => {
         <section className="section quiet-visual">
           <div className="container quiet-visual-inner reveal">
             <div className="image-shell quiet-shell image-parallax">
-              <img src="/images/atmosphere-2.jpg" alt="Ryuge Coffee atmosphere 2" />
+              <img
+                src="/images/atmosphere-2.jpg"
+                alt="Ryuge Coffee atmosphere 2"
+              />
             </div>
-          </div>
-        </section>
-
-        <section className="section band" id="journal">
-          <div className="container band-inner reveal">
-            <p>{t.productsText}</p>
           </div>
         </section>
 
@@ -526,7 +545,9 @@ useEffect(() => {
               {products.map((product, index) => (
                 <article
                   key={product.id}
-                  className={`product-card ${product.className} reveal delay-${(index % 3) + 1}`}
+                  className={`product-card ${product.className} reveal delay-${
+                    (index % 3) + 1
+                  }`}
                   onClick={() => setSelectedProduct(product)}
                 >
                   <div className="product-image-wrap">
@@ -554,9 +575,14 @@ useEffect(() => {
             <img src="/images/vertical-test.jpg" alt="Coffee moment" />
           </div>
 
-          <div className="vertical-space">
-            <p className="vertical-text">Another Day, Another Coffee</p>
-          </div>
+<div className="vertical-space">
+  <div className="vertical-copy">
+    <h2 className="vertical-title">{t.verticalTitle}</h2>
+    <p className="vertical-text" style={{ whiteSpace: "pre-line" }}>
+      {t.verticalText}
+    </p>
+  </div>
+</div>
         </div>
       </section>
 
@@ -593,7 +619,11 @@ useEffect(() => {
       </footer>
 
       {selectedProduct && (
-        <div className="modal-backdrop" onClick={() => setSelectedProduct(null)} role="presentation">
+        <div
+          className="modal-backdrop"
+          onClick={() => setSelectedProduct(null)}
+          role="presentation"
+        >
           <div
             className="modal"
             role="dialog"
@@ -622,11 +652,17 @@ useEffect(() => {
 
                 <button
                   className="modal-square-button"
-                  onClick={() => handleSquareCheckout(selectedProduct.squareUrl)}
+                  onClick={() =>
+                    handleSquareCheckout(selectedProduct.squareUrl)
+                  }
                   type="button"
                 >
-                  <span className="modal-square-button-sub">{t.modalButtonSub}</span>
-                  <span className="modal-square-button-main">{t.modalButton}</span>
+                  <span className="modal-square-button-sub">
+                    {t.modalButtonSub}
+                  </span>
+                  <span className="modal-square-button-main">
+                    {t.modalButton}
+                  </span>
                   <span className="modal-square-button-arrow">↗</span>
                 </button>
               </div>

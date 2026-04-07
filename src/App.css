@@ -683,28 +683,30 @@ html[lang="en"] .product-copy h3 {
 }
 
 .product-copy {
-  padding: 22px 20px 24px;
+  padding: 18px 20px 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .product-subtitle {
-  margin: 0;
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.34);
+  margin: 2px 0 0;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 20px;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: rgba(255, 255, 255, 0.68);
 }
 
 .product-copy h3,
 .modal-copy h3 {
   margin: 0;
-  font-size: clamp(24px, 2.4vw, 40px);
-  line-height: 1.04;
-  letter-spacing: -0.035em;
-  font-weight: 460;
-  color: rgba(255, 255, 255, 0.82);
+  font-size: clamp(28px, 2.6vw, 42px);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .product-copy p {
@@ -1442,4 +1444,48 @@ html[lang="en"] .product-copy h3 {
     flex-direction: column;
     align-items: flex-start;
   }
+  
+  .vertical-space {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6vw;
+}
+
+.vertical-copy {
+  width: min(420px, 100%);
+  text-align: left;
+}
+
+.vertical-title {
+  margin: 0 0 18px;
+  font-family: "Cormorant Garamond", serif;
+  font-size: clamp(1.5rem, 1.9vw, 2.0rem);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1.08;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.vertical-text {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  font-size: clamp(0.9rem, 1vw, 1rem);
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  line-height: 1.95;
+  color: rgba(255, 255, 255, 0.62);
+  max-width: 24em;
+}
+}
+.products-layout {
+  align-items: start;
+}
+
+.product-main {
+  margin-top: 100px;
+}
+.product-main .product-copy {
+  padding: 18px 20px 18px;
+  gap: 10px;
 }
