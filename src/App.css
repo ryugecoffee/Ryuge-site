@@ -1234,7 +1234,7 @@ html[lang="en"] .product-copy h3 {
 
 .legal-page-shell {
   min-height: 100vh;
-  background: #111111;
+  background: #0b0b0b;
   color: rgba(255, 255, 255, 0.9);
   display: flex;
   flex-direction: column;
@@ -1248,18 +1248,19 @@ html[lang="en"] .product-copy h3 {
   justify-content: space-between;
   align-items: center;
   gap: 24px;
-  padding: 22px 32px;
-  background: rgba(17, 17, 17, 0.88);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 20px 32px;
+  background: rgba(11, 11, 11, 0.84);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .legal-brand {
   color: rgba(255, 255, 255, 0.92);
   text-decoration: none;
   font-family: "Cormorant Garamond", serif;
-  font-size: 1.7rem;
-  letter-spacing: 0.04em;
+  font-size: 1.55rem;
+  letter-spacing: 0.05em;
 }
 
 .legal-nav {
@@ -1270,16 +1271,17 @@ html[lang="en"] .product-copy h3 {
 
 .legal-nav a,
 .legal-footer-links a {
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.68);
   text-decoration: none;
-  font-size: 0.92rem;
-  transition: opacity 0.25s ease;
+  font-size: 0.88rem;
+  transition: color 0.28s ease, opacity 0.28s ease;
 }
 
 .legal-nav a:hover,
 .legal-footer-links a:hover,
 .legal-brand:hover {
-  opacity: 0.7;
+  color: rgba(255, 255, 255, 0.92);
+  opacity: 1;
 }
 
 .legal-main {
@@ -1288,33 +1290,34 @@ html[lang="en"] .product-copy h3 {
 }
 
 .legal-document {
-  width: min(860px, calc(100% - 48px));
+  width: min(760px, calc(100% - 56px));
   margin: 0 auto;
-  padding: 84px 0 110px;
+  padding: 104px 0 120px;
 }
 
 .legal-eyebrow {
-  margin: 0 0 10px;
-  font-size: 0.78rem;
-  letter-spacing: 0.16em;
+  margin: 0 0 12px;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.38);
 }
 
 .legal-document h1 {
-  margin: 0 0 18px;
+  margin: 0 0 20px;
   font-family: "Cormorant Garamond", serif;
-  font-size: clamp(2.2rem, 4vw, 3.5rem);
+  font-size: clamp(2.5rem, 4.2vw, 4.4rem);
   font-weight: 500;
-  line-height: 1.05;
-  color: rgba(255, 255, 255, 0.96);
+  line-height: 0.98;
+  letter-spacing: -0.015em;
+  color: rgba(255, 255, 255, 0.97);
 }
 
 .legal-lead {
-  margin: 0 0 44px;
-  max-width: 640px;
-  color: rgba(255, 255, 255, 0.62);
-  line-height: 1.9;
+  margin: 0 0 56px;
+  max-width: 620px;
+  color: rgba(255, 255, 255, 0.58);
+  line-height: 1.95;
   font-size: 0.98rem;
 }
 
@@ -1326,46 +1329,54 @@ html[lang="en"] .product-copy h3 {
 
 .legal-row {
   display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 28px;
-  padding: 22px 0;
+  grid-template-columns: 190px 1fr;
+  gap: 26px;
+  padding: 24px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .legal-row dt {
   margin: 0;
-  color: rgba(255, 255, 255, 0.56);
-  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .legal-row dd {
   margin: 0;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.88);
   line-height: 1.95;
   font-size: 0.98rem;
 }
 
+.legal-stack,
 .legal-sections {
   display: flex;
   flex-direction: column;
-  gap: 34px;
+  gap: 38px;
 }
 
+.legal-block,
 .legal-sections section {
-  padding-top: 20px;
+  padding-top: 22px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.legal-block h2,
 .legal-sections h2 {
   margin: 0 0 12px;
-  font-size: 1rem;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1.45rem;
   font-weight: 500;
+  letter-spacing: 0.01em;
   color: rgba(255, 255, 255, 0.92);
 }
 
+.legal-block p,
 .legal-sections p {
   margin: 0;
-  color: rgba(255, 255, 255, 0.74);
+  color: rgba(255, 255, 255, 0.72);
   line-height: 1.95;
   font-size: 0.98rem;
 }
@@ -1376,10 +1387,11 @@ html[lang="en"] .product-copy h3 {
   align-items: center;
   gap: 18px;
   flex-wrap: wrap;
-  padding: 24px 32px 34px;
+  padding: 22px 32px 30px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.36);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
 }
 
 .legal-footer-links {
@@ -1390,14 +1402,24 @@ html[lang="en"] .product-copy h3 {
 
 @media (max-width: 768px) {
   .legal-header {
-    padding: 18px 18px;
+    padding: 16px 18px;
     align-items: flex-start;
     flex-direction: column;
   }
 
   .legal-document {
-    width: min(100% - 32px, 860px);
-    padding: 56px 0 80px;
+    width: min(100% - 32px, 760px);
+    padding: 72px 0 84px;
+  }
+
+  .legal-document h1 {
+    font-size: clamp(2rem, 10vw, 3rem);
+    line-height: 1.02;
+  }
+
+  .legal-lead {
+    margin-bottom: 42px;
+    font-size: 0.94rem;
   }
 
   .legal-row {
@@ -1406,8 +1428,17 @@ html[lang="en"] .product-copy h3 {
     padding: 18px 0;
   }
 
+  .legal-row dt {
+    font-size: 0.74rem;
+  }
+
+  .legal-block h2,
+  .legal-sections h2 {
+    font-size: 1.22rem;
+  }
+
   .legal-footer {
-    padding: 20px 18px 28px;
+    padding: 18px 18px 24px;
     flex-direction: column;
     align-items: flex-start;
   }
