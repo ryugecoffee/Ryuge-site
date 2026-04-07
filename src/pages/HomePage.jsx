@@ -307,6 +307,44 @@ export default function HomePage() {
   useReveal();
   useScrollMotion(appRef);
 
+  useEffect(() => {
+  const onScroll = () => {
+    const header = document.querySelector(".site-header");
+    if (!header) return;
+
+    if (window.scrollY > 40) {
+      header.classList.add("scrolled");
+    } else {
+      header.classList.remove("scrolled");
+    }
+  };
+
+  window.addEventListener("scroll", onScroll);
+  return () => window.removeEventListener("scroll", onScroll);
+}, []);
+
+useEffect(() => {
+  let lastScroll = 0;
+
+  const onScroll = () => {
+    const header = document.querySelector(".site-header");
+    if (!header) return;
+
+    const current = window.scrollY;
+
+    if (current > lastScroll && current > 80) {
+      header.style.transform = "translateY(-100%)";
+    } else {
+      header.style.transform = "translateY(0)";
+    }
+
+    lastScroll = current;
+  };
+
+  window.addEventListener("scroll", onScroll);
+  return () => window.removeEventListener("scroll", onScroll);
+}, []);
+
   const t = UI[lang];
   const products = useMemo(() => PRODUCTS[lang], [lang]);
 
@@ -368,12 +406,6 @@ export default function HomePage() {
             <a href="#about">{t.about}</a>
             <a href="#journal">{t.journal}</a>
           </nav>
-
-          <div className="header-meta-links">
-            <a href="/privacy">{t.privacyPolicy}</a>
-            <a href="/terms">{t.terms}</a>
-            <a href="/legal">{t.legalNotice}</a>
-          </div>
         </div>
 
         <div className="lang-switch">
