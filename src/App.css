@@ -353,7 +353,7 @@ a {
 }
 
 .site-nav a {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.5);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1290,9 +1290,9 @@ html[lang="en"] .product-copy h3 {
 }
 
 .legal-document {
-  width: min(760px, calc(100% - 56px));
+  width: min(720px, calc(100% - 56px));
   margin: 0 auto;
-  padding: 104px 0 120px;
+  padding: 92px 0 112px;
 }
 
 .legal-eyebrow {
@@ -1304,21 +1304,21 @@ html[lang="en"] .product-copy h3 {
 }
 
 .legal-document h1 {
-  margin: 0 0 20px;
+  margin: 0 0 18px;
   font-family: "Cormorant Garamond", serif;
-  font-size: clamp(2.5rem, 4.2vw, 4.4rem);
+  font-size: clamp(2.2rem, 3.8vw, 3.9rem);
   font-weight: 500;
-  line-height: 0.98;
-  letter-spacing: -0.015em;
+  line-height: 1.02;
+  letter-spacing: -0.012em;
   color: rgba(255, 255, 255, 0.97);
 }
 
 .legal-lead {
-  margin: 0 0 56px;
-  max-width: 620px;
-  color: rgba(255, 255, 255, 0.58);
-  line-height: 1.95;
-  font-size: 0.98rem;
+  margin: 0 0 48px;
+  max-width: 580px;
+  color: rgba(255, 255, 255, 0.56);
+  line-height: 1.9;
+  font-size: 0.95rem;
 }
 
 .legal-table {
@@ -1365,12 +1365,12 @@ html[lang="en"] .product-copy h3 {
 
 .legal-block h2,
 .legal-sections h2 {
-  margin: 0 0 12px;
+  margin: 0 0 10px;
   font-family: "Cormorant Garamond", serif;
-  font-size: 1.45rem;
+  font-size: 1.32rem;
   font-weight: 500;
   letter-spacing: 0.01em;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .legal-block p,
