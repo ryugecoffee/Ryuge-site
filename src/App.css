@@ -510,7 +510,7 @@ html[lang="en"] .product-copy h3 {
 }
 
 .section-label {
-  margin: 0;
+  margin: 60px 0 0;
   font-size: 12px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -1488,4 +1488,70 @@ html[lang="en"] .product-copy h3 {
 .product-main .product-copy {
   padding: 18px 20px 18px;
   gap: 10px;
+}
+.hero-title {
+  display: inline-block;
+  transform: rotate(-8deg);
+}
+.vertical-copy {
+  display: flex;
+  align-items: flex-start;
+  gap: 64px;
+}
+
+.vertical-copy {
+  display: flex;
+  align-items: flex-start;
+  gap: 88px;
+}
+
+.vertical-title {
+  margin: 0;
+  position: relative;
+  width: 120px;
+  height: 360px;
+  flex: 0 0 120px;
+}
+
+.vertical-char {
+  position: absolute;
+  display: block;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: 52px;
+  font-weight: 500;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.vertical-char-1 {
+  top: 0;
+  left: 0;
+}
+
+.vertical-char-2 {
+  top: 88px;
+  left: 36px;
+}
+
+.vertical-char-3 {
+  top: 178px;
+  left: 74px;
+}
+
+.vertical-char-4 {
+  top: 270px;
+  left:36px;
+}
+
+.vertical-text {
+  margin: 92px 0 0;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: 20px;
+  line-height: 2.1;
+  color: rgba(255, 255, 255, 0.54);
+  white-space: nowrap;
+}
+.products .section-label {
+  display: inline-block;
+  transform: translateY(115px);
 }

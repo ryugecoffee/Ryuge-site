@@ -577,7 +577,16 @@ export default function HomePage({ lang, setLang }) {
 
 <div className="vertical-space">
   <div className="vertical-copy">
-    <h2 className="vertical-title">{t.verticalTitle}</h2>
+  <h2 className="vertical-title" aria-label={t.verticalTitle}>
+  {t.verticalTitle.split("").map((char, index) => (
+    <span
+      key={`${char}-${index}`}
+      className={`vertical-char vertical-char-${index + 1}`}
+    >
+      {char}
+    </span>
+  ))}
+</h2>
     <p className="vertical-text" style={{ whiteSpace: "pre-line" }}>
       {t.verticalText}
     </p>
