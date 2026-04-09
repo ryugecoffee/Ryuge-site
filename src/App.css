@@ -2095,7 +2095,7 @@ html[lang="es"] .products-hero-overlay h1 {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .home-nav a[href="#about"] {
     display: none;
   }
