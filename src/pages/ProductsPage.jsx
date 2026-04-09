@@ -54,7 +54,7 @@ const PAGE_TEXT = {
       },
       {
         image: "/images/oriori-2.jpg",
-        title: "ドリップバッグ",
+        title: "コーヒーバッグ",
         text: "日々の合間に、龍華の輪郭を静かに味わう一杯です。",
       },
       {

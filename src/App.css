@@ -2094,6 +2094,13 @@ html[lang="es"] .products-hero-overlay h1 {
     gap: 4px;
   }
 }
+
+@media (max-width: 768px) {
+  .home-nav a[href="#about"] {
+    display: none;
+  }
+}
+
 .oriori-feature {
   padding-top: 92px;
 }
