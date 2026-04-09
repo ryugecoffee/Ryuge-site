@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import SiteLayout from "./components/SiteLayout";
@@ -8,7 +8,13 @@ import Terms from "./pages/Terms";
 import ProductsPage from "./pages/ProductsPage";
 
 export default function App() {
-  const [lang, setLang] = useState("ja");
+  const [lang, setLang] = useState(() => {
+    return localStorage.getItem("site-lang") || "ja";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("site-lang", lang);
+  }, [lang]);
 
   return (
     <Routes>
@@ -18,10 +24,13 @@ export default function App() {
       />
 
       <Route element={<SiteLayout lang={lang} setLang={setLang} />}>
-        <Route path="/products" element={<ProductsPage />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/legal" element={<LegalNotice />} />
+        <Route
+          path="/products"
+          element={<ProductsPage lang={lang} setLang={setLang} />}
+        />
+        <Route path="/privacy" element={<PrivacyPolicy lang={lang} />} />
+        <Route path="/terms" element={<Terms lang={lang} />} />
+        <Route path="/legal" element={<LegalNotice lang={lang} />} />
       </Route>
     </Routes>
   );

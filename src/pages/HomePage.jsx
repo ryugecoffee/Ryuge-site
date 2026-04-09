@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { UI_TEXT } from "../uiText";
+
 
 const UI = {
   ja: {
@@ -434,8 +436,8 @@ export default function HomePage({ lang, setLang }) {
         <div className="brand">{t.brand}</div>
 
         <div className="header-center">
-        <nav className="site-nav">
-  <a href="/products">{t.products}</a>
+<nav className="site-nav">
+  <Link to="/products">{t.products}</Link>
   <a href="#about">{t.about}</a>
   <a href="#journal">{t.journal}</a>
 </nav>
@@ -641,37 +643,37 @@ export default function HomePage({ lang, setLang }) {
         </div>
       </section>
 
-      <footer className="site-footer">
-        <div className="container footer-inner">
-          <div className="footer-top">
-            <div className="footer-brand-block">
-              <p className="footer-brand">{t.footerBrand}</p>
-              <p className="footer-tagline">{t.footerTagline}</p>
-            </div>
+<footer className="site-footer">
+  <div className="container footer-inner">
+    <div className="footer-top">
+      <div className="footer-brand-block">
+        <p className="footer-brand">{t.footerBrand}</p>
+        <p className="footer-tagline">{t.footerTagline}</p>
+      </div>
 
-            <div className="footer-links-group">
-              <a
-                href="https://www.instagram.com/ryuge_coffee/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                {t.instagram}
-              </a>
-              <a href="mailto:ryugecoffee@gmail.com">{t.email}</a>
-            </div>
+      <div className="footer-links-group">
+        <a
+          href="https://www.instagram.com/ryuge_coffee/"
+          target="_blank"
+          rel="noreferrer"
+        >
+          {t.instagram}
+        </a>
+        <a href="mailto:ryugecoffee@gmail.com">{t.email}</a>
+      </div>
 
-            <div className="footer-links-group">
-              <a href="/privacy">{t.privacyPolicy}</a>
-              <a href="/terms">{t.terms}</a>
-              <a href="/legal">{t.legalNotice}</a>
-            </div>
-          </div>
+      <div className="footer-links-group">
+        <Link to="/privacy">{t.privacyPolicy}</Link>
+        <Link to="/terms">{t.terms}</Link>
+        <Link to="/legal">{t.legalNotice}</Link>
+      </div>
+    </div>
 
-          <div className="footer-bottom">
-            <p>© 2026 Ryuge Coffee</p>
-          </div>
-        </div>
-      </footer>
+    <div className="footer-bottom">
+      <p>© 2026 Ryuge Coffee</p>
+    </div>
+  </div>
+</footer>
 
       {selectedProduct && (
         <div

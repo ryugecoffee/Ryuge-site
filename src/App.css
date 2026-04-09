@@ -192,15 +192,25 @@ a {
   left: 0;
   width: 100%;
   height: 68px;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   padding: 0 48px;
   z-index: 100;
+
   background: rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  transition: all 0.4s ease;
+}
+
+.site-logo.center {
+  justify-self: center;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+}
+
+.lang-switch {
+  justify-self: end;
 }
 
 .brand {
