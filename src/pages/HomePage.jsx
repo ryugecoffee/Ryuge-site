@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 const UI = {
   ja: {
@@ -45,6 +46,20 @@ const UI = {
 
     modalButton: "購入する",
     modalButtonSub: "安全な決済",
+        orioriLabel: "折々",
+    orioriLead: "季節の気配とともに、静かにひらく三つの入口。",
+
+    orioriSubscriptionTitle: "サブスクリプション",
+    orioriSubscriptionText:
+      "月ごとに移ろう焙煎や豆の表情を、折々の流れにあわせて届けます。",
+
+    orioriDripbagTitle: "ドリップバッグ",
+    orioriDripbagText:
+      "日々の合間にも、龍華の輪郭を手軽に味わえる小さな一杯です。",
+
+    orioriWheelTitle: "フレーバーホイール",
+    orioriWheelText:
+      "味わいを言葉にするための、静かな記録と発見のためのサイトです。",
   },
 
   en: {
@@ -91,6 +106,20 @@ const UI = {
 
     modalButton: "Purchase",
     modalButtonSub: "Secure Checkout",
+        orioriLabel: "Oriori",
+    orioriLead: "Three quiet forms that open with the season.",
+
+    orioriSubscriptionTitle: "Subscription",
+    orioriSubscriptionText:
+      "A seasonal delivery that follows changing coffees and roast expressions month by month.",
+
+    orioriDripbagTitle: "Drip Bag",
+    orioriDripbagText:
+      "An easy way to enjoy the contour of Ryuge Coffee in the middle of everyday life.",
+
+    orioriWheelTitle: "Flavor Wheel",
+    orioriWheelText:
+      "A quiet website for recording, discovering, and putting flavor into words.",
   },
 
   es: {
@@ -138,6 +167,20 @@ const UI = {
     modalButton: "Comprar",
     modalButtonSub: "Pago seguro",
   },
+      orioriLabel: "Oriori",
+    orioriLead: "Tres formas silenciosas que se abren con la estación.",
+
+    orioriSubscriptionTitle: "Suscripción",
+    orioriSubscriptionText:
+      "Una entrega estacional que acompaña los cambios del café y del tueste mes a mes.",
+
+    orioriDripbagTitle: "Drip Bag",
+    orioriDripbagText:
+      "Una forma sencilla de disfrutar el contorno de Ryuge Coffee en la vida diaria.",
+
+    orioriWheelTitle: "Rueda de Sabor",
+    orioriWheelText:
+      "Un sitio tranquilo para registrar, descubrir y poner el sabor en palabras.",
 };
 
 const COMMON_SQUARE_URL = "https://square.link/u/cLYnP3Mu";
@@ -168,18 +211,6 @@ subtitle: "Wooden Edition",
       className: "product-side-top",
       squareUrl: COMMON_SQUARE_URL,
     },
-    {
-      id: "seasonal",
-name: "折々",
-subtitle: "Seasonal Selection",
-      description:
-        "季節の流れとともに変化する限定ロット。短い時間の美しさをそのまま表現。",
-      detail:
-        "Seasonal は、その時季にしか出せない輪郭を大切にした限定ラインです。味だけでなく、季節の空気や気分まで持ち帰れる構成を目指しています。",
-      image: "/images/seasonal.jpg",
-      className: "product-side-bottom",
-      squareUrl: COMMON_SQUARE_URL,
-    },
   ],
   en: [
     {
@@ -206,18 +237,6 @@ subtitle: "Wooden Edition",
       className: "product-side-top",
       squareUrl: COMMON_SQUARE_URL,
     },
-    {
-      id: "seasonal",
-name: "折々",
-subtitle: "Seasonal Selection",
-      description:
-        "A limited offering that shifts with the season, preserving the beauty of a short moment.",
-      detail:
-        "Seasonal is a limited line built around contours that exist only at a certain time. It carries not only flavor, but also mood and air.",
-      image: "/images/seasonal.jpg",
-      className: "product-side-bottom",
-      squareUrl: COMMON_SQUARE_URL,
-    },
   ],
   es: [
     {
@@ -242,18 +261,6 @@ subtitle: "Wooden Edition",
         "Wood Box busca ordenar con calma el acto de regalar. El gesto de abrir, la textura y el espacio visual forman parte de la experiencia.",
       image: "/images/woodbox.jpg",
       className: "product-side-top",
-      squareUrl: COMMON_SQUARE_URL,
-    },
-    {
-      id: "seasonal",
-name: "折々",
-subtitle: "Seasonal Selection",
-      description:
-        "Una selección limitada que cambia con la estación y conserva la belleza de un momento breve.",
-      detail:
-        "Seasonal es una línea limitada creada en torno a contornos que solo existen en cierto momento. Lleva sabor, atmósfera y ritmo.",
-      image: "/images/seasonal.jpg",
-      className: "product-side-bottom",
       squareUrl: COMMON_SQUARE_URL,
     },
   ],
@@ -363,6 +370,21 @@ export default function HomePage({ lang, setLang }) {
     document.documentElement.lang = lang;
   }, [lang]);
 
+    const orioriItems = [
+    {
+      title: t.orioriSubscriptionTitle,
+      text: t.orioriSubscriptionText,
+    },
+    {
+      title: t.orioriDripbagTitle,
+      text: t.orioriDripbagText,
+    },
+    {
+      title: t.orioriWheelTitle,
+      text: t.orioriWheelText,
+    },
+  ];
+
   useEffect(() => {
     const onKeyDown = (e) => {
       if (e.key === "Escape") setSelectedProduct(null);
@@ -412,11 +434,11 @@ export default function HomePage({ lang, setLang }) {
         <div className="brand">{t.brand}</div>
 
         <div className="header-center">
-          <nav className="site-nav">
-            <a href="#products">{t.products}</a>
-            <a href="#about">{t.about}</a>
-            <a href="#journal">{t.journal}</a>
-          </nav>
+        <nav className="site-nav">
+  <a href="/products">{t.products}</a>
+  <a href="#about">{t.about}</a>
+  <a href="#journal">{t.journal}</a>
+</nav>
         </div>
 
         <div className="lang-switch">
@@ -535,13 +557,13 @@ export default function HomePage({ lang, setLang }) {
           </div>
         </section>
 
-        <section className="section products" id="products" ref={productsRef}>
+                <section className="section products" id="products" ref={productsRef}>
           <div className="container">
             <div className="section-top reveal">
               <p className="section-label">{t.productsLabel}</p>
             </div>
 
-            <div className="products-layout">
+            <div className="products-layout products-layout-two">
               {products.map((product, index) => (
                 <article
                   key={product.id}
@@ -565,6 +587,30 @@ export default function HomePage({ lang, setLang }) {
                 </article>
               ))}
             </div>
+
+            <section className="oriori-services reveal">
+              <div className="oriori-services-head">
+                <p className="section-label">{t.orioriLabel}</p>
+                <p className="oriori-services-lead">{t.orioriLead}</p>
+              </div>
+
+              <div className="oriori-services-grid">
+                {orioriItems.map((item, index) => (
+                  <article
+                    key={item.title}
+                    className={`oriori-service-card reveal delay-${
+                      (index % 3) + 1
+                    }`}
+                  >
+                    <div className="oriori-service-visual" />
+                    <div className="oriori-service-copy">
+                      <h3>{item.title}</h3>
+                      <p>{item.text}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
           </div>
         </section>
       </main>

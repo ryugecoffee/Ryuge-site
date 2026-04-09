@@ -5,17 +5,23 @@ import SiteLayout from "./components/SiteLayout";
 import LegalNotice from "./pages/LegalNotice";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
+import ProductsPage from "./pages/ProductsPage";
 
 export default function App() {
   const [lang, setLang] = useState("ja");
 
   return (
     <Routes>
-      <Route path="/" element={<HomePage lang={lang} setLang={setLang} />} />
+      <Route
+        path="/"
+        element={<HomePage lang={lang} setLang={setLang} />}
+      />
+
       <Route element={<SiteLayout lang={lang} setLang={setLang} />}>
-        <Route path="/legal" element={<LegalNotice lang={lang} />} />
-        <Route path="/privacy" element={<PrivacyPolicy lang={lang} />} />
-        <Route path="/terms" element={<Terms lang={lang} />} />
+        <Route path="/products" element={<ProductsPage />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/legal" element={<LegalNotice />} />
       </Route>
     </Routes>
   );
