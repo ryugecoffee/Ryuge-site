@@ -874,6 +874,37 @@ html[lang="en"] .product-copy h3 {
   max-width: 440px;
 }
 
+.modal-link-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 32px;
+  padding: 0 0 6px;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: color 0.35s ease, border-color 0.35s ease, transform 0.35s ease;
+}
+
+.modal-link-button:hover {
+  color: rgba(255, 255, 255, 0.94);
+  border-bottom-color: rgba(255, 255, 255, 0.34);
+  transform: translateY(-1px);
+}
+
+.modal-link-arrow {
+  font-size: 14px;
+  transition: transform 0.35s ease;
+}
+
+.modal-link-button:hover .modal-link-arrow {
+  transform: translate(2px, -2px);
+}
+
 .modal-square-button {
   position: relative;
   display: inline-flex;
@@ -2652,4 +2683,35 @@ html[lang="es"] .products-hero-overlay h1 {
 .product-side-bottom .product-copy p {
   display: block !important;
   opacity: 0.8;
+}
+
+.modal-link-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 32px;
+  padding: 0 0 6px;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.35s ease;
+}
+
+.modal-link-button:hover {
+  color: rgba(255, 255, 255, 0.94);
+  border-bottom-color: rgba(255, 255, 255, 0.34);
+  transform: translateY(-1px);
+}
+
+.modal-link-arrow {
+  font-size: 14px;
+  transition: transform 0.35s ease;
+}
+
+.modal-link-button:hover .modal-link-arrow {
+  transform: translate(2px, -2px);
 }

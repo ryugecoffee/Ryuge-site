@@ -727,20 +727,15 @@ setSelectedProduct({
                 <p>{selectedProduct.detail}</p>
 
 <button
-  className="modal-square-button"
+  className="modal-link-button"
   onClick={() => {
     setSelectedProduct(null);
     navigate("/products");
   }}
   type="button"
 >
-  <span className="modal-square-button-sub">
-    商品ページへ
-  </span>
-  <span className="modal-square-button-main">
-    商品を見る
-  </span>
-  <span className="modal-square-button-arrow">↗</span>
+  <span>商品を見る</span>
+  <span className="modal-link-arrow">↗</span>
 </button>
               </div>
             </div>
