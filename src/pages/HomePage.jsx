@@ -546,50 +546,62 @@ export default function HomePage({ lang, setLang }) {
 
 <section className="section products" id="products" ref={productsRef}>
   <div className="container">
-
-<p className="section-label products-title">{t.productsLabel}</p>
+    <p className="section-label products-title">{t.productsLabel}</p>
 
     <div className="products-layout products-layout-two">
-
-              {products.map((product, index) => (
-                <article
-                  key={product.id}
-                  className={`product-card ${product.className} reveal delay-${
-                    (index % 3) + 1
-                  }`}
-                  onClick={() => setSelectedProduct(product)}
-                >
-                  <div className="product-image-wrap">
-                    <div className="product-image image-parallax">
-                      <img src={product.image} alt={product.name} />
-                    </div>
-                  </div>
-
-                  <div className="product-copy">
-                    <p className="product-subtitle">{product.subtitle}</p>
-                    <h3>{product.name}</h3>
-                    <p>{product.description}</p>
-                    <span className="product-link">{t.detail}</span>
-                  </div>
-                </article>
-              ))}
-              <article className="product-card product-side-bottom reveal delay-3">
-  <div className="product-image-wrap">
-    <div className="product-image image-parallax">
-      <img src="/images/oriori-1.jpg" alt={t.orioriLabel} />
-    </div>
-  </div>
-
-  <div className="product-copy">
-    <p className="product-subtitle">{t.orioriLabel}</p>
-    <h3>{t.orioriLabel}</h3>
-    <p>{t.orioriLead}</p>
-    <span className="product-link">{t.detail}</span>
-  </div>
-</article>
+      {products.map((product, index) => (
+        <article
+          key={product.id}
+          className={`product-card ${product.className} reveal delay-${
+            (index % 3) + 1
+          }`}
+          onClick={() => setSelectedProduct(product)}
+        >
+          <div className="product-image-wrap">
+            <div className="product-image image-parallax">
+              <img src={product.image} alt={product.name} />
             </div>
           </div>
-        </section>
+
+          <div className="product-copy">
+            <p className="product-subtitle">{product.subtitle}</p>
+            <h3>{product.name}</h3>
+            <p>{product.description}</p>
+            <span className="product-link">{t.detail}</span>
+          </div>
+        </article>
+      ))}
+
+      <article
+        className="product-card product-side-bottom reveal delay-3"
+        onClick={() =>
+          setSelectedProduct({
+            id: "oriori",
+            name: t.orioriLabel,
+            subtitle: t.orioriLabel,
+            description: t.orioriLead,
+            detail: t.orioriLead,
+            image: "/images/oriori-1.jpg",
+            squareUrl: null,
+          })
+        }
+      >
+        <div className="product-image-wrap">
+          <div className="product-image image-parallax">
+            <img src="/images/oriori-1.jpg" alt={t.orioriLabel} />
+          </div>
+        </div>
+
+        <div className="product-copy">
+          <p className="product-subtitle">{t.orioriLabel}</p>
+          <h3>{t.orioriLabel}</h3>
+          <p>{t.orioriLead}</p>
+          <span className="product-link">{t.detail}</span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
       </main>
 
       <section className="section vertical-visual">
