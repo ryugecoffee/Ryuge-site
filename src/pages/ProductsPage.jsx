@@ -194,6 +194,10 @@ const PAGE_TEXT = {
 };
 
 export default function ProductsPage({ lang, setLang }) {
+  useEffect(() => {
+  window.scrollTo(0, 0);
+}, []);
+  
   const t = UI_TEXT[lang] || UI_TEXT.ja;
   const page = PAGE_TEXT[lang] || PAGE_TEXT.ja;
 

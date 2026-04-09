@@ -475,10 +475,19 @@ html[lang="en"] .product-copy h3 {
 
 .story-grid {
   display: grid;
-  grid-template-columns: 1.05fr 0.85fr;
-  gap: 64px;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 32px;
+  align-items: start;
   padding-top: 24px;
   border-top: 1px solid var(--line);
+}
+
+.story-body {
+  padding-top: 10px;
+}
+
+.story-body {
+  margin-left: -380px;
 }
 
 .story-title h2,
@@ -504,7 +513,7 @@ html[lang="en"] .product-copy h3 {
 .feature-grid {
   display: grid;
   grid-template-columns: 1.18fr 0.72fr;
-  gap: 28px;
+  gap: 40px;
   align-items: start;
 }
 
@@ -512,7 +521,7 @@ html[lang="en"] .product-copy h3 {
   display: grid;
   grid-template-rows: auto auto;
   gap: 28px;
-  padding-top: 48px;
+  padding-top: 10px;
 }
 
 .feature-copy {
@@ -523,6 +532,13 @@ html[lang="en"] .product-copy h3 {
   margin-bottom: 18px;
 }
 
+.story-place {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.42);
+}
+
 .feature-copy h2 {
   margin-bottom: 18px;
 }
@@ -530,6 +546,7 @@ html[lang="en"] .product-copy h3 {
 .quiet-visual-inner {
   width: 80%;
   margin-left: auto;
+  margin-top: 40px;
 }
 
 .image-shell {
@@ -1153,6 +1170,20 @@ html[lang="en"] .product-copy h3 {
   }
 }
 
+/* ===== 多言語レイアウト崩れ防止 ===== */
+
+html[lang="en"] .story-grid,
+html[lang="es"] .story-grid {
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+html[lang="en"] .story-body,
+html[lang="es"] .story-body {
+  margin-left: 0;
+  max-width: 760px;
+}
+
 .legal-page-shell {
   min-height: 100vh;
   background: #0b0b0b;
@@ -1572,7 +1603,7 @@ html[lang="en"] .product-copy h3 {
 .products-enma-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0;
+  gap: 20px;
 }
 
 .products-enma-static-card {
@@ -1655,13 +1686,13 @@ html[lang="en"] .product-copy h3 {
 
 .products-simple-grid {
   display: grid;
-  gap: 0;
+  gap: 20px;
 }
 
 .products-two-col {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0;
+  gap: 20px;
 }
 
 .products-woodbox-card {
@@ -2189,6 +2220,13 @@ html[lang="en"] .product-copy h3 {
   min-height: 0;
 }
 
+.oriori-main-image,
+.oriori-sub-image {
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.015);
+  border-radius: 20px;
+}
+
 .oriori-main-image img,
 .oriori-sub-image img {
   width: 100%;
@@ -2591,4 +2629,10 @@ html[lang="en"] .product-copy h3 {
   .product-side-bottom .product-image-wrap {
     min-height: 260px;
   }
+  .story-place {
+  margin: 0 0 14px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.5);
+}
 }

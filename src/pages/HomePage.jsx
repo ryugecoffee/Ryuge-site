@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { UI_TEXT } from "../uiText";
 
 
 const UI = {
   ja: {
     brand: "RYUGE COFFEE",
-    heroEyebrow: "鎌倉の静けさを、一杯の中へ。",
+    heroEyebrow: "鎌倉の静けさを、一杯の中へ",
     heroTitle: "Another Day,\nAnother Coffee",
     heroText:
-      "静けさ、余白、質感。龍華珈琲は、強く主張するのではなく、深く残る一杯を届けます。",
+      "静けさ、余白、質感。ただ、そこにある一杯",
     heroButton: "商品を見る",
 
     products: "商品",
@@ -22,13 +22,13 @@ const UI = {
     legalNotice: "特定商取引法に基づく表記",
 
     storyLabel: "物語",
-    storyTitle: "静かな流れを、\n味にする。",
+    storyTitle: "鎌倉・円応寺",
     storyText:
-      "光、風、器、温度、会話の間。Ryuge Coffee は、味だけではなく、その前後にある空気まで設計したいと考えています。",
+     "閻魔の前に立つときに生まれる静かな緊張と余白。その感覚を、一杯に",
     presenceLabel: "佇まい",
-    presenceTitle: "静けさが、\n存在感になる。",
+    presenceTitle: "静けさが、\n存在感になる",
     presenceText:
-      "派手な演出ではなく、静かに視線を止める存在感。商品だけではなく、その周囲に漂う空気まで体験として届けることを目指しています。",
+      "派手な演出ではなく、静かに視線を止める存在、\n商品だけでなくその周辺に漂う空気まで",
     productsLabel: "商品",
     productsText:
       "3つの商品は、それぞれ異なる輪郭を持ちながら、同じ静けさへとつながっています。",
@@ -41,7 +41,7 @@ const UI = {
     footerBrand: "Ryuge Coffee",
     footerTagline: "Quietly crafted in Kamakura",
     footer: "鎌倉にて丁寧に仕立てています",
-    note: "静かな動き、静かな存在感。",
+    note: "静かな動き、静かな存在感",
 
     verticalTitle: "桃李成蹊",
     verticalText: "静かに積み重ねたものは、やがて人を導く。",
@@ -49,7 +49,8 @@ const UI = {
     modalButton: "購入する",
     modalButtonSub: "安全な決済",
         orioriLabel: "折々",
-    orioriLead: "季節の気配とともに、静かにひらく三つの入口。",
+    orioriLead: "折々は、季節や日々の移ろいに合わせて、その時々の気配を届けるためのシリーズ。閻魔のように一つの軸を定めるのではなく、木函のように上位を収めるのでもなく、その間にある時間や感覚に寄り添いながら、その都度ふさわしいコーヒーやかたちを選び出していく。内容は固定されず、季節のコーヒー、定期便、ドリップバッグなどへと移ろいながら、日常の中で龍華珈琲に触れるための入口として、静かにひらかれていく。",
+orioriDescription: "折々は、季節や日々の移ろいに合わせて、その時々の珈琲やかたちを届ける仕立て。",
 
     orioriSubscriptionTitle: "サブスクリプション",
     orioriSubscriptionText:
@@ -194,9 +195,9 @@ const PRODUCTS = {
 name: "閻魔",
 subtitle: "Enma",
       description:
-        "龍華珈琲の象徴的な存在。印象的でありながら、空間に静かに馴染むパッケージと味わい。",
+        "龍華珈琲の象徴的な存在。印象的でありながら、空間に静かに馴染む包装と味わい。",
       detail:
-        "Enma は、Ryuge Coffee の核となるシグネチャー。存在感のある造形と、静かに残る後味のバランスを意識して設計されたプロダクトです。",
+        "閻魔は、龍華珈琲を象徴する存在。浅煎りも深煎りも、その時に最もふさわしい焙煎で仕上げる。香り、余韻、質感のバランスだけを頼りに、選び抜かれた味わいを届ける。閻魔の御前の一杯を、ご自宅で。",
       image: "/images/enma.jpg",
       className: "product-main",
       squareUrl: COMMON_SQUARE_URL,
@@ -206,9 +207,9 @@ subtitle: "Enma",
 name: "木函",
 subtitle: "Wooden Edition",
       description:
-        "木という素材の温度を活かした、より深く印象に残るボックス仕様のコーヒー。",
+        "木という素材の温度を活かした、より深く印象に残る最高位な珈琲。",
       detail:
-        "Wood Box は、贈る時間そのものを静かに整えるための一箱です。開ける所作、触れたときの質感、余白まで含めて設計しています。",
+        "木函は、品質の高い選び抜かれたものだけを収める器。触れた瞬間から違いが立ち上がり、開ける所作とともに静けさが整う。寺から届く、最上位の味わい。",
       image: "/images/woodbox.jpg",
       className: "product-side-top",
       squareUrl: COMMON_SQUARE_URL,
@@ -320,6 +321,7 @@ function useScrollMotion(rootRef) {
 
 export default function HomePage({ lang, setLang }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
+    const navigate = useNavigate();
 
   const appRef = useRef(null);
   const productsRef = useRef(null);
@@ -471,15 +473,6 @@ export default function HomePage({ lang, setLang }) {
               {t.heroTitle}
             </h1>
             <p className="hero-text reveal delay-3">{t.heroText}</p>
-            <div className="hero-actions reveal delay-4">
-              <button
-                className="hero-button"
-                onClick={scrollToProducts}
-                type="button"
-              >
-                {t.heroButton}
-              </button>
-            </div>
           </div>
         </section>
 
@@ -495,14 +488,14 @@ export default function HomePage({ lang, setLang }) {
               <p className="section-label">{t.storyLabel}</p>
             </div>
 
-            <div className="story-grid">
-              <div className="story-title reveal delay-1">
-                <h2 style={{ whiteSpace: "pre-line" }}>{t.storyTitle}</h2>
-              </div>
-              <div className="story-body reveal delay-2">
-                <p>{t.storyText}</p>
-              </div>
-            </div>
+<div className="story-grid">
+  <div className="story-title reveal delay-1">
+    <h2 style={{ whiteSpace: "pre-line" }}>{t.storyTitle}</h2>
+  </div>
+  <div className="story-body reveal delay-2">
+    <p>{t.storyText}</p>
+  </div>
+</div>
           </div>
         </section>
 
@@ -519,9 +512,9 @@ export default function HomePage({ lang, setLang }) {
 
             <div className="feature-side">
               <div className="feature-copy reveal delay-1">
-                <p className="section-label">{t.presenceLabel}</p>
-                <h2 style={{ whiteSpace: "pre-line" }}>{t.presenceTitle}</h2>
-                <p>{t.presenceText}</p>
+<p className="section-label">{t.presenceLabel}</p>
+<h2 style={{ whiteSpace: "pre-line" }}>{t.presenceTitle}</h2>
+<p style={{ whiteSpace: "pre-line" }}>{t.presenceText}</p>
               </div>
 
               <div className="feature-sub reveal delay-2">
@@ -575,12 +568,12 @@ export default function HomePage({ lang, setLang }) {
       <article
         className="product-card product-side-bottom reveal delay-3"
         onClick={() =>
-          setSelectedProduct({
-            id: "oriori",
-            name: t.orioriLabel,
-            subtitle: t.orioriLabel,
-            description: t.orioriLead,
-            detail: t.orioriLead,
+setSelectedProduct({
+  id: "oriori",
+  name: "折々",
+  subtitle: t.orioriLabel,
+  description: t.orioriDescription,
+  detail: t.orioriLead,
             image: "/images/oriori-1.jpg",
             squareUrl: null,
           })
@@ -593,9 +586,9 @@ export default function HomePage({ lang, setLang }) {
         </div>
 
         <div className="product-copy">
-          <p className="product-subtitle">{t.orioriLabel}</p>
-          <h3>{t.orioriLabel}</h3>
-          <p>{t.orioriLead}</p>
+<p className="product-subtitle">Oriori</p>
+<h3>折々</h3>
+<p>{t.orioriDescription}</p>
           <span className="product-link">{t.detail}</span>
         </div>
       </article>
@@ -694,21 +687,22 @@ export default function HomePage({ lang, setLang }) {
                 <h3>{selectedProduct.name}</h3>
                 <p>{selectedProduct.detail}</p>
 
-                <button
-                  className="modal-square-button"
-                  onClick={() =>
-                    handleSquareCheckout(selectedProduct.squareUrl)
-                  }
-                  type="button"
-                >
-                  <span className="modal-square-button-sub">
-                    {t.modalButtonSub}
-                  </span>
-                  <span className="modal-square-button-main">
-                    {t.modalButton}
-                  </span>
-                  <span className="modal-square-button-arrow">↗</span>
-                </button>
+<button
+  className="modal-square-button"
+  onClick={() => {
+    setSelectedProduct(null);
+    navigate("/products");
+  }}
+  type="button"
+>
+  <span className="modal-square-button-sub">
+    商品ページへ
+  </span>
+  <span className="modal-square-button-main">
+    商品を見る
+  </span>
+  <span className="modal-square-button-arrow">↗</span>
+</button>
               </div>
             </div>
           </div>
