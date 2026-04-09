@@ -372,21 +372,6 @@ export default function HomePage({ lang, setLang }) {
     document.documentElement.lang = lang;
   }, [lang]);
 
-    const orioriItems = [
-    {
-      title: t.orioriSubscriptionTitle,
-      text: t.orioriSubscriptionText,
-    },
-    {
-      title: t.orioriDripbagTitle,
-      text: t.orioriDripbagText,
-    },
-    {
-      title: t.orioriWheelTitle,
-      text: t.orioriWheelText,
-    },
-  ];
-
   useEffect(() => {
     const onKeyDown = (e) => {
       if (e.key === "Escape") setSelectedProduct(null);
@@ -432,41 +417,41 @@ export default function HomePage({ lang, setLang }) {
         <span />
       </div>
 
-      <header className="site-header">
-        <div className="brand">{t.brand}</div>
+<header className="site-header home-header">
+  <Link to="/" className="site-logo">
+    {t.brand}
+  </Link>
 
-        <div className="header-center">
-<nav className="site-nav">
+<nav className="site-nav home-nav">
   <Link to="/products">{t.products}</Link>
   <a href="#about">{t.about}</a>
   <a href="#journal">{t.journal}</a>
 </nav>
-        </div>
 
-        <div className="lang-switch">
-          <button
-            className={lang === "ja" ? "active" : ""}
-            onClick={() => setLang("ja")}
-            type="button"
-          >
-            JA
-          </button>
-          <button
-            className={lang === "en" ? "active" : ""}
-            onClick={() => setLang("en")}
-            type="button"
-          >
-            EN
-          </button>
-          <button
-            className={lang === "es" ? "active" : ""}
-            onClick={() => setLang("es")}
-            type="button"
-          >
-            ES
-          </button>
-        </div>
-      </header>
+  <div className="lang-switch home-lang-switch">
+    <button
+      className={lang === "ja" ? "active" : ""}
+      onClick={() => setLang("ja")}
+      type="button"
+    >
+      JA
+    </button>
+    <button
+      className={lang === "en" ? "active" : ""}
+      onClick={() => setLang("en")}
+      type="button"
+    >
+      EN
+    </button>
+    <button
+      className={lang === "es" ? "active" : ""}
+      onClick={() => setLang("es")}
+      type="button"
+    >
+      ES
+    </button>
+  </div>
+</header>
 
       <main>
         <section className="hero">
@@ -559,13 +544,13 @@ export default function HomePage({ lang, setLang }) {
           </div>
         </section>
 
-                <section className="section products" id="products" ref={productsRef}>
-          <div className="container">
-            <div className="section-top reveal">
-              <p className="section-label">{t.productsLabel}</p>
-            </div>
+<section className="section products" id="products" ref={productsRef}>
+  <div className="container">
 
-            <div className="products-layout products-layout-two">
+<p className="section-label products-title">{t.productsLabel}</p>
+
+    <div className="products-layout products-layout-two">
+
               {products.map((product, index) => (
                 <article
                   key={product.id}
@@ -588,31 +573,21 @@ export default function HomePage({ lang, setLang }) {
                   </div>
                 </article>
               ))}
+              <article className="product-card product-side-bottom reveal delay-3">
+  <div className="product-image-wrap">
+    <div className="product-image image-parallax">
+      <img src="/images/oriori-1.jpg" alt={t.orioriLabel} />
+    </div>
+  </div>
+
+  <div className="product-copy">
+    <p className="product-subtitle">{t.orioriLabel}</p>
+    <h3>{t.orioriLabel}</h3>
+    <p>{t.orioriLead}</p>
+    <span className="product-link">{t.detail}</span>
+  </div>
+</article>
             </div>
-
-            <section className="oriori-services reveal">
-              <div className="oriori-services-head">
-                <p className="section-label">{t.orioriLabel}</p>
-                <p className="oriori-services-lead">{t.orioriLead}</p>
-              </div>
-
-              <div className="oriori-services-grid">
-                {orioriItems.map((item, index) => (
-                  <article
-                    key={item.title}
-                    className={`oriori-service-card reveal delay-${
-                      (index % 3) + 1
-                    }`}
-                  >
-                    <div className="oriori-service-visual" />
-                    <div className="oriori-service-copy">
-                      <h3>{item.title}</h3>
-                      <p>{item.text}</p>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
           </div>
         </section>
       </main>

@@ -316,6 +316,7 @@ export default function ProductsPage({ lang, setLang }) {
           </div>
         </section>
       </main>
+        <SiteFooter lang={lang} />
     </>
   );
 }
