@@ -4,10 +4,9 @@ import { UI_TEXT } from "../uiText";
 
 const PAGE_TEXT = {
   ja: {
-    heroEyebrow: "Products",
-    heroTitle: "静けさの中にある、輪郭。",
-    bannerLead: "苦味は、強さではない。",
-    bannerTitle: "深さである。",
+    heroTitle: "静けさを、日常へ",
+    bannerLead: "華やかさは、香りだけではない",
+    bannerTitle: "余韻である",
 
     enmaLabel: "Enma",
     enmaTitle: "閻魔",
@@ -67,10 +66,9 @@ const PAGE_TEXT = {
   },
 
   en: {
-    heroEyebrow: "Products",
-    heroTitle: "Contours held in stillness.",
-    bannerLead: "Bitterness is not force.",
-    bannerTitle: "It is depth.",
+    heroTitle: "From stillness into everyday life",
+    bannerLead: "Brightness is not just aroma",
+    bannerTitle: "It lingers",
 
     enmaLabel: "Enma",
     enmaTitle: "Enma",
@@ -130,10 +128,9 @@ const PAGE_TEXT = {
   },
 
   es: {
-    heroEyebrow: "Productos",
-    heroTitle: "Contornos dentro de la quietud.",
-    bannerLead: "El amargor no es fuerza.",
-    bannerTitle: "Es profundidad.",
+    heroTitle: "La quietud, hacia la vida cotidiana",
+    bannerLead: "No es solo aroma",
+    bannerTitle: "Permanece",
 
     enmaLabel: "Enma",
     enmaTitle: "Enma",

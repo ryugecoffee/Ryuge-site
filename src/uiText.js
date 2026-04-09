@@ -32,6 +32,9 @@ export const UI_TEXT = {
     subscriptionText: "定期的に届く、龍華珈琲の時間。",
     wheelTitle: "フレーバーホイール",
     wheelText: "味わいを記録し、言葉にするためのウェブツール。",
+    orioriDescription:"折々は、季節や日々の移ろいに合わせて、その時々の珈琲やかたちを届ける仕立て。",
+    productsHeroTop: "華やかさは、軽さではない。",
+productsHeroMain: "華やかさは、香りだけではない。\n余韻である。",
   },
 
   en: {
@@ -67,6 +70,9 @@ export const UI_TEXT = {
     subscriptionText: "A recurring Ryuge Coffee experience delivered over time.",
     wheelTitle: "Flavor Wheel",
     wheelText: "A web tool for recording and describing flavor.",
+    orioriDescription: "Oriori is a seasonal expression, offering coffee and forms that shift with time and atmosphere.",
+    productsHeroTop: "Brightness is not lightness.",
+productsHeroMain: "Brightness is not just aroma.\nIt lingers.",
   },
 
   es: {
@@ -102,5 +108,8 @@ export const UI_TEXT = {
     subscriptionText: "La experiencia de Ryuge Coffee entregada de forma periódica.",
     wheelTitle: "Rueda de Sabores",
     wheelText: "Una herramienta web para registrar y describir sabores.",
+    orioriDescription:"Oriori es una expresión estacional, ofreciendo café y formas que cambian con el tiempo y el ambiente.",
+    productsHeroTop: "La luminosidad no es ligereza.",
+productsHeroMain: "No es solo aroma.\nPermanece.",
   },
 };

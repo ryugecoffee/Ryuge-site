@@ -65,111 +65,143 @@ orioriDescription: "折々は、季節や日々の移ろいに合わせて、そ
       "味わいを言葉にするための、静かな記録と発見のためのサイトです。",
   },
 
-  en: {
-    brand: "Ryuge Coffee",
-    heroEyebrow: "A quiet cup shaped in Kamakura.",
-    heroTitle: "Another Day, Another Coffee",
-    heroText:
-      "Stillness, space, and texture. Ryuge Coffee offers a cup that does not insist, but lingers deeply.",
-    heroButton: "Products",
+ en: {
+  brand: "Ryuge Coffee",
+  heroEyebrow: "Stillness of Kamakura, within a cup.",
+  heroTitle: "Another Day, Another Coffee",
+  heroText: "Stillness, space, texture. A cup that simply exists.",
+  heroButton: "Products",
 
-    products: "Products",
-    about: "About",
-    journal: "Journal",
-    contact: "Contact",
+  products: "Products",
+  about: "About",
+  journal: "Journal",
+  contact: "Contact",
 
-    privacyPolicy: "Privacy Policy",
-    terms: "Terms of Service",
-    legalNotice: "Legal Notice",
+  privacyPolicy: "Privacy Policy",
+  terms: "Terms of Service",
+  legalNotice: "Legal Notice",
 
-    storyLabel: "Story",
-    storyTitle: "Turning stillness into flavor.",
-    storyText:
-      "Light, wind, vessels, temperature, pauses in conversation. Ryuge Coffee is designed not only around taste, but around the atmosphere surrounding it.",
-    presenceLabel: "Presence",
-    presenceTitle: "Silence as presence.",
-    presenceText:
-      "Not loud performance, but a quietly arresting presence. Ryuge Coffee aims to offer not only the product itself, but also the air around it as part of the experience.",
-    productsLabel: "Products",
-    productsText:
-      "Three products with different contours, all connected to the same quiet center.",
-    detail: "View Detail",
-    close: "Close",
+  storyLabel: "Story",
+  storyTitle: "Kamakura · Ennoji, temple",
+  storyText:
+    "A quiet tension and a pause that arise when standing before Enma. That sensation, within a cup.",
 
-    instagram: "Instagram",
-    email: "Email",
+  presenceLabel: "Presence",
+  presenceTitle: "Stillness becomes presence.",
+  presenceText:
+    "Not a striking performance, but a presence that quietly draws the gaze. Not only the product itself, but even the air surrounding it.",
 
-    footerBrand: "Ryuge Coffee",
-    footerTagline: "Quietly crafted in Kamakura",
-    footer: "Crafted in Kamakura, Japan",
-    note: "Slow movement, quiet presence.",
+  productsLabel: "Products",
+  productsText:
+    "Three products, each with a different contour, yet all connected to the same stillness.",
 
-    verticalTitle: "桃李成蹊",
-    verticalText: "What is quietly cultivated will, in time, guide others.",
+  detail: "View Detail",
+  close: "Close",
 
-    modalButton: "Purchase",
-    modalButtonSub: "Secure Checkout",
-        orioriLabel: "Oriori",
-    orioriLead: "Three quiet forms that open with the season.",
+  instagram: "Instagram",
+  email: "Email",
 
-    orioriSubscriptionTitle: "Subscription",
-    orioriSubscriptionText:
-      "A seasonal delivery that follows changing coffees and roast expressions month by month.",
+  footerBrand: "Ryuge Coffee",
+  footerTagline: "Quietly crafted in Kamakura",
+  footer: "Crafted in Kamakura, Japan",
 
-    orioriDripbagTitle: "Drip Bag",
-    orioriDripbagText:
-      "An easy way to enjoy the contour of Ryuge Coffee in the middle of everyday life.",
+  note: "Quiet movement, quiet presence.",
 
-    orioriWheelTitle: "Flavor Wheel",
-    orioriWheelText:
-      "A quiet website for recording, discovering, and putting flavor into words.",
-  },
+  verticalTitle: "桃李成蹊",
+  verticalText:
+    "What is quietly cultivated will, in time, guide others.",
 
-  es: {
-    brand: "Ryuge Coffee",
-    heroEyebrow: "Una taza tranquila nacida en Kamakura.",
-    heroTitle: "Another Day, Another Coffee",
-    heroText:
-      "Quietud, espacio y textura. Ryuge Coffee ofrece una taza que no insiste, pero permanece profundamente.",
-    heroButton: "Productos",
+  modalButton: "Purchase",
+  modalButtonSub: "Secure Checkout",
 
-    products: "Productos",
-    about: "Sobre Ryuge",
-    journal: "Diario",
-    contact: "Contacto",
+  orioriLabel: "Oriori",
+  orioriDescription:
+    "A form shaped to deliver the coffee and expressions suited to each season and each passing day.",
 
-    privacyPolicy: "Política de Privacidad",
-    terms: "Términos de Servicio",
-    legalNotice: "Aviso Legal",
+  orioriLead:
+    "Oriori is a series created to convey the atmosphere of each moment. Not fixed to a single axis, nor confined to the highest tier, it moves between them, choosing the form and coffee that best fits each time. Its contents shift with the seasons—coffee, subscriptions, drip bags—quietly opening a path into Ryuge Coffee within everyday life.",
 
-    storyLabel: "Historia",
-    storyTitle: "Convertir la quietud en sabor.",
-    storyText:
-      "Luz, viento, recipientes, temperatura, pausas en la conversación. Ryuge Coffee no diseña solo el sabor, sino también la atmósfera que lo rodea.",
-    presenceLabel: "Presencia",
-    presenceTitle: "El silencio como presencia.",
-    presenceText:
-      "No una actuación ruidosa, sino una presencia silenciosamente intensa. Ryuge Coffee busca ofrecer no solo el producto, sino también el aire que lo rodea.",
-    productsLabel: "Productos",
-    productsText:
-      "Tres productos con contornos distintos, unidos por un mismo centro silencioso.",
-    detail: "Ver detalle",
-    close: "Cerrar",
+  orioriSubscriptionTitle: "Subscription",
+  orioriSubscriptionText:
+    "A seasonal delivery following the changing expressions of coffee.",
 
-    instagram: "Instagram",
-    email: "Email",
+  orioriDripbagTitle: "Drip Bag",
+  orioriDripbagText:
+    "A simple way to experience the contour of Ryuge Coffee in daily life.",
 
-    footerBrand: "Ryuge Coffee",
-    footerTagline: "Quietly crafted in Kamakura",
-    footer: "Hecho en Kamakura, Japón",
-    note: "Movimiento lento, presencia silenciosa.",
+  orioriWheelTitle: "Flavor Wheel",
+  orioriWheelText:
+    "A quiet space to record and discover flavor through words.",
+},
 
-    verticalTitle: "桃李成蹊",
-    verticalText: "Lo que se cultiva en silencio, con el tiempo, guía a los demás.",
+es: {
+  brand: "Ryuge Coffee",
+  heroEyebrow: "La quietud de Kamakura, dentro de una taza.",
+  heroTitle: "Another Day, Another Coffee",
+  heroText: "Quietud, espacio, textura. Una taza que simplemente existe.",
+  heroButton: "Productos",
 
-    modalButton: "Comprar",
-    modalButtonSub: "Pago seguro",
-  },
+  products: "Productos",
+  about: "Sobre Ryuge",
+  journal: "Diario",
+  contact: "Contacto",
+
+  privacyPolicy: "Política de Privacidad",
+  terms: "Términos de Servicio",
+  legalNotice: "Aviso Legal",
+
+  storyLabel: "Historia",
+  storyTitle: "Kamakura · Ennoji, templo",
+  storyText:
+    "Una tensión silenciosa y una pausa que nacen al estar frente a Enma. Esa sensación, dentro de una taza.",
+
+  presenceLabel: "Presencia",
+  presenceTitle: "La quietud se convierte en presencia.",
+  presenceText:
+    "No una actuación llamativa, sino una presencia que atrae la mirada en silencio. No solo el producto, sino incluso el aire que lo rodea.",
+
+  productsLabel: "Productos",
+  productsText:
+    "Tres productos con contornos distintos, unidos por una misma quietud.",
+
+  detail: "Ver detalle",
+  close: "Cerrar",
+
+  instagram: "Instagram",
+  email: "Email",
+
+  footerBrand: "Ryuge Coffee",
+  footerTagline: "Quietly crafted in Kamakura",
+  footer: "Hecho en Kamakura, Japón",
+
+  note: "Movimiento silencioso, presencia silenciosa.",
+
+  verticalTitle: "桃李成蹊",
+  verticalText:
+    "Lo que se cultiva en silencio, con el tiempo, guía a los demás.",
+
+  modalButton: "Comprar",
+  modalButtonSub: "Pago seguro",
+
+  orioriLabel: "Oriori",
+  orioriDescription:
+    "Una forma concebida para ofrecer el café y las expresiones propias de cada estación y cada momento.",
+
+  orioriLead:
+    "Oriori es una serie creada para transmitir la atmósfera de cada instante. No fija un eje único ni reúne solo lo más alto, sino que se mueve entre ambos, eligiendo el café y la forma más adecuados en cada momento. Su contenido cambia con las estaciones—cafés, suscripciones, drip bags—abriendo en silencio una puerta hacia Ryuge Coffee en la vida cotidiana.",
+
+  orioriSubscriptionTitle: "Suscripción",
+  orioriSubscriptionText:
+    "Una entrega estacional que sigue la evolución del café.",
+
+  orioriDripbagTitle: "Drip Bag",
+  orioriDripbagText:
+    "Una forma sencilla de experimentar Ryuge Coffee en el día a día.",
+
+  orioriWheelTitle: "Rueda de Sabor",
+  orioriWheelText:
+    "Un espacio tranquilo para registrar y descubrir sabores.",
+},
       orioriLabel: "Oriori",
     orioriLead: "Tres formas silenciosas que se abren con la estación.",
 
@@ -184,6 +216,8 @@ orioriDescription: "折々は、季節や日々の移ろいに合わせて、そ
     orioriWheelTitle: "Rueda de Sabor",
     orioriWheelText:
       "Un sitio tranquilo para registrar, descubrir y poner el sabor en palabras.",
+      orioriDescription:
+  "Oriori es una expresión estacional, ofreciendo café y formas que cambian con el tiempo y el ambiente.",
 };
 
 const COMMON_SQUARE_URL = "https://square.link/u/cLYnP3Mu";
@@ -585,12 +619,17 @@ setSelectedProduct({
           </div>
         </div>
 
-        <div className="product-copy">
-<p className="product-subtitle">Oriori</p>
-<h3>折々</h3>
-<p>{t.orioriDescription}</p>
-          <span className="product-link">{t.detail}</span>
-        </div>
+<div className="product-copy">
+  <p className="product-subtitle">Oriori</p>
+  <h3>折々</h3>
+
+  <p>
+    {t?.orioriDescription ||
+      "折々は、季節や日々の移ろいに合わせて、その時々の珈琲やかたちを届ける仕立て。"}
+  </p>
+
+  <span className="product-link">{t.detail}</span>
+</div>
       </article>
     </div>
   </div>

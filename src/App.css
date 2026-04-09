@@ -1529,19 +1529,25 @@ html[lang="es"] .story-body {
 }
 
 .products-eyebrow {
-  margin: 0 0 14px;
-  font-size: 12px;
-  letter-spacing: 0.18em;
+  margin: 0 0 12px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  opacity: 0.72;
+  opacity: 0.62;
 }
 
 .products-hero-overlay h1 {
   margin: 0;
-  font-size: clamp(36px, 5vw, 74px);
-  line-height: 1.08;
+  font-size: clamp(28px, 3.8vw, 58px);
+  line-height: 1.12;
   font-weight: 400;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
+}
+
+html[lang="en"] .products-hero-overlay h1,
+html[lang="es"] .products-hero-overlay h1 {
+  font-size: clamp(24px, 3.2vw, 48px);
+  line-height: 1.14;
 }
 
 .products-showcase-section {
@@ -2635,4 +2641,8 @@ html[lang="es"] .story-body {
   letter-spacing: 0.12em;
   color: rgba(255, 255, 255, 0.5);
 }
+}
+.product-side-bottom .product-copy p {
+  display: block !important;
+  opacity: 0.8;
 }
