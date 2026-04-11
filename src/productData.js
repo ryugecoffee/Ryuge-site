@@ -343,27 +343,75 @@ export const PRODUCT_DATA = {
 
       link: "https://square.link/u/xxxxx",
     },
+{
+  id: "oriori-bag",
+  image: "/images/coffee-bag.jpg",
+  title: {
+    ja: "珈琲バッグ",
+    en: "Coffee Bag",
+    es: "Coffee Bag",
+  },
+  modalTitle: {
+    ja: "珈琲バッグ",
+    en: "Coffee Bag",
+    es: "Coffee Bag",
+  },
+  summary: {
+    ja: "日々の合間に寄り添う、静かな一杯",
+    en: "A quiet cup for everyday moments",
+    es: "Una taza tranquila para el día a día",
+  },
+  brew: {
+    ja: [
+      "バッグをマグカップに入れる",
+      "お湯 160cc を注ぐ",
+      "2分待つ",
+      "軽く揺らして取り出す",
+    ],
+    en: [
+      "Place the bag in a cup",
+      "Pour 160ml of hot water",
+      "Wait 2 minutes",
+      "Gently move and remove",
+    ],
+    es: [
+      "Colocar la bolsa en la taza",
+      "Verter 160ml de agua caliente",
+      "Esperar 2 minutos",
+      "Mover suavemente y retirar",
+    ],
+  },
+  variants: [
     {
-      id: "oriori-bag",
-      image: "/images/oriori-2.jpg",
-      title: {
-        ja: "コーヒーバッグ",
-        en: "Coffee Bag",
-        es: "Coffee Bag",
+      id: "enma-dark",
+      name: {
+        ja: "閻魔　深煎りの禅",
+        en: "ENMA Dark Roast",
+        es: "ENMA Dark Roast",
       },
-      summary: {
-        ja: "日々の合間に寄り添う静かな一杯",
-        en: "A quiet cup for daily pauses",
-        es: "A quiet cup for daily pauses",
+      note: {
+        ja: "静かに残る苦味と余韻",
+        en: "Deep bitterness with a quiet finish",
+        es: "Amargor profundo con final suave",
       },
-      origin: "Changes by release",
-      producer: null,
-      process: "Changes by release",
-      variety: "Changes by release",
-      altitude: "Changes by release",
-      link: "https://square.link/u/xxxxx",
-      isSoldOut: false,
     },
+    {
+      id: "tea",
+      name: {
+        ja: "お茶バッグ",
+        en: "Tea Bag",
+        es: "Tea Bag",
+      },
+      note: {
+        ja: "寺の時間に寄り添う、やわらかな一杯",
+        en: "A softer, quieter cup",
+        es: "Una taza suave y tranquila",
+      },
+    },
+  ],
+  link: "https://square.link/u/xxxxx",
+  isSoldOut: false,
+},
     {
       id: "oriori-wheel",
       image: "/images/atmosphere-2.jpg",
@@ -385,4 +433,5 @@ export const PRODUCT_DATA = {
       link: "https://square.link/u/xxxxx",
     },
   ],
+  
 };

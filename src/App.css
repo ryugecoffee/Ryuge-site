@@ -2709,6 +2709,39 @@ html[lang="es"] .products-hero-overlay h1 {
   margin-bottom: 8px;
 }
 
+.product-brew {
+  margin-top: 20px;
+  display: grid;
+  gap: 6px;
+}
+
+.product-brew p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.product-variants {
+  margin-top: 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.variant strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.variant p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.5);
+}
+
 .modal-link-button:hover .modal-link-arrow {
   transform: translate(2px, -2px);
 }

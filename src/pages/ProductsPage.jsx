@@ -410,21 +410,40 @@ useEffect(() => {
                   </h3>
 
                   <p className="modal-summary modal-product-summary modal-fade-up">
-                    {activeItem.summary?.[lang] ||
-                      activeItem.summary?.en ||
-                      activeItem.summary}
-                  </p>
+  {activeItem.summary?.[lang] ||
+    activeItem.summary?.en ||
+    activeItem.summary}
+</p>
 
-                  <dl className="product-specs product-specs-classic modal-fade-up">
-                    {renderSpecRow(labels.origin, activeItem.origin)}
-                    {renderSpecRow(labels.producer, activeItem.producer)}
-                    {renderSpecRow(labels.process, activeItem.process)}
-                    {renderSpecRow(labels.variety, activeItem.variety)}
-                    {renderSpecRow(labels.altitude, activeItem.altitude)}
-                    {renderSpecRow(labels.weight, activeItem.weight)}
-                    {renderSpecRow(labels.price, activeItem.price)}
-                    {renderSpecRow(labels.flavor, activeItem.flavor)}
-                  </dl>
+{activeItem.id === "oriori-bag" ? (
+  <>
+    <div className="product-brew modal-fade-up">
+      {(activeItem.brew?.[lang] || activeItem.brew?.en || []).map((step, i) => (
+        <p key={i}>{step}</p>
+      ))}
+    </div>
+
+    <div className="product-variants modal-fade-up">
+      {(activeItem.variants || []).map((v) => (
+        <div key={v.id} className="variant">
+          <strong>{v.name?.[lang] || v.name?.en}</strong>
+          <p>{v.note?.[lang] || v.note?.en}</p>
+        </div>
+      ))}
+    </div>
+  </>
+) : (
+  <dl className="product-specs product-specs-classic modal-fade-up">
+    {renderSpecRow(labels.origin, activeItem.origin)}
+    {renderSpecRow(labels.producer, activeItem.producer)}
+    {renderSpecRow(labels.process, activeItem.process)}
+    {renderSpecRow(labels.variety, activeItem.variety)}
+    {renderSpecRow(labels.altitude, activeItem.altitude)}
+    {renderSpecRow(labels.weight, activeItem.weight)}
+    {renderSpecRow(labels.price, activeItem.price)}
+    {renderSpecRow(labels.flavor, activeItem.flavor)}
+  </dl>
+)}
 
                   {activeItem.isSoldOut ? (
                     <button className="modal-cta-link is-disabled" disabled>
