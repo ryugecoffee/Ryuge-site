@@ -40,11 +40,11 @@ export default function ProductsPage({ lang }) {
   const [activeItemId, setActiveItemId] = useState(null);
   const [selectedSubscriptionPlan, setSelectedSubscriptionPlan] =
     useState(DEFAULT_SUBSCRIPTION_PLAN);
-const [selectedCoffeeBagVariant, setSelectedCoffeeBagVariant] =
-  useState("coffee-bag");
-
-const [selectedBagQuantity, setSelectedBagQuantity] = useState("1");
+  const [selectedCoffeeBagVariant, setSelectedCoffeeBagVariant] =
+    useState("coffee-bag");
+  const [selectedBagQuantity, setSelectedBagQuantity] = useState("1");
   const [showEnmaHeading, setShowEnmaHeading] = useState(false);
+  const [simpleQuantity, setSimpleQuantity] = useState(1);
   const [showWoodboxHeading, setShowWoodboxHeading] = useState(false);
 
   const enmaSectionRef = useRef(null);
@@ -64,24 +64,31 @@ const [selectedBagQuantity, setSelectedBagQuantity] = useState("1");
     subscriptionPlans.find((plan) => plan.id === selectedSubscriptionPlan) ||
     subscriptionPlans[0] ||
     null;
-const currentCoffeeBagVariant =
-  activeItem?.id === "oriori-bag"
-    ? activeItem.variants?.find((v) => v.id === selectedCoffeeBagVariant) ||
-      activeItem.variants?.[0] ||
-      null
-    : null;
+
+  const currentCoffeeBagVariant =
+    activeItem?.id === "oriori-bag"
+      ? activeItem.variants?.find((v) => v.id === selectedCoffeeBagVariant) ||
+        activeItem.variants?.[0] ||
+        null
+      : null;
+
   useEffect(() => {
     if (activeItem?.id === "oriori-subscription") {
       setSelectedSubscriptionPlan(DEFAULT_SUBSCRIPTION_PLAN);
     }
   }, [activeItem]);
+
+  useEffect(() => {
+    if (activeItem?.id === "oriori-bag") {
+      setSelectedCoffeeBagVariant("coffee-bag");
+      setSelectedBagQuantity("1");
+    }
+  }, [activeItem]);
 useEffect(() => {
-  if (activeItem?.id === "oriori-bag") {
-    setSelectedCoffeeBagVariant("coffee-bag");
-    setSelectedBagQuantity("1");
+  if (activeItem && activeItem.id !== "oriori-bag") {
+    setSimpleQuantity(1);
   }
 }, [activeItem]);
-
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -101,49 +108,49 @@ useEffect(() => {
     };
   }, [activeItem]);
 
-useEffect(() => {
-  const enmaNode = enmaSectionRef.current;
-  const woodboxNode = woodboxSectionRef.current;
+  useEffect(() => {
+    const enmaNode = enmaSectionRef.current;
+    const woodboxNode = woodboxSectionRef.current;
 
-  if (!enmaNode || !woodboxNode) return;
+    if (!enmaNode || !woodboxNode) return;
 
-  let enmaTriggered = false;
-  let woodboxTriggered = false;
+    let enmaTriggered = false;
+    let woodboxTriggered = false;
 
-  const handleScroll = () => {
-    const triggerLine = window.innerHeight * 0.6;
+    const handleScroll = () => {
+      const triggerLine = window.innerHeight * 0.6;
 
-    // 🔥 閻魔
-    if (!enmaTriggered) {
-      const enmaTop = enmaNode.getBoundingClientRect().top;
+      // 閻魔
+      if (!enmaTriggered) {
+        const enmaTop = enmaNode.getBoundingClientRect().top;
 
-      if (enmaTop <= triggerLine) {
-        enmaTriggered = true;
+        if (enmaTop <= triggerLine) {
+          enmaTriggered = true;
 
-        setTimeout(() => {
-          setShowEnmaHeading(true);
-        }, 2000); // ←4秒後に消える
+          setTimeout(() => {
+            setShowEnmaHeading(true);
+          }, 2000);
+        }
       }
-    }
 
-    // 🔥 木箱
-    if (!woodboxTriggered) {
-      const woodboxTop = woodboxNode.getBoundingClientRect().top;
+      // 木箱
+      if (!woodboxTriggered) {
+        const woodboxTop = woodboxNode.getBoundingClientRect().top;
 
-      if (woodboxTop <= triggerLine) {
-        woodboxTriggered = true;
+        if (woodboxTop <= triggerLine) {
+          woodboxTriggered = true;
 
-        setTimeout(() => {
-          setShowWoodboxHeading(true);
-        }, 2000); // ←4秒後に消える
+          setTimeout(() => {
+            setShowWoodboxHeading(true);
+          }, 2000);
+        }
       }
-    }
-  };
+    };
 
-  window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("scroll", handleScroll, { passive: true });
 
-  return () => window.removeEventListener("scroll", handleScroll);
-}, []);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const renderSpecRow = (label, value) => {
     if (!value) return null;
@@ -170,15 +177,13 @@ useEffect(() => {
           </div>
         </section>
 
-        <section
-          className="products-showcase-section products-enma-section"
-        >
-         <div
-  ref={enmaSectionRef}
-  className={`products-section-heading products-heading-animate ${
-    showEnmaHeading ? "is-hidden" : ""
-  }`}
->
+        <section className="products-showcase-section products-enma-section">
+          <div
+            ref={enmaSectionRef}
+            className={`products-section-heading products-heading-animate ${
+              showEnmaHeading ? "is-hidden" : ""
+            }`}
+          >
             <p className="products-section-label">{sectionText.enmaLabel}</p>
             <h2>{sectionText.enmaTitle}</h2>
           </div>
@@ -221,15 +226,13 @@ useEffect(() => {
           </div>
         </section>
 
-        <section
-          className="products-showcase-section products-woodbox-section"
-        >
+        <section className="products-showcase-section products-woodbox-section">
           <div
-  ref={woodboxSectionRef}
-  className={`products-section-heading products-heading-animate ${
-    showWoodboxHeading ? "is-hidden" : ""
-  }`}
->
+            ref={woodboxSectionRef}
+            className={`products-section-heading products-heading-animate ${
+              showWoodboxHeading ? "is-hidden" : ""
+            }`}
+          >
             <p className="products-section-label">{sectionText.woodboxLabel}</p>
             <h2>{sectionText.woodboxTitle}</h2>
           </div>
@@ -285,7 +288,10 @@ useEffect(() => {
 
       {activeItem && (
         <div className="modal-backdrop" onClick={() => setActiveItemId(null)}>
-          <div className="modal modal-premium" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="modal modal-premium"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               className="modal-close"
               onClick={() => setActiveItemId(null)}
@@ -424,138 +430,201 @@ useEffect(() => {
                   </h3>
 
                   <p className="modal-summary modal-product-summary modal-fade-up">
-  {activeItem.summary?.[lang] ||
-    activeItem.summary?.en ||
-    activeItem.summary}
-</p>
+                    {activeItem.summary?.[lang] ||
+                      activeItem.summary?.en ||
+                      activeItem.summary}
+                  </p>
 
-{activeItem.id === "oriori-bag" ? (
-  <>
-    <div className="coffeebag-variant-tabs modal-fade-up">
-      {(activeItem.variants || []).map((v) => (
-        <button
-          key={v.id}
-          type="button"
-          className={`coffeebag-variant-tab ${
-            currentCoffeeBagVariant?.id === v.id ? "active" : ""
-          }`}
-          onClick={() => {
-            setSelectedCoffeeBagVariant(v.id);
-            setSelectedBagQuantity("1");
-          }}
-        >
-          {v.tabLabel?.[lang] || v.tabLabel?.en}
-        </button>
-      ))}
-    </div>
+                  {activeItem.id === "oriori-bag" ? (
+                    <>
+                      <div className="coffeebag-variant-tabs modal-fade-up">
+                        {(activeItem.variants || []).map((v) => (
+                          <button
+                            key={v.id}
+                            type="button"
+                            className={`coffeebag-variant-tab ${
+                              currentCoffeeBagVariant?.id === v.id ? "active" : ""
+                            }`}
+                            onClick={() => {
+                              setSelectedCoffeeBagVariant(v.id);
+                              setSelectedBagQuantity("1");
+                            }}
+                          >
+                            {v.tabLabel?.[lang] || v.tabLabel?.en}
+                          </button>
+                        ))}
+                      </div>
 
-    {currentCoffeeBagVariant && (
-      <div className="coffeebag-variant-panel modal-fade-up">
-        <strong className="coffeebag-variant-title">
-          {currentCoffeeBagVariant.name?.[lang] || currentCoffeeBagVariant.name?.en}
-        </strong>
+                      {currentCoffeeBagVariant && (
+                        <div className="coffeebag-variant-panel modal-fade-up">
+                          <strong className="coffeebag-variant-title">
+                            {currentCoffeeBagVariant.name?.[lang] ||
+                              currentCoffeeBagVariant.name?.en}
+                          </strong>
 
-        <p className="coffeebag-variant-note">
-          {currentCoffeeBagVariant.note?.[lang] || currentCoffeeBagVariant.note?.en}
-        </p>
+                          <p className="coffeebag-variant-note">
+                            {currentCoffeeBagVariant.note?.[lang] ||
+                              currentCoffeeBagVariant.note?.en}
+                          </p>
 
-        {currentCoffeeBagVariant.teaTypes && (
-          <div className="coffeebag-tea-types">
-            <p className="coffeebag-block-label">
-              {lang === "ja" ? "お茶の種類" : lang === "es" ? "Tipo de té" : "Tea Type"}
-            </p>
-            <div className="coffeebag-chip-list">
-              {(currentCoffeeBagVariant.teaTypes?.[lang] ||
-                currentCoffeeBagVariant.teaTypes?.en ||
-                []
-              ).map((tea, i) => (
-                <span key={i} className="coffeebag-chip">
-                  {tea}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+                          <div className="coffeebag-tea-types">
+                            <p className="coffeebag-block-label">
+                              {currentCoffeeBagVariant.teaTypes
+                                ? lang === "ja"
+                                  ? "お茶の種類"
+                                  : lang === "es"
+                                  ? "Tipo de té"
+                                  : "Tea Type"
+                                : "\u00A0"}
+                            </p>
 
-        <div className="coffeebag-brew-block">
-          <p className="coffeebag-block-label">
-            {lang === "ja" ? "抽出方法" : lang === "es" ? "Preparación" : "How to Brew"}
-          </p>
+                            {currentCoffeeBagVariant.teaTypes ? (
+                              <div className="coffeebag-chip-list">
+                                {(
+                                  currentCoffeeBagVariant.teaTypes?.[lang] ||
+                                  currentCoffeeBagVariant.teaTypes?.en ||
+                                  []
+                                ).map((tea, i) => (
+                                  <span key={i} className="coffeebag-chip">
+                                    {tea}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="coffeebag-chip-list coffeebag-chip-list-placeholder">
+                                <span className="coffeebag-chip coffeebag-chip-placeholder">
+                                  &nbsp;
+                                </span>
+                              </div>
+                            )}
+                          </div>
 
-          <div className="coffeebag-steps">
-            {(currentCoffeeBagVariant.brew?.[lang] ||
-              currentCoffeeBagVariant.brew?.en ||
-              []
-            ).map((step, i) => (
-              <p key={i}>{step}</p>
-            ))}
-          </div>
-        </div>
+                          <div className="coffeebag-brew-block">
+                            <p className="coffeebag-block-label">
+                              {lang === "ja"
+                                ? "抽出方法"
+                                : lang === "es"
+                                ? "Preparación"
+                                : "How to Brew"}
+                            </p>
 
-        <div className="coffeebag-quantity-block">
-          <p className="coffeebag-block-label">
-            {lang === "ja" ? "購入個数" : lang === "es" ? "Cantidad" : "Quantity"}
-          </p>
+                            <div className="coffeebag-steps">
+                              {(
+                                currentCoffeeBagVariant.brew?.[lang] ||
+                                currentCoffeeBagVariant.brew?.en ||
+                                []
+                              ).map((step, i) => (
+                                <p key={i}>{step}</p>
+                              ))}
+                            </div>
+                          </div>
 
-          <div className="coffeebag-quantity-tabs">
-            {(currentCoffeeBagVariant.quantities || []).map((q) => (
-              <button
-                key={q.id}
-                type="button"
-                className={`coffeebag-quantity-tab ${
-                  selectedBagQuantity === q.id ? "active" : ""
-                }`}
-                onClick={() => setSelectedBagQuantity(q.id)}
-              >
-                {q.label}
-              </button>
-            ))}
-          </div>
-        </div>
+                          <div className="coffeebag-quantity-block">
+                            <p className="coffeebag-block-label">
+                              {lang === "ja"
+                                ? "購入個数"
+                                : lang === "es"
+                                ? "Cantidad"
+                                : "Quantity"}
+                            </p>
 
-        <a
-          href={currentCoffeeBagVariant.link}
-          target="_blank"
-          rel="noreferrer"
-          className="subscription-cta"
-        >
-          <span>
-            {currentCoffeeBagVariant.button?.[lang] ||
-              currentCoffeeBagVariant.button?.en ||
-              "Buy"}
-          </span>
-          <span className="modal-link-arrow">↗</span>
-        </a>
-      </div>
-    )}
-  </>
-) : (
-  <dl className="product-specs product-specs-classic modal-fade-up">
-    {renderSpecRow(labels.origin, activeItem.origin)}
-    {renderSpecRow(labels.producer, activeItem.producer)}
-    {renderSpecRow(labels.process, activeItem.process)}
-    {renderSpecRow(labels.variety, activeItem.variety)}
-    {renderSpecRow(labels.altitude, activeItem.altitude)}
-    {renderSpecRow(labels.weight, activeItem.weight)}
-    {renderSpecRow(labels.price, activeItem.price)}
-    {renderSpecRow(labels.flavor, activeItem.flavor)}
-  </dl>
-)}
+                            <div className="coffeebag-quantity-tabs">
+                              {(currentCoffeeBagVariant.quantities || []).map(
+                                (q) => (
+                                  <button
+                                    key={q.id}
+                                    type="button"
+                                    className={`coffeebag-quantity-tab ${
+                                      selectedBagQuantity === q.id
+                                        ? "active"
+                                        : ""
+                                    }`}
+                                    onClick={() => setSelectedBagQuantity(q.id)}
+                                  >
+                                    {q.label}
+                                  </button>
+                                )
+                              )}
+                            </div>
+                          </div>
 
-                  {activeItem.isSoldOut ? (
-                    <button className="modal-cta-link is-disabled" disabled>
-                      {SOLD_OUT_TEXT[lang]}
-                    </button>
+                          <a
+                            href={currentCoffeeBagVariant.link}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="subscription-cta"
+                          >
+                            <span>
+                              {currentCoffeeBagVariant.button?.[lang] ||
+                                currentCoffeeBagVariant.button?.en ||
+                                "Buy"}
+                            </span>
+                            <span className="modal-link-arrow">↗</span>
+                          </a>
+                        </div>
+                      )}
+                    </>
                   ) : (
-                    <a
-                      href={activeItem.link}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="modal-cta-link modal-fade-up"
-                    >
-                      <span>{sectionText.buyButton}</span>
-                      <span className="modal-link-arrow">↗</span>
-                    </a>
+                    <>
+                      <dl className="product-specs product-specs-classic modal-fade-up">
+                        {renderSpecRow(labels.origin, activeItem.origin)}
+                        {renderSpecRow(labels.producer, activeItem.producer)}
+                        {renderSpecRow(labels.process, activeItem.process)}
+                        {renderSpecRow(labels.variety, activeItem.variety)}
+                        {renderSpecRow(labels.altitude, activeItem.altitude)}
+                        {renderSpecRow(labels.weight, activeItem.weight)}
+                        {renderSpecRow(labels.price, activeItem.price)}
+                        {renderSpecRow(labels.flavor, activeItem.flavor)}
+                      </dl>
+
+                      <div className="simple-quantity-block">
+  <p className="simple-quantity-label">
+    {lang === "ja" ? "数量" : lang === "es" ? "Cantidad" : "Quantity"}
+  </p>
+
+  <div className="simple-quantity-control">
+    <button
+      type="button"
+      onClick={() => setSimpleQuantity((prev) => Math.max(1, prev - 1))}
+    >
+      −
+    </button>
+
+    <input
+      type="number"
+      min="1"
+      value={simpleQuantity}
+      onChange={(e) => {
+        const next = Number(e.target.value);
+        setSimpleQuantity(Number.isNaN(next) || next < 1 ? 1 : next);
+      }}
+    />
+
+    <button
+      type="button"
+      onClick={() => setSimpleQuantity((prev) => prev + 1)}
+    >
+      ＋
+    </button>
+  </div>
+</div>
+
+                      {activeItem.isSoldOut ? (
+                        <button className="modal-cta-link is-disabled" disabled>
+                          {SOLD_OUT_TEXT[lang]}
+                        </button>
+                      ) : (
+                        <a
+                          href={activeItem.link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="modal-cta-link modal-fade-up"
+                        >
+                          <span>{sectionText.buyButton}</span>
+                          <span className="modal-link-arrow">↗</span>
+                        </a>
+                      )}
+                    </>
                   )}
                 </div>
               )}
