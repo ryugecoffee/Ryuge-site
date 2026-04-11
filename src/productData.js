@@ -347,43 +347,29 @@ export const PRODUCT_DATA = {
   id: "oriori-bag",
   image: "/images/coffee-bag.jpg",
   title: {
-    ja: "珈琲バッグ",
-    en: "Coffee Bag",
-    es: "Coffee Bag",
+    ja: "バッグシリーズ",
+    en: "Bag Series",
+    es: "Bag Series",
   },
   modalTitle: {
-    ja: "珈琲バッグ",
-    en: "Coffee Bag",
-    es: "Coffee Bag",
+    ja: "バッグシリーズ",
+    en: "Bag Series",
+    es: "Bag Series",
   },
   summary: {
     ja: "日々の合間に寄り添う、静かな一杯",
     en: "A quiet cup for everyday moments",
     es: "Una taza tranquila para el día a día",
   },
-  brew: {
-    ja: [
-      "バッグをマグカップに入れる",
-      "お湯 160cc を注ぐ",
-      "2分待つ",
-      "軽く揺らして取り出す",
-    ],
-    en: [
-      "Place the bag in a cup",
-      "Pour 160ml of hot water",
-      "Wait 2 minutes",
-      "Gently move and remove",
-    ],
-    es: [
-      "Colocar la bolsa en la taza",
-      "Verter 160ml de agua caliente",
-      "Esperar 2 minutos",
-      "Mover suavemente y retirar",
-    ],
-  },
+
   variants: [
     {
-      id: "enma-dark",
+      id: "coffee-bag",
+      tabLabel: {
+        ja: "珈琲バッグ",
+        en: "Coffee Bag",
+        es: "Coffee Bag",
+      },
       name: {
         ja: "閻魔　深煎りの禅",
         en: "ENMA Dark Roast",
@@ -394,9 +380,36 @@ export const PRODUCT_DATA = {
         en: "Deep bitterness with a quiet finish",
         es: "Amargor profundo con final suave",
       },
+      brew: {
+        ja: [
+          "マグカップに入れ、160ccのお湯を注ぎ、2分ほど待ってお召し上がりください。"
+        ],
+        en: [
+          "Place the bag in a mug, pour 160ml of hot water, and wait about 2 minutes."
+        ],
+        es: [
+          "Coloque la bolsa en una taza, vierta 160ml de agua caliente y espere unos 2 minutos."
+        ],
+      },
+      quantities: [
+        { id: "1", label: "1個" },
+        { id: "3", label: "3個" },
+        { id: "5", label: "5個" },
+      ],
+      button: {
+        ja: "購入する",
+        en: "Buy",
+        es: "Comprar",
+      },
+      link: "https://square.link/u/xxxxx",
     },
     {
-      id: "tea",
+      id: "tea-bag",
+      tabLabel: {
+        ja: "お茶バッグ",
+        en: "Tea Bag",
+        es: "Tea Bag",
+      },
       name: {
         ja: "お茶バッグ",
         en: "Tea Bag",
@@ -407,9 +420,42 @@ export const PRODUCT_DATA = {
         en: "A softer, quieter cup",
         es: "Una taza suave y tranquila",
       },
+      teaTypes: {
+        ja: ["煎茶"],
+        en: ["Sencha"],
+        es: ["Sencha"],
+      },
+      brew: {
+        ja: [
+          "一煎目：200ccで1分",
+          "二煎目：200ccで10秒",
+          "三煎目：200ccで10秒",
+        ],
+        en: [
+          "1st infusion: 200ml for 1 minute",
+          "2nd infusion: 200ml for 10 seconds",
+          "3rd infusion: 200ml for 10 seconds",
+        ],
+        es: [
+          "Primera infusión: 200ml durante 1 minuto",
+          "Segunda infusión: 200ml durante 10 segundos",
+          "Tercera infusión: 200ml durante 10 segundos",
+        ],
+      },
+      quantities: [
+        { id: "1", label: "1個" },
+        { id: "3", label: "3個" },
+        { id: "5", label: "5個" },
+      ],
+      button: {
+        ja: "購入する",
+        en: "Buy",
+        es: "Comprar",
+      },
+      link: "https://square.link/u/xxxxx",
     },
   ],
-  link: "https://square.link/u/xxxxx",
+
   isSoldOut: false,
 },
     {

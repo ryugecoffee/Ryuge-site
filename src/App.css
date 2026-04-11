@@ -2392,6 +2392,115 @@ html[lang="es"] .products-hero-overlay h1 {
   color: #f6f1e8;
 }
 
+.coffeebag-variant-tabs,
+.coffeebag-quantity-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.coffeebag-variant-tab,
+.coffeebag-quantity-tab {
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.62);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.coffeebag-variant-tab.active,
+.coffeebag-quantity-tab.active {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.94);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.coffeebag-variant-panel {
+  width: 100%;
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.coffeebag-variant-title {
+  font-size: 28px;
+  line-height: 1.08;
+  font-weight: 500;
+  color: #f6f1e8;
+}
+
+.coffeebag-variant-note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.8;
+  color: rgba(245, 241, 232, 0.66);
+}
+
+.coffeebag-block-label {
+  margin: 0 0 10px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(245, 241, 232, 0.42);
+}
+
+.coffeebag-brew-block,
+.coffeebag-quantity-block,
+.coffeebag-tea-types {
+  width: 100%;
+}
+
+.coffeebag-steps {
+  display: grid;
+  gap: 8px;
+}
+
+.coffeebag-steps p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.75;
+  color: rgba(245, 241, 232, 0.78);
+}
+
+.coffeebag-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.coffeebag-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 241, 232, 0.82);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .coffeebag-variant-title {
+    font-size: 22px;
+  }
+
+  .coffeebag-variant-tab,
+  .coffeebag-quantity-tab {
+    padding: 9px 14px;
+    font-size: 12px;
+  }
+
+  .coffeebag-steps p {
+    font-size: 12px;
+    line-height: 1.7;
+  }
+}
+
 .modal-summary {
   margin: 0 0 18px;
   min-height: 0;
@@ -2726,6 +2835,67 @@ html[lang="es"] .products-hero-overlay h1 {
   margin-top: 24px;
   display: grid;
   gap: 16px;
+}
+
+.coffeebag-steps {
+  margin-top: 20px;
+  display: grid;
+  gap: 6px;
+}
+
+.coffeebag-steps p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.coffeebag-variant-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.coffeebag-variant-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.coffeebag-variant-tab.active {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.coffeebag-variant-panel {
+  margin-top: 22px;
+  display: grid;
+  gap: 8px;
+}
+
+.coffeebag-variant-title {
+  font-size: 16px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.coffeebag-variant-note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.56);
 }
 
 .variant strong {
