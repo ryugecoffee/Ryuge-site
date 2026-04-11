@@ -460,7 +460,6 @@ export default function HomePage({ lang, setLang }) {
 
 <nav className="site-nav home-nav">
   <Link to="/products">{t.products}</Link>
-  <a href="#about">{t.about}</a>
   <a href="#journal">{t.journal}</a>
 </nav>
 
