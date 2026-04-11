@@ -608,18 +608,6 @@ html[lang="en"] .product-copy h3 {
   overflow: hidden;
 }
 
-.product-image {
-  width: 100%;
-  height: 100%;
-  will-change: transform;
-}
-
-.product-image img {
-  height: 100%;
-  object-fit: cover;
-  filter: brightness(0.84) saturate(0.86);
-}
-
 .product-copy {
   padding: 18px 20px 20px;
   display: flex;
@@ -1860,7 +1848,8 @@ html[lang="es"] .story-body {
 
 .product-image {
   width: 100%;
-  height: 100%;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
   will-change: transform;
 }
 
@@ -3252,4 +3241,84 @@ html[lang="es"] .products-hero-overlay h1 {
 .text-link:hover::after {
   width: 108%;
   background: rgba(255, 255, 255, 0.48);
+}
+.modal {
+  align-items: stretch;
+}
+
+.modal-image {
+  height: 420px;
+}
+
+.modal-image img {
+  height: 100%;
+}
+/* ===== Bag Series modal height normalize ===== */
+
+/* ===== BAG ONLY FIX ===== */
+
+.coffeebag-variant-panel {
+  width: 100%;
+  min-height: 390px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.coffeebag-variant-title {
+  min-height: 0;
+}
+
+.coffeebag-variant-note {
+  min-height: 0;
+}
+
+.coffeebag-tea-types {
+  min-height: 0;
+}
+
+.coffeebag-brew-block {
+  min-height: 0;
+}
+
+.coffeebag-quantity-block {
+  min-height: 0;
+}
+
+.coffeebag-steps {
+  min-height: 0;
+}
+
+.coffeebag-variant-panel .subscription-cta {
+  margin-top: auto;
+}
+
+/* サブスクの右側高さ統一 */
+.subscription-plan-panel {
+  width: 100%;
+  min-height: 390px;
+  display: grid;
+  grid-template-rows: auto auto minmax(108px, auto) minmax(92px, auto) minmax(54px, auto) 1fr auto;
+  align-content: start;
+}
+
+.subscription-plan-header {
+  min-height: 72px;
+  margin-bottom: 16px;
+}
+
+.subscription-plan-meta {
+  min-height: 108px;
+}
+
+.subscription-plan-items {
+  min-height: 92px;
+}
+
+.subscription-plan-note {
+  min-height: 54px;
+}
+
+.subscription-plan-panel .subscription-cta {
+  margin-top: auto;
 }
