@@ -726,17 +726,23 @@ setSelectedProduct({
                 <h3>{selectedProduct.name}</h3>
                 <p>{selectedProduct.detail}</p>
 
-<button
-  className="modal-link-button"
+<span
+  className="text-link"
   onClick={() => {
     setSelectedProduct(null);
     navigate("/products");
   }}
-  type="button"
+  role="button"
+  tabIndex={0}
+  onKeyDown={(e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      setSelectedProduct(null);
+      navigate("/products");
+    }
+  }}
 >
-  <span>商品を見る</span>
-  <span className="modal-link-arrow">↗</span>
-</button>
+  {t.detail}
+</span>
               </div>
             </div>
           </div>

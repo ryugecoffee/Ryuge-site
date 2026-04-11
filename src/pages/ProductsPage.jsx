@@ -1,34 +1,72 @@
 import { useEffect, useRef, useState } from "react";
 import SiteFooter from "../components/SiteFooter";
-import { UI_TEXT } from "../uiText";
 import { PRODUCT_DATA, PRODUCT_SECTIONS } from "../productData";
+
+const DEFAULT_SUBSCRIPTION_PLAN = "basic";
 
 const PAGE_TEXT = {
   ja: {
+    heroEyebrow: "Products",
     heroTitle: "静けさを、日常へ",
     bannerLead: "華やかさは、香りだけではない",
     bannerTitle: "余韻である",
   },
-
   en: {
+    heroEyebrow: "Products",
     heroTitle: "From stillness into everyday life",
     bannerLead: "Brightness is not just aroma",
     bannerTitle: "It lingers",
   },
-
   es: {
+    heroEyebrow: "Products",
     heroTitle: "La quietud, hacia la vida cotidiana",
     bannerLead: "No es solo aroma",
     bannerTitle: "Permanece",
   },
 };
 
-export default function ProductsPage({ lang, setLang }) {
-const t = UI_TEXT[lang] || UI_TEXT.ja;
-const page = PAGE_TEXT[lang] || PAGE_TEXT.ja;
-const sectionText = PRODUCT_SECTIONS[lang] || PRODUCT_SECTIONS.ja;
-const products = PRODUCT_DATA[lang] || PRODUCT_DATA.ja;
-const [activeItem, setActiveItem] = useState(null);
+const SOLD_OUT_TEXT = {
+  ja: "売り切れ",
+  en: "Sold Out",
+  es: "Agotado",
+};
+
+export default function ProductsPage({ lang }) {
+  const page = PAGE_TEXT[lang] || PAGE_TEXT.ja;
+  const sectionText = PRODUCT_SECTIONS[lang] || PRODUCT_SECTIONS.ja;
+  const labels = sectionText.specLabels;
+  const products = PRODUCT_DATA;
+
+  const [activeItemId, setActiveItemId] = useState(null);
+  const [selectedSubscriptionPlan, setSelectedSubscriptionPlan] =
+    useState(DEFAULT_SUBSCRIPTION_PLAN);
+
+  const [showEnmaHeading, setShowEnmaHeading] = useState(false);
+  const [showWoodboxHeading, setShowWoodboxHeading] = useState(false);
+
+  const enmaSectionRef = useRef(null);
+  const woodboxSectionRef = useRef(null);
+
+  const activeItem =
+    [...products.enma, ...products.woodbox, ...products.oriori].find(
+      (item) => item.id === activeItemId
+    ) || null;
+
+  const subscriptionPlans =
+    activeItem?.id === "oriori-subscription"
+      ? activeItem.plans?.[lang] || activeItem.plans?.en || []
+      : [];
+
+  const currentSubscriptionPlan =
+    subscriptionPlans.find((plan) => plan.id === selectedSubscriptionPlan) ||
+    subscriptionPlans[0] ||
+    null;
+
+  useEffect(() => {
+    if (activeItem?.id === "oriori-subscription") {
+      setSelectedSubscriptionPlan(DEFAULT_SUBSCRIPTION_PLAN);
+    }
+  }, [activeItem]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -36,9 +74,8 @@ const [activeItem, setActiveItem] = useState(null);
 
   useEffect(() => {
     const onKeyDown = (e) => {
-      if (e.key === "Escape") setActiveItem(null);
+      if (e.key === "Escape") setActiveItemId(null);
     };
-
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
@@ -50,29 +87,59 @@ const [activeItem, setActiveItem] = useState(null);
     };
   }, [activeItem]);
 
-  const woodboxHeadingRef = useRef(null);
-  const [woodboxHeadingVisible, setWoodboxHeadingVisible] = useState(false);
+useEffect(() => {
+  const enmaNode = enmaSectionRef.current;
+  const woodboxNode = woodboxSectionRef.current;
 
-  useEffect(() => {
-    const target = woodboxHeadingRef.current;
-    if (!target) return;
+  if (!enmaNode || !woodboxNode) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setWoodboxHeadingVisible(true);
-          observer.unobserve(target);
-        }
-      },
-      {
-        threshold: 0.45,
+  let enmaTriggered = false;
+  let woodboxTriggered = false;
+
+  const handleScroll = () => {
+    const triggerLine = window.innerHeight * 0.6;
+
+    // 🔥 閻魔
+    if (!enmaTriggered) {
+      const enmaTop = enmaNode.getBoundingClientRect().top;
+
+      if (enmaTop <= triggerLine) {
+        enmaTriggered = true;
+
+        setTimeout(() => {
+          setShowEnmaHeading(true);
+        }, 2000); // ←4秒後に消える
       }
+    }
+
+    // 🔥 木箱
+    if (!woodboxTriggered) {
+      const woodboxTop = woodboxNode.getBoundingClientRect().top;
+
+      if (woodboxTop <= triggerLine) {
+        woodboxTriggered = true;
+
+        setTimeout(() => {
+          setShowWoodboxHeading(true);
+        }, 2000); // ←4秒後に消える
+      }
+    }
+  };
+
+  window.addEventListener("scroll", handleScroll, { passive: true });
+
+  return () => window.removeEventListener("scroll", handleScroll);
+}, []);
+
+  const renderSpecRow = (label, value) => {
+    if (!value) return null;
+    return (
+      <div className="product-spec-row" key={label}>
+        <dt>{label}</dt>
+        <dd>{value}</dd>
+      </div>
     );
-
-    observer.observe(target);
-
-    return () => observer.disconnect();
-  }, []);
+  };
 
   return (
     <>
@@ -80,7 +147,7 @@ const [activeItem, setActiveItem] = useState(null);
         <section className="products-hero">
           <img
             src="/images/products-hero.jpg"
-            alt="Ryuge Coffee products"
+            alt=""
             className="products-hero-image"
           />
           <div className="products-hero-overlay">
@@ -89,177 +156,299 @@ const [activeItem, setActiveItem] = useState(null);
           </div>
         </section>
 
-        <section className="products-showcase-section">
-          <div className="products-section-heading products-heading-animate">
-<p className="products-section-label">{sectionText.enmaLabel}</p>
-<h2>{sectionText.enmaTitle}</h2>
+        <section
+          className="products-showcase-section products-enma-section"
+        >
+         <div
+  ref={enmaSectionRef}
+  className={`products-section-heading products-heading-animate ${
+    showEnmaHeading ? "is-hidden" : ""
+  }`}
+>
+            <p className="products-section-label">{sectionText.enmaLabel}</p>
+            <h2>{sectionText.enmaTitle}</h2>
           </div>
 
           <div className="products-enma-grid">
-{products.enma.map((slide, index) => (
-  <article
-    key={index}
-    className={`products-enma-static-card ${
-      activeItem === slide ? "active" : ""
-    }`}
-    onClick={() => setActiveItem(slide)}
-  >
-    <img src={slide.image} alt={slide.title} />
-    <div className="products-enma-card-text">
-<h3>{slide.title}</h3>
-<p>{slide.summary}</p>
-    </div>
-  </article>
-))}
+            {products.enma.map((item) => (
+              <article
+                key={item.id}
+                className="products-enma-static-card"
+                onClick={() => setActiveItemId(item.id)}
+              >
+                <img src={item.image} alt="" />
+
+                {item.isSoldOut && (
+                  <span className="product-soldout-badge">
+                    {SOLD_OUT_TEXT[lang]}
+                  </span>
+                )}
+
+                <div className="products-enma-card-text">
+                  <h3>{item.title?.[lang]}</h3>
+                  <p>{item.summary?.[lang]}</p>
+                </div>
+              </article>
+            ))}
           </div>
         </section>
 
-        <section className="products-full-banner">
-          <img
-            src="/images/products-banner.jpg"
-            alt="Ryuge Coffee atmosphere"
-            className="products-full-banner-image"
-          />
-          <div className="products-full-banner-overlay">
-            <p>{page.bannerLead}</p>
-            <h2>{page.bannerTitle}</h2>
+        <section className="products-banner-section">
+          <div className="products-banner-image-wrap">
+            <img
+              src="/images/products-banner.jpg"
+              alt=""
+              className="products-banner-image"
+            />
+            <div className="products-banner-overlay">
+              <p>{page.bannerLead}</p>
+              <h2>{page.bannerTitle}</h2>
+            </div>
           </div>
         </section>
 
-        <section className="products-showcase-section">
+        <section
+          className="products-showcase-section products-woodbox-section"
+        >
           <div
-            ref={woodboxHeadingRef}
-            className={`products-section-heading ${
-              woodboxHeadingVisible ? "products-heading-animate" : ""
-            }`}
-          >
-<p className="products-section-label">{sectionText.woodboxLabel}</p>
-<h2>{sectionText.woodboxTitle}</h2>
+  ref={woodboxSectionRef}
+  className={`products-section-heading products-heading-animate ${
+    showWoodboxHeading ? "is-hidden" : ""
+  }`}
+>
+            <p className="products-section-label">{sectionText.woodboxLabel}</p>
+            <h2>{sectionText.woodboxTitle}</h2>
           </div>
 
-          <div className="products-simple-grid products-two-col">
-{products.woodbox.map((item, index) => (
-  <article
-    key={index}
-    className={`products-enma-static-card products-woodbox-card ${
-      activeItem === item ? "active" : ""
-    }`}
-    onClick={() => setActiveItem(item)}
-  >
-    <img src={item.image} alt={item.title} />
-    <div className="products-enma-card-text">
-<h3>{item.title}</h3>
-<p>{item.summary}</p>
-    </div>
-  </article>
-))}
+          <div className="products-two-col">
+            {products.woodbox.map((item) => (
+              <article
+                key={item.id}
+                className="products-enma-static-card products-woodbox-card"
+                onClick={() => setActiveItemId(item.id)}
+              >
+                <img src={item.image} alt="" />
+
+                {item.isSoldOut && (
+                  <span className="product-soldout-badge">
+                    {SOLD_OUT_TEXT[lang]}
+                  </span>
+                )}
+
+                <div className="products-enma-card-text">
+                  <h3>{item.title?.[lang]}</h3>
+                  <p>{item.summary?.[lang]}</p>
+                </div>
+              </article>
+            ))}
           </div>
         </section>
 
-        <section className="products-showcase-section oriori-services-section">
-          <div className="products-section-heading oriori-heading">
-<p className="products-section-label">{sectionText.orioriLabel}</p>
-<h2>{sectionText.orioriTitle}</h2>
-<p className="oriori-intro">{sectionText.orioriIntro}</p>
+        <section className="oriori-services-section">
+          <div className="oriori-heading">
+            <h2>{sectionText.orioriTitle}</h2>
+            <p>{sectionText.orioriIntro}</p>
           </div>
 
           <div className="oriori-services-grid">
-{products.oriori.map((item, index) => (
-  <article
-    key={index}
-    className={`oriori-service-card ${
-      activeItem === item ? "active" : ""
-    }`}
-    onClick={() => setActiveItem(item)}
-  >
-    <div className="oriori-service-visual">
-      <img src={item.image} alt={item.title} />
-    </div>
-    <div className="oriori-service-copy">
-<h3>{item.title}</h3>
-<p>{item.summary}</p>
-    </div>
-  </article>
-))}
+            {products.oriori.map((item) => (
+              <article
+                key={item.id}
+                className="oriori-service-card"
+                onClick={() => setActiveItemId(item.id)}
+              >
+                <img src={item.image} alt="" />
+
+                <div className="oriori-service-copy">
+                  <h3>{item.title?.[lang]}</h3>
+                  <p>{item.summary?.[lang]}</p>
+                </div>
+              </article>
+            ))}
           </div>
         </section>
       </main>
-            {activeItem && (
-        <div
-          className="modal-backdrop"
-          onClick={() => setActiveItem(null)}
-          role="presentation"
-        >
-          <div
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label={activeItem.title}
-            onClick={(e) => e.stopPropagation()}
-          >
+
+      {activeItem && (
+        <div className="modal-backdrop" onClick={() => setActiveItemId(null)}>
+          <div className="modal modal-premium" onClick={(e) => e.stopPropagation()}>
             <button
               className="modal-close"
-              onClick={() => setActiveItem(null)}
-              aria-label="Close"
-              type="button"
+              onClick={() => setActiveItemId(null)}
             >
               ×
             </button>
 
-            <div className="modal-image">
-              <img src={activeItem.image} alt={activeItem.title} />
+            <div className="modal-image modal-image-premium">
+              <img src={activeItem.image} alt="" />
             </div>
 
-            <div className="modal-copy">
-<div className="modal-copy-inner">
-  <h3>{activeItem.title}</h3>
+            <div className="modal-copy modal-copy-premium">
+              {activeItem.id === "oriori-subscription" ? (
+                <div className="modal-copy-inner subscription-modal-copy">
+                  <h3>
+                    {activeItem.modalTitle?.[lang] ||
+                      activeItem.modalTitle?.en ||
+                      activeItem.title?.[lang] ||
+                      activeItem.title?.en ||
+                      activeItem.title}
+                  </h3>
 
-  <p className="modal-summary">{activeItem.summary}</p>
+                  <p className="modal-summary">
+                    {activeItem.summary?.[lang] ||
+                      activeItem.summary?.en ||
+                      activeItem.summary}
+                  </p>
 
-  <div className="modal-specs">
-    <div className="modal-spec-row">
-      <span>{sectionText.specLabels.origin}</span>
-      <strong>{activeItem.origin}</strong>
-    </div>
+                  <div className="subscription-plan-tabs">
+                    {subscriptionPlans.map((plan) => (
+                      <button
+                        key={plan.id}
+                        type="button"
+                        className={`subscription-plan-tab ${
+                          currentSubscriptionPlan?.id === plan.id ? "active" : ""
+                        }`}
+                        onClick={() => setSelectedSubscriptionPlan(plan.id)}
+                      >
+                        <span className="subscription-plan-tab-name">
+                          {plan.name}
+                        </span>
+                        <span className="subscription-plan-tab-price">
+                          {plan.price}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
 
-    {activeItem.producer && (
-      <div className="modal-spec-row">
-        <span>{sectionText.specLabels.producer}</span>
-        <strong>{activeItem.producer}</strong>
-      </div>
-    )}
+                  {currentSubscriptionPlan && (
+                    <div className="subscription-plan-panel">
+                      <div className="subscription-plan-header">
+                        <div>
+                          <p className="subscription-plan-lead">
+                            {currentSubscriptionPlan.lead}
+                          </p>
+                          <h4>{currentSubscriptionPlan.name}</h4>
+                        </div>
 
-    <div className="modal-spec-row">
-      <span>{sectionText.specLabels.variety}</span>
-      <strong>{activeItem.variety}</strong>
-    </div>
+                        {currentSubscriptionPlan.badge && (
+                          <span className="subscription-plan-badge">
+                            {currentSubscriptionPlan.badge}
+                          </span>
+                        )}
+                      </div>
 
-    <div className="modal-spec-row">
-      <span>{sectionText.specLabels.process}</span>
-      <strong>{activeItem.process}</strong>
-    </div>
+                      <div className="subscription-plan-meta">
+                        <div className="subscription-meta-row">
+                          <span>
+                            {lang === "ja"
+                              ? "価格"
+                              : lang === "es"
+                              ? "Precio"
+                              : "Price"}
+                          </span>
+                          <strong>{currentSubscriptionPlan.price}</strong>
+                        </div>
 
-    <div className="modal-spec-row">
-      <span>{sectionText.specLabels.altitude}</span>
-      <strong>{activeItem.altitude}</strong>
-    </div>
-  </div>
+                        <div className="subscription-meta-row">
+                          <span>
+                            {lang === "ja"
+                              ? "配送頻度"
+                              : lang === "es"
+                              ? "Entrega"
+                              : "Delivery"}
+                          </span>
+                          <strong>{currentSubscriptionPlan.frequency}</strong>
+                        </div>
 
-  <a
-    href={activeItem.link}
-    target="_blank"
-    rel="noreferrer"
-    className="modal-link-button"
-  >
-    <span>{sectionText.buyButton}</span>
-    <span className="modal-link-arrow">↗</span>
-  </a>
-</div>
+                        <div className="subscription-meta-row">
+                          <span>
+                            {lang === "ja"
+                              ? "送料"
+                              : lang === "es"
+                              ? "Envío"
+                              : "Shipping"}
+                          </span>
+                          <strong>{currentSubscriptionPlan.shipping}</strong>
+                        </div>
+                      </div>
+
+                      <div className="subscription-plan-items">
+                        {currentSubscriptionPlan.items.map((item) => (
+                          <div key={item} className="subscription-plan-item">
+                            <span className="subscription-plan-dot" />
+                            <span>{item}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <p className="subscription-plan-note">
+                        {currentSubscriptionPlan.note}
+                      </p>
+
+                      <a
+                        href={activeItem.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="subscription-cta"
+                      >
+                        <span>{currentSubscriptionPlan.button}</span>
+                        <span className="modal-link-arrow">↗</span>
+                      </a>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="modal-copy-inner modal-copy-classic">
+                  <h3
+                    className="modal-product-title modal-title-animate"
+                    style={{ whiteSpace: "pre-line" }}
+                  >
+                    {activeItem.modalTitle?.[lang] ||
+                      activeItem.modalTitle?.en ||
+                      activeItem.title?.[lang] ||
+                      activeItem.title?.en}
+                  </h3>
+
+                  <p className="modal-summary modal-product-summary modal-fade-up">
+                    {activeItem.summary?.[lang] ||
+                      activeItem.summary?.en ||
+                      activeItem.summary}
+                  </p>
+
+                  <dl className="product-specs product-specs-classic modal-fade-up">
+                    {renderSpecRow(labels.origin, activeItem.origin)}
+                    {renderSpecRow(labels.producer, activeItem.producer)}
+                    {renderSpecRow(labels.process, activeItem.process)}
+                    {renderSpecRow(labels.variety, activeItem.variety)}
+                    {renderSpecRow(labels.altitude, activeItem.altitude)}
+                    {renderSpecRow(labels.weight, activeItem.weight)}
+                    {renderSpecRow(labels.price, activeItem.price)}
+                    {renderSpecRow(labels.flavor, activeItem.flavor)}
+                  </dl>
+
+                  {activeItem.isSoldOut ? (
+                    <button className="modal-cta-link is-disabled" disabled>
+                      {SOLD_OUT_TEXT[lang]}
+                    </button>
+                  ) : (
+                    <a
+                      href={activeItem.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="modal-cta-link modal-fade-up"
+                    >
+                      <span>{sectionText.buyButton}</span>
+                      <span className="modal-link-arrow">↗</span>
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
-        <SiteFooter lang={lang} />
+
+      <SiteFooter lang={lang} />
     </>
   );
 }
