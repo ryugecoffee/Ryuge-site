@@ -31,7 +31,7 @@ const SOLD_OUT_TEXT = {
   es: "Agotado",
 };
 
-export default function ProductsPage({ lang }) {
+export default function ProductsPage({ lang, cartItems, setCartItems }) {
   const page = PAGE_TEXT[lang] || PAGE_TEXT.ja;
   const sectionText = PRODUCT_SECTIONS[lang] || PRODUCT_SECTIONS.ja;
   const labels = sectionText.specLabels;
@@ -45,7 +45,6 @@ const [selectedCoffeeBagVariant, setSelectedCoffeeBagVariant] =
 const [selectedBagQuantity, setSelectedBagQuantity] = useState("1");
 const [showEnmaHeading, setShowEnmaHeading] = useState(false);
 const [simpleQuantity, setSimpleQuantity] = useState(1);
-const [cartItems, setCartItems] = useState([]);
 const [showWoodboxHeading, setShowWoodboxHeading] = useState(false);
 
   const enmaSectionRef = useRef(null);
@@ -55,6 +54,8 @@ const [showWoodboxHeading, setShowWoodboxHeading] = useState(false);
     [...products.enma, ...products.woodbox, ...products.oriori].find(
       (item) => item.id === activeItemId
     ) || null;
+
+    const cartItem = cartItems.find((item) => item.id === activeItem?.id);
 
   const subscriptionPlans =
     activeItem?.id === "oriori-subscription"
@@ -166,9 +167,6 @@ useEffect(() => {
   return (
     <>
       <main className="products-showcase-page">
-        <p style={{ padding: "12px 20px", color: "#fff" }}>
-  カート件数: {cartItems.length}
-</p>
         <section className="products-hero">
           <img
             src="/images/products-hero.jpg"
@@ -589,20 +587,30 @@ useEffect(() => {
   <div className="simple-quantity-control">
     <button
       type="button"
-      onClick={() => setSimpleQuantity((prev) => Math.max(1, prev - 1))}
+      onClick={() => setSimpleQuantity((prev) => Math.max(0, prev - 1))}
     >
       −
     </button>
 
-    <input
-      type="number"
-      min="1"
-      value={simpleQuantity}
-      onChange={(e) => {
-        const next = Number(e.target.value);
-        setSimpleQuantity(Number.isNaN(next) || next < 1 ? 1 : next);
-      }}
-    />
+<input
+  type="number"
+  min="0"
+  value={simpleQuantity}
+  onChange={(e) => {
+    const value = e.target.value;
+
+    if (value === "") {
+      setSimpleQuantity(0);
+      return;
+    }
+
+    const next = Number(value);
+
+    if (Number.isNaN(next)) return;
+
+    setSimpleQuantity(Math.max(0, next));
+  }}
+/>
 
     <button
       type="button"
@@ -633,31 +641,29 @@ useEffect(() => {
   type="button"
   className="product-cart-button"
 onClick={() => {
-setCartItems((prev) => {
-  const otherItems = prev.filter((item) => item.id !== activeItem.id);
+  setCartItems((prev) => {
+    const otherItems = prev.filter((item) => item.id !== activeItem.id);
 
-  return [
-    ...otherItems,
-    {
-      id: activeItem.id,
-      quantity: simpleQuantity,
-    },
-  ];
-});
+    if (simpleQuantity === 0) {
+      return otherItems;
+    }
+
+    return [
+      ...otherItems,
+      {
+        id: activeItem.id,
+        title:
+          activeItem.title?.[lang] ||
+          activeItem.title?.en ||
+          activeItem.title,
+        quantity: simpleQuantity,
+      },
+    ];
+  });
 }}
 >
   カートに入れる
 </button>
-
-{cartItems.find((item) => item.id === activeItem.id)?.quantity > 0 && (
-  <p className="modal-cart-line">
-    {(activeItem.title?.[lang] || activeItem.title?.en || activeItem.title)} ×{" "}
-    {cartItems.find((item) => item.id === activeItem.id)?.quantity}
-  </p>
-)}
-<p className="modal-cart-count">
-  カート数量: {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
-</p>
   </div>
 )}
                     </>
