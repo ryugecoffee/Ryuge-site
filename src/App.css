@@ -3363,7 +3363,8 @@ html[lang="es"] .products-hero-overlay h1 {
   color: #fff;
   text-align: center;
   font-size: 14px;
-  -moz-appearance: textfield;
+  appearance: textfield;
+-moz-appearance: textfield;
 }
 
 .simple-quantity-control input::-webkit-outer-spin-button,
@@ -3382,4 +3383,27 @@ html[lang="es"] .products-hero-overlay h1 {
 
 .simple-quantity-control input:focus {
   background: rgba(255, 255, 255, 0.06);
+}
+.product-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+.product-cart-button {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: #fff;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.product-cart-button:hover {
+  background: #fff;
+  color: #000;
 }

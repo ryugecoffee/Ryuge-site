@@ -37,15 +37,16 @@ export default function ProductsPage({ lang }) {
   const labels = sectionText.specLabels;
   const products = PRODUCT_DATA;
 
-  const [activeItemId, setActiveItemId] = useState(null);
-  const [selectedSubscriptionPlan, setSelectedSubscriptionPlan] =
-    useState(DEFAULT_SUBSCRIPTION_PLAN);
-  const [selectedCoffeeBagVariant, setSelectedCoffeeBagVariant] =
-    useState("coffee-bag");
-  const [selectedBagQuantity, setSelectedBagQuantity] = useState("1");
-  const [showEnmaHeading, setShowEnmaHeading] = useState(false);
-  const [simpleQuantity, setSimpleQuantity] = useState(1);
-  const [showWoodboxHeading, setShowWoodboxHeading] = useState(false);
+ const [activeItemId, setActiveItemId] = useState(null);
+const [selectedSubscriptionPlan, setSelectedSubscriptionPlan] =
+  useState(DEFAULT_SUBSCRIPTION_PLAN);
+const [selectedCoffeeBagVariant, setSelectedCoffeeBagVariant] =
+  useState("coffee-bag");
+const [selectedBagQuantity, setSelectedBagQuantity] = useState("1");
+const [showEnmaHeading, setShowEnmaHeading] = useState(false);
+const [simpleQuantity, setSimpleQuantity] = useState(1);
+const [cartItems, setCartItems] = useState([]);
+const [showWoodboxHeading, setShowWoodboxHeading] = useState(false);
 
   const enmaSectionRef = useRef(null);
   const woodboxSectionRef = useRef(null);
@@ -165,6 +166,9 @@ useEffect(() => {
   return (
     <>
       <main className="products-showcase-page">
+        <p style={{ padding: "12px 20px", color: "#fff" }}>
+  カート件数: {cartItems.length}
+</p>
         <section className="products-hero">
           <img
             src="/images/products-hero.jpg"
@@ -610,20 +614,52 @@ useEffect(() => {
 </div>
 
                       {activeItem.isSoldOut ? (
-                        <button className="modal-cta-link is-disabled" disabled>
-                          {SOLD_OUT_TEXT[lang]}
-                        </button>
-                      ) : (
-                        <a
-                          href={activeItem.link}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="modal-cta-link modal-fade-up"
-                        >
-                          <span>{sectionText.buyButton}</span>
-                          <span className="modal-link-arrow">↗</span>
-                        </a>
-                      )}
+  <button className="modal-cta-link is-disabled" disabled>
+    {SOLD_OUT_TEXT[lang]}
+  </button>
+) : (
+  <div className="product-modal-actions modal-fade-up">
+    <a
+      href={activeItem.link}
+      target="_blank"
+      rel="noreferrer"
+      className="modal-cta-link"
+    >
+      <span>{sectionText.buyButton}</span>
+      <span className="modal-link-arrow">↗</span>
+    </a>
+
+<button
+  type="button"
+  className="product-cart-button"
+onClick={() => {
+setCartItems((prev) => {
+  const otherItems = prev.filter((item) => item.id !== activeItem.id);
+
+  return [
+    ...otherItems,
+    {
+      id: activeItem.id,
+      quantity: simpleQuantity,
+    },
+  ];
+});
+}}
+>
+  カートに入れる
+</button>
+
+{cartItems.find((item) => item.id === activeItem.id)?.quantity > 0 && (
+  <p className="modal-cart-line">
+    {(activeItem.title?.[lang] || activeItem.title?.en || activeItem.title)} ×{" "}
+    {cartItems.find((item) => item.id === activeItem.id)?.quantity}
+  </p>
+)}
+<p className="modal-cart-count">
+  カート数量: {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+</p>
+  </div>
+)}
                     </>
                   )}
                 </div>
