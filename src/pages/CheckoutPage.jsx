@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const SQUARE_APP_ID = "sq0idp-1qCFvAFBqIpC4aq_U7hwbg";
-const SQUARE_LOCATION_ID = "LS35CQ8K36VVV";
+const SQUARE_LOCATION_ID = "L50FAXZHCP6YM";
 
 export default function CheckoutPage({ cartItems, setCartItems, lang }) {
   const navigate = useNavigate();
