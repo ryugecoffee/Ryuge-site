@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const SQUARE_APP_ID = "sandbox-sq0idb-6860ODXZ1N4xXKLOem9WJQ";
+const SQUARE_APP_ID = "sq0idp-1qCFvAFBqIpC4aq_U7hwbg";
 const SQUARE_LOCATION_ID = "LS35CQ8K36VVV";
 
 export default function CheckoutPage({ cartItems, setCartItems, lang }) {
@@ -54,7 +54,7 @@ export default function CheckoutPage({ cartItems, setCartItems, lang }) {
     }
 
     const existing = document.querySelector(
-      'script[src="https://sandbox.web.squarecdn.com/v1/square.js"]'
+      'script[src="https://web.squarecdn.com/v1/square.js"]'
     );
     if (existing) {
       existing.addEventListener("load", initSquare);
@@ -62,7 +62,7 @@ export default function CheckoutPage({ cartItems, setCartItems, lang }) {
     }
 
     const script = document.createElement("script");
-    script.src = "https://sandbox.web.squarecdn.com/v1/square.js";
+    script.src = "https://web.squarecdn.com/v1/square.js";
     script.onload = initSquare;
     script.onerror = () => setErrorMessage("Square SDKの読み込みに失敗しました");
     document.head.appendChild(script);
