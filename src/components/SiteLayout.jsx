@@ -9,20 +9,21 @@ export default function SiteLayout({
   updateCartQuantity,
 }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const cartRef = useRef(null);
-useEffect(() => {
-  const handleClickOutside = (e) => {
-    if (cartRef.current && !cartRef.current.contains(e.target)) {
-      setIsCartOpen(false);
-    }
-  };
+  const cartWrapRef = useRef(null);
 
-  document.addEventListener("mousedown", handleClickOutside);
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (cartWrapRef.current && !cartWrapRef.current.contains(e.target)) {
+        setIsCartOpen(false);
+      }
+    };
 
-  return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-  };
-}, []);
+    document.addEventListener("click", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, []);
 
   return (
     <div className="site-shell">
@@ -34,13 +35,80 @@ useEffect(() => {
         </Link>
 
         <div className="lang-switch header-lang-switch">
-<button
-  type="button"
-  className="cart-indicator"
-  onClick={() => setIsCartOpen((prev) => !prev)}
+          <div className="cart-wrap" ref={cartWrapRef}>
+            <button
+              type="button"
+              className="cart-indicator"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsCartOpen((prev) => !prev);
+              }}
+            >
+              🛒 {(cartItems || []).reduce((sum, item) => sum + item.quantity, 0)}
+            </button>
+
+            {isCartOpen && (
+              <div
+  className="cart-dropdown"
+  onClick={(e) => e.stopPropagation()}
+style={{
+  width: "70vw",
+  maxWidth: "900px",
+  padding: "28px 32px",
+  right: "50%",
+  transform: "translateX(50%)",
+}}
 >
-  🛒 {(cartItems || []).reduce((sum, item) => sum + item.quantity, 0)}
-</button>
+                {cartItems.length === 0 ? (
+                  <p className="cart-empty">カートは空です</p>
+                ) : (
+                  <div className="cart-dropdown-list">
+                    {cartItems.map((item) => (
+                      <div key={item.id} className="cart-dropdown-item">
+                        <div className="cart-dropdown-info">
+                          <span className="cart-dropdown-title">{item.title}</span>
+
+                          <div className="cart-qty-controls">
+                            <button
+                              type="button"
+                              className="cart-qty-button"
+                              onClick={() =>
+                                updateCartQuantity(item.id, item.quantity - 1)
+                              }
+                            >
+                              −
+                            </button>
+
+                            <span className="cart-dropdown-qty">
+                              {item.quantity}
+                            </span>
+
+                            <button
+                              type="button"
+                              className="cart-qty-button"
+                              onClick={() =>
+                                updateCartQuantity(item.id, item.quantity + 1)
+                              }
+                            >
+                              ＋
+                            </button>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="cart-remove-button"
+                          onClick={() => removeFromCart(item.id)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <button
             className={lang === "ja" ? "active" : ""}
@@ -60,32 +128,6 @@ useEffect(() => {
           >
             ES
           </button>
-          {isCartOpen && (
-<div className="cart-dropdown" ref={cartRef}>
-    {cartItems.length === 0 ? (
-      <p className="cart-empty">カートは空です</p>
-    ) : (
-      <div className="cart-dropdown-list">
-        {cartItems.map((item) => (
-  <div key={item.id} className="cart-dropdown-item">
-    <div className="cart-dropdown-info">
-      <span className="cart-dropdown-title">{item.title}</span>
-      <span className="cart-dropdown-qty">× {item.quantity}</span>
-    </div>
-
-    <button
-      type="button"
-      className="cart-remove-button"
-      onClick={() => removeFromCart(item.id)}
-    >
-      ×
-    </button>
-  </div>
-))}
-      </div>
-    )}
-  </div>
-)}
         </div>
       </header>
 

@@ -14,6 +14,7 @@ export default function App() {
 
   const [cartItems, setCartItems] = useState([]);
 
+
   const removeFromCart = (id) => {
   setCartItems((prev) => prev.filter((item) => item.id !== id));
 };
