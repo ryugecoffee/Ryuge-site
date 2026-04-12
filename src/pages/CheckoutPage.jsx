@@ -30,6 +30,7 @@ const CARD_STYLE = {
     },
     invalid: { color: "rgba(255,100,100,0.9)" },
   },
+  hidePostalCode: true,
 };
 
 const inputStyle = {
