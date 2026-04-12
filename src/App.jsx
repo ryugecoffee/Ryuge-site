@@ -71,12 +71,13 @@ const updateCartQuantity = (id, nextQuantity) => {
 <Route path="/shipping" element={<ShippingPage lang={lang} />} />
 <Route path="/legal" element={<LegalNotice lang={lang} />} />
       </Route>
-      <Route
+<Route
   path="/checkout"
   element={
     <CheckoutPage
       cartItems={cartItems}
       setCartItems={setCartItems}
+      clearCart={() => setCartItems([])}
       lang={lang}
     />
   }

@@ -32,6 +32,17 @@ const CARD_STYLE = {
   },
 };
 
+const inputStyle = {
+  background: "transparent",
+  border: "none",
+  borderBottom: "1px solid rgba(255,255,255,0.14)",
+  color: "rgba(255,255,255,0.82)",
+  padding: "8px 0",
+  fontSize: "14px",
+  outline: "none",
+  width: "100%",
+};
+
 function CheckoutForm({ cartItems, onSuccess }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -39,6 +50,7 @@ function CheckoutForm({ cartItems, onSuccess }) {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [postalCode, setPostalCode] = useState("");
   const [prefecture, setPrefecture] = useState("神奈川県");
   const [address, setAddress] = useState("");
   const [shipping, setShipping] = useState(null);
@@ -47,11 +59,6 @@ function CheckoutForm({ cartItems, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity, 0
-  );
-
-  // 送料取得
   useEffect(() => {
     if (cartItems.length === 0) return;
     fetch("https://ryuge-site.onrender.com/create-payment-intent", {
@@ -86,11 +93,10 @@ function CheckoutForm({ cartItems, onSuccess }) {
       return;
     }
 
-    // 注文完了メール送信
-    fetch("https://ryuge-site.onrender.com/order-complete", {
+    await fetch("https://ryuge-site.onrender.com/order-complete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: cartItems, name, email, address, prefecture, total, shipping }),
+      body: JSON.stringify({ items: cartItems, name, email, postalCode, address, prefecture, total, shipping }),
     });
 
     onSuccess();
@@ -102,7 +108,6 @@ function CheckoutForm({ cartItems, onSuccess }) {
       <p className="checkout-eyebrow">Checkout</p>
       <h1 className="checkout-title">ご注文内容</h1>
 
-      {/* 注文サマリー */}
       <div className="checkout-order-summary">
         <p className="checkout-section-label">注文内容</p>
         {cartItems.map((item) => (
@@ -126,7 +131,6 @@ function CheckoutForm({ cartItems, onSuccess }) {
         </div>
       </div>
 
-      {/* お届け先 */}
       <div className="checkout-card-section">
         <p className="checkout-section-label">お届け先</p>
         <div className="checkout-card-container" style={{ display: "grid", gap: "12px" }}>
@@ -136,16 +140,7 @@ function CheckoutForm({ cartItems, onSuccess }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            style={{
-              background: "transparent",
-              border: "none",
-              borderBottom: "1px solid rgba(255,255,255,0.14)",
-              color: "rgba(255,255,255,0.82)",
-              padding: "8px 0",
-              fontSize: "14px",
-              outline: "none",
-              width: "100%",
-            }}
+            style={inputStyle}
           />
           <input
             type="email"
@@ -153,30 +148,20 @@ function CheckoutForm({ cartItems, onSuccess }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            style={{
-              background: "transparent",
-              border: "none",
-              borderBottom: "1px solid rgba(255,255,255,0.14)",
-              color: "rgba(255,255,255,0.82)",
-              padding: "8px 0",
-              fontSize: "14px",
-              outline: "none",
-              width: "100%",
-            }}
+            style={inputStyle}
+          />
+          <input
+            type="text"
+            placeholder="郵便番号（例：2480012）"
+            value={postalCode}
+            onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, "").slice(0, 7))}
+            required
+            style={inputStyle}
           />
           <select
             value={prefecture}
             onChange={(e) => setPrefecture(e.target.value)}
-            style={{
-              background: "#111",
-              border: "none",
-              borderBottom: "1px solid rgba(255,255,255,0.14)",
-              color: "rgba(255,255,255,0.82)",
-              padding: "8px 0",
-              fontSize: "14px",
-              outline: "none",
-              width: "100%",
-            }}
+            style={{ ...inputStyle, background: "#111" }}
           >
             {PREFECTURES.map((p) => (
               <option key={p} value={p}>{p}</option>
@@ -188,21 +173,11 @@ function CheckoutForm({ cartItems, onSuccess }) {
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             required
-            style={{
-              background: "transparent",
-              border: "none",
-              borderBottom: "1px solid rgba(255,255,255,0.14)",
-              color: "rgba(255,255,255,0.82)",
-              padding: "8px 0",
-              fontSize: "14px",
-              outline: "none",
-              width: "100%",
-            }}
+            style={inputStyle}
           />
         </div>
       </div>
 
-      {/* カード情報 */}
       <div className="checkout-card-section">
         <p className="checkout-section-label">カード情報</p>
         <div className="checkout-card-container">
