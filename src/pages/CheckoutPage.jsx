@@ -54,7 +54,7 @@ function CheckoutForm({ cartItems, onSuccess }) {
   // 送料取得
   useEffect(() => {
     if (cartItems.length === 0) return;
-    fetch("http://localhost:3001/create-payment-intent", {
+    fetch("https://ryuge-site.onrender.com/create-payment-intent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ items: cartItems, prefecture, email: "tmp@tmp.com", name: "tmp", address: "tmp" }),
@@ -87,7 +87,7 @@ function CheckoutForm({ cartItems, onSuccess }) {
     }
 
     // 注文完了メール送信
-    await fetch("http://localhost:3001/order-complete", {
+    fetch("https://ryuge-site.onrender.com/order-complete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ items: cartItems, name, email, address, prefecture, total, shipping }),
