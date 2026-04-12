@@ -40,11 +40,13 @@ export default function SiteLayout({
             className="cart-indicator"
             onClick={() => setIsCartOpen(true)}
           >
-            🛒 {(cartItems || []).reduce((sum, item) => sum + item.quantity, 0)}
+            {lang === "ja" ? "カート" : lang === "es" ? "Carrito" : "Cart"}
+{(cartItems || []).reduce((sum, item) => sum + item.quantity, 0) > 0 &&
+  ` (${(cartItems || []).reduce((sum, item) => sum + item.quantity, 0)})`}
           </button>
 
           {/* 言語切替 */}
-          <button className={lang === "ja" ? "active" : ""} onClick={() => setLang("ja")}>JA</button>
+          <button className={lang === "ja" ? "active" : ""} onClick={() => setLang("ja")}>JP</button>
           <button className={lang === "en" ? "active" : ""} onClick={() => setLang("en")}>EN</button>
           <button className={lang === "es" ? "active" : ""} onClick={() => setLang("es")}>ES</button>
         </div>

@@ -37,6 +37,8 @@ const UI = {
 
     instagram: "Instagram",
     email: "Email",
+    contact: "お問合せ / 卸販売について",
+shipping: "送料について",
 
     footerBrand: "Ryuge Coffee",
     footerTagline: "Quietly crafted in Kamakura",
@@ -100,6 +102,8 @@ orioriDescription: "折々は、季節や日々の移ろいに合わせて、そ
 
   instagram: "Instagram",
   email: "Email",
+contact: "Contact / Wholesale",
+shipping: "Shipping Info",
 
   footerBrand: "Ryuge Coffee",
   footerTagline: "Quietly crafted in Kamakura",
@@ -169,6 +173,8 @@ es: {
 
   instagram: "Instagram",
   email: "Email",
+  contact: "Contacto / Mayorista",
+shipping: "Información de Envío",
 
   footerBrand: "Ryuge Coffee",
   footerTagline: "Quietly crafted in Kamakura",
@@ -469,7 +475,7 @@ export default function HomePage({ lang, setLang }) {
       onClick={() => setLang("ja")}
       type="button"
     >
-      JA
+      JP 
     </button>
     <button
       className={lang === "en" ? "active" : ""}
@@ -529,6 +535,8 @@ export default function HomePage({ lang, setLang }) {
     <p>{t.storyText}</p>
   </div>
 </div>
+
+<div style={{ height: "28px" }} />
           </div>
         </section>
 

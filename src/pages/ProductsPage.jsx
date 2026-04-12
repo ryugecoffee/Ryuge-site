@@ -6,19 +6,19 @@ const DEFAULT_SUBSCRIPTION_PLAN = "basic";
 
 const PAGE_TEXT = {
   ja: {
-    heroEyebrow: "Products",
+    heroEyebrow: "鎌倉から届く、一杯",
     heroTitle: "静けさを、日常へ",
     bannerLead: "華やかさは、香りだけではない",
     bannerTitle: "余韻である",
   },
   en: {
-    heroEyebrow: "Products",
+    heroEyebrow: "A cup from Kamakura",
     heroTitle: "From stillness into everyday life",
     bannerLead: "Brightness is not just aroma",
     bannerTitle: "It lingers",
   },
   es: {
-    heroEyebrow: "Products",
+    heroEyebrow: "Una taza desde Kamakura",
     heroTitle: "La quietud, hacia la vida cotidiana",
     bannerLead: "No es solo aroma",
     bannerTitle: "Permanece",
@@ -407,15 +407,32 @@ useEffect(() => {
                         {currentSubscriptionPlan.note}
                       </p>
 
-                      <a
-                        href={activeItem.link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="subscription-cta"
-                      >
-                        <span>{currentSubscriptionPlan.button}</span>
-                        <span className="modal-link-arrow">↗</span>
-                      </a>
+                        <button
+  type="button"
+  className="modal-cta-link"
+  style={{ marginTop: "16px" }}
+  onClick={() => {
+    if (!currentSubscriptionPlan) return;
+    const priceMap = { light: 2200, basic: 3500, premium: 3900 };
+    const unitPrice = priceMap[currentSubscriptionPlan.id] ?? 0;
+    setCartItems((prev) => {
+      const id = `subscription-${currentSubscriptionPlan.id}`;
+      const otherItems = prev.filter((item) => item.id !== id);
+      return [
+        ...otherItems,
+        {
+          id,
+          title: `${activeItem.title?.[lang] || "サブスクリプション"} — ${currentSubscriptionPlan.name}`,
+          price: unitPrice,
+          quantity: 1,
+        },
+      ];
+    });
+    setActiveItemId(null);
+  }}
+>
+  {lang === "ja" ? "カートに入れる" : lang === "es" ? "Añadir al carrito" : "Add to cart"}
+</button>
                     </div>
                   )}
                 </div>
@@ -464,42 +481,13 @@ useEffect(() => {
                               currentCoffeeBagVariant.name?.en}
                           </strong>
 
-                          <p className="coffeebag-variant-note">
-                            {currentCoffeeBagVariant.note?.[lang] ||
-                              currentCoffeeBagVariant.note?.en}
-                          </p>
-
-                          <div className="coffeebag-tea-types">
-                            <p className="coffeebag-block-label">
-                              {currentCoffeeBagVariant.teaTypes
-                                ? lang === "ja"
-                                  ? "お茶の種類"
-                                  : lang === "es"
-                                  ? "Tipo de té"
-                                  : "Tea Type"
-                                : "\u00A0"}
-                            </p>
-
-                            {currentCoffeeBagVariant.teaTypes ? (
-                              <div className="coffeebag-chip-list">
-                                {(
-                                  currentCoffeeBagVariant.teaTypes?.[lang] ||
-                                  currentCoffeeBagVariant.teaTypes?.en ||
-                                  []
-                                ).map((tea, i) => (
-                                  <span key={i} className="coffeebag-chip">
-                                    {tea}
-                                  </span>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="coffeebag-chip-list coffeebag-chip-list-placeholder">
-                                <span className="coffeebag-chip coffeebag-chip-placeholder">
-                                  &nbsp;
-                                </span>
-                              </div>
-                            )}
-                          </div>
+<p className="coffeebag-variant-note">
+  {currentCoffeeBagVariant.note?.[lang] ||
+    currentCoffeeBagVariant.note?.en}
+</p>
+<p style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)", margin: "4px 0 0" }}>
+¥{(currentCoffeeBagVariant?.id === "coffee-bag" ? 350 : 600).toLocaleString()} / {lang === "ja" ? "個" : lang === "es" ? "ud." : "each"}
+</p>
 
                           <div className="coffeebag-brew-block">
                             <p className="coffeebag-block-label">
@@ -522,47 +510,63 @@ useEffect(() => {
                           </div>
 
                           <div className="coffeebag-quantity-block">
-                            <p className="coffeebag-block-label">
-                              {lang === "ja"
-                                ? "購入個数"
-                                : lang === "es"
-                                ? "Cantidad"
-                                : "Quantity"}
-                            </p>
+  <p className="coffeebag-block-label">
+    {lang === "ja" ? "購入個数" : lang === "es" ? "Cantidad" : "Quantity"}
+  </p>
+  <div className="simple-quantity-control">
+    <button
+      type="button"
+      onClick={() => setSelectedBagQuantity((prev) => String(Math.max(1, Number(prev) - 1)))}
+    >
+      −
+    </button>
+    <input
+      type="number"
+      min="1"
+      value={selectedBagQuantity}
+      onChange={(e) => {
+        const v = Number(e.target.value);
+        if (!isNaN(v) && v >= 1) setSelectedBagQuantity(String(v));
+      }}
+    />
+   <button
+      type="button"
+      onClick={() => setSelectedBagQuantity((prev) => String(Number(prev) + 1))}
+    >
+      ＋
+    </button>
+  </div>
+  <p style={{ marginTop: "10px", fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>
+    ¥{((currentCoffeeBagVariant?.id === "coffee-bag" ? 350 : 600) * Number(selectedBagQuantity)).toLocaleString()}
+  </p>
+</div>
 
-                            <div className="coffeebag-quantity-tabs">
-                              {(currentCoffeeBagVariant.quantities || []).map(
-                                (q) => (
-                                  <button
-                                    key={q.id}
-                                    type="button"
-                                    className={`coffeebag-quantity-tab ${
-                                      selectedBagQuantity === q.id
-                                        ? "active"
-                                        : ""
-                                    }`}
-                                    onClick={() => setSelectedBagQuantity(q.id)}
-                                  >
-                                    {q.label}
-                                  </button>
-                                )
-                              )}
-                            </div>
-                          </div>
-
-                          <a
-                            href={currentCoffeeBagVariant.link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="subscription-cta"
-                          >
-                            <span>
-                              {currentCoffeeBagVariant.button?.[lang] ||
-                                currentCoffeeBagVariant.button?.en ||
-                                "Buy"}
-                            </span>
-                            <span className="modal-link-arrow">↗</span>
-                          </a>
+<button
+  type="button"
+  className="modal-cta-link"
+  style={{ marginTop: "16px" }}
+  onClick={() => {
+    const qty = Number(selectedBagQuantity);
+    if (qty <= 0) return;
+    const unitPrice = currentCoffeeBagVariant.id === "coffee-bag" ? 350 : 600;
+    setCartItems((prev) => {
+      const id = `${activeItem.id}-${currentCoffeeBagVariant.id}`;
+      const otherItems = prev.filter((item) => item.id !== id);
+      return [
+        ...otherItems,
+        {
+          id,
+          title: `${currentCoffeeBagVariant.name?.[lang] || currentCoffeeBagVariant.name?.en}`,
+          price: unitPrice,
+          quantity: qty,
+        },
+      ];
+    });
+    setActiveItemId(null);
+  }}
+>
+  {lang === "ja" ? "カートに入れる" : lang === "es" ? "Añadir al carrito" : "Add to cart"}
+</button>
                         </div>
                       )}
                     </>
@@ -621,51 +625,36 @@ useEffect(() => {
   </div>
 </div>
 
-                      {activeItem.isSoldOut ? (
+{activeItem.isSoldOut ? (
   <button className="modal-cta-link is-disabled" disabled>
     {SOLD_OUT_TEXT[lang]}
   </button>
 ) : (
-  <div className="product-modal-actions modal-fade-up">
-    <a
-      href={activeItem.link}
-      target="_blank"
-      rel="noreferrer"
-      className="modal-cta-link"
-    >
-      <span>{sectionText.buyButton}</span>
-      <span className="modal-link-arrow">↗</span>
-    </a>
-
-<button
-  type="button"
-  className="product-cart-button"
-onClick={() => {
-  setCartItems((prev) => {
-    const otherItems = prev.filter((item) => item.id !== activeItem.id);
-
-    if (simpleQuantity === 0) {
-      return otherItems;
-    }
-
-return [
-  ...otherItems,
-{
-  id: activeItem.id,
-  title:
-    activeItem.title?.[lang] ||
-    activeItem.title?.en ||
-    activeItem.title,
-  price: activeItem.priceNumber ?? 0,
-  quantity: simpleQuantity,
-}
-];
-  });
-}}
->
-  カートに入れる
-</button>
-  </div>
+  <button
+    type="button"
+    className="modal-cta-link modal-fade-up"
+    onClick={() => {
+      setCartItems((prev) => {
+        const otherItems = prev.filter((item) => item.id !== activeItem.id);
+        if (simpleQuantity === 0) return otherItems;
+        return [
+          ...otherItems,
+          {
+            id: activeItem.id,
+            title:
+              activeItem.title?.[lang] ||
+              activeItem.title?.en ||
+              activeItem.title,
+            price: activeItem.priceNumber ?? 0,
+            quantity: simpleQuantity,
+          },
+        ];
+      });
+      setActiveItemId(null);
+    }}
+  >
+    {lang === "ja" ? "カートに入れる" : lang === "es" ? "Añadir al carrito" : "Add to cart"}
+  </button>
 )}
                     </>
                   )}

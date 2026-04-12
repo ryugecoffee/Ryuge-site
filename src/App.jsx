@@ -8,6 +8,7 @@ import Terms from "./pages/Terms";
 import ProductsPage from "./pages/ProductsPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import CheckoutCompletePage from "./pages/CheckoutCompletePage";
+import ShippingPage from "./pages/ShippingPage";
 
 export default function App() {
   const [lang, setLang] = useState(() => {
@@ -67,6 +68,7 @@ const updateCartQuantity = (id, nextQuantity) => {
         />
 <Route path="/privacy" element={<PrivacyPolicy lang={lang} />} />
 <Route path="/terms" element={<Terms lang={lang} />} />
+<Route path="/shipping" element={<ShippingPage lang={lang} />} />
 <Route path="/legal" element={<LegalNotice lang={lang} />} />
       </Route>
       <Route

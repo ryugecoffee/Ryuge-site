@@ -1,6 +1,6 @@
 :root {
   --bg: #070707;
-  --text: rgba(255, 255, 255, 0.7);
+  --text: rgba(255, 255, 255, 0.48);
   --muted: rgba(255, 255, 255, 0.42);
   --line: rgba(255, 255, 255, 0.065);
   --line-strong: rgba(255, 255, 255, 0.11);
@@ -1995,7 +1995,7 @@ html[lang="es"] .story-body {
 
 .products-showcase-page {
   background: #050505;
-  color: #f5f1e8;
+  color: rgba(245, 241, 232, 0.48);
 }
 
 .products-hero {
@@ -2011,23 +2011,23 @@ html[lang="es"] .story-body {
   height: 100%;
   object-fit: cover;
   display: block;
-  filter: brightness(0.72);
+  filter: brightness(0.52) saturate(0.8);
 }
 
 .products-hero-overlay {
   position: absolute;
-  left: 8%;
-  bottom: 10%;
+  left: 3%;
+  bottom: 6%;
   z-index: 2;
   max-width: 560px;
 }
 
 .products-eyebrow {
   margin: 0 0 12px;
-  font-size: 10px;
+  font-size: 15px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  opacity: 0.62;
+  opacity: 0.9;
 }
 
 .products-hero-overlay h1 {
@@ -2036,6 +2036,7 @@ html[lang="es"] .story-body {
   line-height: 1.12;
   font-weight: 400;
   letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.52);
 }
 
 html[lang="en"] .products-hero-overlay h1,
@@ -2106,7 +2107,7 @@ html[lang="es"] .products-hero-overlay h1 {
   height: 100%;
   object-fit: cover;
   display: block;
-  filter: brightness(0.9);
+  filter: brightness(0.72) saturate(0.85);
 }
 
 .products-enma-card-text {
@@ -2124,6 +2125,7 @@ html[lang="es"] .products-hero-overlay h1 {
   letter-spacing: 0.04em;
   line-height: 1.1;
   white-space: pre-line;
+  color: rgba(245, 241, 232, 0.92);
 }
 
 .products-enma-card-text p {
@@ -2186,16 +2188,16 @@ html[lang="es"] .products-hero-overlay h1 {
   font-size: 15px;
   line-height: 1.6;
   letter-spacing: 0.08em;
-  color: rgba(245, 241, 234, 0.9);
+  color: rgba(245, 241, 234, 0.48);
 }
 
 .products-banner-overlay h2 {
   margin: 0;
-  font-size: clamp(36px, 5vw, 58px);
+  font-size: clamp(36px, 5vw, 48px);
   line-height: 1.08;
   letter-spacing: 0.08em;
   font-weight: 500;
-  color: #fff;
+  color: rgba(255, 255, 255, 0.52);
 }
 
 .products-two-col {
@@ -3100,6 +3102,7 @@ html[lang="es"] .products-hero-overlay h1 {
   margin: 0 0 4px;
   font-size: 13px;
   line-height: 1.12;
+  color: rgba(245, 241, 232, 0.92);
 }
 
 .products-enma-card-text p,
@@ -3400,38 +3403,25 @@ html[lang="es"] .products-hero-overlay h1 {
   letter-spacing: 0.08em;
   color: rgba(255,255,255,0.7);
 }
+
 .cart-indicator {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-width: 34px;
-  height: 34px;
-  padding: 0 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0;
   color: rgba(255, 255, 255, 0.78);
   font-size: 11px;
   letter-spacing: 0.08em;
-  line-height: 1;
-  white-space: nowrap;
-}
-.cart-indicator {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 34px;
-  height: 34px;
-  padding: 0 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  line-height: 1;
-  white-space: nowrap;
+  padding: 0 0 3px;
   cursor: pointer;
+  transition: color 0.25s ease, border-color 0.25s ease;
+}
+
+.cart-indicator:hover {
+  color: #fff;
+  border-bottom-color: rgba(255, 255, 255, 0.6);
 }
 .cart-empty {
   margin: 0;
@@ -3860,4 +3850,44 @@ html[lang="es"] .products-hero-overlay h1 {
 .cart-checkout-button:hover {
   background: #fff;
   transform: translateY(-1px);
+}
+.home-lang-switch {
+  border: none !important;
+  background: transparent !important;
+}
+
+.home-lang-switch button {
+  border: none;
+  background: transparent;
+}
+.header-lang-switch {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.header-lang-switch button {
+  border: none !important;
+  background: transparent !important;
+}
+
+.header-lang-switch button.active {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+.modal-copy-inner,
+.cart-modal {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.hero-title {
+  color: rgba(255, 255, 255, 0.52);
+}
+
+.site-nav a {
+  color: rgba(255, 255, 255, 0.36) !important;
+}
+
+.hero-eyebrow {
+  color: rgba(255, 255, 255, 0.36);
 }
