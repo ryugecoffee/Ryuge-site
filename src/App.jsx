@@ -6,6 +6,8 @@ import LegalNotice from "./pages/LegalNotice";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import ProductsPage from "./pages/ProductsPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import CheckoutCompletePage from "./pages/CheckoutCompletePage";
 
 export default function App() {
   const [lang, setLang] = useState(() => {
@@ -67,6 +69,20 @@ const updateCartQuantity = (id, nextQuantity) => {
 <Route path="/terms" element={<Terms lang={lang} />} />
 <Route path="/legal" element={<LegalNotice lang={lang} />} />
       </Route>
+      <Route
+  path="/checkout"
+  element={
+    <CheckoutPage
+      cartItems={cartItems}
+      setCartItems={setCartItems}
+      lang={lang}
+    />
+  }
+/>
+<Route
+  path="/checkout/complete"
+  element={<CheckoutCompletePage />}
+/>
     </Routes>
   );
 }

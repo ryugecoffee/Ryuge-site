@@ -648,17 +648,18 @@ onClick={() => {
       return otherItems;
     }
 
-    return [
-      ...otherItems,
-      {
-        id: activeItem.id,
-        title:
-          activeItem.title?.[lang] ||
-          activeItem.title?.en ||
-          activeItem.title,
-        quantity: simpleQuantity,
-      },
-    ];
+return [
+  ...otherItems,
+{
+  id: activeItem.id,
+  title:
+    activeItem.title?.[lang] ||
+    activeItem.title?.en ||
+    activeItem.title,
+  price: activeItem.priceNumber ?? 0,
+  quantity: simpleQuantity,
+}
+];
   });
 }}
 >
