@@ -45,7 +45,7 @@ export default async function handler(req, res) {
           amount: amountMoney,
           currency: "JPY",
         },
-        location_id: "LS35CQ8K36VVV",
+        location_id: "L50FAXZHCP6YM",
       }),
     });
 
