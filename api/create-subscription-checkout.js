@@ -24,11 +24,13 @@ export default async function handler(req, res) {
 
     const item = cartItems[0];
 
-    if (!["light", "basic", "premium"].includes(item.id)) {
+    const planId = item.id.replace("subscription-", "");
+
+    if (!["light", "basic", "premium"].includes(planId)) {
       return res.status(400).json({ error: "Invalid subscription plan." });
     }
 
-    const priceId = SUBSCRIPTION_PRICE_IDS[item.id];
+    const priceId = SUBSCRIPTION_PRICE_IDS[planId];
 
     if (!priceId) {
       return res.status(400).json({ error: "Missing Stripe price ID." });
@@ -51,7 +53,7 @@ export default async function handler(req, res) {
       cancel_url: `${origin}/checkout`,
       customer_email: customer?.email || undefined,
       metadata: {
-        planId: item.id,
+        planId: planId,
         customerName: customer?.name || "",
         postalCode: customer?.postalCode || "",
         prefecture: customer?.prefecture || "",

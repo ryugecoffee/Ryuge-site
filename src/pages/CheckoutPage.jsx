@@ -189,8 +189,6 @@ const inputStyle = {
   width: "100%",
 };
 
-const SUBSCRIPTION_IDS = ["light", "basic", "premium"];
-
 function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -219,9 +217,10 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const hasSubscription = (cartItems || []).some((item) =>
-    SUBSCRIPTION_IDS.includes(item.id)
-  );
+ const hasSubscription = (cartItems || []).some((item) =>
+  item.id?.startsWith("subscription-")
+);
+
 
   const cartSubtotal = (cartItems || []).reduce(
     (sum, item) => sum + (item.price || 0) * item.quantity,
