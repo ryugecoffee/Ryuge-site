@@ -432,10 +432,10 @@ useEffect(() => {
                         onClick={() => {
                           if (!currentSubscriptionPlan) return;
                           const priceMap = {
-                            light: 2200,
-                            basic: 3500,
-                            premium: 3900,
-                          };
+  light: 2200,
+  basic: 3600,
+  premium: 4600,
+};
                           const unitPrice =
                             priceMap[currentSubscriptionPlan.id] ?? 0;
 
