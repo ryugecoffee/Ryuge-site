@@ -481,7 +481,7 @@ export const PRODUCT_DATA = {
     },
     {
       id: "oriori-wheel",
-      image: "/images/atmosphere-2.jpg",
+      image: "/images/oriori.wheel.jpg",
       title: {
         ja: "フレーバーホイール",
         en: "Flavor Wheel",

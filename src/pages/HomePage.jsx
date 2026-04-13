@@ -239,7 +239,7 @@ subtitle: "Enma",
         "龍華珈琲の象徴的な存在。印象的でありながら、空間に静かに馴染む包装と味わい。",
       detail:
         "閻魔は、龍華珈琲を象徴する存在。浅煎りも深煎りも、その時に最もふさわしい焙煎で仕上げる。香り、余韻、質感のバランスだけを頼りに、選び抜かれた味わいを届ける。閻魔の御前の一杯を、ご自宅で。",
-      image: "/images/enma.jpg",
+      image: "/images/top.enma.jpg",
       className: "product-main",
       squareUrl: COMMON_SQUARE_URL,
     },
@@ -251,7 +251,7 @@ subtitle: "Wooden Edition",
         "木という素材の温度を活かした、より深く印象に残る最高位な珈琲。",
       detail:
         "木函は、品質の高い選び抜かれたものだけを収める器。触れた瞬間から違いが立ち上がり、開ける所作とともに静けさが整う。寺から届く、最上位の味わい。",
-      image: "/images/woodbox-3.jpg",
+      image: "/images/top.woodbox-3.jpg",
       className: "product-side-top",
       squareUrl: COMMON_SQUARE_URL,
     },
@@ -265,7 +265,7 @@ subtitle: "Enma",
         "A signature presence of Ryuge Coffee. Distinct, yet calm enough to belong quietly in a space.",
       detail:
         "Enma is the core signature of Ryuge Coffee. It is shaped around a balance between a striking silhouette and a finish that lingers quietly.",
-      image: "/images/enma.jpg",
+      image: "/images/top.enma.jpg",
       className: "product-main",
       squareUrl: COMMON_SQUARE_URL,
     },
@@ -277,7 +277,7 @@ subtitle: "Wooden Edition",
         "A deeper expression shaped through the warmth and tactility of wood.",
       detail:
         "Wood Box is made to refine the act of giving. The opening gesture, surface feel, and breathing room of the design are part of the experience.",
-      image: "/images/woodbox-3.jpg",
+      image: "/images/top.woodbox-3.jpg",
       className: "product-side-top",
       squareUrl: COMMON_SQUARE_URL,
     },
@@ -291,7 +291,7 @@ subtitle: "Enma",
         "La presencia emblemática de Ryuge Coffee. Distinta, pero silenciosa dentro del espacio.",
       detail:
         "Enma es la firma central de Ryuge Coffee. Está diseñada para equilibrar una silueta fuerte con un final que permanece en silencio.",
-      image: "/images/enma.jpg",
+      image: "/images/top.enma.jpg",
       className: "product-main",
       squareUrl: COMMON_SQUARE_URL,
     },
@@ -303,7 +303,7 @@ subtitle: "Wooden Edition",
         "Una expresión más profunda creada con la calidez y la textura de la madera.",
       detail:
         "Wood Box busca ordenar con calma el acto de regalar. El gesto de abrir, la textura y el espacio visual forman parte de la experiencia.",
-      image: "/images/woodbox-3.jpg",
+      image: "/images/top.woodbox-3.jpg",
       className: "product-side-top",
       squareUrl: COMMON_SQUARE_URL,
     },
@@ -561,7 +561,7 @@ export default function HomePage({ lang, setLang }) {
 
               <div className="feature-sub reveal delay-2">
                 <div className="image-shell sub-shell image-parallax">
-                  <img src="/images/detail-1.jpg" alt="Ryuge Coffee detail" />
+                  <img src="/images/atmosphere-2.jpg" alt="Ryuge Coffee detail" />
                 </div>
               </div>
             </div>
@@ -572,7 +572,7 @@ export default function HomePage({ lang, setLang }) {
           <div className="container quiet-visual-inner reveal">
             <div className="image-shell quiet-shell image-parallax">
               <img
-                src="/images/atmosphere-2.jpg"
+                src="/images/atmosphere-3.jpg"
                 alt="Ryuge Coffee atmosphere 2"
               />
             </div>
@@ -622,14 +622,14 @@ export default function HomePage({ lang, setLang }) {
             subtitle: t.orioriLabel,
             description: t.orioriDescription,
             detail: t.orioriLead,
-            image: "/images/oriori-1.jpg",
+            image: "/images/top.oriori.jpg",
             squareUrl: null,
           })
         }
       >
         <div className="product-image-wrap">
           <div className="product-image image-parallax">
-            <img src="/images/oriori-1.jpg" alt={t.orioriLabel} />
+            <img src="/images/top.oriori.jpg" alt={t.orioriLabel} />
           </div>
 
           <div className="product-copy">
