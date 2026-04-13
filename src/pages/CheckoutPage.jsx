@@ -88,7 +88,10 @@ const UI = {
     address3: "Address Line 3（任意）",
     processing: "処理中...",
     pay: "を支払う",
+    startSubscription: "サブスクを開始する",
     back: "← 戻る",
+    subscriptionOnlyOne:
+      "サブスクは1プランのみ購入できます。通常商品とは分けて決済してください。",
   },
   en: {
     eyebrow: "Checkout",
@@ -117,7 +120,10 @@ const UI = {
     address3: "Address Line 3 (Optional)",
     processing: "Processing...",
     pay: "Pay",
+    startSubscription: "Start Subscription",
     back: "← Back",
+    subscriptionOnlyOne:
+      "Subscription checkout supports one plan only. Please purchase regular items separately.",
   },
   es: {
     eyebrow: "Checkout",
@@ -146,7 +152,10 @@ const UI = {
     address3: "Dirección 3 (Opcional)",
     processing: "Procesando...",
     pay: "Pagar",
+    startSubscription: "Iniciar suscripción",
     back: "← Volver",
+    subscriptionOnlyOne:
+      "La suscripción solo admite un plan por compra. Compra los productos normales por separado.",
   },
 };
 
@@ -180,6 +189,8 @@ const inputStyle = {
   width: "100%",
 };
 
+const SUBSCRIPTION_IDS = ["light", "basic", "premium"];
+
 function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -208,8 +219,25 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const hasSubscription = (cartItems || []).some((item) =>
+    SUBSCRIPTION_IDS.includes(item.id)
+  );
+
+  const cartSubtotal = (cartItems || []).reduce(
+    (sum, item) => sum + (item.price || 0) * item.quantity,
+    0
+  );
+
   useEffect(() => {
     if (!cartItems || cartItems.length === 0) return;
+
+    if (hasSubscription) {
+      setShipping(0);
+      setTotal(cartSubtotal);
+      setClientSecret("");
+      setError("");
+      return;
+    }
 
     const initCheckout = async () => {
       try {
@@ -245,17 +273,73 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
     };
 
     initCheckout();
-  }, [cartItems, prefecture, countryType]);
+  }, [cartItems, prefecture, countryType, hasSubscription, cartSubtotal]);
+
+  const buildFinalAddress = () => {
+    if (countryType === "japan") {
+      return `${prefecture} ${addressLine1Ja} ${addressLine2Ja}`.trim();
+    }
+
+    return [
+      addressLine1,
+      addressLine2,
+      addressLine3,
+      city,
+      stateRegion,
+      postalCode,
+      country,
+    ]
+      .filter(Boolean)
+      .join(", ");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!stripe || !elements || !clientSecret) return;
-
     setLoading(true);
     setError("");
 
     try {
+      const finalAddress = buildFinalAddress();
+
+      if (hasSubscription) {
+        if (cartItems.length !== 1 || cartItems[0].quantity !== 1) {
+          setError(t.subscriptionOnlyOne);
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch("/api/create-subscription-checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cartItems,
+            customer: {
+              name,
+              email,
+              postalCode,
+              prefecture: countryType === "japan" ? prefecture : country,
+              address: finalAddress,
+            },
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.url) {
+          throw new Error(
+            data.error || "Failed to start subscription checkout."
+          );
+        }
+
+        window.location.href = data.url;
+        return;
+      }
+
+      if (!stripe || !elements || !clientSecret) {
+        setLoading(false);
+        return;
+      }
+
       const cardElement = elements.getElement(CardElement);
 
       if (!cardElement) {
@@ -276,21 +360,6 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         setLoading(false);
         return;
       }
-
-      const finalAddress =
-        countryType === "japan"
-          ? `${prefecture} ${addressLine1Ja} ${addressLine2Ja}`.trim()
-          : [
-              addressLine1,
-              addressLine2,
-              addressLine3,
-              city,
-              stateRegion,
-              postalCode,
-              country,
-            ]
-              .filter(Boolean)
-              .join(", ");
 
       await fetch("https://ryuge-site.onrender.com/order-complete", {
         method: "POST",
@@ -518,33 +587,39 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         </div>
       </div>
 
-      <div className="checkout-card-section">
-        <p className="checkout-section-label">{t.cardInfo}</p>
+      {!hasSubscription && (
+        <div className="checkout-card-section">
+          <p className="checkout-section-label">{t.cardInfo}</p>
 
-        <div
-          className="checkout-card-container"
-          style={{
-            padding: "18px 20px",
-            minHeight: "64px",
-            border: "1px solid rgba(255,255,255,0.14)",
-            borderRadius: "16px",
-            background: "rgba(255,255,255,0.02)",
-            position: "relative",
-            zIndex: 1,
-          }}
-        >
-          <CardElement options={CARD_STYLE} />
+          <div
+            className="checkout-card-container"
+            style={{
+              padding: "18px 20px",
+              minHeight: "64px",
+              border: "1px solid rgba(255,255,255,0.14)",
+              borderRadius: "16px",
+              background: "rgba(255,255,255,0.02)",
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
+            <CardElement options={CARD_STYLE} />
+          </div>
         </div>
-      </div>
+      )}
 
       {error && <p className="checkout-error">{error}</p>}
 
       <button
         type="submit"
         className="checkout-pay-button"
-        disabled={!stripe || loading || !clientSecret}
+        disabled={loading || (!hasSubscription && (!stripe || !clientSecret))}
       >
-        {loading ? t.processing : `¥${total?.toLocaleString() ?? "..."} ${t.pay}`}
+        {loading
+          ? t.processing
+          : hasSubscription
+          ? t.startSubscription
+          : `¥${total?.toLocaleString() ?? "..."} ${t.pay}`}
       </button>
 
       <button
