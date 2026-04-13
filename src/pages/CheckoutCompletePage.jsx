@@ -73,7 +73,7 @@ export default function CheckoutCompletePage() {
             {name}{t.nameSuffix ? `　${t.nameSuffix}` : ""}
           </p>
         )}
-        <h1 style={{ margin: 0, fontSize: "clamp(28px, 3.2vw, 48px)", fontWeight: 400, lineHeight: 1.12, letterSpacing: "-0.01em", color: "rgba(255,255,255,0.92)" }}>
+        <h1 style={{ margin: 0, fontSize: "clamp(22px, 2vw, 32px)", fontWeight: 400, lineHeight: 1.12, letterSpacing: "-0.01em", color: "rgba(255,255,255,0.92)" }}>
           {t.title}
         </h1>
         <p style={{ margin: 0, fontSize: "14px", lineHeight: 1.9, color: "rgba(255,255,255,0.52)" }}>
