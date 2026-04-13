@@ -69,7 +69,7 @@ export const PRODUCT_DATA = {
       id: "enma-ethiopia-dark",
       image: "/images/enma-1.jpg",
       category: "beans",
-size: "180g",
+      size: "180g",
       title: {
         ja: "閻魔　深煎りの禅",
         en: "King ENMA Dark Roast",
@@ -96,7 +96,7 @@ size: "180g",
       id: "enma-ethiopia-light",
       image: "/images/enma-2.jpg",
       category: "beans",
-size: "180g",
+      size: "180g",
       title: {
         ja: "閻魔　エチオピア　浅煎り",
         en: "ENMA Ethiopia Light Roast",
@@ -123,7 +123,7 @@ size: "180g",
       id: "enma-burundi-light",
       image: "/images/enma-3.jpg",
       category: "beans",
-size: "180g",
+      size: "180g",
       title: {
         ja: "閻魔　ブルンジ　浅煎り",
         en: "ENMA Burundi Light Roast",
@@ -153,7 +153,7 @@ size: "180g",
       id: "woodbox-ethiopia",
       image: "/images/woodbox-1.jpg",
       category: "woodbox",
-size: "100g",
+      size: "100g",
       title: {
         ja: "木函　コロンビア　ゲイシャ",
         en: "WOOD BOX Colombia Geisha",
@@ -185,7 +185,7 @@ size: "100g",
       id: "woodbox-geisha",
       image: "/images/woodbox-2.jpg",
       category: "woodbox",
-size: "100g",
+      size: "100g",
       title: {
         ja: "木函　ホンジュラス　ゲイシャ",
         en: "WOOD BOX Honduras Geisha",
@@ -219,8 +219,8 @@ size: "100g",
   oriori: [
     {
       id: "oriori-subscription",
-        category: "subscription",
-  size: "100g",
+      category: "subscription",
+      size: "100g",
       image: "/images/oriori-1.jpg",
       title: {
         ja: "サブスクリプション",
@@ -285,10 +285,9 @@ size: "100g",
             price: "¥2,200",
             priceNumber: 2200,
             frequency: "Monthly",
-            shipping: "Shipping added at checkout*",
+            shipping: "Free Shipping",
             items: ["ENMA ×1", "Coffee Bag ×3"],
-            note:
-              "A simple recurring delivery to begin with.\n*International shipping is added at checkout.",
+            note: "A simple recurring delivery to begin with.",
             button: "Choose Light",
           },
           {
@@ -299,10 +298,9 @@ size: "100g",
             price: "¥3,500",
             priceNumber: 3500,
             frequency: "Monthly",
-            shipping: "Shipping added at checkout*",
+            shipping: "Free Shipping",
             items: ["ENMA ×2", "Coffee Bag ×4"],
-            note:
-              "The most balanced plan for daily life. \n*International shipping is added at checkout.",
+            note: "The most balanced plan for daily life.",
             button: "Choose Basic",
           },
           {
@@ -313,10 +311,9 @@ size: "100g",
             price: "¥3,900",
             priceNumber: 3900,
             frequency: "Monthly",
-            shipping: "Shipping added at checkout*",
+            shipping: "Free Shipping",
             items: ["WOOD BOX ×1", "ENMA ×1", "Coffee Bag ×2"],
-            note:
-              "A more composed plan with both premium and everyday cups. \n*International shipping is added at checkout.",
+            note: "A more composed plan with both premium and everyday cups.",
             button: "Choose Premium",
           },
         ],
@@ -330,10 +327,9 @@ size: "100g",
             price: "¥2,200",
             priceNumber: 2200,
             frequency: "Mensual",
-            shipping: "Envío calculado al finalizar*",
+            shipping: "Envío gratis",
             items: ["ENMA ×1", "Coffee Bag ×3"],
-            note:
-              "Una suscripción sencilla para empezar.\n*El envío internacional se calcula al finalizar la compra.",
+            note: "Una suscripción sencilla para empezar.",
             button: "Elegir Light",
           },
           {
@@ -344,10 +340,9 @@ size: "100g",
             price: "¥3,500",
             priceNumber: 3500,
             frequency: "Mensual",
-            shipping: "Envío calculado al finalizar*",
+            shipping: "Envío gratis",
             items: ["ENMA ×2", "Coffee Bag ×4"],
-            note:
-              "El plan más equilibrado para el día a día. \n*El envío internacional se calcula al finalizar la compra.",
+            note: "El plan más equilibrado para el día a día.",
             button: "Elegir Basic",
           },
           {
@@ -358,10 +353,10 @@ size: "100g",
             price: "¥3,900",
             priceNumber: 3900,
             frequency: "Mensual",
-            shipping: "Envío calculado al finalizar*",
+            shipping: "Envío gratis",
             items: ["WOOD BOX ×1", "ENMA ×1", "Coffee Bag ×2"],
             note:
-              "Una propuesta más especial entre lo cotidiano y lo excepcional. \n*El envío internacional se calcula al finalizar la compra.",
+              "Una propuesta más especial entre lo cotidiano y lo excepcional.",
             button: "Elegir Premium",
           },
         ],
@@ -369,151 +364,150 @@ size: "100g",
 
       link: "https://square.link/u/xxxxx",
     },
-{
-  id: "oriori-bag",
-  image: "/images/coffee-bag.jpg",
-  title: {
-    ja: "バッグシリーズ",
-    en: "Bag Series",
-    es: "Bag Series",
-  },
-  modalTitle: {
-    ja: "バッグシリーズ",
-    en: "Bag Series",
-    es: "Bag Series",
-  },
-  summary: {
-    ja: "日々の合間に寄り添う、静かな一杯",
-    en: "A quiet cup for everyday moments",
-    es: "Una taza tranquila para el día a día",
-  },
-
-  variants: [
     {
-      id: "coffee-bag",
-      tabLabel: {
-        ja: "珈琲バッグ",
-        en: "Coffee Bag",
-        es: "Coffee Bag",
+      id: "oriori-bag",
+      image: "/images/coffee-bag.jpg",
+      title: {
+        ja: "バッグシリーズ",
+        en: "Bag Series",
+        es: "Bag Series",
       },
-      name: {
-        ja: "閻魔　深煎りの禅",
-        en: "ENMA Dark Roast",
-        es: "ENMA Dark Roast",
+      modalTitle: {
+        ja: "バッグシリーズ",
+        en: "Bag Series",
+        es: "Bag Series",
       },
-      note: {
-        ja: "静かに残る苦味と余韻",
-        en: "Deep bitterness with a quiet finish",
-        es: "Amargor profundo con final suave",
+      summary: {
+        ja: "日々の合間に寄り添う、静かな一杯",
+        en: "A quiet cup for everyday moments",
+        es: "Una taza tranquila para el día a día",
       },
-      brew: {
-        ja: [
-          "マグカップに入れ、160ccのお湯を注ぎ、2分ほど待ってお召し上がりください。"
-        ],
-        en: [
-          "Place the bag in a mug, pour 160ml of hot water, and wait about 2 minutes."
-        ],
-        es: [
-          "Coloque la bolsa en una taza, vierta 160ml de agua caliente y espere unos 2 minutos."
-        ],
-      },
-      quantities: [
-        { id: "1", label: "1個" },
-        { id: "3", label: "3個" },
-        { id: "5", label: "5個" },
+
+      variants: [
+        {
+          id: "coffee-bag",
+          tabLabel: {
+            ja: "珈琲バッグ",
+            en: "Coffee Bag",
+            es: "Coffee Bag",
+          },
+          name: {
+            ja: "閻魔　深煎りの禅",
+            en: "ENMA Dark Roast",
+            es: "ENMA Dark Roast",
+          },
+          note: {
+            ja: "静かに残る苦味と余韻",
+            en: "Deep bitterness with a quiet finish",
+            es: "Amargor profundo con final suave",
+          },
+          brew: {
+            ja: [
+              "マグカップに入れ、160ccのお湯を注ぎ、2分ほど待ってお召し上がりください。",
+            ],
+            en: [
+              "Place the bag in a mug, pour 160ml of hot water, and wait about 2 minutes.",
+            ],
+            es: [
+              "Coloque la bolsa en una taza, vierta 160ml de agua caliente y espere unos 2 minutos.",
+            ],
+          },
+          quantities: [
+            { id: "1", label: "1個" },
+            { id: "3", label: "3個" },
+            { id: "5", label: "5個" },
+          ],
+          button: {
+            ja: "購入する",
+            en: "Buy",
+            es: "Comprar",
+          },
+          link: "https://square.link/u/xxxxx",
+        },
+        {
+          id: "tea-bag",
+          tabLabel: {
+            ja: "お茶バッグ",
+            en: "Tea Bag",
+            es: "Tea Bag",
+          },
+          name: {
+            ja: "お茶バッグ",
+            en: "Tea Bag",
+            es: "Tea Bag",
+          },
+          note: {
+            ja: "寺の時間に寄り添う、やわらかな一杯",
+            en: "A softer, quieter cup",
+            es: "Una taza suave y tranquila",
+          },
+          teaTypes: {
+            ja: ["煎茶"],
+            en: ["Sencha"],
+            es: ["Sencha"],
+          },
+          brew: {
+            ja: [
+              "一煎目：200ccで1分",
+              "二煎目：200ccで10秒",
+              "三煎目：200ccで10秒",
+            ],
+            en: [
+              "1st infusion: 200ml for 1 minute",
+              "2nd infusion: 200ml for 10 seconds",
+              "3rd infusion: 200ml for 10 seconds",
+            ],
+            es: [
+              "Primera infusión: 200ml durante 1 minuto",
+              "Segunda infusión: 200ml durante 10 segundos",
+              "Tercera infusión: 200ml durante 10 segundos",
+            ],
+          },
+          quantities: [
+            { id: "1", label: "1個" },
+            { id: "3", label: "3個" },
+            { id: "5", label: "5個" },
+          ],
+          button: {
+            ja: "購入する",
+            en: "Buy",
+            es: "Comprar",
+          },
+          link: "https://square.link/u/xxxxx",
+        },
       ],
-      button: {
-        ja: "購入する",
-        en: "Buy",
-        es: "Comprar",
-      },
-      link: "https://square.link/u/xxxxx",
+
+      isSoldOut: false,
     },
     {
-      id: "tea-bag",
-      tabLabel: {
-        ja: "お茶バッグ",
-        en: "Tea Bag",
-        es: "Tea Bag",
+      id: "oriori-wheel",
+      image: "/images/atmosphere-2.jpg",
+      title: {
+        ja: "フレーバーホイール",
+        en: "Flavor Wheel",
+        es: "Flavor Wheel",
       },
-      name: {
-        ja: "お茶バッグ",
-        en: "Tea Bag",
-        es: "Tea Bag",
+      modalTitle: {
+        ja: "フレーバーホイール",
+        en: "Flavor Wheel",
+        es: "Flavor Wheel",
       },
-      note: {
-        ja: "寺の時間に寄り添う、やわらかな一杯",
-        en: "A softer, quieter cup",
-        es: "Una taza suave y tranquila",
+      summary: {
+        ja: "味わいを記録し、言葉にするためのサイト",
+        en: "A site for recording and describing flavor",
+        es: "Un sitio para registrar y expresar sabores",
       },
-      teaTypes: {
-        ja: ["煎茶"],
-        en: ["Sencha"],
-        es: ["Sencha"],
+      description: {
+        ja: "選んだフレーバーを記録し、コメントとともに保存できるテイスティング用サイトです。",
+        en: "A tasting site where you can record selected flavors and save them with notes.",
+        es: "Un sitio de cata donde puedes registrar los sabores seleccionados y guardarlos con notas.",
       },
-      brew: {
-        ja: [
-          "一煎目：200ccで1分",
-          "二煎目：200ccで10秒",
-          "三煎目：200ccで10秒",
-        ],
-        en: [
-          "1st infusion: 200ml for 1 minute",
-          "2nd infusion: 200ml for 10 seconds",
-          "3rd infusion: 200ml for 10 seconds",
-        ],
-        es: [
-          "Primera infusión: 200ml durante 1 minuto",
-          "Segunda infusión: 200ml durante 10 segundos",
-          "Tercera infusión: 200ml durante 10 segundos",
-        ],
+      buttonLabel: {
+        ja: "サイトを見る",
+        en: "Open Site",
+        es: "Ver sitio",
       },
-      quantities: [
-        { id: "1", label: "1個" },
-        { id: "3", label: "3個" },
-        { id: "5", label: "5個" },
-      ],
-      button: {
-        ja: "購入する",
-        en: "Buy",
-        es: "Comprar",
-      },
-      link: "https://square.link/u/xxxxx",
+      link: "https://coffeewheel10.vercel.app",
     },
   ],
-
-  isSoldOut: false,
-},
-{
-  id: "oriori-wheel",
-  image: "/images/atmosphere-2.jpg",
-  title: {
-    ja: "フレーバーホイール",
-    en: "Flavor Wheel",
-    es: "Flavor Wheel",
-  },
-  modalTitle: {
-    ja: "フレーバーホイール",
-    en: "Flavor Wheel",
-    es: "Flavor Wheel",
-  },
-  summary: {
-    ja: "味わいを記録し、言葉にするためのサイト",
-    en: "A site for recording and describing flavor",
-    es: "Un sitio para registrar y expresar sabores",
-  },
-  description: {
-    ja: "選んだフレーバーを記録し、コメントとともに保存できるテイスティング用サイトです。",
-    en: "A tasting site where you can record selected flavors and save them with notes.",
-    es: "Un sitio de cata donde puedes registrar los sabores seleccionados y guardarlos con notas.",
-  },
-  buttonLabel: {
-    ja: "サイトを見る",
-    en: "Open Site",
-    es: "Ver sitio",
-  },
-  link: "https://coffeewheel10.vercel.app",
-}
-  ],
-  
 };

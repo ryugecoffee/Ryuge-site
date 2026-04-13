@@ -4,23 +4,27 @@ const TEXT = {
   ja: {
     eyebrow: "配送・送料",
     title: "配送・送料について",
-    lead: "ご注文確定後、1〜3営業日以内に発送いたします。土日・祝日は出荷をお休みしております。",
+    lead: "ご注文確定後、1〜5営業日以内に発送いたします。土日は出荷をお休みしております。",
     sections: [
       {
-        title: "クリックポスト 185円",
-        body: "全国一律、ポスト投函でお届けいたします。サブスクリプション商品および100g商品の発送に対応しています。A4サイズが入るポストが必要です。",
+        title: "5,000円以上で送料無料",
+        body: "ご注文合計が5,000円以上の場合、送料無料となります。",
       },
       {
-        title: "宅配便（ゆうパック）",
-        body: "180g商品や複数点のご注文は、ゆうパックにてお届けいたします。送料は地域・サイズにより異なります。",
+        title: "サブスクリプションは送料無料",
+        body: "サブスクリプション商品は金額にかかわらず送料無料です。",
       },
       {
-        title: "6,000円以上で送料無料",
-        body: "コーヒー豆のご購入合計が6,000円以上の場合、送料無料となります。ゆうパックにて発送いたします。",
+        title: "バッグシリーズのみはクリックポスト 185円",
+        body: "珈琲バッグ・お茶バッグのみのご注文は、合計10個まで全国一律185円のクリックポストでお届けします。",
+      },
+      {
+        title: "それ以外はゆうパック",
+        body: "バッグシリーズ以外の商品を含むご注文、またはバッグシリーズが11個以上のご注文は、ゆうパックで発送いたします。送料は地域・サイズにより異なります。",
       },
       {
         title: "海外発送",
-        body: "EMS（国際郵便）にて対応しております。送料はご注文後にメールにてご案内いたします。",
+        body: "EMS（国際郵便）にて対応します。送料はご注文後にメールにてご案内します。",
       },
     ],
     note: "送料に関するお問い合わせは ryugecoffee@gmail.com までご連絡ください。",
@@ -29,19 +33,23 @@ const TEXT = {
   en: {
     eyebrow: "Shipping",
     title: "Shipping & Delivery",
-    lead: "Orders are shipped within 1–3 business days after confirmation. We do not ship on weekends or public holidays.",
+    lead: "Orders are shipped within 1–5 business days after confirmation. We do not ship on weekends.",
     sections: [
       {
-        title: "Click Post — ¥185",
-        body: "Flat rate nationwide, delivered to your mailbox. Available for subscription items and 100g products. An A4-compatible mailbox is required.",
+        title: "Free shipping on orders over ¥5,000",
+        body: "Orders totaling ¥5,000 or more qualify for free shipping.",
       },
       {
-        title: "Courier (Yu-Pack)",
-        body: "Orders containing 180g products or multiple items will be shipped via Yu-Pack. Rates vary by region and size.",
+        title: "Subscriptions ship free",
+        body: "All subscription products include free shipping regardless of order total.",
       },
       {
-        title: "Free Shipping on Orders over ¥6,000",
-        body: "Orders totaling ¥6,000 or more in coffee beans qualify for free shipping via Yu-Pack.",
+        title: "Bag series only — Click Post ¥185",
+        body: "Orders containing only Coffee Bags and Tea Bags can be shipped via Click Post for a flat rate of ¥185, up to a total of 10 bags.",
+      },
+      {
+        title: "All other orders ship by Yu-Pack",
+        body: "Orders that include items outside the bag series, or bag-only orders with 11 or more bags, will be shipped by Yu-Pack. Shipping rates vary by region and package size.",
       },
       {
         title: "International Shipping",
@@ -54,19 +62,23 @@ const TEXT = {
   es: {
     eyebrow: "Envío",
     title: "Envío y Entrega",
-    lead: "Los pedidos se envían en 1–3 días hábiles tras la confirmación. No realizamos envíos los fines de semana ni en días festivos.",
+    lead: "Los pedidos se envían en 1–5 días hábiles tras la confirmación. No realizamos envíos los fines de semana.",
     sections: [
       {
-        title: "Click Post — ¥185",
-        body: "Tarifa plana nacional, entrega en buzón. Disponible para productos de suscripción y productos de 100g. Se requiere un buzón compatible con tamaño A4.",
+        title: "Envío gratis en pedidos superiores a ¥5,000",
+        body: "Los pedidos con un total de ¥5,000 o más tienen envío gratuito.",
       },
       {
-        title: "Mensajería (Yu-Pack)",
-        body: "Los pedidos con productos de 180g o varios artículos se enviarán mediante Yu-Pack. Las tarifas varían según la región y el tamaño.",
+        title: "Las suscripciones tienen envío gratis",
+        body: "Todos los productos de suscripción incluyen envío gratuito sin importar el total del pedido.",
       },
       {
-        title: "Envío gratis en pedidos superiores a ¥6,000",
-        body: "Los pedidos de café que superen ¥6,000 en total tienen envío gratuito mediante Yu-Pack.",
+        title: "Solo serie de bolsas — Click Post ¥185",
+        body: "Los pedidos que incluyan únicamente Coffee Bags y Tea Bags pueden enviarse por Click Post con una tarifa fija de ¥185, hasta un máximo de 10 bolsas en total.",
+      },
+      {
+        title: "Todos los demás pedidos se envían por Yu-Pack",
+        body: "Los pedidos que incluyan productos fuera de la serie de bolsas, o pedidos solo de bolsas con 11 unidades o más, se enviarán por Yu-Pack. La tarifa varía según la región y el tamaño del paquete.",
       },
       {
         title: "Envío internacional",

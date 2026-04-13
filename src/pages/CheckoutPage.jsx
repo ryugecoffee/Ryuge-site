@@ -11,13 +11,53 @@ import {
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 const PREFECTURES = [
-  "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
-  "茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県",
-  "新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県",
-  "静岡県","愛知県","三重県","滋賀県","京都府","大阪府","兵庫県",
-  "奈良県","和歌山県","鳥取県","島根県","岡山県","広島県","山口県",
-  "徳島県","香川県","愛媛県","高知県","福岡県","佐賀県","長崎県",
-  "熊本県","大分県","宮崎県","鹿児島県","沖縄県",
+  "北海道",
+  "青森県",
+  "岩手県",
+  "宮城県",
+  "秋田県",
+  "山形県",
+  "福島県",
+  "茨城県",
+  "栃木県",
+  "群馬県",
+  "埼玉県",
+  "千葉県",
+  "東京都",
+  "神奈川県",
+  "新潟県",
+  "富山県",
+  "石川県",
+  "福井県",
+  "山梨県",
+  "長野県",
+  "岐阜県",
+  "静岡県",
+  "愛知県",
+  "三重県",
+  "滋賀県",
+  "京都府",
+  "大阪府",
+  "兵庫県",
+  "奈良県",
+  "和歌山県",
+  "鳥取県",
+  "島根県",
+  "岡山県",
+  "広島県",
+  "山口県",
+  "徳島県",
+  "香川県",
+  "愛媛県",
+  "高知県",
+  "福岡県",
+  "佐賀県",
+  "長崎県",
+  "熊本県",
+  "大分県",
+  "宮崎県",
+  "鹿児島県",
+  "沖縄県",
 ];
 
 const UI = {
@@ -169,108 +209,132 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (cartItems.length === 0) return;
+    if (!cartItems || cartItems.length === 0) return;
 
-    fetch("https://ryuge-site.onrender.com/create-payment-intent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        items: cartItems,
-        prefecture: countryType === "japan" ? prefecture : "overseas",
-        email: "tmp@tmp.com",
-        name: "tmp",
-        address: "tmp",
-      }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
+    const initCheckout = async () => {
+      try {
+        setError("");
+
+        const response = await fetch(
+          "https://ryuge-site.onrender.com/create-payment-intent",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              items: cartItems,
+              prefecture: countryType === "japan" ? prefecture : "overseas",
+              email: "tmp@tmp.com",
+              name: "tmp",
+              address: "tmp",
+            }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to initialize checkout.");
+        }
+
         setShipping(data.shipping);
         setTotal(data.total);
         setClientSecret(data.clientSecret);
-      })
-      .catch(() => {
-        setError("Failed to initialize checkout.");
-      });
+      } catch (err) {
+        setError(err.message || "Failed to initialize checkout.");
+      }
+    };
+
+    initCheckout();
   }, [cartItems, prefecture, countryType]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!stripe || !elements || !clientSecret) return;
 
     setLoading(true);
     setError("");
 
-    const cardElement = elements.getElement(CardElement);
-    if (!cardElement) {
-      setError("Card form is not ready yet.");
+    try {
+      const cardElement = elements.getElement(CardElement);
+
+      if (!cardElement) {
+        setError("Card form is not ready yet.");
+        setLoading(false);
+        return;
+      }
+
+      const result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
+          billing_details: { name, email },
+        },
+      });
+
+      if (result.error) {
+        setError(result.error.message || "Payment failed.");
+        setLoading(false);
+        return;
+      }
+
+      const finalAddress =
+        countryType === "japan"
+          ? `${prefecture} ${addressLine1Ja} ${addressLine2Ja}`.trim()
+          : [
+              addressLine1,
+              addressLine2,
+              addressLine3,
+              city,
+              stateRegion,
+              postalCode,
+              country,
+            ]
+              .filter(Boolean)
+              .join(", ");
+
+      await fetch("https://ryuge-site.onrender.com/order-complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: cartItems,
+          name,
+          email,
+          postalCode,
+          address: finalAddress,
+          prefecture: countryType === "japan" ? prefecture : country,
+          total,
+          shipping,
+        }),
+      });
+
+      onSuccess();
+
+      navigate("/checkout/complete", {
+        state: {
+          name,
+          email,
+          postalCode,
+          prefecture: countryType === "japan" ? prefecture : country,
+          address:
+            countryType === "japan"
+              ? `${addressLine1Ja} ${addressLine2Ja}`.trim()
+              : [addressLine1, addressLine2, addressLine3, city, stateRegion]
+                  .filter(Boolean)
+                  .join(", "),
+          total,
+          shipping,
+          items: cartItems,
+          countryType,
+          lang,
+        },
+      });
+    } catch (err) {
+      setError(err.message || "Payment failed.");
       setLoading(false);
       return;
     }
 
-    const result = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: {
-        card: cardElement,
-        billing_details: { name, email },
-      },
-    });
-
-    if (result.error) {
-      setError(result.error.message || "Payment failed.");
-      setLoading(false);
-      return;
-    }
-
-    const finalAddress =
-      countryType === "japan"
-        ? `${prefecture} ${addressLine1Ja} ${addressLine2Ja}`.trim()
-        : [
-            addressLine1,
-            addressLine2,
-            addressLine3,
-            city,
-            stateRegion,
-            postalCode,
-            country,
-          ]
-            .filter(Boolean)
-            .join(", ");
-
-    await fetch("https://ryuge-site.onrender.com/order-complete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        items: cartItems,
-        name,
-        email,
-        postalCode,
-        address: finalAddress,
-        prefecture: countryType === "japan" ? prefecture : country,
-        total,
-        shipping,
-      }),
-    });
-
-    onSuccess();
-
-    navigate("/checkout/complete", {
-      state: {
-        name,
-        email,
-        postalCode,
-        prefecture: countryType === "japan" ? prefecture : country,
-        address:
-          countryType === "japan"
-            ? `${addressLine1Ja} ${addressLine2Ja}`.trim()
-            : [addressLine1, addressLine2, addressLine3, city, stateRegion]
-                .filter(Boolean)
-                .join(", "),
-        total,
-        shipping,
-        items: cartItems,
-        countryType,
-        lang,
-      },
-    });
+    setLoading(false);
   };
 
   return (
@@ -304,14 +368,19 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
 
         <div className="checkout-order-total">
           <span>{t.total}</span>
-          <span>{total === null ? t.calculating : `¥${total.toLocaleString()}`}</span>
+          <span>
+            {total === null ? t.calculating : `¥${total.toLocaleString()}`}
+          </span>
         </div>
       </div>
 
       <div className="checkout-card-section">
         <p className="checkout-section-label">{t.shippingInfo}</p>
 
-        <div className="checkout-card-container" style={{ display: "grid", gap: "12px" }}>
+        <div
+          className="checkout-card-container"
+          style={{ display: "grid", gap: "12px" }}
+        >
           <input
             type="text"
             placeholder={t.name}
@@ -345,7 +414,9 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
                 type="text"
                 placeholder={t.postalCode}
                 value={postalCode}
-                onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, "").slice(0, 7))}
+                onChange={(e) =>
+                  setPostalCode(e.target.value.replace(/\D/g, "").slice(0, 7))
+                }
                 required
                 style={inputStyle}
               />
@@ -447,30 +518,24 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         </div>
       </div>
 
-<div className="checkout-card-section">
-  <p className="checkout-section-label">{t.cardInfo}</p>
+      <div className="checkout-card-section">
+        <p className="checkout-section-label">{t.cardInfo}</p>
 
-  <div
-    className="checkout-card-container"
-    style={{
-      padding: "18px 20px",
-      minHeight: "64px",
-      border: "1px solid rgba(255,255,255,0.14)",
-      borderRadius: "16px",
-      background: "rgba(255,255,255,0.02)",
-      position: "relative",
-      zIndex: 1,
-    }}
-  >
-    <CardElement
-      options={CARD_STYLE}
-      onReady={() => console.log("CardElement ready")}
-      onFocus={() => console.log("CardElement focus")}
-      onBlur={() => console.log("CardElement blur")}
-      onChange={(e) => console.log("CardElement change", e)}
-    />
-  </div>
-</div>
+        <div
+          className="checkout-card-container"
+          style={{
+            padding: "18px 20px",
+            minHeight: "64px",
+            border: "1px solid rgba(255,255,255,0.14)",
+            borderRadius: "16px",
+            background: "rgba(255,255,255,0.02)",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <CardElement options={CARD_STYLE} />
+        </div>
+      </div>
 
       {error && <p className="checkout-error">{error}</p>}
 
@@ -479,9 +544,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         className="checkout-pay-button"
         disabled={!stripe || loading || !clientSecret}
       >
-        {loading
-          ? t.processing
-          : `¥${total?.toLocaleString() ?? "..."} ${t.pay}`}
+        {loading ? t.processing : `¥${total?.toLocaleString() ?? "..."} ${t.pay}`}
       </button>
 
       <button
