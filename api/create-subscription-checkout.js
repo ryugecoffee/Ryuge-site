@@ -16,6 +16,18 @@ export default async function handler(req, res) {
   try {
     const { cartItems, customer } = req.body;
 
+    console.log("=== create-subscription-checkout start ===");
+    console.log("cartItems:", cartItems);
+    console.log("customer:", customer);
+    console.log("env check:", {
+      hasSecretKey: !!process.env.STRIPE_SECRET_KEY,
+      light: process.env.STRIPE_PRICE_LIGHT,
+      basic: process.env.STRIPE_PRICE_BASIC,
+      premium: process.env.STRIPE_PRICE_PREMIUM,
+      siteUrl: process.env.NEXT_PUBLIC_SITE_URL,
+      originHeader: req.headers.origin,
+    });
+
     if (!cartItems || cartItems.length !== 1) {
       return res
         .status(400)
@@ -23,14 +35,17 @@ export default async function handler(req, res) {
     }
 
     const item = cartItems[0];
+    console.log("item:", item);
 
     const planId = item.id.replace("subscription-", "");
+    console.log("planId:", planId);
 
     if (!["light", "basic", "premium"].includes(planId)) {
       return res.status(400).json({ error: "Invalid subscription plan." });
     }
 
     const priceId = SUBSCRIPTION_PRICE_IDS[planId];
+    console.log("priceId:", priceId);
 
     if (!priceId) {
       return res.status(400).json({ error: "Missing Stripe price ID." });
@@ -40,6 +55,8 @@ export default async function handler(req, res) {
       req.headers.origin ||
       process.env.NEXT_PUBLIC_SITE_URL ||
       "https://ryuge-site.vercel.app";
+
+    console.log("origin:", origin);
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -61,11 +78,22 @@ export default async function handler(req, res) {
       },
     });
 
+    console.log("session created:", session?.id, session?.url);
+
     return res.status(200).json({ url: session.url });
   } catch (err) {
-    console.error("create-subscription-checkout error:", err);
+    console.error("create-subscription-checkout error full:", err);
+    console.error("message:", err.message);
+    console.error("type:", err.type);
+    console.error("code:", err.code);
+    console.error("param:", err.param);
+    console.error("raw:", err.raw);
+
     return res.status(500).json({
       error: err.message || "Failed to create subscription checkout session.",
+      type: err.type || null,
+      code: err.code || null,
+      param: err.param || null,
     });
   }
 }
