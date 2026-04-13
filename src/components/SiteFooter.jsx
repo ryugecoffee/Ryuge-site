@@ -65,7 +65,7 @@ export default function SiteFooter({ lang }) {
         </div>
 
         <div className="footer-bottom">
-          <p>© 2026 Ryuge Coffee</p>
+          <p>© 2024 Ryuge Coffee</p>
         </div>
       </div>
     </footer>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { UI_TEXT } from "../uiText";
+import SiteFooter from "../components/SiteFooter";
 
 
 const UI = {
@@ -250,7 +251,7 @@ subtitle: "Wooden Edition",
         "木という素材の温度を活かした、より深く印象に残る最高位な珈琲。",
       detail:
         "木函は、品質の高い選び抜かれたものだけを収める器。触れた瞬間から違いが立ち上がり、開ける所作とともに静けさが整う。寺から届く、最上位の味わい。",
-      image: "/images/woodbox.jpg",
+      image: "/images/woodbox-3.jpg",
       className: "product-side-top",
       squareUrl: COMMON_SQUARE_URL,
     },
@@ -276,7 +277,7 @@ subtitle: "Wooden Edition",
         "A deeper expression shaped through the warmth and tactility of wood.",
       detail:
         "Wood Box is made to refine the act of giving. The opening gesture, surface feel, and breathing room of the design are part of the experience.",
-      image: "/images/woodbox.jpg",
+      image: "/images/woodbox-3.jpg",
       className: "product-side-top",
       squareUrl: COMMON_SQUARE_URL,
     },
@@ -302,7 +303,7 @@ subtitle: "Wooden Edition",
         "Una expresión más profunda creada con la calidez y la textura de la madera.",
       detail:
         "Wood Box busca ordenar con calma el acto de regalar. El gesto de abrir, la textura y el espacio visual forman parte de la experiencia.",
-      image: "/images/woodbox.jpg",
+      image: "/images/woodbox-3.jpg",
       className: "product-side-top",
       squareUrl: COMMON_SQUARE_URL,
     },
@@ -595,26 +596,32 @@ export default function HomePage({ lang, setLang }) {
             <div className="product-image image-parallax">
               <img src={product.image} alt={product.name} />
             </div>
-          </div>
 
-          <div className="product-copy">
-            <p className="product-subtitle">{product.subtitle}</p>
-            <h3>{product.name}</h3>
-            <p>{product.description}</p>
-            <span className="product-link">{t.detail}</span>
+            {/* 👇 タイトルと説明を画像の上に */}
+            <div className="product-copy">
+              <p className="product-subtitle">{product.subtitle}</p>
+              <h3>{product.name}</h3>
+              <p>{product.description}</p>
+            </div>
+
+            {/* 👇 詳細だけ黒バー */}
+            <div className="product-link-bar">
+              <span className="product-link">{t.detail}</span>
+            </div>
           </div>
         </article>
       ))}
 
+      {/* Oriori */}
       <article
         className="product-card product-side-bottom reveal delay-3"
         onClick={() =>
-setSelectedProduct({
-  id: "oriori",
-  name: "折々",
-  subtitle: t.orioriLabel,
-  description: t.orioriDescription,
-  detail: t.orioriLead,
+          setSelectedProduct({
+            id: "oriori",
+            name: "折々",
+            subtitle: t.orioriLabel,
+            description: t.orioriDescription,
+            detail: t.orioriLead,
             image: "/images/oriori-1.jpg",
             squareUrl: null,
           })
@@ -624,19 +631,20 @@ setSelectedProduct({
           <div className="product-image image-parallax">
             <img src="/images/oriori-1.jpg" alt={t.orioriLabel} />
           </div>
+
+          <div className="product-copy">
+            <p className="product-subtitle">Oriori</p>
+            <h3>折々</h3>
+            <p>
+              {t?.orioriDescription ||
+                "折々は、季節や日々の移ろいに合わせて、その時々の珈琲やかたちを届ける仕立て。"}
+            </p>
+          </div>
+
+          <div className="product-link-bar">
+            <span className="product-link">{t.detail}</span>
+          </div>
         </div>
-
-<div className="product-copy">
-  <p className="product-subtitle">Oriori</p>
-  <h3>折々</h3>
-
-  <p>
-    {t?.orioriDescription ||
-      "折々は、季節や日々の移ろいに合わせて、その時々の珈琲やかたちを届ける仕立て。"}
-  </p>
-
-  <span className="product-link">{t.detail}</span>
-</div>
       </article>
     </div>
   </div>
@@ -669,37 +677,7 @@ setSelectedProduct({
         </div>
       </section>
 
-<footer className="site-footer">
-  <div className="container footer-inner">
-    <div className="footer-top">
-      <div className="footer-brand-block">
-        <p className="footer-brand">{t.footerBrand}</p>
-        <p className="footer-tagline">{t.footerTagline}</p>
-      </div>
-
-      <div className="footer-links-group">
-        <a
-          href="https://www.instagram.com/ryuge_coffee/"
-          target="_blank"
-          rel="noreferrer"
-        >
-          {t.instagram}
-        </a>
-        <a href="mailto:ryugecoffee@gmail.com">{t.email}</a>
-      </div>
-
-      <div className="footer-links-group">
-        <Link to="/privacy">{t.privacyPolicy}</Link>
-        <Link to="/terms">{t.terms}</Link>
-        <Link to="/legal">{t.legalNotice}</Link>
-      </div>
-    </div>
-
-    <div className="footer-bottom">
-      <p>© 2026 Ryuge Coffee</p>
-    </div>
-  </div>
-</footer>
+<SiteFooter lang={lang} />
 
       {selectedProduct && (
         <div

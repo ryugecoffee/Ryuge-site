@@ -320,7 +320,9 @@ useEffect(() => {
             </button>
 
             <div className="modal-image modal-image-premium">
-              <img src={activeItem.image} alt="" />
+              {activeItem?.image && (
+  <img src={activeItem.image} alt="" />
+)}
             </div>
 
             <div className="modal-copy modal-copy-premium">
