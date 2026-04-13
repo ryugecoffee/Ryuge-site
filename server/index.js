@@ -81,85 +81,48 @@ function calcShipping(items, prefecture) {
     0
   );
 
-  // 5000円以上で送料無料
+  // ✅ 5000円以上で送料無料
   if (subtotal >= 5000) return 0;
 
-  // 商品ID一覧
-  const itemIds = safeItems.map((item) => item.id);
-
-  // サブスクは送料無料
-  const subscriptionIds = new Set([
-    "oriori-subscription",
-    "light",
-    "basic",
-    "premium",
-    "subscription-light",
-    "subscription-basic",
-    "subscription-premium",
-  ]);
-
-  const hasSubscription = itemIds.some((id) => subscriptionIds.has(id));
+  // ✅ サブスクは送料無料
+  const hasSubscription = safeItems.some(
+    (item) => item.category === "subscription"
+  );
   if (hasSubscription) return 0;
 
-  // バッグシリーズのみはクリックポスト
-  // 対象: coffee-bag / tea-bag
-  // 条件: バッグ以外が混ざっていない、合計10個まで
-  const bagIds = new Set(["coffee-bag", "tea-bag"]);
+  // ✅ バッグ判定（ここが今回の修正の本丸）
+  const isBagItem = (item) =>
+    item?.category === "bag" || item?.category === "tea-bag";
 
   const hasOnlyBagItems =
     safeItems.length > 0 &&
-    safeItems.every((item) => bagIds.has(item.id));
+    safeItems.every((item) => isBagItem(item));
 
   const totalBagQuantity = safeItems
-    .filter((item) => bagIds.has(item.id))
+    .filter((item) => isBagItem(item))
     .reduce((sum, item) => sum + Number(item.quantity || 0), 0);
 
   if (hasOnlyBagItems && totalBagQuantity <= 10) {
     return 185;
   }
 
-  // 海外は仮送料
+  // ✅ 海外
   if (prefecture === "overseas") {
     return 3000;
   }
 
-  // それ以外はゆうパック
+  // ✅ それ以外はゆうパック
   return YUPACK_SHIPPING[prefecture] ?? 880;
 }
 
-// 接続確認用
+// 接続確認
 app.get("/", (req, res) => {
   res.send("Ryuge server is running");
 });
 
-// テストメール送信用
-app.get("/test-mail", async (req, res) => {
-  try {
-    console.log("test-mail called");
-    console.log("EMAIL_USER exists:", !!process.env.EMAIL_USER);
-    console.log("EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
-    console.log("NOTIFY_EMAILS exists:", !!process.env.NOTIFY_EMAILS);
-
-    const info = await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_USER,
-      subject: "【龍華珈琲】テストメール",
-      text: "Render からのテスト送信です。",
-    });
-
-    console.log("test mail sent:", info.response);
-    res.json({ ok: true, response: info.response });
-  } catch (err) {
-    console.error("test-mail error:", err);
-    res.status(500).json({ ok: false, error: err.message });
-  }
-});
-
-// 決済Intent作成
+// 決済Intent
 app.post("/create-payment-intent", async (req, res) => {
   try {
-    console.log("create-payment-intent called");
-
     const { items, prefecture, email, name, address } = req.body;
 
     const safeItems = Array.isArray(items) ? items : [];
@@ -189,108 +152,12 @@ app.post("/create-payment-intent", async (req, res) => {
       total,
     });
   } catch (err) {
-    console.error("create-payment-intent error:", err);
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// 注文確定後の通知メール
-app.post("/order-complete", async (req, res) => {
-  try {
-    console.log("order-complete called");
-    console.log("EMAIL_USER exists:", !!process.env.EMAIL_USER);
-    console.log("EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
-    console.log("NOTIFY_EMAILS exists:", !!process.env.NOTIFY_EMAILS);
-
-    const { items, name, email, address, prefecture, total, shipping } =
-      req.body;
-
-    const safeItems = Array.isArray(items) ? items : [];
-
-    const itemList = safeItems
-      .map(
-        (i) =>
-          `${i.title} × ${i.quantity} ¥${(
-            Number(i.price || 0) * Number(i.quantity || 0)
-          ).toLocaleString()}`
-      )
-      .join("\n");
-
-    // 先にフロントへ成功レスポンスを返す
-    res.json({ ok: true });
-
-    // ここから後ろは裏でメール送信
-    (async () => {
-      try {
-        // お客さんへのメール
-        const customerInfo = await transporter.sendMail({
-          from: process.env.EMAIL_USER,
-          to: email,
-          subject: "【龍華珈琲】ご注文ありがとうございます",
-          text: `${name} 様
-
-ご注文ありがとうございます。
-
-─────────────
-${itemList}
-─────────────
-送料：¥${Number(shipping).toLocaleString()}
-合計：¥${Number(total).toLocaleString()}
-
-お届け先：${prefecture} ${address}
-
-1〜3営業日以内に発送いたします。
-
-龍華珈琲`,
-        });
-
-        console.log("customer mail sent:", customerInfo.response);
-
-        // 管理者への通知
-        const notifyEmails = process.env.NOTIFY_EMAILS
-          ? process.env.NOTIFY_EMAILS
-              .split(",")
-              .map((mail) => mail.trim())
-              .filter(Boolean)
-          : [];
-
-        if (notifyEmails.length > 0) {
-          const adminInfo = await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: notifyEmails,
-            subject: "【新規注文】龍華珈琲",
-            text: `新規注文が届きました。
-
-お名前：${name}
-メール：${email}
-お届け先：${prefecture} ${address}
-
-─────────────
-${itemList}
-─────────────
-送料：¥${Number(shipping).toLocaleString()}
-合計：¥${Number(total).toLocaleString()}`,
-          });
-
-          console.log("admin mail sent:", adminInfo.response);
-        } else {
-          console.log("NOTIFY_EMAILS is not set, skipped admin notification");
-        }
-
-        console.log("order-complete mail tasks finished");
-      } catch (mailErr) {
-        console.error("mail send error after response:", mailErr);
-      }
-    })();
-  } catch (err) {
-    console.error("order-complete error:", err);
-
-    if (!res.headersSent) {
-      res.status(500).json({ ok: false, error: err.message });
-    }
-  }
-});
-
+// 起動
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
