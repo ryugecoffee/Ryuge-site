@@ -9,6 +9,7 @@ import ProductsPage from "./pages/ProductsPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import CheckoutCompletePage from "./pages/CheckoutCompletePage";
 import ShippingPage from "./pages/ShippingPage";
+import { Analytics } from "@vercel/analytics/react";
 
 export default function App() {
   const [lang, setLang] = useState(() => {
@@ -64,56 +65,60 @@ export default function App() {
   }, [lang]);
 
   return (
-    <Routes>
-      <Route
-        path="/"
-        element={<HomePage lang={lang} setLang={setLang} />}
-      />
-
-      <Route
-        element={
-          <SiteLayout
-            lang={lang}
-            setLang={setLang}
-            cartItems={cartItems}
-            removeFromCart={removeFromCart}
-            updateCartQuantity={updateCartQuantity}
-            addToCart={addToCart}
-          />
-        }
-      >
+    <>
+      <Routes>
         <Route
-          path="/products"
+          path="/"
+          element={<HomePage lang={lang} setLang={setLang} />}
+        />
+
+        <Route
           element={
-            <ProductsPage
+            <SiteLayout
               lang={lang}
+              setLang={setLang}
+              cartItems={cartItems}
+              removeFromCart={removeFromCart}
+              updateCartQuantity={updateCartQuantity}
+              addToCart={addToCart}
+            />
+          }
+        >
+          <Route
+            path="/products"
+            element={
+              <ProductsPage
+                lang={lang}
+                cartItems={cartItems}
+                setCartItems={setCartItems}
+              />
+            }
+          />
+          <Route path="/privacy" element={<PrivacyPolicy lang={lang} />} />
+          <Route path="/terms" element={<Terms lang={lang} />} />
+          <Route path="/shipping" element={<ShippingPage lang={lang} />} />
+          <Route path="/legal" element={<LegalNotice lang={lang} />} />
+        </Route>
+
+        <Route
+          path="/checkout"
+          element={
+            <CheckoutPage
               cartItems={cartItems}
               setCartItems={setCartItems}
+              clearCart={() => setCartItems([])}
+              lang={lang}
             />
           }
         />
-        <Route path="/privacy" element={<PrivacyPolicy lang={lang} />} />
-        <Route path="/terms" element={<Terms lang={lang} />} />
-        <Route path="/shipping" element={<ShippingPage lang={lang} />} />
-        <Route path="/legal" element={<LegalNotice lang={lang} />} />
-      </Route>
 
-      <Route
-        path="/checkout"
-        element={
-          <CheckoutPage
-            cartItems={cartItems}
-            setCartItems={setCartItems}
-            clearCart={() => setCartItems([])}
-            lang={lang}
-          />
-        }
-      />
+        <Route
+          path="/checkout/complete"
+          element={<CheckoutCompletePage />}
+        />
+      </Routes>
 
-      <Route
-        path="/checkout/complete"
-        element={<CheckoutCompletePage />}
-      />
-    </Routes>
+      <Analytics />
+    </>
   );
 }
