@@ -4,47 +4,46 @@ const UI = {
   ja: {
     eyebrow: "Complete",
     title: "ご注文ありがとうございます",
+    nameSuffix: "様",
     text: "ご注文を承りました。発送準備が整い次第、ご連絡いたします。",
     orderSummary: "ご注文内容",
     shippingInfo: "お届け先",
     total: "合計",
     shipping: "送料",
     free: "無料",
-    map: "Google Mapsで確認",
+    map: "Google Mapsで確認 →",
     back: "商品ページへ戻る",
-    nameSuffix: "様",
   },
   en: {
     eyebrow: "Complete",
     title: "Thank you for your order",
-    text: "We’ve received your order. We’ll contact you once your shipment is ready.",
+    nameSuffix: "",
+    text: "We've received your order and will be in touch once your shipment is ready.",
     orderSummary: "Order Summary",
     shippingInfo: "Shipping Address",
     total: "Total",
     shipping: "Shipping",
     free: "Free",
-    map: "View on Google Maps",
+    map: "View on Google Maps →",
     back: "Back to Products",
-    nameSuffix: "",
   },
   es: {
     eyebrow: "Complete",
     title: "Gracias por su pedido",
-    text: "Hemos recibido su pedido. Le avisaremos en cuanto el envío esté listo.",
+    nameSuffix: "",
+    text: "Hemos recibido su pedido y le avisaremos cuando el envío esté listo.",
     orderSummary: "Resumen del pedido",
     shippingInfo: "Dirección de envío",
     total: "Total",
     shipping: "Envío",
     free: "Gratis",
-    map: "Ver en Google Maps",
+    map: "Ver en Google Maps →",
     back: "Volver a productos",
-    nameSuffix: "",
   },
 };
 
 export default function CheckoutCompletePage() {
   const { state } = useLocation();
-
   const lang = state?.lang || "ja";
   const t = UI[lang] || UI.ja;
 
@@ -62,74 +61,77 @@ export default function CheckoutCompletePage() {
     : "";
 
   return (
-    <div className="checkout-page">
-      <div className="checkout-inner checkout-complete-inner">
-        <p className="checkout-eyebrow">{t.eyebrow}</p>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 24px 40px", background: "var(--bg)" }}>
+      <div style={{ width: "min(1080px, 100%)", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "64px", alignItems: "start" }}>
 
-        <h1 className="checkout-title">
-          {name ? `${name}${t.nameSuffix ? ` ${t.nameSuffix}` : ""}` : ""}
-          {name ? " " : ""}
-          {t.title}
-        </h1>
-
-        <p className="checkout-complete-text">{t.text}</p>
-
-        {items.length > 0 && (
-          <div className="checkout-order-summary" style={{ marginTop: "32px" }}>
-            <p className="checkout-section-label">{t.orderSummary}</p>
-
-            {items.map((item) => (
-              <div key={item.id} className="checkout-order-item">
-                <span className="checkout-order-title">{item.title}</span>
-                <span className="checkout-order-qty">× {item.quantity}</span>
-                <span className="checkout-order-price">
-                  ¥{(item.price * item.quantity).toLocaleString()}
-                </span>
-              </div>
-            ))}
-
-            <div className="checkout-order-item">
-              <span className="checkout-order-title">{t.shipping}</span>
-              <span className="checkout-order-price">
-                {shipping === 0 ? t.free : `¥${Number(shipping || 0).toLocaleString()}`}
-              </span>
-            </div>
-
-            <div className="checkout-order-total">
-              <span>{t.total}</span>
-              <span>¥{Number(total || 0).toLocaleString()}</span>
-            </div>
-          </div>
-        )}
-
-        {fullAddress && (
-          <div className="checkout-card-section" style={{ marginTop: "28px" }}>
-            <p className="checkout-section-label">{t.shippingInfo}</p>
-
-            <div className="checkout-card-container" style={{ padding: "18px 0" }}>
-              {postalCode && <p className="checkout-complete-text">〒{postalCode}</p>}
-              <p className="checkout-complete-text" style={{ marginTop: "8px" }}>
-                {prefecture} {address}
+        <div style={{ display: "flex", flexDirection: "column", gap: "24px", paddingTop: "8px" }}>
+          <p style={{ margin: 0, fontSize: "11px", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.38)" }}>
+            {t.eyebrow}
+          </p>
+          <div>
+            {name && (
+              <p style={{ margin: "0 0 8px", fontSize: "clamp(14px, 1.2vw, 18px)", color: "rgba(255,255,255,0.6)", letterSpacing: "0.04em" }}>
+                {name}{t.nameSuffix ? `　${t.nameSuffix}` : ""}
               </p>
-
-              {mapUrl && (
-                <a
-                  href={mapUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="checkout-back-to-products"
-                  style={{ display: "inline-block", marginTop: "18px" }}
-                >
-                  {t.map}
-                </a>
-              )}
-            </div>
+            )}
+            <h1 style={{ margin: 0, fontSize: "clamp(28px, 3.2vw, 48px)", fontWeight: 400, lineHeight: 1.12, letterSpacing: "-0.01em", color: "rgba(255,255,255,0.92)" }}>
+              {t.title}
+            </h1>
           </div>
-        )}
+          <p style={{ margin: 0, fontSize: "14px", lineHeight: 1.9, color: "rgba(255,255,255,0.52)" }}>
+            {t.text}
+          </p>
+          <Link to="/products" style={{ marginTop: "8px", fontSize: "12px", letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.62)", borderBottom: "1px solid rgba(255,255,255,0.2)", paddingBottom: "4px", width: "fit-content" }}>
+            {t.back}
+          </Link>
+        </div>
 
-        <Link to="/products" className="checkout-back-to-products" style={{ marginTop: "28px" }}>
-          {t.back}
-        </Link>
+        <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+          {items.length > 0 && (
+            <div>
+              <p style={{ margin: "0 0 14px", fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.38)" }}>
+                {t.orderSummary}
+              </p>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                {items.map((item) => (
+                  <div key={item.id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <span style={{ flex: 1, fontSize: "13px", color: "rgba(255,255,255,0.82)" }}>{item.title}</span>
+                    <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.38)" }}>× {item.quantity}</span>
+                    <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.72)", minWidth: "70px", textAlign: "right" }}>¥{(item.price * item.quantity).toLocaleString()}</span>
+                  </div>
+                ))}
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <span style={{ flex: 1, fontSize: "13px", color: "rgba(255,255,255,0.82)" }}>{t.shipping}</span>
+                  <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.72)", minWidth: "70px", textAlign: "right" }}>{shipping === 0 ? t.free : `¥${Number(shipping || 0).toLocaleString()}`}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: "16px", fontSize: "18px", fontWeight: 500, color: "rgba(255,255,255,0.92)" }}>
+                  <span>{t.total}</span>
+                  <span>¥{Number(total || 0).toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {fullAddress && (
+            <div>
+              <p style={{ margin: "0 0 14px", fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.38)" }}>
+                {t.shippingInfo}
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                {postalCode && (
+                  <p style={{ margin: 0, fontSize: "13px", color: "rgba(255,255,255,0.72)" }}>〒{postalCode}</p>
+                )}
+                <p style={{ margin: 0, fontSize: "13px", color: "rgba(255,255,255,0.72)" }}>{prefecture}　{address}</p>
+                {mapUrl && (
+                  <a href={mapUrl} target="_blank" rel="noreferrer" style={{ marginTop: "10px", fontSize: "12px", letterSpacing: "0.08em", color: "rgba(255,255,255,0.52)", borderBottom: "1px solid rgba(255,255,255,0.16)", paddingBottom: "3px", width: "fit-content" }}>
+                    {t.map}
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );
