@@ -70,10 +70,18 @@ export default function SiteLayout({
               ×
             </button>
 
-            <p className="cart-modal-heading">Cart</p>
+            <p className="cart-modal-heading">
+  {lang === "ja" ? "カート" : lang === "es" ? "Carrito" : "Cart"}
+</p>
 
             {cartItems.length === 0 ? (
-              <p className="cart-empty">カートは空です</p>
+              <p className="cart-empty">
+  {lang === "ja"
+    ? "カートは空です"
+    : lang === "es"
+    ? "El carrito está vacío"
+    : "Your cart is empty"}
+</p>
             ) : (
               <>
                 <div className="cart-dropdown-list">
@@ -112,23 +120,34 @@ export default function SiteLayout({
 
                 {/* 合計金額 */}
                 <div className="cart-modal-footer">
-                  <div className="cart-total-row">
-                    <span>合計</span>
+<div className="cart-total-row">
+  <span>{lang === "ja" ? "合計" : lang === "es" ? "Total" : "Total"}</span>
                     <span className="cart-total-amount">
                       ¥{cartItems
                         .reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0)
                         .toLocaleString()}
                     </span>
                   </div>
-                  <p className="cart-total-note">送料・税は別途</p>
+                  <p className="cart-total-note">
+  {lang === "ja"
+    ? "送料・税は別途"
+    : lang === "es"
+    ? "Envío e impuestos no incluidos"
+    : "Shipping and taxes calculated separately"}
+</p>
+
 <button
   className="cart-checkout-button"
-onClick={() => {
-  setIsCartOpen(false);
-  navigate("/checkout");
-}}
+  onClick={() => {
+    setIsCartOpen(false);
+    navigate("/checkout");
+  }}
 >
-  決済へ進む
+  {lang === "ja"
+    ? "決済へ進む"
+    : lang === "es"
+    ? "Ir al pago"
+    : "Proceed to Checkout"}
 </button>
                 </div>
               </>

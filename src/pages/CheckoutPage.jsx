@@ -20,15 +20,111 @@ const PREFECTURES = [
   "熊本県","大分県","宮崎県","鹿児島県","沖縄県",
 ];
 
+const UI = {
+  ja: {
+    eyebrow: "Checkout",
+    title: "ご注文内容",
+    orderSummary: "注文内容",
+    shipping: "送料",
+    free: "無料",
+    calculating: "計算中...",
+    total: "合計",
+    shippingInfo: "お届け先",
+    cardInfo: "カード情報",
+    name: "お名前",
+    email: "メールアドレス",
+    countryType: "配送先",
+    japan: "日本",
+    other: "海外",
+    postalCode: "郵便番号（例：2480012）",
+    prefecture: "都道府県",
+    address1Ja: "市区町村・番地",
+    address2Ja: "建物名・部屋番号",
+    country: "国 / 地域",
+    state: "州 / 地域",
+    city: "市区町村",
+    address1: "Address Line 1",
+    address2: "Address Line 2",
+    address3: "Address Line 3（任意）",
+    processing: "処理中...",
+    pay: "を支払う",
+    back: "← 戻る",
+  },
+  en: {
+    eyebrow: "Checkout",
+    title: "Order Summary",
+    orderSummary: "Items",
+    shipping: "Shipping",
+    free: "Free",
+    calculating: "Calculating...",
+    total: "Total",
+    shippingInfo: "Shipping Address",
+    cardInfo: "Card Details",
+    name: "Full Name",
+    email: "Email Address",
+    countryType: "Shipping destination",
+    japan: "Japan",
+    other: "International",
+    postalCode: "Postal Code",
+    prefecture: "Prefecture",
+    address1Ja: "City, street address",
+    address2Ja: "Building / Apt",
+    country: "Country / Region",
+    state: "State / Province / Region",
+    city: "City",
+    address1: "Address Line 1",
+    address2: "Address Line 2",
+    address3: "Address Line 3 (Optional)",
+    processing: "Processing...",
+    pay: "Pay",
+    back: "← Back",
+  },
+  es: {
+    eyebrow: "Checkout",
+    title: "Resumen del pedido",
+    orderSummary: "Pedido",
+    shipping: "Envío",
+    free: "Gratis",
+    calculating: "Calculando...",
+    total: "Total",
+    shippingInfo: "Dirección de envío",
+    cardInfo: "Información de la tarjeta",
+    name: "Nombre completo",
+    email: "Correo electrónico",
+    countryType: "Destino del envío",
+    japan: "Japón",
+    other: "Internacional",
+    postalCode: "Código postal",
+    prefecture: "Prefectura",
+    address1Ja: "Ciudad, calle y número",
+    address2Ja: "Edificio / Apartamento",
+    country: "País / Región",
+    state: "Estado / Provincia / Región",
+    city: "Ciudad",
+    address1: "Dirección 1",
+    address2: "Dirección 2",
+    address3: "Dirección 3 (Opcional)",
+    processing: "Procesando...",
+    pay: "Pagar",
+    back: "← Volver",
+  },
+};
+
 const CARD_STYLE = {
   style: {
     base: {
-      color: "rgba(255,255,255,0.82)",
+      color: "#ffffff",
       fontFamily: "Inter, sans-serif",
-      fontSize: "14px",
-      "::placeholder": { color: "rgba(255,255,255,0.28)" },
+      fontSize: "16px",
+      fontSmoothing: "antialiased",
+      "::placeholder": {
+        color: "rgba(255,255,255,0.42)",
+      },
     },
-    invalid: { color: "rgba(255,100,100,0.9)" },
+    invalid: {
+      color: "#ff6b6b",
+      iconColor: "#ff6b6b",
+    },
   },
   hidePostalCode: true,
 };
@@ -38,22 +134,34 @@ const inputStyle = {
   border: "none",
   borderBottom: "1px solid rgba(255,255,255,0.14)",
   color: "rgba(255,255,255,0.82)",
-  padding: "8px 0",
+  padding: "10px 0",
   fontSize: "14px",
   outline: "none",
   width: "100%",
 };
 
-function CheckoutForm({ cartItems, onSuccess }) {
+function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
   const stripe = useStripe();
   const elements = useElements();
   const navigate = useNavigate();
+  const t = UI[lang] || UI.ja;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+
+  const [countryType, setCountryType] = useState("japan");
   const [postalCode, setPostalCode] = useState("");
   const [prefecture, setPrefecture] = useState("神奈川県");
-  const [address, setAddress] = useState("");
+  const [addressLine1Ja, setAddressLine1Ja] = useState("");
+  const [addressLine2Ja, setAddressLine2Ja] = useState("");
+
+  const [country, setCountry] = useState("");
+  const [stateRegion, setStateRegion] = useState("");
+  const [city, setCity] = useState("");
+  const [addressLine1, setAddressLine1] = useState("");
+  const [addressLine2, setAddressLine2] = useState("");
+  const [addressLine3, setAddressLine3] = useState("");
+
   const [shipping, setShipping] = useState(null);
   const [total, setTotal] = useState(null);
   const [clientSecret, setClientSecret] = useState("");
@@ -62,55 +170,117 @@ function CheckoutForm({ cartItems, onSuccess }) {
 
   useEffect(() => {
     if (cartItems.length === 0) return;
+
     fetch("https://ryuge-site.onrender.com/create-payment-intent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: cartItems, prefecture, email: "tmp@tmp.com", name: "tmp", address: "tmp" }),
+      body: JSON.stringify({
+        items: cartItems,
+        prefecture: countryType === "japan" ? prefecture : "overseas",
+        email: "tmp@tmp.com",
+        name: "tmp",
+        address: "tmp",
+      }),
     })
       .then((r) => r.json())
       .then((data) => {
         setShipping(data.shipping);
         setTotal(data.total);
         setClientSecret(data.clientSecret);
+      })
+      .catch(() => {
+        setError("Failed to initialize checkout.");
       });
-  }, [cartItems, prefecture]);
+  }, [cartItems, prefecture, countryType]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!stripe || !elements || !clientSecret) return;
+
     setLoading(true);
     setError("");
 
+    const cardElement = elements.getElement(CardElement);
+    if (!cardElement) {
+      setError("Card form is not ready yet.");
+      setLoading(false);
+      return;
+    }
+
     const result = await stripe.confirmCardPayment(clientSecret, {
       payment_method: {
-        card: elements.getElement(CardElement),
+        card: cardElement,
         billing_details: { name, email },
       },
     });
 
     if (result.error) {
-      setError(result.error.message);
+      setError(result.error.message || "Payment failed.");
       setLoading(false);
       return;
     }
 
+    const finalAddress =
+      countryType === "japan"
+        ? `${prefecture} ${addressLine1Ja} ${addressLine2Ja}`.trim()
+        : [
+            addressLine1,
+            addressLine2,
+            addressLine3,
+            city,
+            stateRegion,
+            postalCode,
+            country,
+          ]
+            .filter(Boolean)
+            .join(", ");
+
     await fetch("https://ryuge-site.onrender.com/order-complete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: cartItems, name, email, postalCode, address, prefecture, total, shipping }),
+      body: JSON.stringify({
+        items: cartItems,
+        name,
+        email,
+        postalCode,
+        address: finalAddress,
+        prefecture: countryType === "japan" ? prefecture : country,
+        total,
+        shipping,
+      }),
     });
 
     onSuccess();
-    navigate("/checkout/complete");
+
+    navigate("/checkout/complete", {
+      state: {
+        name,
+        email,
+        postalCode,
+        prefecture: countryType === "japan" ? prefecture : country,
+        address:
+          countryType === "japan"
+            ? `${addressLine1Ja} ${addressLine2Ja}`.trim()
+            : [addressLine1, addressLine2, addressLine3, city, stateRegion]
+                .filter(Boolean)
+                .join(", "),
+        total,
+        shipping,
+        items: cartItems,
+        countryType,
+        lang,
+      },
+    });
   };
 
   return (
     <form onSubmit={handleSubmit} className="checkout-inner">
-      <p className="checkout-eyebrow">Checkout</p>
-      <h1 className="checkout-title">ご注文内容</h1>
+      <p className="checkout-eyebrow">{t.eyebrow}</p>
+      <h1 className="checkout-title">{t.title}</h1>
 
       <div className="checkout-order-summary">
-        <p className="checkout-section-label">注文内容</p>
+        <p className="checkout-section-label">{t.orderSummary}</p>
+
         {cartItems.map((item) => (
           <div key={item.id} className="checkout-order-item">
             <span className="checkout-order-title">{item.title}</span>
@@ -120,71 +290,187 @@ function CheckoutForm({ cartItems, onSuccess }) {
             </span>
           </div>
         ))}
+
         <div className="checkout-order-item">
-          <span className="checkout-order-title">送料</span>
+          <span className="checkout-order-title">{t.shipping}</span>
           <span className="checkout-order-price">
-            {shipping === null ? "計算中..." : shipping === 0 ? "無料" : `¥${shipping.toLocaleString()}`}
+            {shipping === null
+              ? t.calculating
+              : shipping === 0
+              ? t.free
+              : `¥${shipping.toLocaleString()}`}
           </span>
         </div>
+
         <div className="checkout-order-total">
-          <span>合計</span>
-          <span>{total === null ? "計算中..." : `¥${total.toLocaleString()}`}</span>
+          <span>{t.total}</span>
+          <span>{total === null ? t.calculating : `¥${total.toLocaleString()}`}</span>
         </div>
       </div>
 
       <div className="checkout-card-section">
-        <p className="checkout-section-label">お届け先</p>
+        <p className="checkout-section-label">{t.shippingInfo}</p>
+
         <div className="checkout-card-container" style={{ display: "grid", gap: "12px" }}>
           <input
             type="text"
-            placeholder="お名前"
+            placeholder={t.name}
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
             style={inputStyle}
           />
+
           <input
             type="email"
-            placeholder="メールアドレス"
+            placeholder={t.email}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             style={inputStyle}
           />
-          <input
-            type="text"
-            placeholder="郵便番号（例：2480012）"
-            value={postalCode}
-            onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, "").slice(0, 7))}
-            required
-            style={inputStyle}
-          />
+
           <select
-            value={prefecture}
-            onChange={(e) => setPrefecture(e.target.value)}
+            value={countryType}
+            onChange={(e) => setCountryType(e.target.value)}
             style={{ ...inputStyle, background: "#111" }}
           >
-            {PREFECTURES.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
+            <option value="japan">{t.japan}</option>
+            <option value="other">{t.other}</option>
           </select>
-          <input
-            type="text"
-            placeholder="市区町村・番地・建物名"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            required
-            style={inputStyle}
-          />
+
+          {countryType === "japan" ? (
+            <>
+              <input
+                type="text"
+                placeholder={t.postalCode}
+                value={postalCode}
+                onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, "").slice(0, 7))}
+                required
+                style={inputStyle}
+              />
+
+              <select
+                value={prefecture}
+                onChange={(e) => setPrefecture(e.target.value)}
+                style={{ ...inputStyle, background: "#111" }}
+              >
+                {PREFECTURES.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                type="text"
+                placeholder={t.address1Ja}
+                value={addressLine1Ja}
+                onChange={(e) => setAddressLine1Ja(e.target.value)}
+                required
+                style={inputStyle}
+              />
+
+              <input
+                type="text"
+                placeholder={t.address2Ja}
+                value={addressLine2Ja}
+                onChange={(e) => setAddressLine2Ja(e.target.value)}
+                style={inputStyle}
+              />
+            </>
+          ) : (
+            <>
+              <input
+                type="text"
+                placeholder={t.country}
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                required
+                style={inputStyle}
+              />
+
+              <input
+                type="text"
+                placeholder={t.postalCode}
+                value={postalCode}
+                onChange={(e) => setPostalCode(e.target.value)}
+                required
+                style={inputStyle}
+              />
+
+              <input
+                type="text"
+                placeholder={t.state}
+                value={stateRegion}
+                onChange={(e) => setStateRegion(e.target.value)}
+                required
+                style={inputStyle}
+              />
+
+              <input
+                type="text"
+                placeholder={t.city}
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                required
+                style={inputStyle}
+              />
+
+              <input
+                type="text"
+                placeholder={t.address1}
+                value={addressLine1}
+                onChange={(e) => setAddressLine1(e.target.value)}
+                required
+                style={inputStyle}
+              />
+
+              <input
+                type="text"
+                placeholder={t.address2}
+                value={addressLine2}
+                onChange={(e) => setAddressLine2(e.target.value)}
+                required
+                style={inputStyle}
+              />
+
+              <input
+                type="text"
+                placeholder={t.address3}
+                value={addressLine3}
+                onChange={(e) => setAddressLine3(e.target.value)}
+                style={inputStyle}
+              />
+            </>
+          )}
         </div>
       </div>
 
-      <div className="checkout-card-section">
-        <p className="checkout-section-label">カード情報</p>
-        <div className="checkout-card-container">
-          <CardElement options={CARD_STYLE} />
-        </div>
-      </div>
+<div className="checkout-card-section">
+  <p className="checkout-section-label">{t.cardInfo}</p>
+
+  <div
+    className="checkout-card-container"
+    style={{
+      padding: "18px 20px",
+      minHeight: "64px",
+      border: "1px solid rgba(255,255,255,0.14)",
+      borderRadius: "16px",
+      background: "rgba(255,255,255,0.02)",
+      position: "relative",
+      zIndex: 1,
+    }}
+  >
+    <CardElement
+      options={CARD_STYLE}
+      onReady={() => console.log("CardElement ready")}
+      onFocus={() => console.log("CardElement focus")}
+      onBlur={() => console.log("CardElement blur")}
+      onChange={(e) => console.log("CardElement change", e)}
+    />
+  </div>
+</div>
 
       {error && <p className="checkout-error">{error}</p>}
 
@@ -193,7 +479,9 @@ function CheckoutForm({ cartItems, onSuccess }) {
         className="checkout-pay-button"
         disabled={!stripe || loading || !clientSecret}
       >
-        {loading ? "処理中..." : `¥${total?.toLocaleString() ?? "..."} を支払う`}
+        {loading
+          ? t.processing
+          : `¥${total?.toLocaleString() ?? "..."} ${t.pay}`}
       </button>
 
       <button
@@ -201,17 +489,17 @@ function CheckoutForm({ cartItems, onSuccess }) {
         className="checkout-back-button"
         onClick={() => window.history.back()}
       >
-        ← 戻る
+        {t.back}
       </button>
     </form>
   );
 }
 
-export default function CheckoutPage({ cartItems, clearCart }) {
+export default function CheckoutPage({ cartItems, clearCart, lang = "ja" }) {
   return (
     <div className="checkout-page">
       <Elements stripe={stripePromise}>
-        <CheckoutForm cartItems={cartItems} onSuccess={clearCart} />
+        <CheckoutForm cartItems={cartItems} onSuccess={clearCart} lang={lang} />
       </Elements>
     </div>
   );

@@ -1,6 +1,6 @@
 import { useCart } from "../context/CartContext";
 
-export default function CartDrawer() {
+export default function CartDrawer({ lang }) {
   const {
     cartItems,
     updateQuantity,
@@ -87,8 +87,8 @@ export default function CartDrawer() {
           </div>
 
           <button className="cart-checkout-button" disabled={cartItems.length === 0}>
-            購入へ進む
-          </button>
+  {lang === "ja" ? "購入へ進む" : lang === "es" ? "Ir al pago" : "Proceed to Checkout"}
+</button>
         </div>
       </aside>
     </div>

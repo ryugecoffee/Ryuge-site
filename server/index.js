@@ -96,6 +96,7 @@ app.post("/create-payment-intent", async (req, res) => {
 });
 
 // 注文確定後の通知メール
+// 注文確定後の通知メール
 app.post("/order-complete", async (req, res) => {
   try {
     console.log("order-complete called");
@@ -109,12 +110,18 @@ app.post("/order-complete", async (req, res) => {
       .map((i) => `${i.title} × ${i.quantity} ¥${(i.price * i.quantity).toLocaleString()}`)
       .join("\n");
 
-    // お客さんへのメール
-    const customerInfo = await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "【龍華珈琲】ご注文ありがとうございます",
-      text: `${name} 様
+    // 先にフロントへ成功レスポンスを返す
+    res.json({ ok: true });
+
+    // ここから後ろは裏でメール送信
+    (async () => {
+      try {
+        // お客さんへのメール
+        const customerInfo = await transporter.sendMail({
+          from: process.env.EMAIL_USER,
+          to: email,
+          subject: "【龍華珈琲】ご注文ありがとうございます",
+          text: `${name} 様
 
 ご注文ありがとうございます。
 
@@ -129,21 +136,24 @@ ${itemList}
 1〜3営業日以内に発送いたします。
 
 龍華珈琲`,
-    });
+        });
 
-    console.log("customer mail sent:", customerInfo.response);
+        console.log("customer mail sent:", customerInfo.response);
 
-    // 管理者への通知
-    const notifyEmails = process.env.NOTIFY_EMAILS
-      ? process.env.NOTIFY_EMAILS.split(",").map((mail) => mail.trim()).filter(Boolean)
-      : [];
+        // 管理者への通知
+        const notifyEmails = process.env.NOTIFY_EMAILS
+          ? process.env.NOTIFY_EMAILS
+              .split(",")
+              .map((mail) => mail.trim())
+              .filter(Boolean)
+          : [];
 
-    if (notifyEmails.length > 0) {
-      const adminInfo = await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: notifyEmails,
-        subject: "【新規注文】龍華珈琲",
-        text: `新規注文が届きました。
+        if (notifyEmails.length > 0) {
+          const adminInfo = await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: notifyEmails,
+            subject: "【新規注文】龍華珈琲",
+            text: `新規注文が届きました。
 
 お名前：${name}
 メール：${email}
@@ -154,18 +164,24 @@ ${itemList}
 ─────────────
 送料：¥${Number(shipping).toLocaleString()}
 合計：¥${Number(total).toLocaleString()}`,
-      });
+          });
 
-      console.log("admin mail sent:", adminInfo.response);
-    } else {
-      console.log("NOTIFY_EMAILS is not set, skipped admin notification");
-    }
+          console.log("admin mail sent:", adminInfo.response);
+        } else {
+          console.log("NOTIFY_EMAILS is not set, skipped admin notification");
+        }
 
-    console.log("order-complete success");
-    res.json({ ok: true });
+        console.log("order-complete mail tasks finished");
+      } catch (mailErr) {
+        console.error("mail send error after response:", mailErr);
+      }
+    })();
   } catch (err) {
     console.error("order-complete error:", err);
-    res.status(500).json({ ok: false, error: err.message });
+
+    if (!res.headersSent) {
+      res.status(500).json({ ok: false, error: err.message });
+    }
   }
 });
 
