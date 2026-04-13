@@ -68,6 +68,8 @@ export const PRODUCT_DATA = {
     {
       id: "enma-ethiopia-dark",
       image: "/images/enma-1.jpg",
+      category: "beans",
+size: "180g",
       title: {
         ja: "閻魔　深煎りの禅",
         en: "King ENMA Dark Roast",
@@ -93,6 +95,8 @@ export const PRODUCT_DATA = {
     {
       id: "enma-ethiopia-light",
       image: "/images/enma-2.jpg",
+      category: "beans",
+size: "180g",
       title: {
         ja: "閻魔　エチオピア　浅煎り",
         en: "ENMA Ethiopia Light Roast",
@@ -118,6 +122,8 @@ export const PRODUCT_DATA = {
     {
       id: "enma-burundi-light",
       image: "/images/enma-3.jpg",
+      category: "beans",
+size: "180g",
       title: {
         ja: "閻魔　ブルンジ　浅煎り",
         en: "ENMA Burundi Light Roast",
@@ -146,6 +152,8 @@ export const PRODUCT_DATA = {
     {
       id: "woodbox-ethiopia",
       image: "/images/woodbox-1.jpg",
+      category: "woodbox",
+size: "100g",
       title: {
         ja: "木函　コロンビア　ゲイシャ",
         en: "WOOD BOX Colombia Geisha",
@@ -166,7 +174,7 @@ export const PRODUCT_DATA = {
       process: "Anaerobic Honey",
       variety: "Geisha",
       altitude: "1,800–2,100m",
-      weight: "100",
+      weight: "100g",
       price: "¥3,200",
       priceNumber: 3200,
       flavor: "Orange, Apricot, Walnut, Honey, Bergamot, Smooth, Round",
@@ -176,6 +184,8 @@ export const PRODUCT_DATA = {
     {
       id: "woodbox-geisha",
       image: "/images/woodbox-2.jpg",
+      category: "woodbox",
+size: "100g",
       title: {
         ja: "木函　ホンジュラス　ゲイシャ",
         en: "WOOD BOX Honduras Geisha",
@@ -209,6 +219,8 @@ export const PRODUCT_DATA = {
   oriori: [
     {
       id: "oriori-subscription",
+        category: "subscription",
+  size: "100g",
       image: "/images/oriori-1.jpg",
       title: {
         ja: "サブスクリプション",
@@ -472,26 +484,36 @@ export const PRODUCT_DATA = {
 
   isSoldOut: false,
 },
-    {
-      id: "oriori-wheel",
-      image: "/images/atmosphere-2.jpg",
-      title: {
-        ja: "フレーバーホイール",
-        en: "Flavor Wheel",
-        es: "Flavor Wheel",
-      },
-      summary: {
-        ja: "味わいを記録し、言葉にするためのサイト",
-        en: "A site for recording and describing flavor",
-        es: "A site for recording and describing flavor",
-      },
-      origin: "—",
-      producer: null,
-      process: "—",
-      variety: "—",
-      altitude: "—",
-      link: "https://square.link/u/xxxxx",
-    },
+{
+  id: "oriori-wheel",
+  image: "/images/atmosphere-2.jpg",
+  title: {
+    ja: "フレーバーホイール",
+    en: "Flavor Wheel",
+    es: "Flavor Wheel",
+  },
+  modalTitle: {
+    ja: "フレーバーホイール",
+    en: "Flavor Wheel",
+    es: "Flavor Wheel",
+  },
+  summary: {
+    ja: "味わいを記録し、言葉にするためのサイト",
+    en: "A site for recording and describing flavor",
+    es: "Un sitio para registrar y expresar sabores",
+  },
+  description: {
+    ja: "選んだフレーバーを記録し、コメントとともに保存できるテイスティング用サイトです。",
+    en: "A tasting site where you can record selected flavors and save them with notes.",
+    es: "Un sitio de cata donde puedes registrar los sabores seleccionados y guardarlos con notas.",
+  },
+  buttonLabel: {
+    ja: "サイトを見る",
+    en: "Open Site",
+    es: "Ver sitio",
+  },
+  link: "https://coffeewheel10.vercel.app",
+}
   ],
   
 };

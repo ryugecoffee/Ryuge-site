@@ -3891,3 +3891,86 @@ html[lang="es"] .products-hero-overlay h1 {
 .hero-eyebrow {
   color: rgba(255, 255, 255, 0.36);
 }
+
+.cart-upsell {
+  margin: 16px 0 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cart-upsell-shipping {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.cart-upsell-list {
+  display: grid;
+  gap: 10px;
+}
+
+.cart-upsell-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.cart-upsell-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cart-upsell-name {
+  margin: 0;
+  font-size: 13px;
+  color: #fff;
+}
+
+.cart-upsell-price {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.cart-upsell-add {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: #f3f3f3;
+  color: #111;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.cart-upsell-add:hover {
+  opacity: 0.88;
+}
+
+.cart-upsell-desc {
+  margin: 2px 0 6px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.cart-upsell-links {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cart-upsell-detail {
+  font-size: 11px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: underline;
+  cursor: pointer;
+}

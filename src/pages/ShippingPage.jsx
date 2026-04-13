@@ -4,27 +4,23 @@ const TEXT = {
   ja: {
     eyebrow: "配送・送料",
     title: "配送・送料について",
-    lead: "ご注文確定後、1〜3営業日以内に発送いたします。毎週火曜日は出荷をお休みしております。",
+    lead: "ご注文確定後、1〜3営業日以内に発送いたします。土日・祝日は出荷をお休みしております。",
     sections: [
       {
         title: "クリックポスト 185円",
-        body: "全国一律、ポスト投函。閻魔3個（約540g）まで対応。A4サイズが入るポストがない場合は投函不能で返送されることがあります。木箱を含む注文には対応していません。",
-      },
-      {
-        title: "レターパックプラス 600円",
-        body: "全国一律、郵便職員による手渡し。木箱1個の発送に対応。閻魔のみの場合は800gまで梱包可能。",
+        body: "全国一律、ポスト投函でお届けいたします。サブスクリプション商品および100g商品の発送に対応しています。A4サイズが入るポストが必要です。",
       },
       {
         title: "宅配便（ゆうパック）",
-        body: "複数個注文や大型注文に対応。送料は地域・サイズにより異なります。",
+        body: "180g商品や複数点のご注文は、ゆうパックにてお届けいたします。送料は地域・サイズにより異なります。",
       },
       {
-        title: "7,000円以上で送料無料",
-        body: "コーヒー豆のご購入合計が7,000円以上の場合、送料無料。ゆうパックにて発送いたします。",
+        title: "6,000円以上で送料無料",
+        body: "コーヒー豆のご購入合計が6,000円以上の場合、送料無料となります。ゆうパックにて発送いたします。",
       },
       {
         title: "海外発送",
-        body: "EMS（国際郵便）にて対応。送料はご注文後にメールにてご案内します。",
+        body: "EMS（国際郵便）にて対応しております。送料はご注文後にメールにてご案内いたします。",
       },
     ],
     note: "送料に関するお問い合わせは ryugecoffee@gmail.com までご連絡ください。",
@@ -33,23 +29,19 @@ const TEXT = {
   en: {
     eyebrow: "Shipping",
     title: "Shipping & Delivery",
-    lead: "Orders are shipped within 1–3 business days after confirmation. We do not ship on Tuesdays.",
+    lead: "Orders are shipped within 1–3 business days after confirmation. We do not ship on weekends or public holidays.",
     sections: [
       {
         title: "Click Post — ¥185",
-        body: "Flat rate nationwide, delivered to your mailbox. Up to 3 bags of Enma (approx. 540g). Not available for orders containing Woodbox. Note: requires an A4-compatible mailbox.",
-      },
-      {
-        title: "Letter Pack Plus — ¥600",
-        body: "Flat rate nationwide, hand-delivered by postal staff. Available for Woodbox orders. Up to 800g for Enma-only orders.",
+        body: "Flat rate nationwide, delivered to your mailbox. Available for subscription items and 100g products. An A4-compatible mailbox is required.",
       },
       {
         title: "Courier (Yu-Pack)",
-        body: "Available for larger or multiple-item orders. Rates vary by region and size.",
+        body: "Orders containing 180g products or multiple items will be shipped via Yu-Pack. Rates vary by region and size.",
       },
       {
-        title: "Free Shipping on Orders over ¥7,000",
-        body: "Orders totaling ¥7,000 or more in coffee beans qualify for free shipping via Yu-Pack.",
+        title: "Free Shipping on Orders over ¥6,000",
+        body: "Orders totaling ¥6,000 or more in coffee beans qualify for free shipping via Yu-Pack.",
       },
       {
         title: "International Shipping",
@@ -62,23 +54,19 @@ const TEXT = {
   es: {
     eyebrow: "Envío",
     title: "Envío y Entrega",
-    lead: "Los pedidos se envían en 1–3 días hábiles tras la confirmación. No realizamos envíos los martes.",
+    lead: "Los pedidos se envían en 1–3 días hábiles tras la confirmación. No realizamos envíos los fines de semana ni en días festivos.",
     sections: [
       {
         title: "Click Post — ¥185",
-        body: "Tarifa plana nacional, entrega en buzón. Hasta 3 bolsas Enma (aprox. 540g). No disponible para pedidos con Woodbox. Requiere buzón compatible con tamaño A4.",
-      },
-      {
-        title: "Letter Pack Plus — ¥600",
-        body: "Tarifa plana nacional, entrega en mano por el cartero. Disponible para pedidos con Woodbox. Hasta 800g para pedidos solo de Enma.",
+        body: "Tarifa plana nacional, entrega en buzón. Disponible para productos de suscripción y productos de 100g. Se requiere un buzón compatible con tamaño A4.",
       },
       {
         title: "Mensajería (Yu-Pack)",
-        body: "Disponible para pedidos grandes o múltiples artículos. Las tarifas varían según región y tamaño.",
+        body: "Los pedidos con productos de 180g o varios artículos se enviarán mediante Yu-Pack. Las tarifas varían según la región y el tamaño.",
       },
       {
-        title: "Envío gratis en pedidos superiores a ¥7,000",
-        body: "Los pedidos de café que superen ¥7,000 en total tienen envío gratuito mediante Yu-Pack.",
+        title: "Envío gratis en pedidos superiores a ¥6,000",
+        body: "Los pedidos de café que superen ¥6,000 en total tienen envío gratuito mediante Yu-Pack.",
       },
       {
         title: "Envío internacional",
@@ -114,7 +102,11 @@ export default function ShippingPage({ lang }) {
             {t.note}
           </p>
 
-          <Link to="/" className="text-link" style={{ marginTop: "32px", display: "inline-block" }}>
+          <Link
+            to="/"
+            className="text-link"
+            style={{ marginTop: "32px", display: "inline-block" }}
+          >
             {t.back}
           </Link>
         </div>

@@ -7,7 +7,10 @@ export default function SiteLayout({
   cartItems,
   removeFromCart,
   updateCartQuantity,
-}) {
+  addToCart,
+})
+
+{
   const [isCartOpen, setIsCartOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -135,6 +138,119 @@ export default function SiteLayout({
     ? "Envío e impuestos no incluidos"
     : "Shipping and taxes calculated separately"}
 </p>
+
+{/* 送料無料誘導 */}
+{(() => {
+  const total = cartItems.reduce(
+    (sum, item) => sum + (item.price || 0) * item.quantity,
+    0
+  );
+
+  const FREE_SHIPPING = 6000;
+  const remaining = Math.max(0, FREE_SHIPPING - total);
+
+  if (remaining === 0) return null;
+
+  return (
+    <div className="cart-upsell">
+      <p className="cart-upsell-shipping">
+        {lang === "ja"
+          ? `あと ¥${remaining.toLocaleString()} で送料無料`
+          : lang === "es"
+          ? `Envío gratis con ¥${remaining.toLocaleString()} más`
+          : `Add ¥${remaining.toLocaleString()} more for free shipping`}
+      </p>
+
+      <div className="cart-upsell-list">
+        {/* 珈琲バッグ */}
+        <div className="cart-upsell-item">
+<div className="cart-upsell-info">
+  <p className="cart-upsell-name">
+    {lang === "ja" ? "珈琲バッグ" : "Coffee Bag"}
+  </p>
+
+  <p className="cart-upsell-desc">
+    {lang === "ja"
+      ? "マグに入れてお湯を注ぐだけの手軽な一杯"
+      : "Easy cup, just add hot water"}
+  </p>
+
+  <div className="cart-upsell-links">
+    <button
+      className="cart-upsell-detail"
+      onClick={() => {
+        setIsCartOpen(false);
+        navigate("/products"); // 折々ページに飛ばすならここ変更
+      }}
+    >
+      {lang === "ja" ? "詳細" : "Details"}
+    </button>
+
+    <p className="cart-upsell-price">¥350</p>
+  </div>
+</div>
+          <button
+            className="cart-upsell-add"
+            onClick={() =>
+              addToCart({
+                id: "coffee-bag",
+                name: "珈琲バッグ",
+                priceNumber: 350,
+                image: "",
+              })
+            }
+          >
+            {lang === "ja" ? "追加" : "Add"}
+          </button>
+        </div>
+
+        {/* お茶バッグ */}
+        <div className="cart-upsell-item">
+<div className="cart-upsell-info">
+  <p className="cart-upsell-name">
+    {lang === "ja" ? "お茶バッグ" : "Tea Bag"}
+  </p>
+
+  <p className="cart-upsell-desc">
+    {lang === "ja"
+      ? "やわらかく広がる香りを手軽に楽しむ一杯"
+      : "Easy and aromatic tea bag"}
+  </p>
+
+  <div className="cart-upsell-links">
+    <button
+      type="button"
+      className="cart-upsell-detail"
+      onClick={() => {
+        setIsCartOpen(false);
+        navigate("/products#oriori");
+      }}
+    >
+      {lang === "ja" ? "詳細" : "Details"}
+    </button>
+
+    <p className="cart-upsell-price">¥500</p>
+  </div>
+</div>
+
+          <button
+            className="cart-upsell-add"
+            onClick={() =>
+              addToCart({
+                id: "tea-bag",
+                name: "お茶バッグ",
+                priceNumber: 500,
+                image: "",
+              })
+            }
+          >
+            {lang === "ja" ? "追加" : "Add"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+})()}
 
 <button
   className="cart-checkout-button"

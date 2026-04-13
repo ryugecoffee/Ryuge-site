@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import SiteFooter from "../components/SiteFooter";
 import { PRODUCT_DATA, PRODUCT_SECTIONS } from "../productData";
 
@@ -32,20 +33,33 @@ const SOLD_OUT_TEXT = {
 };
 
 export default function ProductsPage({ lang, cartItems, setCartItems }) {
+  const location = useLocation();
+
+useEffect(() => {
+  if (location.hash === "#oriori") {
+    const target = document.getElementById("oriori-section");
+    if (target) {
+      setTimeout(() => {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    }
+  }
+}, [location]);
   const page = PAGE_TEXT[lang] || PAGE_TEXT.ja;
   const sectionText = PRODUCT_SECTIONS[lang] || PRODUCT_SECTIONS.ja;
   const labels = sectionText.specLabels;
   const products = PRODUCT_DATA;
 
- const [activeItemId, setActiveItemId] = useState(null);
-const [selectedSubscriptionPlan, setSelectedSubscriptionPlan] =
-  useState(DEFAULT_SUBSCRIPTION_PLAN);
-const [selectedCoffeeBagVariant, setSelectedCoffeeBagVariant] =
-  useState("coffee-bag");
-const [selectedBagQuantity, setSelectedBagQuantity] = useState("1");
-const [showEnmaHeading, setShowEnmaHeading] = useState(false);
-const [simpleQuantity, setSimpleQuantity] = useState(1);
-const [showWoodboxHeading, setShowWoodboxHeading] = useState(false);
+  const [activeItemId, setActiveItemId] = useState(null);
+  const [selectedSubscriptionPlan, setSelectedSubscriptionPlan] = useState(
+    DEFAULT_SUBSCRIPTION_PLAN
+  );
+  const [selectedCoffeeBagVariant, setSelectedCoffeeBagVariant] =
+    useState("coffee-bag");
+  const [selectedBagQuantity, setSelectedBagQuantity] = useState("1");
+  const [showEnmaHeading, setShowEnmaHeading] = useState(false);
+  const [simpleQuantity, setSimpleQuantity] = useState(1);
+  const [showWoodboxHeading, setShowWoodboxHeading] = useState(false);
 
   const enmaSectionRef = useRef(null);
   const woodboxSectionRef = useRef(null);
@@ -54,8 +68,6 @@ const [showWoodboxHeading, setShowWoodboxHeading] = useState(false);
     [...products.enma, ...products.woodbox, ...products.oriori].find(
       (item) => item.id === activeItemId
     ) || null;
-
-    const cartItem = cartItems.find((item) => item.id === activeItem?.id);
 
   const subscriptionPlans =
     activeItem?.id === "oriori-subscription"
@@ -86,14 +98,27 @@ const [showWoodboxHeading, setShowWoodboxHeading] = useState(false);
       setSelectedBagQuantity("1");
     }
   }, [activeItem]);
-useEffect(() => {
-  if (activeItem && activeItem.id !== "oriori-bag") {
-    setSimpleQuantity(1);
-  }
-}, [activeItem]);
+
+  useEffect(() => {
+    if (activeItem && activeItem.id !== "oriori-bag") {
+      setSimpleQuantity(1);
+    }
+  }, [activeItem]);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+  if (location.hash === "#oriori") {
+    const target = document.getElementById("oriori-section");
+    if (target) {
+      setTimeout(() => {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    }
+  }
+}, [location]);
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -122,26 +147,20 @@ useEffect(() => {
     const handleScroll = () => {
       const triggerLine = window.innerHeight * 0.6;
 
-      // 閻魔
       if (!enmaTriggered) {
         const enmaTop = enmaNode.getBoundingClientRect().top;
-
         if (enmaTop <= triggerLine) {
           enmaTriggered = true;
-
           setTimeout(() => {
             setShowEnmaHeading(true);
           }, 2000);
         }
       }
 
-      // 木箱
       if (!woodboxTriggered) {
         const woodboxTop = woodboxNode.getBoundingClientRect().top;
-
         if (woodboxTop <= triggerLine) {
           woodboxTriggered = true;
-
           setTimeout(() => {
             setShowWoodboxHeading(true);
           }, 2000);
@@ -150,7 +169,6 @@ useEffect(() => {
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -263,7 +281,7 @@ useEffect(() => {
           </div>
         </section>
 
-        <section className="oriori-services-section">
+        <section className="oriori-services-section" id="oriori-section">
           <div className="oriori-heading">
             <h2>{sectionText.orioriTitle}</h2>
             <p>{sectionText.orioriIntro}</p>
@@ -407,32 +425,50 @@ useEffect(() => {
                         {currentSubscriptionPlan.note}
                       </p>
 
-                        <button
-  type="button"
-  className="modal-cta-link"
-  style={{ marginTop: "16px" }}
-  onClick={() => {
-    if (!currentSubscriptionPlan) return;
-    const priceMap = { light: 2200, basic: 3500, premium: 3900 };
-    const unitPrice = priceMap[currentSubscriptionPlan.id] ?? 0;
-    setCartItems((prev) => {
-      const id = `subscription-${currentSubscriptionPlan.id}`;
-      const otherItems = prev.filter((item) => item.id !== id);
-      return [
-        ...otherItems,
-        {
-          id,
-          title: `${activeItem.title?.[lang] || "サブスクリプション"} — ${currentSubscriptionPlan.name}`,
-          price: unitPrice,
-          quantity: 1,
-        },
-      ];
-    });
-    setActiveItemId(null);
-  }}
->
-  {lang === "ja" ? "カートに入れる" : lang === "es" ? "Añadir al carrito" : "Add to cart"}
-</button>
+                      <button
+                        type="button"
+                        className="modal-cta-link"
+                        style={{ marginTop: "16px" }}
+                        onClick={() => {
+                          if (!currentSubscriptionPlan) return;
+                          const priceMap = {
+                            light: 2200,
+                            basic: 3500,
+                            premium: 3900,
+                          };
+                          const unitPrice =
+                            priceMap[currentSubscriptionPlan.id] ?? 0;
+
+                          setCartItems((prev) => {
+                            const id = `subscription-${currentSubscriptionPlan.id}`;
+                            const otherItems = prev.filter(
+                              (item) => item.id !== id
+                            );
+
+                            return [
+                              ...otherItems,
+                              {
+                                id,
+                                title: `${
+                                  activeItem.title?.[lang] || "サブスクリプション"
+                                } — ${currentSubscriptionPlan.name}`,
+                                price: unitPrice,
+                                quantity: 1,
+                                category: "subscription",
+                                size: "100g",
+                              },
+                            ];
+                          });
+
+                          setActiveItemId(null);
+                        }}
+                      >
+                        {lang === "ja"
+                          ? "カートに入れる"
+                          : lang === "es"
+                          ? "Añadir al carrito"
+                          : "Add to cart"}
+                      </button>
                     </div>
                   )}
                 </div>
@@ -462,7 +498,9 @@ useEffect(() => {
                             key={v.id}
                             type="button"
                             className={`coffeebag-variant-tab ${
-                              currentCoffeeBagVariant?.id === v.id ? "active" : ""
+                              currentCoffeeBagVariant?.id === v.id
+                                ? "active"
+                                : ""
                             }`}
                             onClick={() => {
                               setSelectedCoffeeBagVariant(v.id);
@@ -481,13 +519,26 @@ useEffect(() => {
                               currentCoffeeBagVariant.name?.en}
                           </strong>
 
-<p className="coffeebag-variant-note">
-  {currentCoffeeBagVariant.note?.[lang] ||
-    currentCoffeeBagVariant.note?.en}
-</p>
-<p style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)", margin: "4px 0 0" }}>
-¥{(currentCoffeeBagVariant?.id === "coffee-bag" ? 350 : 600).toLocaleString()} / {lang === "ja" ? "個" : lang === "es" ? "ud." : "each"}
-</p>
+                          <p className="coffeebag-variant-note">
+                            {currentCoffeeBagVariant.note?.[lang] ||
+                              currentCoffeeBagVariant.note?.en}
+                          </p>
+
+                          <p
+                            style={{
+                              fontSize: "13px",
+                              color: "rgba(255,255,255,0.6)",
+                              margin: "4px 0 0",
+                            }}
+                          >
+                            ¥
+                            {(
+                              currentCoffeeBagVariant?.id === "coffee-bag"
+                                ? 350
+                                : 600
+                            ).toLocaleString()}{" "}
+                            / {lang === "ja" ? "個" : lang === "es" ? "ud." : "each"}
+                          </p>
 
                           <div className="coffeebag-brew-block">
                             <p className="coffeebag-block-label">
@@ -510,65 +561,138 @@ useEffect(() => {
                           </div>
 
                           <div className="coffeebag-quantity-block">
-  <p className="coffeebag-block-label">
-    {lang === "ja" ? "購入個数" : lang === "es" ? "Cantidad" : "Quantity"}
-  </p>
-  <div className="simple-quantity-control">
-    <button
-      type="button"
-      onClick={() => setSelectedBagQuantity((prev) => String(Math.max(1, Number(prev) - 1)))}
-    >
-      −
-    </button>
-    <input
-      type="number"
-      min="1"
-      value={selectedBagQuantity}
-      onChange={(e) => {
-        const v = Number(e.target.value);
-        if (!isNaN(v) && v >= 1) setSelectedBagQuantity(String(v));
-      }}
-    />
-   <button
-      type="button"
-      onClick={() => setSelectedBagQuantity((prev) => String(Number(prev) + 1))}
-    >
-      ＋
-    </button>
-  </div>
-  <p style={{ marginTop: "10px", fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>
-    ¥{((currentCoffeeBagVariant?.id === "coffee-bag" ? 350 : 600) * Number(selectedBagQuantity)).toLocaleString()}
-  </p>
-</div>
+                            <p className="coffeebag-block-label">
+                              {lang === "ja"
+                                ? "購入個数"
+                                : lang === "es"
+                                ? "Cantidad"
+                                : "Quantity"}
+                            </p>
 
-<button
-  type="button"
-  className="modal-cta-link"
-  style={{ marginTop: "16px" }}
-  onClick={() => {
-    const qty = Number(selectedBagQuantity);
-    if (qty <= 0) return;
-    const unitPrice = currentCoffeeBagVariant.id === "coffee-bag" ? 350 : 600;
-    setCartItems((prev) => {
-      const id = `${activeItem.id}-${currentCoffeeBagVariant.id}`;
-      const otherItems = prev.filter((item) => item.id !== id);
-      return [
-        ...otherItems,
-        {
-          id,
-          title: `${currentCoffeeBagVariant.name?.[lang] || currentCoffeeBagVariant.name?.en}`,
-          price: unitPrice,
-          quantity: qty,
-        },
-      ];
-    });
-    setActiveItemId(null);
-  }}
->
-  {lang === "ja" ? "カートに入れる" : lang === "es" ? "Añadir al carrito" : "Add to cart"}
-</button>
+                            <div className="simple-quantity-control">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setSelectedBagQuantity((prev) =>
+                                    String(Math.max(1, Number(prev) - 1))
+                                  )
+                                }
+                              >
+                                −
+                              </button>
+
+                              <input
+                                type="number"
+                                min="1"
+                                value={selectedBagQuantity}
+                                onChange={(e) => {
+                                  const v = Number(e.target.value);
+                                  if (!isNaN(v) && v >= 1) {
+                                    setSelectedBagQuantity(String(v));
+                                  }
+                                }}
+                              />
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setSelectedBagQuantity((prev) =>
+                                    String(Number(prev) + 1)
+                                  )
+                                }
+                              >
+                                ＋
+                              </button>
+                            </div>
+
+                            <p
+                              style={{
+                                marginTop: "10px",
+                                fontSize: "13px",
+                                color: "rgba(255,255,255,0.6)",
+                              }}
+                            >
+                              ¥
+                              {(
+                                (currentCoffeeBagVariant?.id === "coffee-bag"
+                                  ? 350
+                                  : 600) * Number(selectedBagQuantity)
+                              ).toLocaleString()}
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            className="modal-cta-link"
+                            style={{ marginTop: "16px" }}
+                            onClick={() => {
+                              const qty = Number(selectedBagQuantity);
+                              if (qty <= 0) return;
+
+                              const unitPrice =
+                                currentCoffeeBagVariant.id === "coffee-bag"
+                                  ? 350
+                                  : 600;
+
+                              setCartItems((prev) => {
+                                const id = `${activeItem.id}-${currentCoffeeBagVariant.id}`;
+                                const otherItems = prev.filter(
+                                  (item) => item.id !== id
+                                );
+
+                                return [
+                                  ...otherItems,
+                                  {
+                                    id,
+                                    title:
+                                      currentCoffeeBagVariant.name?.[lang] ||
+                                      currentCoffeeBagVariant.name?.en,
+                                    price: unitPrice,
+                                    quantity: qty,
+                                    category:
+                                      currentCoffeeBagVariant.id === "coffee-bag"
+                                        ? "bag"
+                                        : "tea-bag",
+                                  },
+                                ];
+                              });
+
+                              setActiveItemId(null);
+                            }}
+                          >
+                            {lang === "ja"
+                              ? "カートに入れる"
+                              : lang === "es"
+                              ? "Añadir al carrito"
+                              : "Add to cart"}
+                          </button>
                         </div>
                       )}
+                    </>
+                  ) : activeItem.id === "oriori-wheel" ? (
+                    <>
+                      <p className="modal-summary modal-product-summary modal-fade-up">
+                        {activeItem.description?.[lang] ||
+                          activeItem.description?.en ||
+                          activeItem.summary?.[lang] ||
+                          activeItem.summary?.en}
+                      </p>
+
+                      <a
+                        href={activeItem.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="modal-cta-link modal-fade-up"
+                        style={{
+                          marginTop: "16px",
+                          display: "inline-block",
+                          textAlign: "center",
+                        }}
+                      >
+                        {activeItem.buttonLabel?.[lang] ||
+                          activeItem.buttonLabel?.en ||
+                          "Open Site"}
+                      </a>
                     </>
                   ) : (
                     <>
@@ -584,78 +708,95 @@ useEffect(() => {
                       </dl>
 
                       <div className="simple-quantity-block">
-  <p className="simple-quantity-label">
-    {lang === "ja" ? "数量" : lang === "es" ? "Cantidad" : "Quantity"}
-  </p>
+                        <p className="simple-quantity-label">
+                          {lang === "ja"
+                            ? "数量"
+                            : lang === "es"
+                            ? "Cantidad"
+                            : "Quantity"}
+                        </p>
 
-  <div className="simple-quantity-control">
-    <button
-      type="button"
-      onClick={() => setSimpleQuantity((prev) => Math.max(0, prev - 1))}
-    >
-      −
-    </button>
+                        <div className="simple-quantity-control">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSimpleQuantity((prev) => Math.max(0, prev - 1))
+                            }
+                          >
+                            −
+                          </button>
 
-<input
-  type="number"
-  min="0"
-  value={simpleQuantity}
-  onChange={(e) => {
-    const value = e.target.value;
+                          <input
+                            type="number"
+                            min="0"
+                            value={simpleQuantity}
+                            onChange={(e) => {
+                              const value = e.target.value;
 
-    if (value === "") {
-      setSimpleQuantity(0);
-      return;
-    }
+                              if (value === "") {
+                                setSimpleQuantity(0);
+                                return;
+                              }
 
-    const next = Number(value);
+                              const next = Number(value);
 
-    if (Number.isNaN(next)) return;
+                              if (Number.isNaN(next)) return;
 
-    setSimpleQuantity(Math.max(0, next));
-  }}
-/>
+                              setSimpleQuantity(Math.max(0, next));
+                            }}
+                          />
 
-    <button
-      type="button"
-      onClick={() => setSimpleQuantity((prev) => prev + 1)}
-    >
-      ＋
-    </button>
-  </div>
-</div>
+                          <button
+                            type="button"
+                            onClick={() => setSimpleQuantity((prev) => prev + 1)}
+                          >
+                            ＋
+                          </button>
+                        </div>
+                      </div>
 
-{activeItem.isSoldOut ? (
-  <button className="modal-cta-link is-disabled" disabled>
-    {SOLD_OUT_TEXT[lang]}
-  </button>
-) : (
-  <button
-    type="button"
-    className="modal-cta-link modal-fade-up"
-    onClick={() => {
-      setCartItems((prev) => {
-        const otherItems = prev.filter((item) => item.id !== activeItem.id);
-        if (simpleQuantity === 0) return otherItems;
-        return [
-          ...otherItems,
-          {
-            id: activeItem.id,
-            title:
-              activeItem.title?.[lang] ||
-              activeItem.title?.en ||
-              activeItem.title,
-            price: activeItem.priceNumber ?? 0,
-            quantity: simpleQuantity,
-          },
-        ];
-      });
-      setActiveItemId(null);
-    }}
-  >
-    {lang === "ja" ? "カートに入れる" : lang === "es" ? "Añadir al carrito" : "Add to cart"}
-  </button>
-)}
+                      {activeItem.isSoldOut ? (
+                        <button className="modal-cta-link is-disabled" disabled>
+                          {SOLD_OUT_TEXT[lang]}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="modal-cta-link modal-fade-up"
+                          onClick={() => {
+                            setCartItems((prev) => {
+                              const otherItems = prev.filter(
+                                (item) => item.id !== activeItem.id
+                              );
+
+                              if (simpleQuantity === 0) return otherItems;
+
+                              return [
+                                ...otherItems,
+                                {
+                                  id: activeItem.id,
+                                  title:
+                                    activeItem.title?.[lang] ||
+                                    activeItem.title?.en ||
+                                    activeItem.title,
+                                  price: activeItem.priceNumber ?? 0,
+                                  quantity: simpleQuantity,
+                                  category: activeItem.category,
+                                  size: activeItem.size,
+                                },
+                              ];
+                            });
+
+                            setActiveItemId(null);
+                          }}
+                        >
+                          {lang === "ja"
+                            ? "カートに入れる"
+                            : lang === "es"
+                            ? "Añadir al carrito"
+                            : "Add to cart"}
+                        </button>
+                      )}
                     </>
                   )}
                 </div>

@@ -8,7 +8,38 @@ export default function CartDrawer({ lang }) {
     cartTotal,
     isCartOpen,
     setIsCartOpen,
+    addToCart,
   } = useCart();
+
+  const FREE_SHIPPING_THRESHOLD = 6000;
+  const remainingForFreeShipping = Math.max(
+    0,
+    FREE_SHIPPING_THRESHOLD - cartTotal
+  );
+  const isFreeShippingReached = remainingForFreeShipping === 0;
+
+  const bagRecommendations = [
+    {
+      id: "coffee-bag",
+      name:
+        lang === "ja"
+          ? "珈琲バッグ"
+          : lang === "es"
+          ? "Bolsa de café"
+          : "Coffee Bag",
+      price: 350,
+    },
+    {
+      id: "tea-bag",
+      name:
+        lang === "ja"
+          ? "お茶バッグ"
+          : lang === "es"
+          ? "Bolsa de té"
+          : "Tea Bag",
+      price: 500,
+    },
+  ];
 
   if (!isCartOpen) return null;
 
@@ -16,7 +47,9 @@ export default function CartDrawer({ lang }) {
     <div className="cart-overlay" onClick={() => setIsCartOpen(false)}>
       <aside className="cart-drawer" onClick={(e) => e.stopPropagation()}>
         <div className="cart-header">
-          <h2>Cart</h2>
+          <h2>
+            {lang === "ja" ? "カート" : lang === "es" ? "Carrito" : "Cart"}
+          </h2>
           <button
             className="cart-close"
             onClick={() => setIsCartOpen(false)}
@@ -27,7 +60,13 @@ export default function CartDrawer({ lang }) {
 
         <div className="cart-body">
           {cartItems.length === 0 ? (
-            <p className="cart-empty">カートは空です。</p>
+            <p className="cart-empty">
+              {lang === "ja"
+                ? "カートは空です。"
+                : lang === "es"
+                ? "El carrito está vacío."
+                : "Your cart is empty."}
+            </p>
           ) : (
             cartItems.map((item) => (
               <div className="cart-item" key={item.id}>
@@ -72,7 +111,11 @@ export default function CartDrawer({ lang }) {
                     className="cart-remove"
                     onClick={() => removeFromCart(item.id)}
                   >
-                    削除
+                    {lang === "ja"
+                      ? "削除"
+                      : lang === "es"
+                      ? "Eliminar"
+                      : "Remove"}
                   </button>
                 </div>
               </div>
@@ -82,13 +125,62 @@ export default function CartDrawer({ lang }) {
 
         <div className="cart-footer">
           <div className="cart-total">
-            <span>合計</span>
+            <span>{lang === "ja" ? "合計" : lang === "es" ? "Total" : "Total"}</span>
             <strong>¥{cartTotal.toLocaleString()}</strong>
           </div>
 
-          <button className="cart-checkout-button" disabled={cartItems.length === 0}>
-  {lang === "ja" ? "購入へ進む" : lang === "es" ? "Ir al pago" : "Proceed to Checkout"}
-</button>
+          {!isFreeShippingReached && cartItems.length > 0 && (
+            <div className="cart-upsell">
+              <p className="cart-upsell-shipping">
+                {lang === "ja"
+                  ? `あと ¥${remainingForFreeShipping.toLocaleString()} で送料無料`
+                  : lang === "es"
+                  ? `Envío gratis con ¥${remainingForFreeShipping.toLocaleString()} más`
+                  : `Add ¥${remainingForFreeShipping.toLocaleString()} more for free shipping`}
+              </p>
+
+              <div className="cart-upsell-list">
+                {bagRecommendations.map((item) => (
+                  <div key={item.id} className="cart-upsell-item">
+                    <div className="cart-upsell-info">
+                      <p className="cart-upsell-name">{item.name}</p>
+                      <p className="cart-upsell-price">
+                        ¥{item.price.toLocaleString()}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="cart-upsell-add"
+                      onClick={() =>
+                        addToCart?.({
+                          ...item,
+                          quantity: 1,
+                        })
+                      }
+                    >
+                      {lang === "ja"
+                        ? "追加"
+                        : lang === "es"
+                        ? "Añadir"
+                        : "Add"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button
+            className="cart-checkout-button"
+            disabled={cartItems.length === 0}
+          >
+            {lang === "ja"
+              ? "購入へ進む"
+              : lang === "es"
+              ? "Ir al pago"
+              : "Proceed to Checkout"}
+          </button>
         </div>
       </aside>
     </div>
