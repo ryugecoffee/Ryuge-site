@@ -3,7 +3,7 @@ export default function Terms({ lang = "ja" }) {
     ja: {
       title: "利用規約",
       intro:
-        "本サイトは、Ryuge Coffee に関する情報提供、商品案内、販売導線の提供を目的として運営されています。",
+        "本サイトは、株式会社龍華が運営する Ryuge Coffee に関する情報提供、商品案内、販売導線の提供を目的として運営されています。",
       sections: [
         {
           heading: "適用範囲",
@@ -25,12 +25,17 @@ export default function Terms({ lang = "ja" }) {
           heading: "準拠法",
           body: "本サイトおよび本規約の解釈には、日本法を適用します。",
         },
+        {
+          heading: "お問い合わせ",
+          body: "本サイトおよび本規約に関するお問い合わせは、ryugecoffee@gmail.com までご連絡ください。",
+        },
       ],
     },
+
     en: {
       title: "Terms of Service",
       intro:
-        "This website is operated to provide information, product guidance, and purchasing access for Ryuge Coffee.",
+        "This website is operated by Kabushikigaisha Ryuge to provide information, product guidance, and purchasing access for Ryuge Coffee.",
       sections: [
         {
           heading: "Scope",
@@ -52,12 +57,17 @@ export default function Terms({ lang = "ja" }) {
           heading: "Governing Law",
           body: "These terms and this website shall be governed by the laws of Japan.",
         },
+        {
+          heading: "Contact",
+          body: "For questions regarding this website or these Terms, please contact us at ryugecoffee@gmail.com.",
+        },
       ],
     },
+
     es: {
       title: "Términos de Servicio",
       intro:
-        "Este sitio web se opera para ofrecer información, guía de productos y acceso de compra de Ryuge Coffee.",
+        "Este sitio web es operado por Kabushikigaisha Ryuge para ofrecer información, guía de productos y acceso de compra de Ryuge Coffee.",
       sections: [
         {
           heading: "Alcance",
@@ -78,6 +88,10 @@ export default function Terms({ lang = "ja" }) {
         {
           heading: "Ley Aplicable",
           body: "Estos términos y este sitio web se regirán por las leyes de Japón.",
+        },
+        {
+          heading: "Contacto",
+          body: "Para consultas sobre este sitio web o estos términos, contáctenos en ryugecoffee@gmail.com.",
         },
       ],
     },

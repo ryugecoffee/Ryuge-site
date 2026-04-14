@@ -4189,3 +4189,119 @@ html[lang="es"] .products-hero-overlay h1 {
 .product-main .product-image img {
   object-position: center 70%;
 }
+
+@media (max-width: 768px) {
+  .modal-overlay,
+  .product-modal-overlay {
+    padding: 12px;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .modal,
+  .product-modal {
+    width: 100%;
+    max-width: 420px;
+    max-height: 92dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 20px;
+  }
+
+  .modal-image,
+  .product-modal-image {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .modal-image img,
+  .product-modal-image img {
+    width: 100%;
+    height: auto;
+    max-height: 42dvh;
+    object-fit: cover;
+    display: block;
+  }
+
+  .modal-copy,
+  .product-modal-copy,
+  .modal-content,
+  .product-modal-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 18px 16px 24px;
+  }
+
+  .modal-close,
+  .product-modal-close {
+    top: 10px;
+    right: 10px;
+    z-index: 20;
+  }
+
+  .purchase-button,
+  .add-to-cart-button,
+  .product-buy-button,
+  .product-cart-button {
+    width: 100%;
+  }
+}
+@media (max-width: 768px) {
+  .subscription-plans {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .subscription-plan {
+    flex: 0 0 80%;
+    min-width: 240px;
+  }
+}
+.subscription-plan-tab.active {
+  border: 1px solid rgba(255,255,255,0.6);
+  background: rgba(255,255,255,0.08);
+}
+
+@media (max-width: 768px) {
+  .subscription-plan-tabs {
+    display: flex !important;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    grid-template-columns: unset !important;
+  }
+
+  .subscription-plan-tab {
+    flex: 0 0 auto;
+    min-width: 120px;
+    white-space: nowrap;
+  }
+}
+@media (max-width: 768px) {
+  .subscription-plan-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px;
+  }
+
+  .subscription-plan-tab {
+    min-width: 0;
+    padding: 6px 0 10px;
+  }
+
+  .subscription-plan-tab-name {
+    font-size: 12px;
+  }
+
+  .subscription-plan-tab-price {
+    font-size: 10px;
+  }
+}

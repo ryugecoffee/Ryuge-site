@@ -4,7 +4,7 @@ const TEXT = {
   ja: {
     eyebrow: "配送・送料",
     title: "配送・送料について",
-    lead: "ご注文確定後、1〜5営業日以内に発送いたします。土日は出荷をお休みしております。",
+    lead: "ご注文確定後、3〜7営業日以内に発送いたします。土日は出荷をお休みしております。",
     sections: [
       {
         title: "5,000円以上で送料無料",
@@ -24,16 +24,17 @@ const TEXT = {
       },
       {
         title: "海外発送",
-        body: "EMS（国際郵便）にて対応します。送料はご注文後にメールにてご案内します。",
+        body: "EMS（国際郵便）にて対応します。送料はご注文内容確認後、メールにてご案内いたします。",
       },
     ],
-    note: "送料に関するお問い合わせは ryugecoffee@gmail.com までご連絡ください。",
+    note: "送料・配送に関するお問い合わせは ryugecoffee@gmail.com までご連絡ください。",
     back: "← トップへ戻る",
   },
+
   en: {
     eyebrow: "Shipping",
     title: "Shipping & Delivery",
-    lead: "Orders are shipped within 1–5 business days after confirmation. We do not ship on weekends.",
+    lead: "Orders are usually shipped within 3–7 business days after confirmation. We do not ship on weekends.",
     sections: [
       {
         title: "Free shipping on orders over ¥5,000",
@@ -53,16 +54,17 @@ const TEXT = {
       },
       {
         title: "International Shipping",
-        body: "We ship internationally via EMS. Shipping costs will be confirmed by email after your order.",
+        body: "We ship internationally via EMS. Shipping costs will be confirmed by email after reviewing your order.",
       },
     ],
     note: "For shipping inquiries, please contact ryugecoffee@gmail.com",
     back: "← Back to top",
   },
+
   es: {
     eyebrow: "Envío",
     title: "Envío y Entrega",
-    lead: "Los pedidos se envían en 1–5 días hábiles tras la confirmación. No realizamos envíos los fines de semana.",
+    lead: "Los pedidos se envían normalmente dentro de 3–7 días hábiles tras la confirmación. No realizamos envíos los fines de semana.",
     sections: [
       {
         title: "Envío gratis en pedidos superiores a ¥5,000",
@@ -82,7 +84,7 @@ const TEXT = {
       },
       {
         title: "Envío internacional",
-        body: "Realizamos envíos internacionales mediante EMS. El coste se confirmará por correo electrónico tras el pedido.",
+        body: "Realizamos envíos internacionales mediante EMS. El coste se confirmará por correo electrónico tras revisar el pedido.",
       },
     ],
     note: "Para consultas sobre envíos: ryugecoffee@gmail.com",

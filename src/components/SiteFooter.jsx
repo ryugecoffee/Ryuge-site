@@ -5,8 +5,11 @@ export default function SiteFooter({ lang }) {
     ja: {
       brand: "Ryuge Coffee",
       tagline: "Quietly crafted in Kamakura",
+      company: "運営会社：株式会社龍華",
+      description:  "焙煎珈琲豆・珈琲／お茶バッグの販売サイト",
       instagram: "Instagram",
       contact: "お問合せ / 卸販売について",
+      email: "ryugecoffee@gmail.com",
       privacy: "プライバシーポリシー",
       terms: "利用規約",
       legal: "特定商取引法に基づく表記",
@@ -16,8 +19,10 @@ export default function SiteFooter({ lang }) {
     en: {
       brand: "Ryuge Coffee",
       tagline: "Quietly crafted in Kamakura",
-      instagram: "Instagram",
+      company: "Operating Company: Kabushikigaisha Ryuge",
+      description: "Online store for roasted coffee beans and coffee/tea bags",
       contact: "Contact / Wholesale",
+      email: "ryugecoffee@gmail.com",
       privacy: "Privacy Policy",
       terms: "Terms of Service",
       legal: "Legal Notice",
@@ -27,8 +32,11 @@ export default function SiteFooter({ lang }) {
     es: {
       brand: "Ryuge Coffee",
       tagline: "Quietly crafted in Kamakura",
+      company: "Empresa operadora: Kabushikigaisha Ryuge",
+      description: "Tienda online de café tostado y bolsas de café/té",
       instagram: "Instagram",
       contact: "Contacto / Mayorista",
+      email: "ryugecoffee@gmail.com",
       privacy: "Política de Privacidad",
       terms: "Términos de Servicio",
       legal: "Aviso Legal",
@@ -46,6 +54,10 @@ export default function SiteFooter({ lang }) {
           <div className="footer-brand-block">
             <p className="footer-brand">{t.brand}</p>
             <p className="footer-tagline">{t.tagline}</p>
+
+            {/* ←ここがStripe対策のコア */}
+            <p className="footer-company">{t.company}</p>
+            <p className="footer-description">{t.description}</p>
           </div>
 
           <div className="footer-links-group">
@@ -56,7 +68,13 @@ export default function SiteFooter({ lang }) {
             >
               {t.instagram}
             </a>
-            <a href="mailto:ryugecoffee@gmail.com">{t.contact}</a>
+
+            <a href={`mailto:${t.email}`}>
+              {t.contact}
+            </a>
+
+            {/* メールを明示 */}
+            <p className="footer-email">{t.email}</p>
           </div>
 
           <div className="footer-links-group">
@@ -76,7 +94,7 @@ export default function SiteFooter({ lang }) {
         </div>
 
         <div className="footer-bottom">
-          <p>© 2024 Ryuge Coffee</p>
+          <p>© 2024 Ryuge Coffee / 株式会社龍華</p>
         </div>
       </div>
     </footer>

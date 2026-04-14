@@ -3,7 +3,7 @@ export default function PrivacyPolicy({ lang = "ja" }) {
     ja: {
       title: "プライバシーポリシー",
       intro:
-        "Ryuge Coffee は、お客様の個人情報を適切に取り扱い、安心してご利用いただけるよう努めます。",
+        "Ryuge Coffee（運営：株式会社龍華）は、お客様の個人情報を適切に取り扱い、安心してご利用いただけるよう努めます。",
       sections: [
         {
           heading: "取得する情報",
@@ -25,12 +25,17 @@ export default function PrivacyPolicy({ lang = "ja" }) {
           heading: "見直し",
           body: "本ポリシーは必要に応じて改定されることがあります。改定後は本サイト上で公表します。",
         },
+        {
+          heading: "お問い合わせ窓口",
+          body: "個人情報の取扱いに関するお問い合わせは、ryugecoffee@gmail.com までご連絡ください。",
+        },
       ],
     },
+
     en: {
       title: "Privacy Policy",
       intro:
-        "Ryuge Coffee is committed to handling personal information appropriately and providing a safe experience for users.",
+        "Ryuge Coffee (operated by Kabushikigaisha Ryuge) is committed to handling personal information appropriately and providing a safe experience for users.",
       sections: [
         {
           heading: "Information We Collect",
@@ -52,12 +57,17 @@ export default function PrivacyPolicy({ lang = "ja" }) {
           heading: "Revisions",
           body: "This policy may be updated when necessary. Any revised version will be posted on this website.",
         },
+        {
+          heading: "Contact",
+          body: "For questions regarding this Privacy Policy or personal data handling, please contact us at ryugecoffee@gmail.com.",
+        },
       ],
     },
+
     es: {
       title: "Política de Privacidad",
       intro:
-        "Ryuge Coffee se compromete a tratar adecuadamente la información personal y a ofrecer una experiencia segura a los usuarios.",
+        "Ryuge Coffee (operado por Kabushikigaisha Ryuge) se compromete a tratar adecuadamente la información personal y a ofrecer una experiencia segura a los usuarios.",
       sections: [
         {
           heading: "Información que Recopilamos",
@@ -78,6 +88,10 @@ export default function PrivacyPolicy({ lang = "ja" }) {
         {
           heading: "Revisiones",
           body: "Esta política puede actualizarse cuando sea necesario. La versión revisada se publicará en este sitio web.",
+        },
+        {
+          heading: "Contacto",
+          body: "Si tiene consultas sobre esta Política de Privacidad o el tratamiento de datos personales, contáctenos en ryugecoffee@gmail.com.",
         },
       ],
     },
