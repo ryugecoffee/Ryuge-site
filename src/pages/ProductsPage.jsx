@@ -537,7 +537,7 @@ useEffect(() => {
                             {(
                               currentCoffeeBagVariant?.id === "coffee-bag"
                                 ? 350
-                                : 600
+                                : 500
                             ).toLocaleString()}{" "}
                             / {lang === "ja" ? "個" : lang === "es" ? "ud." : "each"}
                           </p>
@@ -618,7 +618,7 @@ useEffect(() => {
                               {(
                                 (currentCoffeeBagVariant?.id === "coffee-bag"
                                   ? 350
-                                  : 600) * Number(selectedBagQuantity)
+                                  : 500) * Number(selectedBagQuantity)
                               ).toLocaleString()}
                             </p>
                           </div>
@@ -634,10 +634,10 @@ useEffect(() => {
                               const unitPrice =
                                 currentCoffeeBagVariant.id === "coffee-bag"
                                   ? 350
-                                  : 600;
+                                  : 500;
 
                               setCartItems((prev) => {
-                                const id = `${activeItem.id}-${currentCoffeeBagVariant.id}`;
+                                const id = currentCoffeeBagVariant.id;
                                 const otherItems = prev.filter(
                                   (item) => item.id !== id
                                 );
