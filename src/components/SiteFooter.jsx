@@ -66,7 +66,7 @@ export default function SiteFooter({ lang }) {
             <Link to="/shipping">{t.shipping}</Link>
 
             <a
-              href="https://billing.stripe.com/p/login/1Zu4gz7CR4Gc15I0H45AQ00"
+              href="https://billing.stripe.com/p/login/3cI28r8GV4GcaFV1L85AQ01"
               target="_blank"
               rel="noreferrer"
             >
