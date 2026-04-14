@@ -9,6 +9,7 @@ import ProductsPage from "./pages/ProductsPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import CheckoutCompletePage from "./pages/CheckoutCompletePage";
 import ShippingPage from "./pages/ShippingPage";
+import RefundPolicy from "./pages/RefundPolicy"; // ← 追加
 import { Analytics } from "@vercel/analytics/react";
 
 export default function App() {
@@ -94,10 +95,14 @@ export default function App() {
               />
             }
           />
+
           <Route path="/privacy" element={<PrivacyPolicy lang={lang} />} />
           <Route path="/terms" element={<Terms lang={lang} />} />
           <Route path="/shipping" element={<ShippingPage lang={lang} />} />
           <Route path="/legal" element={<LegalNotice lang={lang} />} />
+
+          {/* ← これが今回の追加（重要） */}
+          <Route path="/refund" element={<RefundPolicy lang={lang} />} />
         </Route>
 
         <Route

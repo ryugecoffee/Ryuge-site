@@ -6,7 +6,7 @@ export default function SiteFooter({ lang }) {
       brand: "Ryuge Coffee",
       tagline: "Quietly crafted in Kamakura",
       company: "運営会社：株式会社龍華",
-      description:  "焙煎珈琲豆・珈琲／お茶バッグの販売サイト",
+      description: "焙煎珈琲豆・珈琲／お茶バッグの販売サイト",
       instagram: "Instagram",
       contact: "お問合せ / 卸販売について",
       email: "ryugecoffee@gmail.com",
@@ -14,20 +14,23 @@ export default function SiteFooter({ lang }) {
       terms: "利用規約",
       legal: "特定商取引法に基づく表記",
       shipping: "送料について",
-      manage: "定期購入の確認・解約はこちら"
+      manage: "定期購入の確認・解約はこちら",
+      refund: "返品・返金ポリシー",
     },
     en: {
       brand: "Ryuge Coffee",
       tagline: "Quietly crafted in Kamakura",
       company: "Operating Company: Kabushikigaisha Ryuge",
       description: "Online store for roasted coffee beans and coffee/tea bags",
+      instagram: "Instagram",
       contact: "Contact / Wholesale",
       email: "ryugecoffee@gmail.com",
       privacy: "Privacy Policy",
       terms: "Terms of Service",
       legal: "Legal Notice",
       shipping: "Shipping Info",
-      manage: "Manage or cancel subscription"
+      manage: "Manage or cancel subscription",
+      refund: "Refund Policy",
     },
     es: {
       brand: "Ryuge Coffee",
@@ -41,7 +44,8 @@ export default function SiteFooter({ lang }) {
       terms: "Términos de Servicio",
       legal: "Aviso Legal",
       shipping: "Información de Envío",
-      manage: "Gestionar o cancelar suscripción"
+      manage: "Gestionar o cancelar suscripción",
+      refund: "Política de Reembolsos",
     },
   };
 
@@ -54,8 +58,6 @@ export default function SiteFooter({ lang }) {
           <div className="footer-brand-block">
             <p className="footer-brand">{t.brand}</p>
             <p className="footer-tagline">{t.tagline}</p>
-
-            {/* ←ここがStripe対策のコア */}
             <p className="footer-company">{t.company}</p>
             <p className="footer-description">{t.description}</p>
           </div>
@@ -69,11 +71,8 @@ export default function SiteFooter({ lang }) {
               {t.instagram}
             </a>
 
-            <a href={`mailto:${t.email}`}>
-              {t.contact}
-            </a>
+            <a href={`mailto:${t.email}`}>{t.contact}</a>
 
-            {/* メールを明示 */}
             <p className="footer-email">{t.email}</p>
           </div>
 
@@ -82,6 +81,7 @@ export default function SiteFooter({ lang }) {
             <Link to="/terms">{t.terms}</Link>
             <Link to="/legal">{t.legal}</Link>
             <Link to="/shipping">{t.shipping}</Link>
+            <Link to="/refund">{t.refund}</Link>
 
             <a
               href="https://billing.stripe.com/p/login/3cI28r8GV4GcaFV1L85AQ01"
