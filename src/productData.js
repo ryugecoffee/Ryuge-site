@@ -507,7 +507,7 @@ export const PRODUCT_DATA = {
         en: "Open Site",
         es: "Ver sitio",
       },
-      link: "https://coffeewheel10.vercel.app",
+      link: "https://flavorcoffeewheel.com"
     },
   ],
 };
