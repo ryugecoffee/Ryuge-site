@@ -12,7 +12,6 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// メール送信設定
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -21,7 +20,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// ゆうパック送料
 const YUPACK_SHIPPING = {
   北海道: 1410,
   青森県: 880,
@@ -72,8 +70,16 @@ const YUPACK_SHIPPING = {
   沖縄県: 1450,
 };
 
-// 送料計算
-function calcShipping(items, prefecture) {
+// 海外送料テーブル
+const INTERNATIONAL_SHIPPING = {
+  zone1: 3400,
+  zone2: 4550,
+  zone3: 6700,
+  zone4: 7900,
+  zone5: 8100,
+};
+
+function calcShipping(items, prefecture, countryType) {
   const safeItems = Array.isArray(items) ? items : [];
 
   const subtotal = safeItems.reduce(
@@ -81,22 +87,24 @@ function calcShipping(items, prefecture) {
     0
   );
 
-  // ✅ 5000円以上で送料無料
-  if (subtotal >= 5000) return 0;
-
-  // ✅ サブスクは送料無料
   const hasSubscription = safeItems.some(
     (item) => item.category === "subscription"
   );
   if (hasSubscription) return 0;
 
-  // ✅ バッグ判定（ここが今回の修正の本丸）
+  // 海外の場合はzoneキーで送料を返す（小計による無料判定なし）
+  if (countryType === "international") {
+    return INTERNATIONAL_SHIPPING[prefecture] ?? 8100;
+  }
+
+  // 5000円以上で送料無料（国内のみ）
+  if (subtotal >= 5000) return 0;
+
   const isBagItem = (item) =>
     item?.category === "bag" || item?.category === "tea-bag";
 
   const hasOnlyBagItems =
-    safeItems.length > 0 &&
-    safeItems.every((item) => isBagItem(item));
+    safeItems.length > 0 && safeItems.every((item) => isBagItem(item));
 
   const totalBagQuantity = safeItems
     .filter((item) => isBagItem(item))
@@ -106,24 +114,16 @@ function calcShipping(items, prefecture) {
     return 185;
   }
 
-  // ✅ 海外
-  if (prefecture === "overseas") {
-    return 3000;
-  }
-
-  // ✅ それ以外はゆうパック
   return YUPACK_SHIPPING[prefecture] ?? 880;
 }
 
-// 接続確認
 app.get("/", (req, res) => {
   res.send("Ryuge server is running");
 });
 
-// 決済Intent
 app.post("/create-payment-intent", async (req, res) => {
   try {
-    const { items, prefecture, email, name, address } = req.body;
+    const { items, prefecture, countryType, email, name, address } = req.body;
 
     const safeItems = Array.isArray(items) ? items : [];
 
@@ -132,7 +132,7 @@ app.post("/create-payment-intent", async (req, res) => {
       0
     );
 
-    const shipping = calcShipping(safeItems, prefecture);
+    const shipping = calcShipping(safeItems, prefecture, countryType);
     const total = subtotal + shipping;
 
     const paymentIntent = await stripe.paymentIntents.create({
@@ -157,7 +157,6 @@ app.post("/create-payment-intent", async (req, res) => {
   }
 });
 
-// 起動
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {

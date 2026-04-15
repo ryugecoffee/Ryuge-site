@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -11,54 +11,121 @@ import {
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 const PREFECTURES = [
-  "北海道",
-  "青森県",
-  "岩手県",
-  "宮城県",
-  "秋田県",
-  "山形県",
-  "福島県",
-  "茨城県",
-  "栃木県",
-  "群馬県",
-  "埼玉県",
-  "千葉県",
-  "東京都",
-  "神奈川県",
-  "新潟県",
-  "富山県",
-  "石川県",
-  "福井県",
-  "山梨県",
-  "長野県",
-  "岐阜県",
-  "静岡県",
-  "愛知県",
-  "三重県",
-  "滋賀県",
-  "京都府",
-  "大阪府",
-  "兵庫県",
-  "奈良県",
-  "和歌山県",
-  "鳥取県",
-  "島根県",
-  "岡山県",
-  "広島県",
-  "山口県",
-  "徳島県",
-  "香川県",
-  "愛媛県",
-  "高知県",
-  "福岡県",
-  "佐賀県",
-  "長崎県",
-  "熊本県",
-  "大分県",
-  "宮崎県",
-  "鹿児島県",
-  "沖縄県",
+  "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
+  "茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県",
+  "新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県",
+  "静岡県","愛知県","三重県","滋賀県","京都府","大阪府","兵庫県",
+  "奈良県","和歌山県","鳥取県","島根県","岡山県","広島県","山口県",
+  "徳島県","香川県","愛媛県","高知県","福岡県","佐賀県","長崎県",
+  "熊本県","大分県","宮崎県","鹿児島県","沖縄県",
 ];
+
+const COUNTRY_CODES = `
+AD,AE,AF,AG,AI,AL,AM,AO,AQ,AR,AS,AT,AU,AW,AX,AZ,
+BA,BB,BD,BE,BF,BG,BH,BI,BJ,BL,BM,BN,BO,BQ,BR,BS,BT,BV,BW,BY,BZ,
+CA,CC,CD,CF,CG,CH,CI,CK,CL,CM,CN,CO,CR,CU,CV,CW,CX,CY,CZ,
+DE,DJ,DK,DM,DO,DZ,
+EC,EE,EG,EH,ER,ES,ET,
+FI,FJ,FK,FM,FO,FR,
+GA,GB,GD,GE,GF,GG,GH,GI,GL,GM,GN,GP,GQ,GR,GS,GT,GU,GW,GY,
+HK,HM,HN,HR,HT,HU,
+ID,IE,IL,IM,IN,IO,IQ,IR,IS,IT,
+JE,JM,JO,JP,
+KE,KG,KH,KI,KM,KN,KP,KR,KW,KY,KZ,
+LA,LB,LC,LI,LK,LR,LS,LT,LU,LV,LY,
+MA,MC,MD,ME,MF,MG,MH,MK,ML,MM,MN,MO,MP,MQ,MR,MS,MT,MU,MV,MW,MX,MY,MZ,
+NA,NC,NE,NF,NG,NI,NL,NO,NP,NR,NU,NZ,
+OM,
+PA,PE,PF,PG,PH,PK,PL,PM,PN,PR,PS,PT,PW,PY,
+QA,
+RE,RO,RS,RU,RW,
+SA,SB,SC,SD,SE,SG,SH,SI,SJ,SK,SL,SM,SN,SO,SR,SS,ST,SV,SX,SY,SZ,
+TC,TD,TF,TG,TH,TJ,TK,TL,TM,TN,TO,TR,TT,TV,TW,TZ,
+UA,UG,UM,US,UY,UZ,
+VA,VC,VE,VG,VI,VN,VU,
+WF,WS,
+XK,
+YE,YT,
+ZA,ZM,ZW
+`
+  .replace(/\s/g, "")
+  .split(",")
+  .filter(Boolean);
+
+const regionNames =
+  typeof Intl !== "undefined" && typeof Intl.DisplayNames === "function"
+    ? new Intl.DisplayNames(["en"], { type: "region" })
+    : null;
+
+const COUNTRY_OPTIONS = COUNTRY_CODES.map((code) => ({
+  code,
+  name: regionNames?.of(code) || code,
+}))
+  .filter((item) => item.code !== "JP")
+  .sort((a, b) => a.name.localeCompare(b.name));
+
+const SHIPPING_BY_ZONE = {
+  zone1: 3400,
+  zone2: 4550,
+  zone3: 6700,
+  zone4: 7900,
+  zone5: 8100,
+};
+
+const ZONE_LABELS = {
+  zone1: {
+    ja: "第1地帯（中国・韓国・台湾）",
+    en: "Zone 1 (China / South Korea / Taiwan)",
+    es: "Zona 1 (China / Corea del Sur / Taiwán)",
+  },
+  zone2: {
+    ja: "第2地帯（アジアその他）",
+    en: "Zone 2 (Other Asia)",
+    es: "Zona 2 (Resto de Asia)",
+  },
+  zone3: {
+    ja: "第3地帯（オセアニア・カナダ・メキシコ・中近東・ヨーロッパ）",
+    en: "Zone 3 (Oceania / Canada / Mexico / Middle East / Europe)",
+    es: "Zona 3 (Oceanía / Canadá / México / Oriente Medio / Europa)",
+  },
+  zone4: {
+    ja: "第4地帯（米国）",
+    en: "Zone 4 (United States)",
+    es: "Zona 4 (Estados Unidos)",
+  },
+  zone5: {
+    ja: "第5地帯（中南米・アフリカ）",
+    en: "Zone 5 (Latin America / Africa)",
+    es: "Zona 5 (América Latina / África)",
+  },
+};
+
+const ZONE1_CODES = new Set(["CN", "KR", "TW"]);
+const ZONE4_CODES = new Set(["US"]);
+
+const ZONE3_CODES = new Set([
+  "AD","AL","AT","AX","BA","BE","BG","BY","CH","CY","CZ","DE","DK","EE",
+  "ES","FI","FO","FR","GB","GG","GI","GL","GR","HR","HU","IE","IM","IS",
+  "IT","JE","LI","LT","LU","LV","MC","MD","ME","MK","MT","NL","NO","PL",
+  "PT","RO","RS","RU","SE","SI","SJ","SK","SM","UA","VA","XK",
+  "AU","CC","CK","CX","FJ","FM","GU","HM","KI","MH","MP","NC","NF","NR",
+  "NU","NZ","PF","PG","PN","PW","SB","TK","TO","TV","UM","VU","WF","WS",
+  "CA","MX",
+  "AE","AM","AZ","BH","GE","IL","IQ","IR","JO","KW","LB","OM","PS","QA",
+  "SA","SY","TR","YE",
+]);
+
+const ZONE5_CODES = new Set([
+  "AG","AI","AR","AW","BB","BL","BM","BO","BQ","BR","BS","BZ","CL","CO",
+  "CR","CU","CW","DM","DO","EC","FK","GD","GF","GP","GS","GT","GY","HN",
+  "HT","JM","KN","KY","LC","MF","MQ","MS","NI","PA","PE","PR","PY","SR",
+  "SV","SX","TC","TT","UY","VC","VE","VG","VI",
+  "AO","BF","BI","BJ","BW","CD","CF","CG","CI","CM","CV","DJ","DZ","EG",
+  "EH","ER","ET","GA","GH","GM","GN","GQ","GW","KE","KM","LR","LS","LY",
+  "MA","MG","ML","MR","MU","MW","MZ","NA","NE","NG","RE","RW","SC","SD",
+  "SH","SL","SN","SO","SS","ST","SZ","TD","TF","TG","TN","TZ","UG","YT",
+  "ZA","ZM","ZW",
+]);
 
 const UI = {
   ja: {
@@ -73,7 +140,6 @@ const UI = {
     cardInfo: "カード情報",
     name: "お名前",
     email: "メールアドレス",
-    countryType: "配送先",
     japan: "日本",
     other: "海外",
     postalCode: "郵便番号（例：2480012）",
@@ -92,6 +158,21 @@ const UI = {
     back: "← 戻る",
     subscriptionOnlyOne:
       "サブスクは1プランのみ購入できます。通常商品とは分けて決済してください。",
+    beanLimitError:
+      "閻魔・木函の合計は10個までです。10個を超える場合はお問い合わせください。",
+    coffeeBagLimitError:
+      "コーヒーバッグは20個までです。20個を超える場合はお問い合わせください。",
+    selectCountry: "海外配送では国 / 地域を選択してください。",
+    zone: "配送地帯",
+    internationalRule:
+      "海外配送は国に応じて自動で送料を計算します。閻魔・木函は合計10個まで、コーヒーバッグは20個までです。",
+    unsupportedCountry: "この国 / 地域の送料判定に失敗しました。",
+    shippingEstimate: "現在の海外送料",
+    cannotPurchaseLimit: "上限超過のため購入できません",
+    checkoutInitError: "決済情報の初期化に失敗しました。",
+    cardNotReady: "カード入力フォームの準備ができていません。",
+    paymentFailed: "決済に失敗しました。",
+    subscriptionStartError: "サブスク決済の開始に失敗しました。",
   },
   en: {
     eyebrow: "Checkout",
@@ -105,7 +186,6 @@ const UI = {
     cardInfo: "Card Details",
     name: "Full Name",
     email: "Email Address",
-    countryType: "Shipping destination",
     japan: "Japan",
     other: "International",
     postalCode: "Postal Code",
@@ -124,6 +204,22 @@ const UI = {
     back: "← Back",
     subscriptionOnlyOne:
       "Subscription checkout supports one plan only. Please purchase regular items separately.",
+    beanLimitError:
+      "Enma and Wood Box items are limited to 10 per order. Please contact us for larger orders.",
+    coffeeBagLimitError:
+      "Coffee bags are limited to 20 per order. Please contact us for larger orders.",
+    selectCountry: "Please select a country / region for international shipping.",
+    zone: "Shipping Zone",
+    internationalRule:
+      "International shipping is calculated automatically by country. Enma and Wood Box items are limited to 10 total, and coffee bags are limited to 20.",
+    unsupportedCountry:
+      "We could not determine the shipping zone for this country / region.",
+    shippingEstimate: "Current international shipping",
+    cannotPurchaseLimit: "Cannot purchase (limit exceeded)",
+    checkoutInitError: "Failed to initialize checkout.",
+    cardNotReady: "Card form is not ready yet.",
+    paymentFailed: "Payment failed.",
+    subscriptionStartError: "Failed to start subscription checkout.",
   },
   es: {
     eyebrow: "Checkout",
@@ -137,7 +233,6 @@ const UI = {
     cardInfo: "Información de la tarjeta",
     name: "Nombre completo",
     email: "Correo electrónico",
-    countryType: "Destino del envío",
     japan: "Japón",
     other: "Internacional",
     postalCode: "Código postal",
@@ -156,6 +251,22 @@ const UI = {
     back: "← Volver",
     subscriptionOnlyOne:
       "La suscripción solo admite un plan por compra. Compra los productos normales por separado.",
+    beanLimitError:
+      "Los productos Enma y Wood Box están limitados a 10 por pedido. Para pedidos mayores, contáctanos.",
+    coffeeBagLimitError:
+      "Las bolsas de café están limitadas a 20 por pedido. Para pedidos mayores, contáctanos.",
+    selectCountry: "Selecciona un país / región para el envío internacional.",
+    zone: "Zona de envío",
+    internationalRule:
+      "El envío internacional se calcula automáticamente según el país. Los productos Enma y Wood Box están limitados a 10 en total y las bolsas de café a 20.",
+    unsupportedCountry:
+      "No hemos podido determinar la zona de envío para este país / región.",
+    shippingEstimate: "Costo internacional actual",
+    cannotPurchaseLimit: "No se puede comprar (límite excedido)",
+    checkoutInitError: "No se pudo inicializar el pago.",
+    cardNotReady: "El formulario de tarjeta aún no está listo.",
+    paymentFailed: "El pago falló.",
+    subscriptionStartError: "No se pudo iniciar la suscripción.",
   },
 };
 
@@ -189,6 +300,73 @@ const inputStyle = {
   width: "100%",
 };
 
+function getCountryName(code) {
+  return COUNTRY_OPTIONS.find((item) => item.code === code)?.name || "";
+}
+
+function getZoneByCountryCode(countryCode) {
+  if (!countryCode) return null;
+  if (ZONE1_CODES.has(countryCode)) return "zone1";
+  if (ZONE4_CODES.has(countryCode)) return "zone4";
+  if (ZONE3_CODES.has(countryCode)) return "zone3";
+  if (ZONE5_CODES.has(countryCode)) return "zone5";
+  return "zone2";
+}
+
+function getZoneLabel(zoneKey, lang = "ja") {
+  if (!zoneKey) return "";
+  return ZONE_LABELS[zoneKey]?.[lang] || ZONE_LABELS[zoneKey]?.ja || "";
+}
+
+function isSubscriptionItem(item) {
+  return item?.id?.startsWith("subscription-");
+}
+
+function isCoffeeBagItem(item) {
+  const source = `${item?.id || ""} ${item?.title || ""}`.toLowerCase();
+  return (
+    source.includes("coffee-bag") ||
+    source.includes("coffee_bag") ||
+    source.includes("coffeebag") ||
+    source.includes("coffee bag") ||
+    source.includes("コーヒーバッグ") ||
+    source.includes("お茶バッグ")
+  );
+}
+
+function isBeanItem(item) {
+  const source = `${item?.id || ""} ${item?.title || ""}`.toLowerCase();
+  return (
+    source.includes("enma") ||
+    source.includes("woodbox") ||
+    source.includes("wood-box") ||
+    source.includes("wood_box") ||
+    source.includes("閻魔") ||
+    source.includes("木函")
+  );
+}
+
+function countBeanItems(cartItems = []) {
+  return cartItems
+    .filter((item) => isBeanItem(item) && !isSubscriptionItem(item))
+    .reduce((sum, item) => sum + (item.quantity || 0), 0);
+}
+
+function countCoffeeBagItems(cartItems = []) {
+  return cartItems
+    .filter((item) => isCoffeeBagItem(item) && !isSubscriptionItem(item))
+    .reduce((sum, item) => sum + (item.quantity || 0), 0);
+}
+
+function getOrderLimitError(cartItems = [], t, countryType = "japan") {
+  if (countryType !== "international") return "";
+  const beanCount = countBeanItems(cartItems);
+  const coffeeBagCount = countCoffeeBagItems(cartItems);
+  if (beanCount > 10) return t.beanLimitError;
+  if (coffeeBagCount > 20) return t.coffeeBagLimitError;
+  return "";
+}
+
 function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -197,34 +375,45 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-
   const [countryType, setCountryType] = useState("japan");
   const [postalCode, setPostalCode] = useState("");
   const [prefecture, setPrefecture] = useState("神奈川県");
   const [addressLine1Ja, setAddressLine1Ja] = useState("");
   const [addressLine2Ja, setAddressLine2Ja] = useState("");
-
-  const [country, setCountry] = useState("");
+  const [countryCode, setCountryCode] = useState("");
   const [stateRegion, setStateRegion] = useState("");
   const [city, setCity] = useState("");
   const [addressLine1, setAddressLine1] = useState("");
   const [addressLine2, setAddressLine2] = useState("");
   const [addressLine3, setAddressLine3] = useState("");
-
   const [shipping, setShipping] = useState(null);
   const [total, setTotal] = useState(null);
   const [clientSecret, setClientSecret] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
- const hasSubscription = (cartItems || []).some((item) =>
-  item.id?.startsWith("subscription-")
-);
+  const hasSubscription = useMemo(
+    () => (cartItems || []).some((item) => isSubscriptionItem(item)),
+    [cartItems]
+  );
 
+  const cartSubtotal = useMemo(
+    () =>
+      (cartItems || []).reduce(
+        (sum, item) => sum + (item.price || 0) * (item.quantity || 0),
+        0
+      ),
+    [cartItems]
+  );
 
-  const cartSubtotal = (cartItems || []).reduce(
-    (sum, item) => sum + (item.price || 0) * item.quantity,
-    0
+  const selectedZoneKey =
+    countryType === "international" ? getZoneByCountryCode(countryCode) : null;
+
+  const selectedCountryName = getCountryName(countryCode);
+
+  const orderLimitError = useMemo(
+    () => getOrderLimitError(cartItems, t, countryType),
+    [cartItems, t, countryType]
   );
 
   useEffect(() => {
@@ -238,9 +427,37 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
       return;
     }
 
+    if (countryType === "international" && orderLimitError) {
+      setShipping(null);
+      setTotal(null);
+      setClientSecret("");
+      setError(orderLimitError);
+      return;
+    }
+
+    if (countryType === "international" && !countryCode) {
+      setShipping(null);
+      setTotal(null);
+      setClientSecret("");
+      setError("");
+      return;
+    }
+
+    if (countryType === "international" && !selectedZoneKey) {
+      setShipping(null);
+      setTotal(null);
+      setClientSecret("");
+      setError(t.unsupportedCountry);
+      return;
+    }
+
     const initCheckout = async () => {
       try {
         setError("");
+
+        // ★修正: 海外の場合はselectedZoneKeyをprefectureとして渡す
+        const prefectureParam =
+          countryType === "international" ? selectedZoneKey : prefecture;
 
         const response = await fetch(
           "https://ryuge-site.onrender.com/create-payment-intent",
@@ -249,7 +466,11 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               items: cartItems,
-              prefecture: countryType === "japan" ? prefecture : "overseas",
+              prefecture: prefectureParam,
+              countryType,
+              countryCode,
+              countryName: selectedCountryName,
+              shippingZone: selectedZoneKey,
               email: "tmp@tmp.com",
               name: "tmp",
               address: "tmp",
@@ -260,25 +481,39 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error || "Failed to initialize checkout.");
+          throw new Error(data.error || t.checkoutInitError);
         }
 
         setShipping(data.shipping);
         setTotal(data.total);
         setClientSecret(data.clientSecret);
       } catch (err) {
-        setError(err.message || "Failed to initialize checkout.");
+        setShipping(null);
+        setTotal(null);
+        setClientSecret("");
+        setError(err.message || t.checkoutInitError);
       }
     };
 
     initCheckout();
-  }, [cartItems, prefecture, countryType, hasSubscription, cartSubtotal]);
+  }, [
+    cartItems,
+    prefecture,
+    countryType,
+    countryCode,
+    selectedZoneKey,
+    selectedCountryName,
+    hasSubscription,
+    cartSubtotal,
+    orderLimitError,
+    t.checkoutInitError,
+    t.unsupportedCountry,
+  ]);
 
   const buildFinalAddress = () => {
     if (countryType === "japan") {
       return `${prefecture} ${addressLine1Ja} ${addressLine2Ja}`.trim();
     }
-
     return [
       addressLine1,
       addressLine2,
@@ -286,7 +521,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
       city,
       stateRegion,
       postalCode,
-      country,
+      selectedCountryName,
     ]
       .filter(Boolean)
       .join(", ");
@@ -298,6 +533,24 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
     setError("");
 
     try {
+      if (countryType === "international" && orderLimitError) {
+        setError(orderLimitError);
+        setLoading(false);
+        return;
+      }
+
+      if (countryType === "international" && !countryCode) {
+        setError(t.selectCountry);
+        setLoading(false);
+        return;
+      }
+
+      if (countryType === "international" && !selectedZoneKey) {
+        setError(t.unsupportedCountry);
+        setLoading(false);
+        return;
+      }
+
       const finalAddress = buildFinalAddress();
 
       if (hasSubscription) {
@@ -316,7 +569,8 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
               name,
               email,
               postalCode,
-              prefecture: countryType === "japan" ? prefecture : country,
+              prefecture:
+                countryType === "japan" ? prefecture : selectedCountryName,
               address: finalAddress,
             },
           }),
@@ -325,9 +579,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         const data = await response.json();
 
         if (!response.ok || !data.url) {
-          throw new Error(
-            data.error || "Failed to start subscription checkout."
-          );
+          throw new Error(data.error || t.subscriptionStartError);
         }
 
         window.location.href = data.url;
@@ -335,6 +587,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
       }
 
       if (!stripe || !elements || !clientSecret) {
+        setError(t.cardNotReady);
         setLoading(false);
         return;
       }
@@ -342,7 +595,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
       const cardElement = elements.getElement(CardElement);
 
       if (!cardElement) {
-        setError("Card form is not ready yet.");
+        setError(t.cardNotReady);
         setLoading(false);
         return;
       }
@@ -350,12 +603,34 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
       const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
           card: cardElement,
-          billing_details: { name, email },
+          billing_details: {
+            name,
+            email,
+            address:
+              countryType === "japan"
+                ? {
+                    country: "JP",
+                    postal_code: postalCode,
+                    state: prefecture,
+                    line1: addressLine1Ja,
+                    line2: addressLine2Ja,
+                  }
+                : {
+                    country: countryCode,
+                    postal_code: postalCode,
+                    state: stateRegion,
+                    city,
+                    line1: addressLine1,
+                    line2: [addressLine2, addressLine3]
+                      .filter(Boolean)
+                      .join(" "),
+                  },
+          },
         },
       });
 
       if (result.error) {
-        setError(result.error.message || "Payment failed.");
+        setError(result.error.message || t.paymentFailed);
         setLoading(false);
         return;
       }
@@ -369,7 +644,12 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           email,
           postalCode,
           address: finalAddress,
-          prefecture: countryType === "japan" ? prefecture : country,
+          prefecture:
+            countryType === "japan" ? prefecture : selectedCountryName,
+          countryType,
+          countryCode,
+          countryName: selectedCountryName,
+          shippingZone: selectedZoneKey,
           total,
           shipping,
         }),
@@ -382,7 +662,8 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           name,
           email,
           postalCode,
-          prefecture: countryType === "japan" ? prefecture : country,
+          prefecture:
+            countryType === "japan" ? prefecture : selectedCountryName,
           address:
             countryType === "japan"
               ? `${addressLine1Ja} ${addressLine2Ja}`.trim()
@@ -393,11 +674,14 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           shipping,
           items: cartItems,
           countryType,
+          countryCode,
+          countryName: selectedCountryName,
+          shippingZone: selectedZoneKey,
           lang,
         },
       });
     } catch (err) {
-      setError(err.message || "Payment failed.");
+      setError(err.message || t.paymentFailed);
       setLoading(false);
       return;
     }
@@ -418,7 +702,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
             <span className="checkout-order-title">{item.title}</span>
             <span className="checkout-order-qty">× {item.quantity}</span>
             <span className="checkout-order-price">
-              ¥{(item.price * item.quantity).toLocaleString()}
+              ¥{((item.price || 0) * (item.quantity || 0)).toLocaleString()}
             </span>
           </div>
         ))}
@@ -440,15 +724,18 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
             {total === null ? t.calculating : `¥${total.toLocaleString()}`}
           </span>
         </div>
+
+        {countryType === "international" && orderLimitError && (
+          <p style={{ marginTop: "8px", color: "#ff6b6b", fontSize: "13px", lineHeight: 1.6 }}>
+            {orderLimitError}
+          </p>
+        )}
       </div>
 
       <div className="checkout-card-section">
         <p className="checkout-section-label">{t.shippingInfo}</p>
 
-        <div
-          className="checkout-card-container"
-          style={{ display: "grid", gap: "12px" }}
-        >
+        <div className="checkout-card-container" style={{ display: "grid", gap: "12px" }}>
           <input
             type="text"
             placeholder={t.name}
@@ -469,11 +756,29 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
 
           <select
             value={countryType}
-            onChange={(e) => setCountryType(e.target.value)}
+            onChange={(e) => {
+              const nextType = e.target.value;
+              setCountryType(nextType);
+              setError("");
+              setShipping(null);
+              setTotal(null);
+              setClientSecret("");
+              if (nextType === "japan") {
+                setCountryCode("");
+                setStateRegion("");
+                setCity("");
+                setAddressLine1("");
+                setAddressLine2("");
+                setAddressLine3("");
+              } else {
+                setAddressLine1Ja("");
+                setAddressLine2Ja("");
+              }
+            }}
             style={{ ...inputStyle, background: "#111" }}
           >
             <option value="japan">{t.japan}</option>
-            <option value="other">{t.other}</option>
+            <option value="international">{t.other}</option>
           </select>
 
           {countryType === "japan" ? (
@@ -495,9 +800,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
                 style={{ ...inputStyle, background: "#111" }}
               >
                 {PREFECTURES.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
+                  <option key={p} value={p}>{p}</option>
                 ))}
               </select>
 
@@ -520,14 +823,43 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
             </>
           ) : (
             <>
-              <input
-                type="text"
-                placeholder={t.country}
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
+              <select
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value)}
                 required
-                style={inputStyle}
-              />
+                style={{ ...inputStyle, background: "#111" }}
+              >
+                <option value="">{t.country}</option>
+                {COUNTRY_OPTIONS.map((item) => (
+                  <option key={item.code} value={item.code}>{item.name}</option>
+                ))}
+              </select>
+
+              {countryCode && selectedZoneKey && (
+                <div
+                  style={{
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    borderRadius: "14px",
+                    padding: "14px 16px",
+                    background: "rgba(255,255,255,0.03)",
+                    color: "rgba(255,255,255,0.82)",
+                    fontSize: "13px",
+                    lineHeight: 1.7,
+                  }}
+                >
+                  <div>
+                    <strong>{t.zone}:</strong> {getZoneLabel(selectedZoneKey, lang)}
+                  </div>
+                  <div>
+                    <strong>{t.shippingEstimate}:</strong>{" "}
+                    ¥{SHIPPING_BY_ZONE[selectedZoneKey].toLocaleString()}
+                  </div>
+                </div>
+              )}
+
+              <p style={{ margin: 0, fontSize: "12px", lineHeight: 1.7, color: "rgba(255,255,255,0.58)" }}>
+                {t.internationalRule}
+              </p>
 
               <input
                 type="text"
@@ -590,34 +922,39 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         <div className="checkout-card-section">
           <p className="checkout-section-label">{t.cardInfo}</p>
 
-          <div
-            className="checkout-card-container"
-            style={{
-              padding: "18px 20px",
-              minHeight: "64px",
-              border: "1px solid rgba(255,255,255,0.14)",
-              borderRadius: "16px",
-              background: "rgba(255,255,255,0.02)",
-              position: "relative",
-              zIndex: 1,
-            }}
-          >
-            <CardElement options={CARD_STYLE} />
-          </div>
+          {/* ★修正: pointerEvents: "auto" を追加してクリックを確実に通す */}
+<div
+  className="checkout-card-container"
+  style={{
+    position: "relative",
+    zIndex: 1,
+  }}
+>
+  <CardElement options={CARD_STYLE} />
+</div>
         </div>
       )}
 
-      {error && <p className="checkout-error">{error}</p>}
+      {(error || (countryType === "international" && orderLimitError)) && (
+        <p className="checkout-error">{error || orderLimitError}</p>
+      )}
 
       <button
         type="submit"
         className="checkout-pay-button"
-        disabled={loading || (!hasSubscription && (!stripe || !clientSecret))}
+        disabled={
+          loading ||
+          (countryType === "international" && !!orderLimitError) ||
+          (!hasSubscription && (!stripe || !clientSecret)) ||
+          (countryType === "international" && !countryCode)
+        }
       >
         {loading
           ? t.processing
           : hasSubscription
           ? t.startSubscription
+          : countryType === "international" && orderLimitError
+          ? t.cannotPurchaseLimit
           : `¥${total?.toLocaleString() ?? "..."} ${t.pay}`}
       </button>
 
