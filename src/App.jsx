@@ -9,7 +9,7 @@ import ProductsPage from "./pages/ProductsPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import CheckoutCompletePage from "./pages/CheckoutCompletePage";
 import ShippingPage from "./pages/ShippingPage";
-import RefundPolicy from "./pages/RefundPolicy"; // ← 追加
+import RefundPolicy from "./pages/RefundPolicy";
 import { Analytics } from "@vercel/analytics/react";
 
 export default function App() {
@@ -17,7 +17,10 @@ export default function App() {
     return localStorage.getItem("site-lang") || "ja";
   });
 
-  const [cartItems, setCartItems] = useState([]);
+  const [cartItems, setCartItems] = useState(() => {
+    const savedCart = localStorage.getItem("cart-items");
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
 
   const addToCart = (product, quantity = 1) => {
     setCartItems((prev) => {
@@ -61,9 +64,18 @@ export default function App() {
     );
   };
 
+  const clearCart = () => {
+    setCartItems([]);
+    localStorage.removeItem("cart-items");
+  };
+
   useEffect(() => {
     localStorage.setItem("site-lang", lang);
   }, [lang]);
+
+  useEffect(() => {
+    localStorage.setItem("cart-items", JSON.stringify(cartItems));
+  }, [cartItems]);
 
   return (
     <>
@@ -100,8 +112,6 @@ export default function App() {
           <Route path="/terms" element={<Terms lang={lang} />} />
           <Route path="/shipping" element={<ShippingPage lang={lang} />} />
           <Route path="/legal" element={<LegalNotice lang={lang} />} />
-
-          {/* ← これが今回の追加（重要） */}
           <Route path="/refund" element={<RefundPolicy lang={lang} />} />
         </Route>
 
@@ -111,7 +121,7 @@ export default function App() {
             <CheckoutPage
               cartItems={cartItems}
               setCartItems={setCartItems}
-              clearCart={() => setCartItems([])}
+              clearCart={clearCart}
               lang={lang}
             />
           }

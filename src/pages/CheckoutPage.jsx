@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import {
   Elements,
@@ -142,7 +142,6 @@ const UI = {
     internationalRule: "海外配送は国に応じて自動で送料を計算します。閻魔・木函は合計10個まで、コーヒーバッグ・お茶バッグは合計20個までです。",
     unsupportedCountry: "この国 / 地域の送料判定に失敗しました。",
     shippingEstimate: "基本送料",
-    shippingDiscount: "送料割引",
     cannotPurchaseLimit: "上限超過のため購入できません",
     checkoutInitError: "決済情報の初期化に失敗しました。",
     cardNotReady: "カード入力フォームの準備ができていません。",
@@ -156,6 +155,7 @@ const UI = {
     discountStep1: "送料50%OFF適用中",
     discountStep2Zone123: "送料無料適用中",
     discountStep2Zone45: "送料70%OFF適用中",
+    shippingDetailsLink: "送料について",
   },
   en: {
     eyebrow: "Checkout",
@@ -193,7 +193,6 @@ const UI = {
     internationalRule: "International shipping is calculated automatically by country. Enma and Wood Box are limited to 10 total, and coffee/tea bags are limited to 20.",
     unsupportedCountry: "We could not determine the shipping zone for this country / region.",
     shippingEstimate: "Base shipping",
-    shippingDiscount: "Shipping discount",
     cannotPurchaseLimit: "Cannot purchase (limit exceeded)",
     checkoutInitError: "Failed to initialize checkout.",
     cardNotReady: "Card form is not ready yet.",
@@ -207,6 +206,7 @@ const UI = {
     discountStep1: "50% shipping discount applied",
     discountStep2Zone123: "Free shipping applied",
     discountStep2Zone45: "70% shipping discount applied",
+    shippingDetailsLink: "Shipping Details",
   },
   es: {
     eyebrow: "Checkout",
@@ -244,7 +244,6 @@ const UI = {
     internationalRule: "El envío internacional se calcula según el país. Enma y Wood Box están limitados a 10 en total, y las bolsas a 20.",
     unsupportedCountry: "No hemos podido determinar la zona de envío para este país.",
     shippingEstimate: "Envío base",
-    shippingDiscount: "Descuento de envío",
     cannotPurchaseLimit: "No se puede comprar (límite excedido)",
     checkoutInitError: "No se pudo inicializar el pago.",
     cardNotReady: "El formulario de tarjeta aún no está listo.",
@@ -258,6 +257,7 @@ const UI = {
     discountStep1: "50% de descuento en envío aplicado",
     discountStep2Zone123: "Envío gratuito aplicado",
     discountStep2Zone45: "70% de descuento en envío aplicado",
+    shippingDetailsLink: "Detalles de envío",
   },
 };
 
@@ -324,7 +324,7 @@ function isBagItem(item) {
 }
 
 function isBeanItem(item) {
-  if (isBagItem(item)) return false; // ← これを追加
+  if (isBagItem(item)) return false;
   const source = `${item?.id || ""} ${item?.title || ""}`.toLowerCase();
   return (
     source.includes("enma") ||
@@ -348,14 +348,12 @@ function countBags(cartItems = []) {
     .reduce((sum, item) => sum + (item.quantity || 0), 0);
 }
 
-// 送料割引ステップを計算（フロント表示用）
 function getShippingDiscountStep(beans, bags) {
   if (beans >= 10 && bags >= 20) return 2;
   if (beans >= 7 && bags >= 10) return 1;
   return 0;
 }
 
-// 送料割引後の金額を計算（フロント表示用のプレビュー）
 function calcDiscountedShipping(baseShipping, step, zoneKey) {
   if (step === 2) {
     const zone45 = zoneKey === "zone4" || zoneKey === "zone5";
@@ -372,6 +370,66 @@ function getOrderLimitError(cartItems = [], t, countryType) {
   if (beans > 10) return t.beanLimitError;
   if (bags > 20) return t.bagLimitError;
   return "";
+}
+
+function ShippingProgressBar({ beans, bags, lang, selectedZoneKey, t }) {
+  const beanProgress = Math.min(100, (beans / 10) * 100);
+  const bagProgress = Math.min(100, (bags / 20) * 100);
+ const overallProgress = Math.min(beanProgress, bagProgress);
+
+  const isMaxDiscount = beans >= 10 && bags >= 20;
+  const isStep1 = beans >= 7 && bags >= 10 && !isMaxDiscount;
+
+const getMessage = () => {
+  if (isMaxDiscount) {
+    const zone45 = selectedZoneKey === "zone4" || selectedZoneKey === "zone5";
+    return zone45 ? t.discountStep2Zone45 : t.discountStep2Zone123;
+  }
+
+  if (isStep1) return t.discountStep1;
+
+  const remainBeans = Math.max(0, 10 - beans);
+  const remainBags = Math.max(0, 20 - bags);
+
+  if (lang === "ja") {
+  return `送料無料まで：豆${remainBeans}個 + バッグ${remainBags}個`;
+}
+
+  if (lang === "es") {
+  return `Para envío gratis: ${remainBeans} cafés + ${remainBags} bolsas`;
+}
+
+return `Free shipping: ${remainBeans} beans + ${remainBags} bags`;
+};
+
+  const barColor = isMaxDiscount ? "rgba(100,255,150,0.8)" : isStep1 ? "rgba(255,200,80,0.8)" : "rgba(255,255,255,0.4)";
+  const textColor = isMaxDiscount ? "rgba(100,255,150,0.9)" : isStep1 ? "rgba(255,200,80,0.9)" : "rgba(255,255,255,0.52)";
+
+  return (
+    <div style={{ marginTop: "10px" }}>
+      <div style={{ height: "4px", borderRadius: "999px", background: "rgba(255,255,255,0.1)", overflow: "hidden" }}>
+        <div style={{ height: "100%", width: String(overallProgress) + "%", borderRadius: "999px", background: barColor, transition: "width 0.4s ease" }} />
+      </div>
+      <p style={{ margin: "6px 0 0", fontSize: "12px", color: textColor, lineHeight: 1.6 }}>
+        {getMessage()}
+      </p>
+      <div style={{ marginTop: "6px" }}>
+  <Link
+    to="/shipping"
+    style={{
+      fontSize: "11px",
+      color: "rgba(255,255,255,0.38)",
+      borderBottom: "1px solid rgba(255,255,255,0.18)",
+      paddingBottom: "1px",
+      letterSpacing: "0.06em",
+      textDecoration: "none",
+    }}
+  >
+    {t.shippingDetailsLink}
+  </Link>
+</div>
+    </div>
+  );
 }
 
 function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
@@ -398,11 +456,9 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
   const [clientSecret, setClientSecret] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  // クーポン
   const [couponCode, setCouponCode] = useState("");
-  const [couponStatus, setCouponStatus] = useState("idle"); // idle | applying | valid | invalid
-  const [couponDiscount, setCouponDiscount] = useState(null); // { type: "percent"|"fixed", value: number, label: string }
+  const [couponStatus, setCouponStatus] = useState("idle");
+  const [couponDiscount, setCouponDiscount] = useState(null);
 
   const hasSubscription = useMemo(
     () => (cartItems || []).some((item) => isSubscriptionItem(item)),
@@ -422,12 +478,10 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
     [cartItems, t, countryType]
   );
 
-  // 送料割引ステップ（海外のみ）
   const beans = useMemo(() => countBeans(cartItems), [cartItems]);
   const bags = useMemo(() => countBags(cartItems), [cartItems]);
   const discountStep = countryType === "international" ? getShippingDiscountStep(beans, bags) : 0;
 
-  // 割引ラベル表示
   const discountLabel = useMemo(() => {
     if (countryType !== "international" || discountStep === 0) return null;
     if (discountStep === 2) {
@@ -546,7 +600,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
 
   const buildFinalAddress = () => {
     if (countryType === "japan") {
-      return `${prefecture} ${addressLine1Ja} ${addressLine2Ja}`.trim();
+      return (prefecture + " " + addressLine1Ja + " " + addressLine2Ja).trim();
     }
     return [addressLine1, addressLine2, addressLine3, city, stateRegion, postalCode, selectedCountryName]
       .filter(Boolean).join(", ");
@@ -653,7 +707,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           name, email, postalCode,
           prefecture: countryType === "japan" ? prefecture : selectedCountryName,
           address: countryType === "japan"
-            ? `${addressLine1Ja} ${addressLine2Ja}`.trim()
+            ? (addressLine1Ja + " " + addressLine2Ja).trim()
             : [addressLine1, addressLine2, addressLine3, city, stateRegion].filter(Boolean).join(", "),
           total, shipping,
           items: cartItems,
@@ -669,7 +723,6 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
     setLoading(false);
   };
 
-  // 送料プレビュー表示（バックエンドから返ってきた値を優先）
   const baseShipping = selectedZoneKey ? SHIPPING_BY_ZONE[selectedZoneKey] : null;
   const previewShipping = baseShipping !== null ? calcDiscountedShipping(baseShipping, discountStep, selectedZoneKey) : null;
 
@@ -678,14 +731,13 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
       <p className="checkout-eyebrow">{t.eyebrow}</p>
       <h1 className="checkout-title">{t.title}</h1>
 
-      {/* 注文内容 */}
       <div className="checkout-order-summary">
         <p className="checkout-section-label">{t.orderSummary}</p>
         {cartItems.map((item) => (
           <div key={item.id} className="checkout-order-item">
             <span className="checkout-order-title">{item.title}</span>
-            <span className="checkout-order-qty">× {item.quantity}</span>
-            <span className="checkout-order-price">¥{((item.price || 0) * (item.quantity || 0)).toLocaleString()}</span>
+            <span className="checkout-order-qty">{"×"} {item.quantity}</span>
+            <span className="checkout-order-price">{"¥"}{((item.price || 0) * (item.quantity || 0)).toLocaleString()}</span>
           </div>
         ))}
 
@@ -695,20 +747,29 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
             {shipping === null
               ? (countryType === "international" && countryCode ? t.calculating : "-")
               : shipping === 0 ? t.free
-              : `¥${shipping.toLocaleString()}`}
+              : "¥" + shipping.toLocaleString()}
           </span>
         </div>
 
-        {/* 送料割引バッジ */}
+        {countryType === "international" && (
+          <ShippingProgressBar
+            beans={beans}
+            bags={bags}
+            lang={lang}
+            selectedZoneKey={selectedZoneKey}
+            t={t}
+          />
+        )}
+
         {discountLabel && countryCode && (
           <div style={{ marginTop: "6px", padding: "8px 12px", borderRadius: "10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", fontSize: "12px", color: "rgba(255,255,255,0.78)", lineHeight: 1.6 }}>
-            ✓ {discountLabel}
+            {"✓"} {discountLabel}
           </div>
         )}
 
         <div className="checkout-order-total">
           <span>{t.total}</span>
-          <span>{total === null ? t.calculating : `¥${total.toLocaleString()}`}</span>
+          <span>{total === null ? t.calculating : "¥" + total.toLocaleString()}</span>
         </div>
 
         {countryType === "international" && orderLimitError && (
@@ -716,7 +777,6 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         )}
       </div>
 
-      {/* お届け先 */}
       <div className="checkout-card-section">
         <p className="checkout-section-label">{t.shippingInfo}</p>
         <div className="checkout-card-container" style={{ display: "grid", gap: "12px" }}>
@@ -749,7 +809,9 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
             <>
               <input type="text" placeholder={t.postalCode} value={postalCode} onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, "").slice(0, 7))} required style={inputStyle} />
               <select value={prefecture} onChange={(e) => setPrefecture(e.target.value)} style={{ ...inputStyle, background: "#111" }}>
-                {PREFECTURES.map((p) => <option key={p} value={p}>{p}</option>)}
+                {PREFECTURES.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
               </select>
               <input type="text" placeholder={t.address1Ja} value={addressLine1Ja} onChange={(e) => setAddressLine1Ja(e.target.value)} required style={inputStyle} />
               <input type="text" placeholder={t.address2Ja} value={addressLine2Ja} onChange={(e) => setAddressLine2Ja(e.target.value)} style={inputStyle} />
@@ -758,16 +820,18 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
             <>
               <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} required style={{ ...inputStyle, background: "#111" }}>
                 <option value="">{t.country}</option>
-                {COUNTRY_OPTIONS.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}
+                {COUNTRY_OPTIONS.map((item) => (
+                  <option key={item.code} value={item.code}>{item.name}</option>
+                ))}
               </select>
 
               {countryCode && selectedZoneKey && (
                 <div style={{ border: "1px solid rgba(255,255,255,0.14)", borderRadius: "14px", padding: "14px 16px", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.82)", fontSize: "13px", lineHeight: 1.7 }}>
                   <div><strong>{t.zone}:</strong> {getZoneLabel(selectedZoneKey, lang)}</div>
-                  <div><strong>{t.shippingEstimate}:</strong> ¥{SHIPPING_BY_ZONE[selectedZoneKey].toLocaleString()}</div>
+                  <div><strong>{t.shippingEstimate}:</strong> {"¥"}{SHIPPING_BY_ZONE[selectedZoneKey].toLocaleString()}</div>
                   {discountStep > 0 && previewShipping !== null && (
-                    <div style={{ marginTop: "6px", color: "rgba(255,255,255,0.6)" }}>
-                      → {discountLabel}：¥{previewShipping.toLocaleString()}
+                    <div style={{ marginTop: "6px", color: "rgba(100,255,150,0.8)" }}>
+                      {discountLabel}{"："} {"¥"}{previewShipping.toLocaleString()}
                     </div>
                   )}
                 </div>
@@ -788,7 +852,6 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         </div>
       </div>
 
-      {/* クーポン入力 */}
       {!hasSubscription && (
         <div className="checkout-card-section">
           <p className="checkout-section-label">{t.couponLabel}</p>
@@ -824,7 +887,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
             </button>
           </div>
           {couponStatus === "valid" && (
-            <p style={{ margin: "6px 0 0", fontSize: "12px", color: "rgba(100,255,150,0.9)" }}>✓ {t.couponApplied}</p>
+            <p style={{ margin: "6px 0 0", fontSize: "12px", color: "rgba(100,255,150,0.9)" }}>{"✓"} {t.couponApplied}</p>
           )}
           {couponStatus === "invalid" && (
             <p style={{ margin: "6px 0 0", fontSize: "12px", color: "#ff6b6b" }}>{t.couponInvalid}</p>
@@ -832,7 +895,6 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         </div>
       )}
 
-      {/* カード情報 */}
       {!hasSubscription && (
         <div className="checkout-card-section">
           <p className="checkout-section-label">{t.cardInfo}</p>
@@ -857,7 +919,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         {loading ? t.processing
           : hasSubscription ? t.startSubscription
           : countryType === "international" && orderLimitError ? t.cannotPurchaseLimit
-          : `¥${total?.toLocaleString() ?? "..."} ${t.pay}`}
+          : "¥" + (total ? total.toLocaleString() : "...") + " " + t.pay}
       </button>
 
       <button type="button" className="checkout-back-button" onClick={() => window.history.back()}>
