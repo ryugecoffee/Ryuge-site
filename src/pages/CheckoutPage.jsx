@@ -73,36 +73,15 @@ const SHIPPING_BY_ZONE = {
 };
 
 const ZONE_LABELS = {
-  zone1: {
-    ja: "第1地帯（中国・韓国・台湾）",
-    en: "Zone 1 (China / South Korea / Taiwan)",
-    es: "Zona 1 (China / Corea del Sur / Taiwán)",
-  },
-  zone2: {
-    ja: "第2地帯（アジアその他）",
-    en: "Zone 2 (Other Asia)",
-    es: "Zona 2 (Resto de Asia)",
-  },
-  zone3: {
-    ja: "第3地帯（オセアニア・カナダ・メキシコ・中近東・ヨーロッパ）",
-    en: "Zone 3 (Oceania / Canada / Mexico / Middle East / Europe)",
-    es: "Zona 3 (Oceanía / Canadá / México / Oriente Medio / Europa)",
-  },
-  zone4: {
-    ja: "第4地帯（米国）",
-    en: "Zone 4 (United States)",
-    es: "Zona 4 (Estados Unidos)",
-  },
-  zone5: {
-    ja: "第5地帯（中南米・アフリカ）",
-    en: "Zone 5 (Latin America / Africa)",
-    es: "Zona 5 (América Latina / África)",
-  },
+  zone1: { ja: "第1地帯（中国・韓国・台湾）", en: "Zone 1 (China / South Korea / Taiwan)", es: "Zona 1 (China / Corea del Sur / Taiwán)" },
+  zone2: { ja: "第2地帯（アジアその他）", en: "Zone 2 (Other Asia)", es: "Zona 2 (Resto de Asia)" },
+  zone3: { ja: "第3地帯（オセアニア・カナダ・メキシコ・中近東・ヨーロッパ）", en: "Zone 3 (Oceania / Canada / Mexico / Middle East / Europe)", es: "Zona 3 (Oceanía / Canadá / México / Oriente Medio / Europa)" },
+  zone4: { ja: "第4地帯（米国）", en: "Zone 4 (United States)", es: "Zona 4 (Estados Unidos)" },
+  zone5: { ja: "第5地帯（中南米・アフリカ）", en: "Zone 5 (Latin America / Africa)", es: "Zona 5 (América Latina / África)" },
 };
 
 const ZONE1_CODES = new Set(["CN", "KR", "TW"]);
 const ZONE4_CODES = new Set(["US"]);
-
 const ZONE3_CODES = new Set([
   "AD","AL","AT","AX","BA","BE","BG","BY","CH","CY","CZ","DE","DK","EE",
   "ES","FI","FO","FR","GB","GG","GI","GL","GR","HR","HU","IE","IM","IS",
@@ -114,7 +93,6 @@ const ZONE3_CODES = new Set([
   "AE","AM","AZ","BH","GE","IL","IQ","IR","JO","KW","LB","OM","PS","QA",
   "SA","SY","TR","YE",
 ]);
-
 const ZONE5_CODES = new Set([
   "AG","AI","AR","AW","BB","BL","BM","BO","BQ","BR","BS","BZ","CL","CO",
   "CR","CU","CW","DM","DO","EC","FK","GD","GF","GP","GS","GT","GY","HN",
@@ -156,23 +134,28 @@ const UI = {
     pay: "を支払う",
     startSubscription: "サブスクを開始する",
     back: "← 戻る",
-    subscriptionOnlyOne:
-      "サブスクは1プランのみ購入できます。通常商品とは分けて決済してください。",
-    beanLimitError:
-      "閻魔・木函の合計は10個までです。10個を超える場合はお問い合わせください。",
-    coffeeBagLimitError:
-      "コーヒーバッグは20個までです。20個を超える場合はお問い合わせください。",
+    subscriptionOnlyOne: "サブスクは1プランのみ購入できます。通常商品とは分けて決済してください。",
+    beanLimitError: "閻魔・木函の合計は10個までです。10個を超える場合はお問い合わせください。",
+    bagLimitError: "コーヒーバッグ・お茶バッグは合計20個までです。20個を超える場合はお問い合わせください。",
     selectCountry: "海外配送では国 / 地域を選択してください。",
     zone: "配送地帯",
-    internationalRule:
-      "海外配送は国に応じて自動で送料を計算します。閻魔・木函は合計10個まで、コーヒーバッグは20個までです。",
+    internationalRule: "海外配送は国に応じて自動で送料を計算します。閻魔・木函は合計10個まで、コーヒーバッグ・お茶バッグは合計20個までです。",
     unsupportedCountry: "この国 / 地域の送料判定に失敗しました。",
-    shippingEstimate: "現在の海外送料",
+    shippingEstimate: "基本送料",
+    shippingDiscount: "送料割引",
     cannotPurchaseLimit: "上限超過のため購入できません",
     checkoutInitError: "決済情報の初期化に失敗しました。",
     cardNotReady: "カード入力フォームの準備ができていません。",
     paymentFailed: "決済に失敗しました。",
     subscriptionStartError: "サブスク決済の開始に失敗しました。",
+    couponLabel: "クーポンコード",
+    couponApply: "適用",
+    couponApplied: "クーポン適用済み",
+    couponInvalid: "無効なクーポンコードです",
+    couponApplying: "確認中...",
+    discountStep1: "送料50%OFF適用中",
+    discountStep2Zone123: "送料無料適用中",
+    discountStep2Zone45: "送料70%OFF適用中",
   },
   en: {
     eyebrow: "Checkout",
@@ -202,24 +185,28 @@ const UI = {
     pay: "Pay",
     startSubscription: "Start Subscription",
     back: "← Back",
-    subscriptionOnlyOne:
-      "Subscription checkout supports one plan only. Please purchase regular items separately.",
-    beanLimitError:
-      "Enma and Wood Box items are limited to 10 per order. Please contact us for larger orders.",
-    coffeeBagLimitError:
-      "Coffee bags are limited to 20 per order. Please contact us for larger orders.",
+    subscriptionOnlyOne: "Subscription checkout supports one plan only. Please purchase regular items separately.",
+    beanLimitError: "Enma and Wood Box items are limited to 10 per order. Please contact us for larger orders.",
+    bagLimitError: "Coffee bags and tea bags are limited to 20 per order. Please contact us for larger orders.",
     selectCountry: "Please select a country / region for international shipping.",
     zone: "Shipping Zone",
-    internationalRule:
-      "International shipping is calculated automatically by country. Enma and Wood Box items are limited to 10 total, and coffee bags are limited to 20.",
-    unsupportedCountry:
-      "We could not determine the shipping zone for this country / region.",
-    shippingEstimate: "Current international shipping",
+    internationalRule: "International shipping is calculated automatically by country. Enma and Wood Box are limited to 10 total, and coffee/tea bags are limited to 20.",
+    unsupportedCountry: "We could not determine the shipping zone for this country / region.",
+    shippingEstimate: "Base shipping",
+    shippingDiscount: "Shipping discount",
     cannotPurchaseLimit: "Cannot purchase (limit exceeded)",
     checkoutInitError: "Failed to initialize checkout.",
     cardNotReady: "Card form is not ready yet.",
     paymentFailed: "Payment failed.",
     subscriptionStartError: "Failed to start subscription checkout.",
+    couponLabel: "Coupon Code",
+    couponApply: "Apply",
+    couponApplied: "Coupon applied",
+    couponInvalid: "Invalid coupon code",
+    couponApplying: "Checking...",
+    discountStep1: "50% shipping discount applied",
+    discountStep2Zone123: "Free shipping applied",
+    discountStep2Zone45: "70% shipping discount applied",
   },
   es: {
     eyebrow: "Checkout",
@@ -249,24 +236,28 @@ const UI = {
     pay: "Pagar",
     startSubscription: "Iniciar suscripción",
     back: "← Volver",
-    subscriptionOnlyOne:
-      "La suscripción solo admite un plan por compra. Compra los productos normales por separado.",
-    beanLimitError:
-      "Los productos Enma y Wood Box están limitados a 10 por pedido. Para pedidos mayores, contáctanos.",
-    coffeeBagLimitError:
-      "Las bolsas de café están limitadas a 20 por pedido. Para pedidos mayores, contáctanos.",
+    subscriptionOnlyOne: "La suscripción solo admite un plan por compra. Compra los productos normales por separado.",
+    beanLimitError: "Los productos Enma y Wood Box están limitados a 10 por pedido.",
+    bagLimitError: "Las bolsas de café y té están limitadas a 20 por pedido.",
     selectCountry: "Selecciona un país / región para el envío internacional.",
     zone: "Zona de envío",
-    internationalRule:
-      "El envío internacional se calcula automáticamente según el país. Los productos Enma y Wood Box están limitados a 10 en total y las bolsas de café a 20.",
-    unsupportedCountry:
-      "No hemos podido determinar la zona de envío para este país / región.",
-    shippingEstimate: "Costo internacional actual",
+    internationalRule: "El envío internacional se calcula según el país. Enma y Wood Box están limitados a 10 en total, y las bolsas a 20.",
+    unsupportedCountry: "No hemos podido determinar la zona de envío para este país.",
+    shippingEstimate: "Envío base",
+    shippingDiscount: "Descuento de envío",
     cannotPurchaseLimit: "No se puede comprar (límite excedido)",
     checkoutInitError: "No se pudo inicializar el pago.",
     cardNotReady: "El formulario de tarjeta aún no está listo.",
     paymentFailed: "El pago falló.",
     subscriptionStartError: "No se pudo iniciar la suscripción.",
+    couponLabel: "Código de cupón",
+    couponApply: "Aplicar",
+    couponApplied: "Cupón aplicado",
+    couponInvalid: "Código de cupón inválido",
+    couponApplying: "Verificando...",
+    discountStep1: "50% de descuento en envío aplicado",
+    discountStep2Zone123: "Envío gratuito aplicado",
+    discountStep2Zone45: "70% de descuento en envío aplicado",
   },
 };
 
@@ -277,14 +268,9 @@ const CARD_STYLE = {
       fontFamily: "Inter, sans-serif",
       fontSize: "16px",
       fontSmoothing: "antialiased",
-      "::placeholder": {
-        color: "rgba(255,255,255,0.42)",
-      },
+      "::placeholder": { color: "rgba(255,255,255,0.42)" },
     },
-    invalid: {
-      color: "#ff6b6b",
-      iconColor: "#ff6b6b",
-    },
+    invalid: { color: "#ff6b6b", iconColor: "#ff6b6b" },
   },
   hidePostalCode: true,
 };
@@ -322,7 +308,7 @@ function isSubscriptionItem(item) {
   return item?.id?.startsWith("subscription-");
 }
 
-function isCoffeeBagItem(item) {
+function isBagItem(item) {
   const source = `${item?.id || ""} ${item?.title || ""}`.toLowerCase();
   return (
     source.includes("coffee-bag") ||
@@ -330,11 +316,15 @@ function isCoffeeBagItem(item) {
     source.includes("coffeebag") ||
     source.includes("coffee bag") ||
     source.includes("コーヒーバッグ") ||
-    source.includes("お茶バッグ")
+    source.includes("お茶バッグ") ||
+    source.includes("tea-bag") ||
+    source.includes("tea_bag") ||
+    source.includes("teabag")
   );
 }
 
 function isBeanItem(item) {
+  if (isBagItem(item)) return false; // ← これを追加
   const source = `${item?.id || ""} ${item?.title || ""}`.toLowerCase();
   return (
     source.includes("enma") ||
@@ -346,24 +336,41 @@ function isBeanItem(item) {
   );
 }
 
-function countBeanItems(cartItems = []) {
+function countBeans(cartItems = []) {
   return cartItems
     .filter((item) => isBeanItem(item) && !isSubscriptionItem(item))
     .reduce((sum, item) => sum + (item.quantity || 0), 0);
 }
 
-function countCoffeeBagItems(cartItems = []) {
+function countBags(cartItems = []) {
   return cartItems
-    .filter((item) => isCoffeeBagItem(item) && !isSubscriptionItem(item))
+    .filter((item) => isBagItem(item) && !isSubscriptionItem(item))
     .reduce((sum, item) => sum + (item.quantity || 0), 0);
 }
 
-function getOrderLimitError(cartItems = [], t, countryType = "japan") {
+// 送料割引ステップを計算（フロント表示用）
+function getShippingDiscountStep(beans, bags) {
+  if (beans >= 10 && bags >= 20) return 2;
+  if (beans >= 7 && bags >= 10) return 1;
+  return 0;
+}
+
+// 送料割引後の金額を計算（フロント表示用のプレビュー）
+function calcDiscountedShipping(baseShipping, step, zoneKey) {
+  if (step === 2) {
+    const zone45 = zoneKey === "zone4" || zoneKey === "zone5";
+    return zone45 ? Math.round(baseShipping * 0.3) : 0;
+  }
+  if (step === 1) return Math.round(baseShipping * 0.5);
+  return baseShipping;
+}
+
+function getOrderLimitError(cartItems = [], t, countryType) {
   if (countryType !== "international") return "";
-  const beanCount = countBeanItems(cartItems);
-  const coffeeBagCount = countCoffeeBagItems(cartItems);
-  if (beanCount > 10) return t.beanLimitError;
-  if (coffeeBagCount > 20) return t.coffeeBagLimitError;
+  const beans = countBeans(cartItems);
+  const bags = countBags(cartItems);
+  if (beans > 10) return t.beanLimitError;
+  if (bags > 20) return t.bagLimitError;
   return "";
 }
 
@@ -392,29 +399,43 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // クーポン
+  const [couponCode, setCouponCode] = useState("");
+  const [couponStatus, setCouponStatus] = useState("idle"); // idle | applying | valid | invalid
+  const [couponDiscount, setCouponDiscount] = useState(null); // { type: "percent"|"fixed", value: number, label: string }
+
   const hasSubscription = useMemo(
     () => (cartItems || []).some((item) => isSubscriptionItem(item)),
     [cartItems]
   );
 
   const cartSubtotal = useMemo(
-    () =>
-      (cartItems || []).reduce(
-        (sum, item) => sum + (item.price || 0) * (item.quantity || 0),
-        0
-      ),
+    () => (cartItems || []).reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 0), 0),
     [cartItems]
   );
 
-  const selectedZoneKey =
-    countryType === "international" ? getZoneByCountryCode(countryCode) : null;
-
+  const selectedZoneKey = countryType === "international" ? getZoneByCountryCode(countryCode) : null;
   const selectedCountryName = getCountryName(countryCode);
 
   const orderLimitError = useMemo(
     () => getOrderLimitError(cartItems, t, countryType),
     [cartItems, t, countryType]
   );
+
+  // 送料割引ステップ（海外のみ）
+  const beans = useMemo(() => countBeans(cartItems), [cartItems]);
+  const bags = useMemo(() => countBags(cartItems), [cartItems]);
+  const discountStep = countryType === "international" ? getShippingDiscountStep(beans, bags) : 0;
+
+  // 割引ラベル表示
+  const discountLabel = useMemo(() => {
+    if (countryType !== "international" || discountStep === 0) return null;
+    if (discountStep === 2) {
+      const zone45 = selectedZoneKey === "zone4" || selectedZoneKey === "zone5";
+      return zone45 ? t.discountStep2Zone45 : t.discountStep2Zone123;
+    }
+    return t.discountStep1;
+  }, [discountStep, selectedZoneKey, countryType, t]);
 
   useEffect(() => {
     if (!cartItems || cartItems.length === 0) return;
@@ -454,10 +475,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
     const initCheckout = async () => {
       try {
         setError("");
-
-        // ★修正: 海外の場合はselectedZoneKeyをprefectureとして渡す
-        const prefectureParam =
-          countryType === "international" ? selectedZoneKey : prefecture;
+        const prefectureParam = countryType === "international" ? selectedZoneKey : prefecture;
 
         const response = await fetch(
           "https://ryuge-site.onrender.com/create-payment-intent",
@@ -471,6 +489,8 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
               countryCode,
               countryName: selectedCountryName,
               shippingZone: selectedZoneKey,
+              shippingDiscountStep: discountStep,
+              couponCode: couponStatus === "valid" ? couponCode : "",
               email: "tmp@tmp.com",
               name: "tmp",
               address: "tmp",
@@ -479,10 +499,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         );
 
         const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || t.checkoutInitError);
-        }
+        if (!response.ok) throw new Error(data.error || t.checkoutInitError);
 
         setShipping(data.shipping);
         setTotal(data.total);
@@ -497,34 +514,42 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
 
     initCheckout();
   }, [
-    cartItems,
-    prefecture,
-    countryType,
-    countryCode,
-    selectedZoneKey,
-    selectedCountryName,
-    hasSubscription,
-    cartSubtotal,
-    orderLimitError,
-    t.checkoutInitError,
-    t.unsupportedCountry,
+    cartItems, prefecture, countryType, countryCode,
+    selectedZoneKey, selectedCountryName, hasSubscription,
+    cartSubtotal, orderLimitError, discountStep,
+    couponStatus, couponCode,
+    t.checkoutInitError, t.unsupportedCountry,
   ]);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponStatus("applying");
+    try {
+      const res = await fetch("https://ryuge-site.onrender.com/validate-coupon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ couponCode: couponCode.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok && data.valid) {
+        setCouponStatus("valid");
+        setCouponDiscount(data.discount || null);
+      } else {
+        setCouponStatus("invalid");
+        setCouponDiscount(null);
+      }
+    } catch {
+      setCouponStatus("invalid");
+      setCouponDiscount(null);
+    }
+  };
 
   const buildFinalAddress = () => {
     if (countryType === "japan") {
       return `${prefecture} ${addressLine1Ja} ${addressLine2Ja}`.trim();
     }
-    return [
-      addressLine1,
-      addressLine2,
-      addressLine3,
-      city,
-      stateRegion,
-      postalCode,
-      selectedCountryName,
-    ]
-      .filter(Boolean)
-      .join(", ");
+    return [addressLine1, addressLine2, addressLine3, city, stateRegion, postalCode, selectedCountryName]
+      .filter(Boolean).join(", ");
   };
 
   const handleSubmit = async (e) => {
@@ -538,13 +563,11 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         setLoading(false);
         return;
       }
-
       if (countryType === "international" && !countryCode) {
         setError(t.selectCountry);
         setLoading(false);
         return;
       }
-
       if (countryType === "international" && !selectedZoneKey) {
         setError(t.unsupportedCountry);
         setLoading(false);
@@ -559,29 +582,20 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           setLoading(false);
           return;
         }
-
         const response = await fetch("/api/create-subscription-checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             cartItems,
             customer: {
-              name,
-              email,
-              postalCode,
-              prefecture:
-                countryType === "japan" ? prefecture : selectedCountryName,
+              name, email, postalCode,
+              prefecture: countryType === "japan" ? prefecture : selectedCountryName,
               address: finalAddress,
             },
           }),
         });
-
         const data = await response.json();
-
-        if (!response.ok || !data.url) {
-          throw new Error(data.error || t.subscriptionStartError);
-        }
-
+        if (!response.ok || !data.url) throw new Error(data.error || t.subscriptionStartError);
         window.location.href = data.url;
         return;
       }
@@ -593,7 +607,6 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
       }
 
       const cardElement = elements.getElement(CardElement);
-
       if (!cardElement) {
         setError(t.cardNotReady);
         setLoading(false);
@@ -606,25 +619,9 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           billing_details: {
             name,
             email,
-            address:
-              countryType === "japan"
-                ? {
-                    country: "JP",
-                    postal_code: postalCode,
-                    state: prefecture,
-                    line1: addressLine1Ja,
-                    line2: addressLine2Ja,
-                  }
-                : {
-                    country: countryCode,
-                    postal_code: postalCode,
-                    state: stateRegion,
-                    city,
-                    line1: addressLine1,
-                    line2: [addressLine2, addressLine3]
-                      .filter(Boolean)
-                      .join(" "),
-                  },
+            address: countryType === "japan"
+              ? { country: "JP", postal_code: postalCode, state: prefecture, line1: addressLine1Ja, line2: addressLine2Ja }
+              : { country: countryCode, postal_code: postalCode, state: stateRegion, city, line1: addressLine1, line2: [addressLine2, addressLine3].filter(Boolean).join(" ") },
           },
         },
       });
@@ -639,71 +636,56 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: cartItems,
-          name,
-          email,
-          postalCode,
+          items: cartItems, name, email, postalCode,
           address: finalAddress,
-          prefecture:
-            countryType === "japan" ? prefecture : selectedCountryName,
-          countryType,
-          countryCode,
-          countryName: selectedCountryName,
+          prefecture: countryType === "japan" ? prefecture : selectedCountryName,
+          countryType, countryCode, countryName: selectedCountryName,
           shippingZone: selectedZoneKey,
-          total,
-          shipping,
+          shippingDiscountStep: discountStep,
+          couponCode: couponStatus === "valid" ? couponCode : "",
+          total, shipping,
         }),
       });
 
       onSuccess();
-
       navigate("/checkout/complete", {
         state: {
-          name,
-          email,
-          postalCode,
-          prefecture:
-            countryType === "japan" ? prefecture : selectedCountryName,
-          address:
-            countryType === "japan"
-              ? `${addressLine1Ja} ${addressLine2Ja}`.trim()
-              : [addressLine1, addressLine2, addressLine3, city, stateRegion]
-                  .filter(Boolean)
-                  .join(", "),
-          total,
-          shipping,
+          name, email, postalCode,
+          prefecture: countryType === "japan" ? prefecture : selectedCountryName,
+          address: countryType === "japan"
+            ? `${addressLine1Ja} ${addressLine2Ja}`.trim()
+            : [addressLine1, addressLine2, addressLine3, city, stateRegion].filter(Boolean).join(", "),
+          total, shipping,
           items: cartItems,
-          countryType,
-          countryCode,
-          countryName: selectedCountryName,
-          shippingZone: selectedZoneKey,
-          lang,
+          countryType, countryCode, countryName: selectedCountryName,
+          shippingZone: selectedZoneKey, lang,
         },
       });
     } catch (err) {
       setError(err.message || t.paymentFailed);
       setLoading(false);
-      return;
     }
 
     setLoading(false);
   };
+
+  // 送料プレビュー表示（バックエンドから返ってきた値を優先）
+  const baseShipping = selectedZoneKey ? SHIPPING_BY_ZONE[selectedZoneKey] : null;
+  const previewShipping = baseShipping !== null ? calcDiscountedShipping(baseShipping, discountStep, selectedZoneKey) : null;
 
   return (
     <form onSubmit={handleSubmit} className="checkout-inner">
       <p className="checkout-eyebrow">{t.eyebrow}</p>
       <h1 className="checkout-title">{t.title}</h1>
 
+      {/* 注文内容 */}
       <div className="checkout-order-summary">
         <p className="checkout-section-label">{t.orderSummary}</p>
-
         {cartItems.map((item) => (
           <div key={item.id} className="checkout-order-item">
             <span className="checkout-order-title">{item.title}</span>
             <span className="checkout-order-qty">× {item.quantity}</span>
-            <span className="checkout-order-price">
-              ¥{((item.price || 0) * (item.quantity || 0)).toLocaleString()}
-            </span>
+            <span className="checkout-order-price">¥{((item.price || 0) * (item.quantity || 0)).toLocaleString()}</span>
           </div>
         ))}
 
@@ -711,48 +693,35 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           <span className="checkout-order-title">{t.shipping}</span>
           <span className="checkout-order-price">
             {shipping === null
-              ? t.calculating
-              : shipping === 0
-              ? t.free
+              ? (countryType === "international" && countryCode ? t.calculating : "-")
+              : shipping === 0 ? t.free
               : `¥${shipping.toLocaleString()}`}
           </span>
         </div>
 
+        {/* 送料割引バッジ */}
+        {discountLabel && countryCode && (
+          <div style={{ marginTop: "6px", padding: "8px 12px", borderRadius: "10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", fontSize: "12px", color: "rgba(255,255,255,0.78)", lineHeight: 1.6 }}>
+            ✓ {discountLabel}
+          </div>
+        )}
+
         <div className="checkout-order-total">
           <span>{t.total}</span>
-          <span>
-            {total === null ? t.calculating : `¥${total.toLocaleString()}`}
-          </span>
+          <span>{total === null ? t.calculating : `¥${total.toLocaleString()}`}</span>
         </div>
 
         {countryType === "international" && orderLimitError && (
-          <p style={{ marginTop: "8px", color: "#ff6b6b", fontSize: "13px", lineHeight: 1.6 }}>
-            {orderLimitError}
-          </p>
+          <p style={{ marginTop: "8px", color: "#ff6b6b", fontSize: "13px", lineHeight: 1.6 }}>{orderLimitError}</p>
         )}
       </div>
 
+      {/* お届け先 */}
       <div className="checkout-card-section">
         <p className="checkout-section-label">{t.shippingInfo}</p>
-
         <div className="checkout-card-container" style={{ display: "grid", gap: "12px" }}>
-          <input
-            type="text"
-            placeholder={t.name}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            style={inputStyle}
-          />
-
-          <input
-            type="email"
-            placeholder={t.email}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={inputStyle}
-          />
+          <input type="text" placeholder={t.name} value={name} onChange={(e) => setName(e.target.value)} required style={inputStyle} />
+          <input type="email" placeholder={t.email} value={email} onChange={(e) => setEmail(e.target.value)} required style={inputStyle} />
 
           <select
             value={countryType}
@@ -764,15 +733,10 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
               setTotal(null);
               setClientSecret("");
               if (nextType === "japan") {
-                setCountryCode("");
-                setStateRegion("");
-                setCity("");
-                setAddressLine1("");
-                setAddressLine2("");
-                setAddressLine3("");
+                setCountryCode(""); setStateRegion(""); setCity("");
+                setAddressLine1(""); setAddressLine2(""); setAddressLine3("");
               } else {
-                setAddressLine1Ja("");
-                setAddressLine2Ja("");
+                setAddressLine1Ja(""); setAddressLine2Ja("");
               }
             }}
             style={{ ...inputStyle, background: "#111" }}
@@ -783,77 +747,29 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
 
           {countryType === "japan" ? (
             <>
-              <input
-                type="text"
-                placeholder={t.postalCode}
-                value={postalCode}
-                onChange={(e) =>
-                  setPostalCode(e.target.value.replace(/\D/g, "").slice(0, 7))
-                }
-                required
-                style={inputStyle}
-              />
-
-              <select
-                value={prefecture}
-                onChange={(e) => setPrefecture(e.target.value)}
-                style={{ ...inputStyle, background: "#111" }}
-              >
-                {PREFECTURES.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
+              <input type="text" placeholder={t.postalCode} value={postalCode} onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, "").slice(0, 7))} required style={inputStyle} />
+              <select value={prefecture} onChange={(e) => setPrefecture(e.target.value)} style={{ ...inputStyle, background: "#111" }}>
+                {PREFECTURES.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
-
-              <input
-                type="text"
-                placeholder={t.address1Ja}
-                value={addressLine1Ja}
-                onChange={(e) => setAddressLine1Ja(e.target.value)}
-                required
-                style={inputStyle}
-              />
-
-              <input
-                type="text"
-                placeholder={t.address2Ja}
-                value={addressLine2Ja}
-                onChange={(e) => setAddressLine2Ja(e.target.value)}
-                style={inputStyle}
-              />
+              <input type="text" placeholder={t.address1Ja} value={addressLine1Ja} onChange={(e) => setAddressLine1Ja(e.target.value)} required style={inputStyle} />
+              <input type="text" placeholder={t.address2Ja} value={addressLine2Ja} onChange={(e) => setAddressLine2Ja(e.target.value)} style={inputStyle} />
             </>
           ) : (
             <>
-              <select
-                value={countryCode}
-                onChange={(e) => setCountryCode(e.target.value)}
-                required
-                style={{ ...inputStyle, background: "#111" }}
-              >
+              <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} required style={{ ...inputStyle, background: "#111" }}>
                 <option value="">{t.country}</option>
-                {COUNTRY_OPTIONS.map((item) => (
-                  <option key={item.code} value={item.code}>{item.name}</option>
-                ))}
+                {COUNTRY_OPTIONS.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}
               </select>
 
               {countryCode && selectedZoneKey && (
-                <div
-                  style={{
-                    border: "1px solid rgba(255,255,255,0.14)",
-                    borderRadius: "14px",
-                    padding: "14px 16px",
-                    background: "rgba(255,255,255,0.03)",
-                    color: "rgba(255,255,255,0.82)",
-                    fontSize: "13px",
-                    lineHeight: 1.7,
-                  }}
-                >
-                  <div>
-                    <strong>{t.zone}:</strong> {getZoneLabel(selectedZoneKey, lang)}
-                  </div>
-                  <div>
-                    <strong>{t.shippingEstimate}:</strong>{" "}
-                    ¥{SHIPPING_BY_ZONE[selectedZoneKey].toLocaleString()}
-                  </div>
+                <div style={{ border: "1px solid rgba(255,255,255,0.14)", borderRadius: "14px", padding: "14px 16px", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.82)", fontSize: "13px", lineHeight: 1.7 }}>
+                  <div><strong>{t.zone}:</strong> {getZoneLabel(selectedZoneKey, lang)}</div>
+                  <div><strong>{t.shippingEstimate}:</strong> ¥{SHIPPING_BY_ZONE[selectedZoneKey].toLocaleString()}</div>
+                  {discountStep > 0 && previewShipping !== null && (
+                    <div style={{ marginTop: "6px", color: "rgba(255,255,255,0.6)" }}>
+                      → {discountLabel}：¥{previewShipping.toLocaleString()}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -861,83 +777,72 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
                 {t.internationalRule}
               </p>
 
-              <input
-                type="text"
-                placeholder={t.postalCode}
-                value={postalCode}
-                onChange={(e) => setPostalCode(e.target.value)}
-                required
-                style={inputStyle}
-              />
-
-              <input
-                type="text"
-                placeholder={t.state}
-                value={stateRegion}
-                onChange={(e) => setStateRegion(e.target.value)}
-                required
-                style={inputStyle}
-              />
-
-              <input
-                type="text"
-                placeholder={t.city}
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                required
-                style={inputStyle}
-              />
-
-              <input
-                type="text"
-                placeholder={t.address1}
-                value={addressLine1}
-                onChange={(e) => setAddressLine1(e.target.value)}
-                required
-                style={inputStyle}
-              />
-
-              <input
-                type="text"
-                placeholder={t.address2}
-                value={addressLine2}
-                onChange={(e) => setAddressLine2(e.target.value)}
-                required
-                style={inputStyle}
-              />
-
-              <input
-                type="text"
-                placeholder={t.address3}
-                value={addressLine3}
-                onChange={(e) => setAddressLine3(e.target.value)}
-                style={inputStyle}
-              />
+              <input type="text" placeholder={t.postalCode} value={postalCode} onChange={(e) => setPostalCode(e.target.value)} required style={inputStyle} />
+              <input type="text" placeholder={t.state} value={stateRegion} onChange={(e) => setStateRegion(e.target.value)} required style={inputStyle} />
+              <input type="text" placeholder={t.city} value={city} onChange={(e) => setCity(e.target.value)} required style={inputStyle} />
+              <input type="text" placeholder={t.address1} value={addressLine1} onChange={(e) => setAddressLine1(e.target.value)} required style={inputStyle} />
+              <input type="text" placeholder={t.address2} value={addressLine2} onChange={(e) => setAddressLine2(e.target.value)} required style={inputStyle} />
+              <input type="text" placeholder={t.address3} value={addressLine3} onChange={(e) => setAddressLine3(e.target.value)} style={inputStyle} />
             </>
           )}
         </div>
       </div>
 
+      {/* クーポン入力 */}
       {!hasSubscription && (
         <div className="checkout-card-section">
-          <p className="checkout-section-label">{t.cardInfo}</p>
-
-          {/* ★修正: pointerEvents: "auto" を追加してクリックを確実に通す */}
-<div
-  className="checkout-card-container"
-  style={{
-    position: "relative",
-    zIndex: 1,
-  }}
->
-  <CardElement options={CARD_STYLE} />
-</div>
+          <p className="checkout-section-label">{t.couponLabel}</p>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <input
+              type="text"
+              placeholder={t.couponLabel}
+              value={couponCode}
+              onChange={(e) => {
+                setCouponCode(e.target.value);
+                if (couponStatus !== "idle") setCouponStatus("idle");
+              }}
+              style={{ ...inputStyle, flex: 1 }}
+              disabled={couponStatus === "valid"}
+            />
+            <button
+              type="button"
+              onClick={handleApplyCoupon}
+              disabled={couponStatus === "applying" || couponStatus === "valid" || !couponCode.trim()}
+              style={{
+                border: "1px solid rgba(255,255,255,0.2)",
+                background: "transparent",
+                color: "rgba(255,255,255,0.8)",
+                borderRadius: "999px",
+                padding: "8px 16px",
+                fontSize: "12px",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                opacity: couponStatus === "valid" ? 0.5 : 1,
+              }}
+            >
+              {couponStatus === "applying" ? t.couponApplying : t.couponApply}
+            </button>
+          </div>
+          {couponStatus === "valid" && (
+            <p style={{ margin: "6px 0 0", fontSize: "12px", color: "rgba(100,255,150,0.9)" }}>✓ {t.couponApplied}</p>
+          )}
+          {couponStatus === "invalid" && (
+            <p style={{ margin: "6px 0 0", fontSize: "12px", color: "#ff6b6b" }}>{t.couponInvalid}</p>
+          )}
         </div>
       )}
 
-      {(error || (countryType === "international" && orderLimitError)) && (
-        <p className="checkout-error">{error || orderLimitError}</p>
+      {/* カード情報 */}
+      {!hasSubscription && (
+        <div className="checkout-card-section">
+          <p className="checkout-section-label">{t.cardInfo}</p>
+          <div className="checkout-card-container" style={{ position: "relative", zIndex: 1 }}>
+            <CardElement options={CARD_STYLE} />
+          </div>
+        </div>
       )}
+
+      {error && <p className="checkout-error">{error}</p>}
 
       <button
         type="submit"
@@ -949,20 +854,13 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           (countryType === "international" && !countryCode)
         }
       >
-        {loading
-          ? t.processing
-          : hasSubscription
-          ? t.startSubscription
-          : countryType === "international" && orderLimitError
-          ? t.cannotPurchaseLimit
+        {loading ? t.processing
+          : hasSubscription ? t.startSubscription
+          : countryType === "international" && orderLimitError ? t.cannotPurchaseLimit
           : `¥${total?.toLocaleString() ?? "..."} ${t.pay}`}
       </button>
 
-      <button
-        type="button"
-        className="checkout-back-button"
-        onClick={() => window.history.back()}
-      >
+      <button type="button" className="checkout-back-button" onClick={() => window.history.back()}>
         {t.back}
       </button>
     </form>

@@ -70,7 +70,6 @@ const YUPACK_SHIPPING = {
   沖縄県: 1450,
 };
 
-// 海外送料テーブル
 const INTERNATIONAL_SHIPPING = {
   zone1: 3400,
   zone2: 4550,
@@ -79,7 +78,75 @@ const INTERNATIONAL_SHIPPING = {
   zone5: 8100,
 };
 
-function calcShipping(items, prefecture, countryType) {
+// ===== クーポン定義 =====
+const COUPONS = {
+  WELCOME10: { type: "percent", value: 10, label: "10% OFF" },
+  FREESHIP: { type: "shipping", value: 100, label: "送料補助" },
+};
+
+// ===== 商品判定 =====
+function isBeanItem(item) {
+  if (isBagItem(item)) return false; // ← これを追加
+  const source = `${item?.id || ""} ${item?.title || ""} ${item?.category || ""}`.toLowerCase();
+  return (
+    source.includes("enma") ||
+    source.includes("woodbox") ||
+    source.includes("wood-box") ||
+    source.includes("wood_box") ||
+    source.includes("閻魔") ||
+    source.includes("木函")
+  );
+}
+
+function isBagItem(item) {
+  const source = `${item?.id || ""} ${item?.title || ""} ${item?.category || ""}`.toLowerCase();
+  return (
+    source.includes("coffee-bag") ||
+    source.includes("coffee_bag") ||
+    source.includes("coffeebag") ||
+    source.includes("coffee bag") ||
+    source.includes("コーヒーバッグ") ||
+    source.includes("お茶バッグ") ||
+    source.includes("tea-bag") ||
+    source.includes("tea_bag") ||
+    source.includes("bag") ||
+    item?.category === "bag" ||
+    item?.category === "tea-bag"
+  );
+}
+
+function countBeans(items = []) {
+  return items
+    .filter((item) => isBeanItem(item))
+    .reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+}
+
+function countBags(items = []) {
+  return items
+    .filter((item) => isBagItem(item))
+    .reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+}
+
+// ===== 海外送料割引 =====
+function applyInternationalShippingDiscount(baseShipping, beans, bags, zoneKey) {
+  // STEP 2: 豆10個以上 & バッグ20個以上
+  if (beans >= 10 && bags >= 20) {
+    if (zoneKey === "zone4" || zoneKey === "zone5") {
+      return Math.round(baseShipping * 0.3); // 70%OFF
+    }
+    return 0; // 送料無料（zone1,2,3）
+  }
+
+  // STEP 1: 豆7個以上 & バッグ10個以上
+  if (beans >= 7 && bags >= 10) {
+    return Math.round(baseShipping * 0.5); // 50%OFF
+  }
+
+  return baseShipping; // 割引なし
+}
+
+// ===== 送料計算 =====
+function calcShipping(items, prefecture, countryType, zoneKey) {
   const safeItems = Array.isArray(items) ? items : [];
 
   const subtotal = safeItems.reduce(
@@ -92,16 +159,15 @@ function calcShipping(items, prefecture, countryType) {
   );
   if (hasSubscription) return 0;
 
-  // 海外の場合はzoneキーで送料を返す（小計による無料判定なし）
   if (countryType === "international") {
-    return INTERNATIONAL_SHIPPING[prefecture] ?? 8100;
+    const baseShipping = INTERNATIONAL_SHIPPING[zoneKey || prefecture] ?? 8100;
+    const beans = countBeans(safeItems);
+    const bags = countBags(safeItems);
+    return applyInternationalShippingDiscount(baseShipping, beans, bags, zoneKey || prefecture);
   }
 
-  // 5000円以上で送料無料（国内のみ）
+  // 国内：5000円以上で送料無料
   if (subtotal >= 5000) return 0;
-
-  const isBagItem = (item) =>
-    item?.category === "bag" || item?.category === "tea-bag";
 
   const hasOnlyBagItems =
     safeItems.length > 0 && safeItems.every((item) => isBagItem(item));
@@ -117,22 +183,59 @@ function calcShipping(items, prefecture, countryType) {
   return YUPACK_SHIPPING[prefecture] ?? 880;
 }
 
+// ===== クーポン適用 =====
+function applyCoupon(subtotal, shipping, couponCode) {
+  if (!couponCode) return { subtotal, shipping };
+
+  const coupon = COUPONS[couponCode.trim().toUpperCase()];
+  if (!coupon) return { subtotal, shipping };
+
+  if (coupon.type === "percent") {
+    const discount = Math.round(subtotal * (coupon.value / 100));
+    return { subtotal: subtotal - discount, shipping };
+  }
+
+  if (coupon.type === "shipping") {
+    const discountedShipping = Math.max(0, shipping - Math.round(shipping * (coupon.value / 100)));
+    return { subtotal, shipping: discountedShipping };
+  }
+
+  return { subtotal, shipping };
+}
+
+// ===== エンドポイント =====
+
 app.get("/", (req, res) => {
   res.send("Ryuge server is running");
 });
 
 app.post("/create-payment-intent", async (req, res) => {
   try {
-    const { items, prefecture, countryType, email, name, address } = req.body;
+    const {
+      items,
+      prefecture,
+      countryType,
+      shippingZone,
+      couponCode,
+      email,
+      name,
+      address,
+    } = req.body;
 
     const safeItems = Array.isArray(items) ? items : [];
 
-    const subtotal = safeItems.reduce(
+    let subtotal = safeItems.reduce(
       (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0),
       0
     );
 
-    const shipping = calcShipping(safeItems, prefecture, countryType);
+    let shipping = calcShipping(safeItems, prefecture, countryType, shippingZone);
+
+    // クーポン適用
+    const afterCoupon = applyCoupon(subtotal, shipping, couponCode);
+    subtotal = afterCoupon.subtotal;
+    shipping = afterCoupon.shipping;
+
     const total = subtotal + shipping;
 
     const paymentIntent = await stripe.paymentIntents.create({
@@ -143,6 +246,7 @@ app.post("/create-payment-intent", async (req, res) => {
         name: name || "",
         address: address || "",
         prefecture: prefecture || "",
+        couponCode: couponCode || "",
       },
     });
 
@@ -155,6 +259,26 @@ app.post("/create-payment-intent", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// ===== クーポン検証 =====
+app.post("/validate-coupon", (req, res) => {
+  const { couponCode } = req.body;
+
+  if (!couponCode) {
+    return res.status(400).json({ valid: false });
+  }
+
+  const coupon = COUPONS[couponCode.trim().toUpperCase()];
+
+  if (!coupon) {
+    return res.status(200).json({ valid: false });
+  }
+
+  return res.status(200).json({
+    valid: true,
+    discount: coupon,
+  });
 });
 
 const PORT = process.env.PORT || 3001;

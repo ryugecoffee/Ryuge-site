@@ -383,99 +383,99 @@ export const PRODUCT_DATA = {
         es: "Una taza tranquila para el día a día",
       },
 
-      variants: [
-        {
-          id: "coffee-bag",
-          tabLabel: {
-            ja: "珈琲バッグ",
-            en: "Coffee Bag",
-            es: "Coffee Bag",
-          },
-          name: {
-            ja: "閻魔　深煎りの禅",
-            en: "ENMA Dark Roast",
-            es: "ENMA Dark Roast",
-          },
-          note: {
-            ja: "静かに残る苦味と余韻",
-            en: "Deep bitterness with a quiet finish",
-            es: "Amargor profundo con final suave",
-          },
-          brew: {
-            ja: [
-              "マグカップに入れ、160ccのお湯を注ぎ、2分ほど待ってお召し上がりください。",
-            ],
-            en: [
-              "Place the bag in a mug, pour 160ml of hot water, and wait about 2 minutes.",
-            ],
-            es: [
-              "Coloque la bolsa en una taza, vierta 160ml de agua caliente y espere unos 2 minutos.",
-            ],
-          },
-          quantities: [
-            { id: "1", label: "1個" },
-            { id: "3", label: "3個" },
-            { id: "5", label: "5個" },
-          ],
-          button: {
-            ja: "購入する",
-            en: "Buy",
-            es: "Comprar",
-          },
-          link: "https://square.link/u/xxxxx",
-        },
-        {
-          id: "tea-bag",
-          tabLabel: {
-            ja: "お茶バッグ",
-            en: "Tea Bag",
-            es: "Tea Bag",
-          },
-          name: {
-            ja: "お茶バッグ",
-            en: "Tea Bag",
-            es: "Tea Bag",
-          },
-          note: {
-            ja: "寺の時間に寄り添う、やわらかな一杯",
-            en: "A softer, quieter cup",
-            es: "Una taza suave y tranquila",
-          },
-          teaTypes: {
-            ja: ["煎茶"],
-            en: ["Sencha"],
-            es: ["Sencha"],
-          },
-          brew: {
-            ja: [
-              "一煎目：200ccで1分",
-              "二煎目：200ccで10秒",
-              "三煎目：200ccで10秒",
-            ],
-            en: [
-              "1st infusion: 200ml for 1 minute",
-              "2nd infusion: 200ml for 10 seconds",
-              "3rd infusion: 200ml for 10 seconds",
-            ],
-            es: [
-              "Primera infusión: 200ml durante 1 minuto",
-              "Segunda infusión: 200ml durante 10 segundos",
-              "Tercera infusión: 200ml durante 10 segundos",
-            ],
-          },
-          quantities: [
-            { id: "1", label: "1個" },
-            { id: "3", label: "3個" },
-            { id: "5", label: "5個" },
-          ],
-          button: {
-            ja: "購入する",
-            en: "Buy",
-            es: "Comprar",
-          },
-          link: "https://square.link/u/xxxxx",
-        },
+     variants: [
+  {
+    id: "coffee-bag",
+    tabLabel: {
+      ja: "閻魔",
+      en: "ENMA",
+      es: "ENMA",
+    },
+    name: {
+      ja: "珈琲バッグ　閻魔　深煎りの禅",
+      en: "Coffee Bag – ENMA / Deep Roasted Zen",
+      es: "Bolsa de café – ENMA / Zen de tueste profundo",
+    },
+    note: {
+      ja: "静かに残る苦味と余韻",
+      en: "Deep bitterness with a quiet finish",
+      es: "Amargor profundo con final suave",
+    },
+    brew: {
+      ja: [
+        "マグカップに入れ、160ccのお湯を注ぎ、2分ほど待ってお召し上がりください。",
       ],
+      en: [
+        "Place the bag in a mug, pour 160ml of hot water, and wait about 2 minutes.",
+      ],
+      es: [
+        "Coloque la bolsa en una taza, vierta 160ml de agua caliente y espere unos 2 minutos.",
+      ],
+    },
+    quantities: [
+      { id: "1", label: "1個" },
+      { id: "3", label: "3個" },
+      { id: "5", label: "5個" },
+    ],
+    button: {
+      ja: "購入する",
+      en: "Buy",
+      es: "Comprar",
+    },
+    link: "https://square.link/u/xxxxx",
+  },
+  {
+    id: "tea-bag",
+    tabLabel: {
+      ja: "地蔵",
+      en: "JIZO",
+      es: "JIZO",
+    },
+    name: {
+      ja: "お茶バッグ　地蔵　静寂の余韻",
+      en: "Tea Bag – JIZO / Quiet Aftertaste",
+      es: "Bolsa de té – JIZO / Eco tranquilo",
+    },
+    note: {
+      ja: "寺の時間に寄り添う、やわらかな一杯",
+      en: "A softer, quieter cup",
+      es: "Una taza suave y tranquila",
+    },
+    teaTypes: {
+      ja: ["煎茶"],
+      en: ["Sencha"],
+      es: ["Sencha"],
+    },
+    brew: {
+      ja: [
+        "一煎目：200ccで1分",
+        "二煎目：200ccで10秒",
+        "三煎目：200ccで10秒",
+      ],
+      en: [
+        "1st infusion: 200ml for 1 minute",
+        "2nd infusion: 200ml for 10 seconds",
+        "3rd infusion: 200ml for 10 seconds",
+      ],
+      es: [
+        "Primera infusión: 200ml durante 1 minuto",
+        "Segunda infusión: 200ml durante 10 segundos",
+        "Tercera infusión: 200ml durante 10 segundos",
+      ],
+    },
+    quantities: [
+      { id: "1", label: "1個" },
+      { id: "3", label: "3個" },
+      { id: "5", label: "5個" },
+    ],
+    button: {
+      ja: "購入する",
+      en: "Buy",
+      es: "Comprar",
+    },
+    link: "https://square.link/u/xxxxx",
+  },
+],
 
       isSoldOut: false,
     },
