@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import AccessSection from "../pages/AccessSection";
 
 export default function SiteFooter({ lang }) {
   const TEXT = {
@@ -16,6 +17,7 @@ export default function SiteFooter({ lang }) {
       shipping: "送料について",
       manage: "定期購入の確認・解約はこちら",
       refund: "返品・返金ポリシー",
+      access: "アクセス",
     },
     en: {
       brand: "Ryuge Coffee",
@@ -31,6 +33,7 @@ export default function SiteFooter({ lang }) {
       shipping: "Shipping Info",
       manage: "Manage or cancel subscription",
       refund: "Refund Policy",
+      access: "Access",
     },
     es: {
       brand: "Ryuge Coffee",
@@ -46,10 +49,14 @@ export default function SiteFooter({ lang }) {
       shipping: "Información de Envío",
       manage: "Gestionar o cancelar suscripción",
       refund: "Política de Reembolsos",
+      access: "Acceso",
     },
   };
 
   const t = TEXT[lang] || TEXT.ja;
+
+  const instagramUrl = "https://www.instagram.com/ryuge_coffee/";
+  const stripeUrl = "https://billing.stripe.com/p/login/3cI28r8GV4GcaFV1L85AQ01";
 
   return (
     <footer className="site-footer">
@@ -63,17 +70,9 @@ export default function SiteFooter({ lang }) {
           </div>
 
           <div className="footer-links-group">
-            <a
-              href="https://www.instagram.com/ryuge_coffee/"
-              target="_blank"
-              rel="noreferrer"
-            >
-              {t.instagram}
-            </a>
-
-            <a href={`mailto:${t.email}`}>{t.contact}</a>
-
-            <p className="footer-email">{t.email}</p>
+            <a href={instagramUrl} target="_blank" rel="noreferrer">{t.instagram}</a>
+            <a href={"mailto:" + t.email}>{t.contact}</a>
+            <Link to="/access">{t.access}</Link>
           </div>
 
           <div className="footer-links-group">
@@ -82,14 +81,7 @@ export default function SiteFooter({ lang }) {
             <Link to="/legal">{t.legal}</Link>
             <Link to="/shipping">{t.shipping}</Link>
             <Link to="/refund">{t.refund}</Link>
-
-            <a
-              href="https://billing.stripe.com/p/login/3cI28r8GV4GcaFV1L85AQ01"
-              target="_blank"
-              rel="noreferrer"
-            >
-              {t.manage}
-            </a>
+            <a href={stripeUrl} target="_blank" rel="noreferrer">{t.manage}</a>
           </div>
         </div>
 
