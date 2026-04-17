@@ -307,7 +307,7 @@ async function sendUnifiedReceiptEmail(type, data) {
         <!-- Body text -->
         <tr>
           <td style="padding:28px 48px 0;">
-            ${name ? `<p style="margin:0 0 16px;font-size:14px;color:#888;">${name} 様</p>` : ""}
+${name ? `<p style="margin:0 0 16px;font-size:14px;color:#888;">${lang === "ja" ? `${name} 様` : lang === "es" ? `Hola ${name},` : `Hi ${name},`}</p>` : ""}
             <p style="margin:0;font-size:14px;line-height:1.8;color:#888;">${bodyText}</p>
           </td>
         </tr>
