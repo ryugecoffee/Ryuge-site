@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import SiteLayout from "./components/SiteLayout";
 import LegalNotice from "./pages/LegalNotice";
@@ -13,7 +13,12 @@ import RefundPolicy from "./pages/RefundPolicy";
 import { Analytics } from "@vercel/analytics/react";
 import AccessSection from "./pages/AccessSection";
 
+// 👇 追加（GA）
+import { pageview, trackAddToCart } from "./lib/analytics";
+
 export default function App() {
+  const location = useLocation(); // 👈 追加
+
   const [lang, setLang] = useState(() => {
     return localStorage.getItem("site-lang") || "ja";
   });
@@ -22,6 +27,11 @@ export default function App() {
     const savedCart = localStorage.getItem("cart-items");
     return savedCart ? JSON.parse(savedCart) : [];
   });
+
+  // 👇 ページビュー計測
+  useEffect(() => {
+    pageview(location.pathname + location.search);
+  }, [location]);
 
   const addToCart = (product, quantity = 1) => {
     setCartItems((prev) => {
@@ -46,6 +56,9 @@ export default function App() {
         },
       ];
     });
+
+    // 👇 追加（カート計測）
+    trackAddToCart(product, quantity);
   };
 
   const removeFromCart = (id) => {
@@ -114,8 +127,7 @@ export default function App() {
           <Route path="/shipping" element={<ShippingPage lang={lang} />} />
           <Route path="/legal" element={<LegalNotice lang={lang} />} />
           <Route path="/refund" element={<RefundPolicy lang={lang} />} />
-          <Route path="/refund" element={<RefundPolicy lang={lang} />} />
-<Route path="/access" element={<AccessSection lang={lang} />} />
+          <Route path="/access" element={<AccessSection lang={lang} />} />
         </Route>
 
         <Route

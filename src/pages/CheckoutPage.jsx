@@ -1,3 +1,4 @@
+import { trackBeginCheckout } from "../lib/analytics";
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
@@ -599,6 +600,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    trackBeginCheckout(cartItems);
     setLoading(true);
     setError("");
 
