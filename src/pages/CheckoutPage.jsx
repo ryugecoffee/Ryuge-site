@@ -375,32 +375,23 @@ function getOrderLimitError(cartItems = [], t, countryType) {
 function ShippingProgressBar({ beans, bags, lang, selectedZoneKey, t }) {
   const beanProgress = Math.min(100, (beans / 10) * 100);
   const bagProgress = Math.min(100, (bags / 20) * 100);
- const overallProgress = Math.min(beanProgress, bagProgress);
+  const overallProgress = Math.min(beanProgress, bagProgress);
 
   const isMaxDiscount = beans >= 10 && bags >= 20;
   const isStep1 = beans >= 7 && bags >= 10 && !isMaxDiscount;
 
-const getMessage = () => {
-  if (isMaxDiscount) {
-    const zone45 = selectedZoneKey === "zone4" || selectedZoneKey === "zone5";
-    return zone45 ? t.discountStep2Zone45 : t.discountStep2Zone123;
-  }
-
-  if (isStep1) return t.discountStep1;
-
-  const remainBeans = Math.max(0, 10 - beans);
-  const remainBags = Math.max(0, 20 - bags);
-
-  if (lang === "ja") {
-  return `送料無料まで：豆${remainBeans}個 + バッグ${remainBags}個`;
-}
-
-  if (lang === "es") {
-  return `Para envío gratis: ${remainBeans} cafés + ${remainBags} bolsas`;
-}
-
-return `Free shipping: ${remainBeans} beans + ${remainBags} bags`;
-};
+  const getMessage = () => {
+    if (isMaxDiscount) {
+      const zone45 = selectedZoneKey === "zone4" || selectedZoneKey === "zone5";
+      return zone45 ? t.discountStep2Zone45 : t.discountStep2Zone123;
+    }
+    if (isStep1) return t.discountStep1;
+    const remainBeans = Math.max(0, 10 - beans);
+    const remainBags = Math.max(0, 20 - bags);
+    if (lang === "ja") return `送料無料まで：豆${remainBeans}個 + バッグ${remainBags}個`;
+    if (lang === "es") return `Para envío gratis: ${remainBeans} cafés + ${remainBags} bolsas`;
+    return `Free shipping: ${remainBeans} beans + ${remainBags} bags`;
+  };
 
   const barColor = isMaxDiscount ? "rgba(100,255,150,0.8)" : isStep1 ? "rgba(255,200,80,0.8)" : "rgba(255,255,255,0.4)";
   const textColor = isMaxDiscount ? "rgba(100,255,150,0.9)" : isStep1 ? "rgba(255,200,80,0.9)" : "rgba(255,255,255,0.52)";
@@ -414,20 +405,20 @@ return `Free shipping: ${remainBeans} beans + ${remainBags} bags`;
         {getMessage()}
       </p>
       <div style={{ marginTop: "6px" }}>
-  <Link
-    to="/shipping"
-    style={{
-      fontSize: "11px",
-      color: "rgba(255,255,255,0.38)",
-      borderBottom: "1px solid rgba(255,255,255,0.18)",
-      paddingBottom: "1px",
-      letterSpacing: "0.06em",
-      textDecoration: "none",
-    }}
-  >
-    {t.shippingDetailsLink}
-  </Link>
-</div>
+        <Link
+          to="/shipping"
+          style={{
+            fontSize: "11px",
+            color: "rgba(255,255,255,0.38)",
+            borderBottom: "1px solid rgba(255,255,255,0.18)",
+            paddingBottom: "1px",
+            letterSpacing: "0.06em",
+            textDecoration: "none",
+          }}
+        >
+          {t.shippingDetailsLink}
+        </Link>
+      </div>
     </div>
   );
 }
@@ -642,9 +633,12 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           body: JSON.stringify({
             cartItems,
             customer: {
-              name, email, postalCode,
+              name,
+              email,
+              postalCode,
               prefecture: countryType === "japan" ? prefecture : selectedCountryName,
               address: finalAddress,
+              lang, // ← 追加（この1行のみ変更）
             },
           }),
         });
@@ -698,6 +692,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           shippingDiscountStep: discountStep,
           couponCode: couponStatus === "valid" ? couponCode : "",
           total, shipping,
+          lang, // ← メール送信に lang を渡す
         }),
       });
 
