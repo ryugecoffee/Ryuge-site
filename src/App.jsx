@@ -11,6 +11,7 @@ import CheckoutCompletePage from "./pages/CheckoutCompletePage";
 import ShippingPage from "./pages/ShippingPage";
 import RefundPolicy from "./pages/RefundPolicy";
 import { Analytics } from "@vercel/analytics/react";
+import AccessSection from "./pages/AccessSection";
 
 export default function App() {
   const [lang, setLang] = useState(() => {
@@ -113,6 +114,8 @@ export default function App() {
           <Route path="/shipping" element={<ShippingPage lang={lang} />} />
           <Route path="/legal" element={<LegalNotice lang={lang} />} />
           <Route path="/refund" element={<RefundPolicy lang={lang} />} />
+          <Route path="/refund" element={<RefundPolicy lang={lang} />} />
+<Route path="/access" element={<AccessSection lang={lang} />} />
         </Route>
 
         <Route
