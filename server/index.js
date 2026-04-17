@@ -199,19 +199,6 @@ function applyCoupon(subtotal, shipping, couponCode) {
 }
 
 // ===== 共通メール送信 =====
-/**
- * @param {"order"|"subscription"} type
- * @param {{
- *   email: string,
- *   name: string,
- *   lang: "ja"|"en"|"es",
- *   items: Array<{title:string, quantity:number, price:number}>,
- *   total: number,
- *   shipping: number,
- *   address: string,
- *   planTitle?: string,
- * }} data
- */
 async function sendUnifiedReceiptEmail(type, data) {
   const { email, name, lang = "ja", items = [], total, shipping, address, planTitle } = data;
 
@@ -219,14 +206,12 @@ async function sendUnifiedReceiptEmail(type, data) {
 
   const isSubscription = type === "subscription";
 
-  // ── 件名 ──────────────────────────────────────────────
   const subjects = {
     ja: isSubscription ? "定期購入ありがとうございます | Ryuge Coffee" : "ご注文ありがとうございます | Ryuge Coffee",
     en: isSubscription ? "Thank you for your subscription | Ryuge Coffee" : "Thank you for your order | Ryuge Coffee",
     es: isSubscription ? "Gracias por tu suscripción | Ryuge Coffee" : "Gracias por tu pedido | Ryuge Coffee",
   };
 
-  // ── ヘッダーコピー ────────────────────────────────────
   const headlines = {
     ja: isSubscription ? "定期購入を開始しました" : "ご注文を承りました",
     en: isSubscription ? "Your subscription has started" : "We've received your order",
@@ -246,20 +231,24 @@ async function sendUnifiedReceiptEmail(type, data) {
   };
 
   const shippingLabels = { ja: "送料", en: "Shipping", es: "Envío" };
-  const totalLabels   = { ja: "合計", en: "Total",    es: "Total" };
-  const freeLabels    = { ja: "無料", en: "Free",     es: "Gratis" };
-  const addressLabels = { ja: "お届け先", en: "Shipping Address", es: "Dirección" };
-  const manageLabels  = {
+  const totalLabels    = { ja: "合計", en: "Total",    es: "Total" };
+  const freeLabels     = { ja: "無料", en: "Free",     es: "Gratis" };
+  const addressLabels  = { ja: "お届け先", en: "Shipping Address", es: "Dirección" };
+  const manageLabels   = {
     ja: "定期購入の管理（解約・支払い変更）",
     en: "Manage your subscription (cancel / update payment)",
     es: "Gestionar suscripción (cancelar / actualizar pago)",
   };
 
-  const subject  = subjects[lang]  || subjects.ja;
-  const headline = headlines[lang] || headlines.ja;
-  const bodyText = bodyTexts[lang] || bodyTexts.ja;
+  const subject      = subjects[lang]      || subjects.ja;
+  const headline     = headlines[lang]     || headlines.ja;
+  const bodyText     = bodyTexts[lang]     || bodyTexts.ja;
+  const shippingLabel = shippingLabels[lang] || shippingLabels.ja;
+  const totalLabel    = totalLabels[lang]    || totalLabels.ja;
+  const freeLabel     = freeLabels[lang]     || freeLabels.ja;
+  const addressLabel  = addressLabels[lang]  || addressLabels.ja;
+  const manageLabel   = manageLabels[lang]   || manageLabels.ja;
 
-  // ── 商品行 HTML ───────────────────────────────────────
   let itemRows = "";
   if (isSubscription && planTitle) {
     itemRows = `
@@ -277,16 +266,13 @@ async function sendUnifiedReceiptEmail(type, data) {
       </tr>`).join("");
   }
 
-  const shippingLabel = shippingLabels[lang] || shippingLabels.ja;
-  const totalLabel    = totalLabels[lang]    || totalLabels.ja;
-  const freeLabel     = freeLabels[lang]     || freeLabels.ja;
-  const addressLabel  = addressLabels[lang]  || addressLabels.ja;
-  const manageLabel   = manageLabels[lang]   || manageLabels.ja;
-
   const shippingDisplay = (shipping === 0 || isSubscription) ? freeLabel : `¥${Number(shipping || 0).toLocaleString()}`;
   const totalDisplay    = isSubscription ? "—" : `¥${Number(total || 0).toLocaleString()}`;
 
-  // ── HTML本文 ──────────────────────────────────────────
+  const greeting = name
+    ? (lang === "ja" ? `${name} 様` : lang === "es" ? `Hola ${name},` : `Hi ${name},`)
+    : "";
+
   const html = `
 <!DOCTYPE html>
 <html lang="${lang}">
@@ -296,7 +282,6 @@ async function sendUnifiedReceiptEmail(type, data) {
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="background:#111;border-radius:16px;overflow:hidden;max-width:560px;width:100%;">
 
-        <!-- Header -->
         <tr>
           <td style="padding:40px 48px 32px;border-bottom:1px solid #1e1e1e;">
             <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#444;">Ryuge Coffee</p>
@@ -304,25 +289,21 @@ async function sendUnifiedReceiptEmail(type, data) {
           </td>
         </tr>
 
-        <!-- Body text -->
         <tr>
           <td style="padding:28px 48px 0;">
-${name ? `<p style="margin:0 0 16px;font-size:14px;color:#888;">${lang === "ja" ? `${name} 様` : lang === "es" ? `Hola ${name},` : `Hi ${name},`}</p>` : ""}
+            ${greeting ? `<p style="margin:0 0 16px;font-size:14px;color:#888;">${greeting}</p>` : ""}
             <p style="margin:0;font-size:14px;line-height:1.8;color:#888;">${bodyText}</p>
           </td>
         </tr>
 
-        <!-- Items -->
         <tr>
           <td style="padding:28px 48px 0;">
             <table width="100%" cellpadding="0" cellspacing="0">
               ${itemRows}
-              <!-- Shipping row -->
               <tr>
                 <td style="padding:10px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ccc;" colspan="2">${shippingLabel}</td>
                 <td style="padding:10px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ccc;text-align:right;">${shippingDisplay}</td>
               </tr>
-              <!-- Total row -->
               <tr>
                 <td style="padding:16px 0 0;font-size:17px;font-weight:500;color:#e8e8e8;" colspan="2">${totalLabel}</td>
                 <td style="padding:16px 0 0;font-size:17px;font-weight:500;color:#e8e8e8;text-align:right;">${totalDisplay}</td>
@@ -331,7 +312,6 @@ ${name ? `<p style="margin:0 0 16px;font-size:14px;color:#888;">${lang === "ja" 
           </td>
         </tr>
 
-        <!-- Address -->
         ${address ? `
         <tr>
           <td style="padding:28px 48px 0;">
@@ -340,7 +320,6 @@ ${name ? `<p style="margin:0 0 16px;font-size:14px;color:#888;">${lang === "ja" 
           </td>
         </tr>` : ""}
 
-        <!-- Subscription management link -->
         ${isSubscription ? `
         <tr>
           <td style="padding:28px 48px 0;">
@@ -351,7 +330,6 @@ ${name ? `<p style="margin:0 0 16px;font-size:14px;color:#888;">${lang === "ja" 
           </td>
         </tr>` : ""}
 
-        <!-- Footer -->
         <tr>
           <td style="padding:40px 48px;border-top:1px solid #1e1e1e;margin-top:32px;">
             <p style="margin:0;font-size:12px;color:#444;line-height:1.7;">
@@ -372,6 +350,49 @@ ${name ? `<p style="margin:0 0 16px;font-size:14px;color:#888;">${lang === "ja" 
     to: email,
     subject,
     html,
+  });
+}
+
+// ===== 管理者通知メール =====
+async function sendAdminNotificationEmail(type, data) {
+  const { name, email, address, items = [], total, shipping, planTitle } = data;
+  const adminAddresses = "ryugecoffee@gmail.com, ryuka2452533@icloud.com";
+
+  const isSubscription = type === "subscription";
+  const subject = isSubscription
+    ? `【新規サブスク】${name} 様が定期購入を開始しました`
+    : `【新規注文】${name} 様より ¥${Number(total || 0).toLocaleString()}`;
+
+  const itemLines = isSubscription
+    ? planTitle || "サブスクプラン"
+    : (Array.isArray(items) ? items : [])
+        .map((item) => `${item.title} × ${item.quantity}　¥${((item.price || 0) * (item.quantity || 0)).toLocaleString()}`)
+        .join("\n");
+
+  const shippingLine = isSubscription
+    ? "送料：無料"
+    : `送料：${shipping === 0 ? "無料" : `¥${Number(shipping || 0).toLocaleString()}`}`;
+
+  const totalLine = isSubscription
+    ? ""
+    : `合計：¥${Number(total || 0).toLocaleString()}`;
+
+  await transporter.sendMail({
+    from: `"Ryuge Coffee" <${process.env.EMAIL_USER}>`,
+    to: adminAddresses,
+    subject,
+    text: `新規${isSubscription ? "サブスク" : "注文"}が入りました。
+
+お名前：${name}
+メール：${email}
+住所：${address || ""}
+
+【${isSubscription ? "プラン" : "注文内容"}】
+${itemLines}
+
+${shippingLine}
+${totalLine}
+`.trim(),
   });
 }
 
@@ -436,25 +457,16 @@ app.post("/create-payment-intent", async (req, res) => {
 app.post("/order-complete", async (req, res) => {
   try {
     const {
-      items,
-      name,
-      email,
-      postalCode,
-      address,
-      prefecture,
-      countryType,
-      countryCode,
-      countryName,
-      shippingZone,
-      shippingDiscountStep,
-      couponCode,
-      total,
-      shipping,
-      lang,
+      items, name, email, postalCode, address, prefecture,
+      countryType, countryCode, countryName,
+      shippingZone, shippingDiscountStep, couponCode,
+      total, shipping, lang,
     } = req.body;
 
-    // メール送信（エラーは握り潰してレスポンスを返す）
+    const fullAddress = [postalCode, prefecture, address].filter(Boolean).join(" ");
+
     try {
+      // お客様へのレシートメール
       await sendUnifiedReceiptEmail("order", {
         email,
         name,
@@ -462,10 +474,24 @@ app.post("/order-complete", async (req, res) => {
         items: Array.isArray(items) ? items : [],
         total,
         shipping,
-        address: [postalCode, prefecture, address].filter(Boolean).join(" "),
+        address: fullAddress,
       });
     } catch (mailErr) {
-      console.error("order-complete mail error:", mailErr);
+      console.error("order-complete customer mail error:", mailErr);
+    }
+
+    try {
+      // 管理者への通知メール
+      await sendAdminNotificationEmail("order", {
+        name,
+        email,
+        address: fullAddress,
+        items: Array.isArray(items) ? items : [],
+        total,
+        shipping,
+      });
+    } catch (mailErr) {
+      console.error("order-complete admin mail error:", mailErr);
     }
 
     return res.status(200).json({ ok: true });
@@ -484,7 +510,6 @@ app.post("/subscription-complete", async (req, res) => {
       return res.status(400).json({ error: "sessionId is required" });
     }
 
-    // Stripe session を取得
     const session = await stripe.checkout.sessions.retrieve(sessionId, {
       expand: ["line_items"],
     });
@@ -500,34 +525,37 @@ app.post("/subscription-complete", async (req, res) => {
     const planTitle = meta.planTitle || meta.planId || "";
     const address   = [meta.postalCode, meta.prefecture, meta.address].filter(Boolean).join(" ");
 
-    // order オブジェクトを組み立てて返す
     const order = {
       email,
       name,
       lang,
       planTitle,
       address,
-      postalCode:  meta.postalCode  || "",
-      prefecture:  meta.prefecture  || "",
-      shipping:    0,
-      total:       null, // サブスクは初回請求額が変動するため非表示
+      postalCode:     meta.postalCode  || "",
+      prefecture:     meta.prefecture  || "",
+      shipping:       0,
+      total:          null,
       isSubscription: true,
     };
 
-    // メール送信（重複送信の恐れあり ─ 将来 Webhook で解決予定）
     try {
+      // お客様へのレシートメール
       await sendUnifiedReceiptEmail("subscription", {
-        email,
-        name,
-        lang,
-        items:      [],
-        total:      null,
-        shipping:   0,
-        address,
-        planTitle,
+        email, name, lang,
+        items: [], total: null, shipping: 0,
+        address, planTitle,
       });
     } catch (mailErr) {
-      console.error("subscription-complete mail error:", mailErr);
+      console.error("subscription-complete customer mail error:", mailErr);
+    }
+
+    try {
+      // 管理者への通知メール
+      await sendAdminNotificationEmail("subscription", {
+        name, email, address, planTitle,
+      });
+    } catch (mailErr) {
+      console.error("subscription-complete admin mail error:", mailErr);
     }
 
     return res.status(200).json({ ok: true, order });
