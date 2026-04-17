@@ -356,7 +356,7 @@ ${name ? `<p style="margin:0 0 16px;font-size:14px;color:#888;">${lang === "ja" 
           <td style="padding:40px 48px;border-top:1px solid #1e1e1e;margin-top:32px;">
             <p style="margin:0;font-size:12px;color:#444;line-height:1.7;">
               Ryuge Coffee<br>
-              <a href="https://ryuge-site.vercel.app" style="color:#555;text-decoration:none;">ryuge-site.vercel.app</a>
+              <a href="https://ryuge.biz" style="color:#555;text-decoration:none;">ryuge.biz</a>
             </p>
           </td>
         </tr>
