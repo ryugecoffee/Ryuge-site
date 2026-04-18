@@ -1,61 +1,150 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R1FTS64TB1"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      window.gtag = gtag;
-      gtag('js', new Date());
-      gtag('config', 'G-R1FTS64TB1');
-    </script>
+import { useEffect, useState } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
+import HomePage from "./pages/HomePage";
+import SiteLayout from "./components/SiteLayout";
+import LegalNotice from "./pages/LegalNotice";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Terms from "./pages/Terms";
+import ProductsPage from "./pages/ProductsPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import CheckoutCompletePage from "./pages/CheckoutCompletePage";
+import ShippingPage from "./pages/ShippingPage";
+import RefundPolicy from "./pages/RefundPolicy";
+import { Analytics } from "@vercel/analytics/react";
+import AccessSection from "./pages/AccessSection";
+import { pageview, trackAddToCart } from "./lib/analytics";
 
-    <meta charset="UTF-8" />
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;"
-    />
-    <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+export default function App() {
+  const location = useLocation();
 
-    <title>Ryuge Coffee | Kamakura, Japan</title>
+  const [lang, setLang] = useState(() => {
+    return localStorage.getItem("site-lang") || "ja";
+  });
 
-    <meta
-      name="description"
-      content="Ryuge Coffee is a coffee brand based in Kamakura, Japan. A quiet expression of coffee shaped by atmosphere, stillness, and presence."
-    />
-    <meta
-      name="keywords"
-      content="Ryuge Coffee, Kamakura coffee, Japanese coffee, specialty coffee, coffee brand"
-    />
-    <meta name="author" content="Ryuge Coffee" />
+  const [cartItems, setCartItems] = useState(() => {
+    const savedCart = localStorage.getItem("cart-items");
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
 
-    <meta property="og:title" content="Ryuge Coffee | Kamakura, Japan" />
-    <meta
-      property="og:description"
-      content="Crafted in quiet rhythm. A coffee brand based in Kamakura, Japan."
-    />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="/images/stairs.jpg" />
-    <meta property="og:url" content="https://ryuge.biz" />
+  useEffect(() => {
+    pageview(location.pathname + location.search);
+  }, [location]);
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Ryuge Coffee | Kamakura, Japan" />
-    <meta
-      name="twitter:description"
-      content="Crafted in quiet rhythm. A coffee brand based in Kamakura, Japan."
-    />
-    <meta name="twitter:image" content="/images/stairs.jpg" />
+  const addToCart = (product, quantity = 1) => {
+    setCartItems((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
 
-    <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap"
-      rel="stylesheet"
-    />
-  </head>
+      if (existing) {
+        return prev.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        );
+      }
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
+      return [
+        ...prev,
+        {
+          id: product.id,
+          title: product.title || product.name || "Product",
+          price: product.priceNumber ?? product.price ?? 0,
+          image: product.image || "",
+          quantity,
+        },
+      ];
+    });
+
+    trackAddToCart(product, quantity);
+  };
+
+  const removeFromCart = (id) => {
+    setCartItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const updateCartQuantity = (id, nextQuantity) => {
+    if (nextQuantity <= 0) {
+      setCartItems((prev) => prev.filter((item) => item.id !== id));
+      return;
+    }
+
+    setCartItems((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, quantity: nextQuantity } : item
+      )
+    );
+  };
+
+  const clearCart = () => {
+    setCartItems([]);
+    localStorage.removeItem("cart-items");
+  };
+
+  useEffect(() => {
+    localStorage.setItem("site-lang", lang);
+  }, [lang]);
+
+  useEffect(() => {
+    localStorage.setItem("cart-items", JSON.stringify(cartItems));
+  }, [cartItems]);
+
+  return (
+    <>
+      <Routes>
+        <Route
+          path="/"
+          element={<HomePage lang={lang} setLang={setLang} />}
+        />
+
+        <Route
+          element={
+            <SiteLayout
+              lang={lang}
+              setLang={setLang}
+              cartItems={cartItems}
+              removeFromCart={removeFromCart}
+              updateCartQuantity={updateCartQuantity}
+              addToCart={addToCart}
+            />
+          }
+        >
+          <Route
+            path="/products"
+            element={
+              <ProductsPage
+                lang={lang}
+                cartItems={cartItems}
+                setCartItems={setCartItems}
+              />
+            }
+          />
+
+          <Route path="/privacy" element={<PrivacyPolicy lang={lang} />} />
+          <Route path="/terms" element={<Terms lang={lang} />} />
+          <Route path="/shipping" element={<ShippingPage lang={lang} />} />
+          <Route path="/legal" element={<LegalNotice lang={lang} />} />
+          <Route path="/refund" element={<RefundPolicy lang={lang} />} />
+          <Route path="/access" element={<AccessSection lang={lang} />} />
+        </Route>
+
+        <Route
+          path="/checkout"
+          element={
+            <CheckoutPage
+              cartItems={cartItems}
+              setCartItems={setCartItems}
+              clearCart={clearCart}
+              lang={lang}
+            />
+          }
+        />
+
+        <Route
+          path="/checkout/complete"
+          element={<CheckoutCompletePage />}
+        />
+      </Routes>
+
+      <Analytics />
+    </>
+  );
+}
