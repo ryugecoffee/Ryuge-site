@@ -30,213 +30,191 @@ const WHOLESALE_PRODUCTS = [
   },
 ];
 
-const styles = {
-  page: {
-    minHeight: "100vh",
-    backgroundColor: "#f7f5f2",
-    fontFamily: "Cormorant Garamond, serif",
-    color: "#2a2a2a",
-  },
-  header: {
-    borderBottom: "1px solid #ddd8d0",
-    backgroundColor: "#f7f5f2",
-    padding: "1.2rem 3rem",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    position: "sticky",
-    top: 0,
-    zIndex: 100,
-  },
-  logo: {
-    textDecoration: "none",
-    fontSize: "0.95rem",
-    letterSpacing: "0.18em",
-    color: "#2a2a2a",
-    textTransform: "uppercase",
-  },
-  navLink: {
-    fontSize: "0.72rem",
-    color: "#888",
-    textDecoration: "none",
-    letterSpacing: "0.1em",
-    textTransform: "uppercase",
-    transition: "color 0.2s",
-  },
-  loginBtn: {
-    fontSize: "0.72rem",
-    color: "#2a2a2a",
-    textDecoration: "none",
-    border: "1px solid #2a2a2a",
-    padding: "0.4rem 1.1rem",
-    letterSpacing: "0.12em",
-    textTransform: "uppercase",
-    transition: "background 0.2s, color 0.2s",
-  },
-  container: {
-    maxWidth: "1080px",
-    margin: "0 auto",
-    padding: "5rem 3rem 6rem",
-  },
-  eyebrow: {
-    fontSize: "0.68rem",
-    letterSpacing: "0.22em",
-    textTransform: "uppercase",
-    color: "#aaa",
-    marginBottom: "1rem",
-  },
-  heading: {
-    fontSize: "2rem",
-    fontWeight: 400,
-    letterSpacing: "0.06em",
-    color: "#2a2a2a",
-    margin: 0,
-    lineHeight: 1.3,
-  },
-  subtext: {
-    fontSize: "0.82rem",
-    color: "#888",
-    marginTop: "1rem",
-    lineHeight: 2,
-    letterSpacing: "0.04em",
-  },
-  notice: {
-    marginTop: "1.8rem",
-    padding: "1rem 1.4rem",
-    backgroundColor: "#f0ece6",
-    fontSize: "0.78rem",
-    color: "#666",
-    letterSpacing: "0.04em",
-    lineHeight: 1.8,
-    borderLeft: "2px solid #c8bfb4",
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-    gap: "1.8rem",
-    marginTop: "4rem",
-    marginBottom: "5rem",
-  },
-  divider: {
-    borderTop: "1px solid #ddd8d0",
-    paddingTop: "3rem",
-  },
-  sectionTitle: {
-    fontSize: "0.72rem",
-    letterSpacing: "0.2em",
-    textTransform: "uppercase",
-    color: "#aaa",
-    marginBottom: "1rem",
-  },
-  bodyText: {
-    fontSize: "0.8rem",
-    color: "#888",
-    lineHeight: 2.1,
-    margin: 0,
-    letterSpacing: "0.04em",
-  },
-};
-
 export default function WholesaleJpPage() {
   const { user, approved, logout } = useAuth();
 
   return (
-    <div style={styles.page}>
-      <div style={styles.header}>
-        <Link to="/" style={styles.logo}>
+    <div style={{
+      minHeight: "100vh",
+      backgroundColor: "#2a2a2a",
+      fontFamily: "Cormorant Garamond, serif",
+      color: "#e8e2d9",
+    }}>
+
+      {/* ヘッダー */}
+      <div style={{
+        borderBottom: "1px solid #3a3a3a",
+        backgroundColor: "#2a2a2a",
+        padding: "1.2rem 3rem",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        position: "sticky",
+        top: 0,
+        zIndex: 100,
+      }}>
+        <Link to="/" style={{
+          textDecoration: "none",
+          fontSize: "0.9rem",
+          letterSpacing: "0.2em",
+          color: "#e8e2d9",
+          textTransform: "uppercase",
+        }}>
           Ryuge Coffee
         </Link>
-
         <div style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
           {user ? (
             <>
-              <Link to="/wholesale-jp/dashboard" style={styles.navLink}>
+              <Link to="/wholesale-jp/dashboard" style={{
+                fontSize: "0.68rem",
+                color: "#888",
+                textDecoration: "none",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+              }}>
                 Dashboard
               </Link>
-              <button
-                onClick={logout}
-                style={{
-                  ...styles.navLink,
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: 0,
-                }}
-              >
+              <button onClick={logout} style={{
+                fontSize: "0.68rem",
+                color: "#666",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                padding: 0,
+              }}>
                 Logout
               </button>
             </>
           ) : (
-            <Link to="/wholesale-jp/login" style={styles.loginBtn}>
+            <Link to="/wholesale-jp/login" style={{
+              fontSize: "0.68rem",
+              color: "#e8e2d9",
+              textDecoration: "none",
+              border: "1px solid #555",
+              padding: "0.4rem 1.2rem",
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+            }}>
               Login
             </Link>
           )}
         </div>
       </div>
 
-      <div style={styles.container}>
-        <div style={{ marginBottom: "0" }}>
-          <p style={styles.eyebrow}>Wholesale — Japan</p>
-          <h1 style={styles.heading}>卸販売｜国内</h1>
+      {/* メイン */}
+      <div style={{ maxWidth: "1300px", margin: "0 auto", padding: "5rem 3rem 7rem" }}>
 
-          <p style={styles.subtext}>
-            Ryuge Coffeeの卸販売ページです。ご購入には承認済みアカウントが必要です。
-            <br />
+        {/* タイトルブロック */}
+        <div style={{ marginBottom: "4rem" }}>
+          <p style={{
+            fontSize: "0.65rem",
+            letterSpacing: "0.26em",
+            textTransform: "uppercase",
+            color: "#666",
+            margin: "0 0 1rem",
+          }}>
+            Wholesale — Japan
+          </p>
+          <h1 style={{
+            fontSize: "2.2rem",
+            fontWeight: 400,
+            letterSpacing: "0.06em",
+            color: "#e8e2d9",
+            margin: "0 0 1.2rem",
+            lineHeight: 1.3,
+          }}>
+            卸販売｜国内
+          </h1>
+          <p style={{
+            fontSize: "0.78rem",
+            color: "#777",
+            lineHeight: 2.1,
+            letterSpacing: "0.04em",
+            margin: 0,
+          }}>
+            Ryuge Coffeeの卸販売ページです。ご購入には承認済みアカウントが必要です。<br />
             お取引のご希望は{" "}
-            <a
-              href="mailto:ryugecoffee@gmail.com"
-              style={{ color: "#888", textDecoration: "underline" }}
-            >
+            <a href="mailto:ryugecoffee@gmail.com" style={{ color: "#999", textDecoration: "underline" }}>
               ryugecoffee@gmail.com
-            </a>{" "}
-            までご連絡ください。
+            </a>
+            {" "}までご連絡ください。
           </p>
 
           {!user && (
-            <div style={styles.notice}>
+            <div style={{
+              marginTop: "2rem",
+              padding: "1rem 1.4rem",
+              borderLeft: "2px solid #444",
+              backgroundColor: "#333",
+              fontSize: "0.75rem",
+              color: "#888",
+              letterSpacing: "0.04em",
+              lineHeight: 1.8,
+            }}>
               卸価格を確認するには{" "}
-              <Link
-                to="/wholesale-jp/login"
-                style={{
-                  color: "#2a2a2a",
-                  textDecoration: "underline",
-                  letterSpacing: "0.04em",
-                }}
-              >
+              <Link to="/wholesale-jp/login" style={{ color: "#e8e2d9", textDecoration: "underline" }}>
                 ログイン
-              </Link>{" "}
-              が必要です。
+              </Link>
+              {" "}が必要です。
             </div>
           )}
 
           {user && !approved && (
-            <div style={styles.notice}>
+            <div style={{
+              marginTop: "2rem",
+              padding: "1rem 1.4rem",
+              borderLeft: "2px solid #444",
+              backgroundColor: "#333",
+              fontSize: "0.75rem",
+              color: "#888",
+              letterSpacing: "0.04em",
+              lineHeight: 1.8,
+            }}>
               アカウントの承認をお待ちください。承認後に卸価格が表示されます。
             </div>
           )}
         </div>
 
-        <div style={styles.grid}>
+        {/* 商品グリッド */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(5, 1fr)",
+          gap: "1.2rem",
+          marginBottom: "8rem",
+        }}>
           {WHOLESALE_PRODUCTS.map((product) => (
             <WholesaleProductCard key={product.id} product={product} />
           ))}
-          <OriginalBagCard approved={approved} />
+
+          {/* オリジナルバッグ：商品一覧内のサービスカード */}
+          <OriginalBagCard user={user} approved={approved} />
+
+          <ComingSoonCard />
         </div>
 
-        <div style={styles.divider}>
-          <p style={styles.sectionTitle}>Order & Trade</p>
-          <p style={styles.bodyText}>
-            最低注文数量・納期・お支払い条件については、お問い合わせの上ご確認ください。
-            <br />
+        {/* フッター注記 */}
+        <div style={{ borderTop: "1px solid #3a3a3a", paddingTop: "3rem" }}>
+          <p style={{
+            fontSize: "0.65rem",
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            color: "#555",
+            marginBottom: "1rem",
+          }}>
+            Order & Trade
+          </p>
+          <p style={{
+            fontSize: "0.78rem",
+            color: "#666",
+            lineHeight: 2.2,
+            margin: 0,
+            letterSpacing: "0.04em",
+          }}>
+            最低注文数量・納期・お支払い条件については、お問い合わせの上ご確認ください。<br />
             初回ご注文の前に取引承認が必要です。
-            <a
-              href="mailto:ryugecoffee@gmail.com"
-              style={{
-                color: "#888",
-                marginLeft: "0.4em",
-                textDecoration: "underline",
-              }}
-            >
+            <a href="mailto:ryugecoffee@gmail.com" style={{ color: "#888", marginLeft: "0.4em", textDecoration: "underline" }}>
               ryugecoffee@gmail.com
             </a>
           </p>
@@ -246,143 +224,143 @@ export default function WholesaleJpPage() {
   );
 }
 
-function OriginalBagCard({ approved }) {
+// オリジナルバッグ：サービスカード
+function OriginalBagCard({ user, approved }) {
   return (
     <div
       style={{
-        border: "1px solid #ddd8d0",
-        borderRadius: "3px",
+        border: "1px solid #3a3a3a",
+        borderRadius: "2px",
         overflow: "hidden",
-        backgroundColor: "#fff",
+        backgroundColor: "#333",
         display: "flex",
         flexDirection: "column",
-        transition: "box-shadow 0.25s ease, transform 0.25s ease",
+        transition: "border-color 0.25s ease",
       }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = "0 6px 24px rgba(0,0,0,0.06)";
-        e.currentTarget.style.transform = "translateY(-2px)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "none";
-        e.currentTarget.style.transform = "translateY(0)";
-      }}
+      onMouseEnter={e => e.currentTarget.style.borderColor = "#555"}
+      onMouseLeave={e => e.currentTarget.style.borderColor = "#3a3a3a"}
     >
-      <div
-        style={{
-          aspectRatio: "1 / 1",
-          backgroundColor: "#f0ece6",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <span style={{ fontSize: "2rem", opacity: 0.4 }}>✦</span>
+      {/* アイキャッチ */}
+      <div style={{
+        aspectRatio: "1 / 1",
+        backgroundColor: "#3a3a3a",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "0.6rem",
+      }}>
+        <span style={{ fontSize: "1.6rem", opacity: 0.25, color: "#e8e2d9" }}>✦</span>
+        {/* サービスラベル */}
+        <span style={{
+          fontSize: "0.55rem",
+          letterSpacing: "0.2em",
+          textTransform: "uppercase",
+          color: "#666",
+          border: "1px solid #444",
+          padding: "0.2rem 0.6rem",
+        }}>
+          For approved partners
+        </span>
       </div>
 
-      <div
-        style={{
-          padding: "1.6rem 1.4rem",
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.5rem",
-        }}
-      >
-        <p
-          style={{
-            fontFamily: "Cormorant Garamond, serif",
-            fontSize: "1rem",
-            fontWeight: 500,
-            margin: 0,
-            letterSpacing: "0.04em",
-          }}
-        >
+      {/* テキストエリア */}
+      <div style={{ padding: "1.2rem 1rem", flex: 1, display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        <p style={{
+          fontSize: "0.85rem",
+          fontWeight: 500,
+          margin: 0,
+          color: "#e8e2d9",
+          letterSpacing: "0.04em",
+          lineHeight: 1.5,
+        }}>
           オリジナルコーヒーバッグ制作
         </p>
 
-        <p
-          style={{
-            fontSize: "0.78rem",
-            color: "#999",
-            margin: 0,
-            lineHeight: 1.9,
-            letterSpacing: "0.03em",
-          }}
-        >
-          貴社ロゴ・デザインを印刷したオリジナルドリップバッグを制作します。ギフト・ノベルティ・OEM対応。
+        <p style={{
+          fontSize: "0.7rem",
+          color: "#777",
+          margin: 0,
+          lineHeight: 1.9,
+          letterSpacing: "0.02em",
+        }}>
+          貴社ロゴ・デザインを印刷したオリジナルドリップバッグを制作します。
+          既存取引先様、または導入をご検討中の法人様向けサービスです。
         </p>
 
-        <div
-          style={{
-            marginTop: "0.8rem",
-            padding: "0.8rem 1rem",
-            backgroundColor: "#f7f5f2",
-            fontSize: "0.72rem",
-            color: "#888",
-            lineHeight: 2,
-            letterSpacing: "0.04em",
-            borderLeft: "1px solid #ddd8d0",
-          }}
-        >
-          <p
-            style={{
-              margin: "0 0 0.2rem",
-              color: "#666",
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              fontSize: "0.65rem",
-            }}
-          >
-            入稿条件
-          </p>
-          サイズ：110mm × 110mm（枠なし）
-          <br />
-          形式：PDF / PNG / JPG
-          <br />
-          ※ Word・PowerPoint は PDF または画像化の上ご提出ください
-        </div>
-
-        <div style={{ marginTop: "auto", paddingTop: "1.2rem" }}>
+        {/* 状態別CTA */}
+        <div style={{
+          marginTop: "auto",
+          paddingTop: "0.8rem",
+          borderTop: "1px solid #3a3a3a",
+        }}>
           {approved ? (
             <a
               href="mailto:ryugecoffee@gmail.com?subject=オリジナルコーヒーバッグ制作のご相談"
               style={{
                 display: "inline-block",
-                fontSize: "0.68rem",
-                color: "#2a2a2a",
-                border: "1px solid #2a2a2a",
-                padding: "0.45rem 1.2rem",
+                fontSize: "0.62rem",
+                color: "#e8e2d9",
+                border: "1px solid #555",
+                padding: "0.4rem 1rem",
                 textDecoration: "none",
                 letterSpacing: "0.14em",
                 textTransform: "uppercase",
-                transition: "background 0.2s, color 0.2s",
+                transition: "border-color 0.2s",
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#2a2a2a";
-                e.currentTarget.style.color = "#fff";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.color = "#2a2a2a";
-              }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = "#e8e2d9"}
+              onMouseLeave={e => e.currentTarget.style.borderColor = "#555"}
             >
-              Contact
+              制作について相談する
             </a>
+          ) : !user ? (
+            <p style={{
+              fontSize: "0.68rem",
+              color: "#555",
+              margin: 0,
+              lineHeight: 1.8,
+              letterSpacing: "0.03em",
+            }}>
+              取引開始後にご案内
+            </p>
           ) : (
-            <p
-              style={{
-                fontSize: "0.75rem",
-                color: "#bbb",
-                margin: 0,
-                fontStyle: "italic",
-                letterSpacing: "0.04em",
-              }}
-            >
-              ログイン後に詳細を表示
+            <p style={{
+              fontSize: "0.68rem",
+              color: "#555",
+              margin: 0,
+              lineHeight: 1.8,
+              letterSpacing: "0.03em",
+            }}>
+              承認済み取引先様向けサービス
             </p>
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// 近日公開スロット
+function ComingSoonCard() {
+  return (
+    <div style={{
+      border: "1px dashed #3a3a3a",
+      borderRadius: "2px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: "280px",
+      opacity: 0.35,
+    }}>
+      <p style={{
+        fontSize: "0.6rem",
+        letterSpacing: "0.2em",
+        textTransform: "uppercase",
+        color: "#666",
+        margin: 0,
+      }}>
+        Coming Soon
+      </p>
     </div>
   );
 }
