@@ -1,3 +1,4 @@
+// src/App.jsx
 import { useEffect, useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import HomePage from "./pages/HomePage";
@@ -13,6 +14,12 @@ import RefundPolicy from "./pages/RefundPolicy";
 import { Analytics } from "@vercel/analytics/react";
 import AccessSection from "./pages/AccessSection";
 import { pageview, trackAddToCart } from "./lib/analytics";
+
+// 卸ページ
+import WholesaleJpPage from "./pages/WholesaleJpPage";
+import WholesaleJpLoginPage from "./pages/WholesaleJpLoginPage";
+import WholesaleJpDashboardPage from "./pages/WholesaleJpDashboardPage";
+import { AuthProvider } from "./contexts/AuthContext";
 
 export default function App() {
   const location = useLocation();
@@ -88,7 +95,7 @@ export default function App() {
   }, [cartItems]);
 
   return (
-    <>
+    <AuthProvider>
       <Routes>
         <Route
           path="/"
@@ -142,9 +149,14 @@ export default function App() {
           path="/checkout/complete"
           element={<CheckoutCompletePage />}
         />
+
+        {/* 卸ページ（SiteLayoutの外・独立） */}
+        <Route path="/wholesale-jp" element={<WholesaleJpPage />} />
+        <Route path="/wholesale-jp/login" element={<WholesaleJpLoginPage />} />
+        <Route path="/wholesale-jp/dashboard" element={<WholesaleJpDashboardPage />} />
       </Routes>
 
       <Analytics />
-    </>
+    </AuthProvider>
   );
 }

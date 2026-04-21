@@ -84,7 +84,6 @@ function DashboardContent() {
           gap: "1.2rem",
         }}>
 
-          {/* 卸商品一覧へ */}
           <DashboardCard
             title="卸商品一覧"
             description="国内卸価格・商品ラインナップを確認できます。"
@@ -92,7 +91,6 @@ function DashboardContent() {
             linkLabel="商品を見る"
           />
 
-          {/* オリジナルバッグ相談 */}
           <DashboardCard
             title="オリジナルバッグ制作"
             description="貴社ロゴ入りのドリップバッグ制作のご相談はこちら。"
@@ -100,7 +98,6 @@ function DashboardContent() {
             linkLabel="メールで相談"
           />
 
-          {/* お問い合わせ */}
           <DashboardCard
             title="お問い合わせ"
             description="ご注文・納期・お支払いについてはメールにてご連絡ください。"
@@ -151,6 +148,7 @@ function DashboardCard({ title, description, linkTo, linkHref, linkLabel }) {
       <p style={{ fontSize: "0.8rem", color: "#888", margin: 0, lineHeight: 1.7 }}>
         {description}
       </p>
+
       <div style={{ marginTop: "auto", paddingTop: "0.8rem" }}>
         {linkTo ? (
           <Link
@@ -168,7 +166,7 @@ function DashboardCard({ title, description, linkTo, linkHref, linkLabel }) {
             {linkLabel}
           </Link>
         ) : (
-          
+          <a
             href={linkHref}
             style={{
               fontSize: "0.78rem",

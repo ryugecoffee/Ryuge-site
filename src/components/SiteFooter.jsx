@@ -1,3 +1,4 @@
+// src/components/SiteFooter.jsx
 import { Link } from "react-router-dom";
 import AccessSection from "../pages/AccessSection";
 
@@ -18,6 +19,7 @@ export default function SiteFooter({ lang }) {
       manage: "定期購入の確認・解約はこちら",
       refund: "返品・返金ポリシー",
       access: "アクセス",
+      wholesale: "卸販売（国内）",
     },
     en: {
       brand: "Ryuge Coffee",
@@ -34,6 +36,7 @@ export default function SiteFooter({ lang }) {
       manage: "Manage or cancel subscription",
       refund: "Refund Policy",
       access: "Access",
+      wholesale: "Wholesale (Japan)",
     },
     es: {
       brand: "Ryuge Coffee",
@@ -50,6 +53,7 @@ export default function SiteFooter({ lang }) {
       manage: "Gestionar o cancelar suscripción",
       refund: "Política de Reembolsos",
       access: "Acceso",
+      wholesale: "Venta al por mayor (Japón)",
     },
   };
 
@@ -73,6 +77,8 @@ export default function SiteFooter({ lang }) {
             <a href={instagramUrl} target="_blank" rel="noreferrer">{t.instagram}</a>
             <a href={"mailto:" + t.email}>{t.contact}</a>
             <Link to="/access">{t.access}</Link>
+            {/* 卸導線 */}
+            <Link to="/wholesale-jp">{t.wholesale}</Link>
           </div>
 
           <div className="footer-links-group">
