@@ -21,6 +21,8 @@ import WholesaleJpLoginPage from "./pages/WholesaleJpLoginPage";
 import WholesaleJpDashboardPage from "./pages/WholesaleJpDashboardPage";
 import WholesaleJpRegisterPage from "./pages/WholesaleJpRegisterPage";
 import WholesaleJpAdminPage from "./pages/WholesaleJpAdminPage";
+import WholesaleJpOrderPage from "./pages/WholesaleJpOrderPage";
+import WholesaleJpOrderCompletePage from "./pages/WholesaleJpOrderCompletePage";
 import { AuthProvider } from "./contexts/AuthContext";
 
 export default function App() {
@@ -119,12 +121,12 @@ export default function App() {
               />
             }
           />
-          <Route path="/privacy" element={<PrivacyPolicy lang={lang} />} />
-          <Route path="/terms" element={<Terms lang={lang} />} />
-          <Route path="/shipping" element={<ShippingPage lang={lang} />} />
-          <Route path="/legal" element={<LegalNotice lang={lang} />} />
-          <Route path="/refund" element={<RefundPolicy lang={lang} />} />
-          <Route path="/access" element={<AccessSection lang={lang} />} />
+          <Route path="/privacy"   element={<PrivacyPolicy lang={lang} />} />
+          <Route path="/terms"     element={<Terms lang={lang} />} />
+          <Route path="/shipping"  element={<ShippingPage lang={lang} />} />
+          <Route path="/legal"     element={<LegalNotice lang={lang} />} />
+          <Route path="/refund"    element={<RefundPolicy lang={lang} />} />
+          <Route path="/access"    element={<AccessSection lang={lang} />} />
         </Route>
 
         <Route
@@ -141,11 +143,13 @@ export default function App() {
         <Route path="/checkout/complete" element={<CheckoutCompletePage />} />
 
         {/* 卸ページ */}
-        <Route path="/wholesale-jp" element={<WholesaleJpPage />} />
-        <Route path="/wholesale-jp/login" element={<WholesaleJpLoginPage />} />
-        <Route path="/wholesale-jp/register" element={<WholesaleJpRegisterPage />} />
-        <Route path="/wholesale-jp/dashboard" element={<WholesaleJpDashboardPage />} />
-        <Route path="/wholesale-jp/admin" element={<WholesaleJpAdminPage />} />
+        <Route path="/wholesale-jp"                  element={<WholesaleJpPage />} />
+        <Route path="/wholesale-jp/login"            element={<WholesaleJpLoginPage />} />
+        <Route path="/wholesale-jp/register"         element={<WholesaleJpRegisterPage />} />
+        <Route path="/wholesale-jp/dashboard"        element={<WholesaleJpDashboardPage />} />
+        <Route path="/wholesale-jp/admin"            element={<WholesaleJpAdminPage />} />
+        <Route path="/wholesale-jp/order"            element={<WholesaleJpOrderPage />} />
+        <Route path="/wholesale-jp/order/complete"   element={<WholesaleJpOrderCompletePage />} />
       </Routes>
 
       <Analytics />
