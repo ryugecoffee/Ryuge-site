@@ -11,8 +11,7 @@ export default function WholesaleJpLoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleLogin = async () => {
     setError("");
     setLoading(true);
 
@@ -27,102 +26,123 @@ export default function WholesaleJpLoginPage() {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") handleLogin();
+  };
+
   return (
     <div style={{
       minHeight: "100vh",
+      backgroundColor: "#2a2a2a",
+      fontFamily: "Cormorant Garamond, serif",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: "#faf9f7",
       padding: "2rem",
     }}>
-      <div style={{
-        width: "100%",
-        maxWidth: "400px",
-        backgroundColor: "#fff",
-        border: "1px solid #e8e2d9",
-        borderRadius: "4px",
-        padding: "2.5rem 2rem",
-      }}>
-        {/* ロゴ・タイトル */}
-        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+      <div style={{ width: "100%", maxWidth: "400px" }}>
+
+        {/* タイトル */}
+        <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
           <Link to="/" style={{ textDecoration: "none" }}>
             <p style={{
-              fontFamily: "Cormorant Garamond, serif",
-              fontSize: "1.3rem",
-              letterSpacing: "0.1em",
-              color: "#2a2a2a",
-              margin: 0,
+              fontSize: "0.9rem",
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: "#e8e2d9",
+              margin: "0 0 0.6rem",
             }}>
               Ryuge Coffee
             </p>
           </Link>
           <p style={{
-            fontSize: "0.8rem",
-            color: "#888",
-            marginTop: "0.4rem",
-            letterSpacing: "0.05em",
+            fontSize: "0.68rem",
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            color: "#666",
+            margin: 0,
           }}>
-            卸専用ページ ログイン
+            Wholesale Login
           </p>
         </div>
 
-        {/* エラー表示 */}
+        {/* エラー */}
         {error && (
-          <p style={{
-            fontSize: "0.82rem",
-            color: "#c0392b",
-            backgroundColor: "#fdf0ee",
-            border: "1px solid #f5c6c0",
-            borderRadius: "3px",
-            padding: "0.6rem 0.8rem",
-            marginBottom: "1.2rem",
+          <div style={{
+            marginBottom: "1.5rem",
+            padding: "0.8rem 1rem",
+            borderLeft: "2px solid #7a3a3a",
+            backgroundColor: "#3a2a2a",
+            fontSize: "0.75rem",
+            color: "#c08080",
+            letterSpacing: "0.04em",
+            lineHeight: 1.8,
           }}>
             {error}
-          </p>
+          </div>
         )}
 
         {/* フォーム */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
           <div>
-            <label style={{ fontSize: "0.78rem", color: "#666", display: "block", marginBottom: "0.3rem" }}>
-              メールアドレス
+            <label style={{
+              fontSize: "0.65rem",
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: "#666",
+              display: "block",
+              marginBottom: "0.5rem",
+            }}>
+              Email
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={handleKeyDown}
               style={{
                 width: "100%",
-                padding: "0.6rem 0.8rem",
-                border: "1px solid #d9d2c8",
-                borderRadius: "3px",
-                fontSize: "0.9rem",
+                padding: "0.7rem 0.9rem",
+                backgroundColor: "#333",
+                border: "1px solid #444",
+                color: "#e8e2d9",
+                fontSize: "0.82rem",
+                fontFamily: "Cormorant Garamond, serif",
                 outline: "none",
+                letterSpacing: "0.03em",
                 boxSizing: "border-box",
-                backgroundColor: "#faf9f7",
               }}
             />
           </div>
 
           <div>
-            <label style={{ fontSize: "0.78rem", color: "#666", display: "block", marginBottom: "0.3rem" }}>
-              パスワード
+            <label style={{
+              fontSize: "0.65rem",
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: "#666",
+              display: "block",
+              marginBottom: "0.5rem",
+            }}>
+              Password
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={handleKeyDown}
               style={{
                 width: "100%",
-                padding: "0.6rem 0.8rem",
-                border: "1px solid #d9d2c8",
-                borderRadius: "3px",
-                fontSize: "0.9rem",
+                padding: "0.7rem 0.9rem",
+                backgroundColor: "#333",
+                border: "1px solid #444",
+                color: "#e8e2d9",
+                fontSize: "0.82rem",
+                fontFamily: "Cormorant Garamond, serif",
                 outline: "none",
+                letterSpacing: "0.03em",
                 boxSizing: "border-box",
-                backgroundColor: "#faf9f7",
               }}
             />
           </div>
@@ -132,29 +152,48 @@ export default function WholesaleJpLoginPage() {
             disabled={loading}
             style={{
               marginTop: "0.5rem",
-              padding: "0.75rem",
-              backgroundColor: "#2a2a2a",
-              color: "#fff",
-              border: "none",
-              borderRadius: "3px",
-              fontSize: "0.85rem",
-              letterSpacing: "0.08em",
+              padding: "0.85rem",
+              backgroundColor: "transparent",
+              color: "#e8e2d9",
+              border: "1px solid #555",
+              fontSize: "0.68rem",
+              letterSpacing: "0.16em",
+              textTransform: "uppercase",
               cursor: loading ? "not-allowed" : "pointer",
-              opacity: loading ? 0.6 : 1,
+              opacity: loading ? 0.5 : 1,
               fontFamily: "Cormorant Garamond, serif",
+              transition: "border-color 0.2s",
             }}
+            onMouseEnter={e => { if (!loading) e.currentTarget.style.borderColor = "#e8e2d9"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#555"; }}
           >
-            {loading ? "ログイン中..." : "ログイン"}
+            {loading ? "..." : "Login"}
           </button>
         </div>
 
-        {/* 卸ページへ戻る */}
-        <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
-          <Link
-            to="/wholesale-jp"
-            style={{ fontSize: "0.78rem", color: "#888", textDecoration: "underline" }}
-          >
-            卸ページへ戻る
+        {/* 導線 */}
+        <div style={{
+          textAlign: "center",
+          marginTop: "2rem",
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.8rem",
+        }}>
+          <Link to="/wholesale-jp/register" style={{
+            fontSize: "0.65rem",
+            color: "#666",
+            textDecoration: "underline",
+            letterSpacing: "0.08em",
+          }}>
+            新規お取引のお申し込みはこちら
+          </Link>
+          <Link to="/wholesale-jp" style={{
+            fontSize: "0.65rem",
+            color: "#555",
+            textDecoration: "none",
+            letterSpacing: "0.08em",
+          }}>
+            ← 卸ページへ戻る
           </Link>
         </div>
       </div>

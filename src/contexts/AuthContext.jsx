@@ -9,6 +9,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [approved, setApproved] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,16 +21,21 @@ export function AuthProvider({ children }) {
           const docRef = doc(db, "wholesaleUsers", firebaseUser.uid);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
-            setApproved(docSnap.data().approved === true);
+            const data = docSnap.data();
+            setApproved(data.approved === true);
+            setIsAdmin(data.role === "admin");
           } else {
             setApproved(false);
+            setIsAdmin(false);
           }
         } catch (e) {
           console.error("Firestore fetch error:", e);
           setApproved(false);
+          setIsAdmin(false);
         }
       } else {
         setApproved(false);
+        setIsAdmin(false);
       }
 
       setLoading(false);
@@ -41,7 +47,7 @@ export function AuthProvider({ children }) {
   const logout = () => signOut(auth);
 
   return (
-    <AuthContext.Provider value={{ user, approved, loading, logout }}>
+    <AuthContext.Provider value={{ user, approved, isAdmin, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );
