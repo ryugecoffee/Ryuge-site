@@ -12,7 +12,13 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+// 🔥 ここ追加（重要）
+console.log("firebaseConfig:", firebaseConfig);
+
 const app = initializeApp(firebaseConfig);
+
+// 🔥 ここ追加（重要）
+console.log("app options:", app.options);
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
