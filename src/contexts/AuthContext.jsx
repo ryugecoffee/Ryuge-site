@@ -18,7 +18,7 @@ export function AuthProvider({ children }) {
 
       if (firebaseUser) {
         try {
-          const docRef = doc(db, "wholesaleUsers", firebaseUser.uid);
+          const docRef = doc(db, "users", firebaseUser.uid);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const data = docSnap.data();
