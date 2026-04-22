@@ -8,7 +8,8 @@ import { PRODUCT_DATA, PRODUCT_SECTIONS } from "../productData";
 const WHOLESALE_PRODUCTS = [
   {
     id: "wh-simple-600",
-    detailType: "simple",
+    detailType: "productData",
+    detailId: "enma-ethiopia-dark",
     name: "無印",
     subtitle: "Simple Package",
     description: "シンプルなパッケージ仕様。",
@@ -20,7 +21,8 @@ const WHOLESALE_PRODUCTS = [
   },
   {
     id: "wh-simple-700",
-    detailType: "simple",
+    detailType: "productData",
+    detailId: "enma-burundi-light",
     name: "無印",
     subtitle: "Simple Package",
     description: "シンプルなパッケージ仕様。",
@@ -32,7 +34,8 @@ const WHOLESALE_PRODUCTS = [
   },
   {
     id: "wh-simple-750",
-    detailType: "simple",
+    detailType: "productData",
+    detailId: "enma-ethiopia-light",
     name: "無印",
     subtitle: "Simple Package",
     description: "シンプルなパッケージ仕様。",
@@ -111,13 +114,6 @@ export default function WholesaleJpPage() {
 
   const allDetailedProducts = [...PRODUCT_DATA.enma, ...PRODUCT_DATA.woodbox];
 
-  const wholesalePriceMap = {
-    "enma-ethiopia-dark": { price: "¥1,190", priceNumber: 1190, weight: "180g" },
-    "enma-burundi-light": { price: "¥1,380", priceNumber: 1380, weight: "180g" },
-    "enma-ethiopia-light": { price: "¥1,470", priceNumber: 1470, weight: "180g" },
-    "woodbox-geisha": { price: "¥1,950", priceNumber: 1950, weight: "100g" },
-  };
-
   const activeWholesaleProduct =
     WHOLESALE_PRODUCTS.find((item) => item.id === activeItemId) || null;
 
@@ -128,10 +124,25 @@ export default function WholesaleJpPage() {
         ) || null
       : null;
 
-  const activeSimpleItem =
-    activeWholesaleProduct?.detailType === "simple"
-      ? activeWholesaleProduct
-      : null;
+  const isSimpleWholesale = activeWholesaleProduct?.id?.startsWith("wh-simple-");
+
+  const displayWeight = activeWholesaleProduct
+    ? activeWholesaleProduct.weight || activeWholesaleProduct.unit
+    : "";
+
+  const displayPrice = activeWholesaleProduct
+    ? `¥${activeWholesaleProduct.wholesalePrice?.toLocaleString()}`
+    : "";
+
+  const modalTitle = isSimpleWholesale
+    ? activeWholesaleProduct?.name
+    : activeDetailedItem?.modalTitle?.[lang] ||
+      activeDetailedItem?.title?.[lang] ||
+      activeWholesaleProduct?.name;
+
+  const modalSummary = isSimpleWholesale
+    ? activeWholesaleProduct?.summary || activeWholesaleProduct?.description
+    : activeDetailedItem?.summary?.[lang] || activeWholesaleProduct?.description;
 
   const addToCart = (productId) => {
     setCart((prev) => ({ ...prev, [productId]: (prev[productId] || 0) + 1 }));
@@ -445,179 +456,180 @@ export default function WholesaleJpPage() {
 
       {activeWholesaleProduct && (
         <div className="modal-backdrop" onClick={() => setActiveItemId(null)}>
-          <div
-            className="modal modal-premium"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button className="modal-close" onClick={() => setActiveItemId(null)}>
-              ×
-            </button>
+          {!user ? (
+            <div
+              className="modal modal-premium"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                className="modal-close"
+                onClick={() => setActiveItemId(null)}
+              >
+                ×
+              </button>
 
-            <div className="modal-image modal-image-premium">
-              <img
-                src={
-                  activeDetailedItem?.image ||
-                  activeSimpleItem?.image ||
-                  activeWholesaleProduct.image
-                }
-                alt=""
-              />
-            </div>
-
-            <div className="modal-copy modal-copy-premium">
-              <div className="modal-copy-inner modal-copy-classic">
-                <h3
-                  className="modal-product-title modal-title-animate"
-                  style={{ whiteSpace: "pre-line" }}
-                >
-                  {activeDetailedItem?.modalTitle?.[lang] ||
-                    activeDetailedItem?.title?.[lang] ||
-                    activeSimpleItem?.name ||
-                    activeWholesaleProduct.name}
-                </h3>
-
-                <p className="modal-summary modal-product-summary modal-fade-up">
-                  {activeDetailedItem?.summary?.[lang] ||
-                    activeSimpleItem?.summary ||
-                    activeWholesaleProduct.description}
-                </p>
-
-                {activeDetailedItem ? (
-                  <>
-                    <dl className="product-specs product-specs-classic modal-fade-up">
-                      {renderSpecRow(labels.origin, activeDetailedItem.origin)}
-                      {renderSpecRow(labels.producer, activeDetailedItem.producer)}
-                      {renderSpecRow(labels.process, activeDetailedItem.process)}
-                      {renderSpecRow(labels.variety, activeDetailedItem.variety)}
-                      {renderSpecRow(labels.altitude, activeDetailedItem.altitude)}
-                      {renderSpecRow(
-                        labels.weight,
-                        wholesalePriceMap[activeDetailedItem.id]?.weight ||
-                          activeWholesaleProduct.unit
-                      )}
-                      {approved
-  ? renderSpecRow(
-      labels.price,
-      wholesalePriceMap[activeDetailedItem.id]?.price
-    )
-  : null}
-                      {renderSpecRow(labels.flavor, activeDetailedItem.flavor)}
-                    </dl>
-
-                    <div className="simple-quantity-block">
-                      <p className="simple-quantity-label">数量</p>
-
-                      <div className="simple-quantity-control">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            removeFromCart(activeWholesaleProduct.id)
-                          }
-                        >
-                          −
-                        </button>
-
-                        <input
-                          type="number"
-                          min="0"
-                          value={cart[activeWholesaleProduct.id] || 0}
-                          onChange={(e) => {
-                            const value = Number(e.target.value);
-                            const safeValue = Number.isNaN(value)
-                              ? 0
-                              : Math.max(0, value);
-
-                            setCart((prev) => {
-                              const next = { ...prev };
-                              if (safeValue === 0) delete next[activeWholesaleProduct.id];
-                              else next[activeWholesaleProduct.id] = safeValue;
-                              return next;
-                            });
-                          }}
-                        />
-
-                        <button
-                          type="button"
-                          onClick={() => addToCart(activeWholesaleProduct.id)}
-                        >
-                          ＋
-                        </button>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="modal-cta-link modal-fade-up"
-                      onClick={() => setActiveItemId(null)}
-                    >
-                      カートに入れる
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <dl className="product-specs product-specs-classic modal-fade-up">
-                      {renderSpecRow(labels.weight, activeSimpleItem?.weight)}
-                      {approved
-  ? renderSpecRow(
-      labels.price,
-      `¥${activeSimpleItem?.wholesalePrice?.toLocaleString()}`
-    )
-  : null}
-                    </dl>
-
-                    <div className="simple-quantity-block">
-                      <p className="simple-quantity-label">数量</p>
-
-                      <div className="simple-quantity-control">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            removeFromCart(activeWholesaleProduct.id)
-                          }
-                        >
-                          −
-                        </button>
-
-                        <input
-                          type="number"
-                          min="0"
-                          value={cart[activeWholesaleProduct.id] || 0}
-                          onChange={(e) => {
-                            const value = Number(e.target.value);
-                            const safeValue = Number.isNaN(value)
-                              ? 0
-                              : Math.max(0, value);
-
-                            setCart((prev) => {
-                              const next = { ...prev };
-                              if (safeValue === 0) delete next[activeWholesaleProduct.id];
-                              else next[activeWholesaleProduct.id] = safeValue;
-                              return next;
-                            });
-                          }}
-                        />
-
-                        <button
-                          type="button"
-                          onClick={() => addToCart(activeWholesaleProduct.id)}
-                        >
-                          ＋
-                        </button>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="modal-cta-link modal-fade-up"
-                      onClick={() => setActiveItemId(null)}
-                    >
-                      カートに入れる
-                    </button>
-                  </>
-                )}
+              <div className="modal-image modal-image-premium">
+                <img src={activeWholesaleProduct.image} alt="" />
               </div>
             </div>
-          </div>
+          ) : (
+            <div
+              className="modal modal-premium"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                className="modal-close"
+                onClick={() => setActiveItemId(null)}
+              >
+                ×
+              </button>
+
+              <div className="modal-image modal-image-premium">
+                <img src={activeWholesaleProduct.image} alt="" />
+              </div>
+
+              <div className="modal-copy modal-copy-premium">
+                <div className="modal-copy-inner modal-copy-classic">
+                  <h3
+                    className="modal-product-title modal-title-animate"
+                    style={{ whiteSpace: "pre-line" }}
+                  >
+                    {modalTitle}
+                  </h3>
+
+                  <p className="modal-summary modal-product-summary modal-fade-up">
+                    {modalSummary}
+                  </p>
+
+                  {activeDetailedItem ? (
+                    <>
+                      <dl className="product-specs product-specs-classic modal-fade-up">
+                        {renderSpecRow(labels.origin, activeDetailedItem.origin)}
+                        {renderSpecRow(labels.producer, activeDetailedItem.producer)}
+                        {renderSpecRow(labels.process, activeDetailedItem.process)}
+                        {renderSpecRow(labels.variety, activeDetailedItem.variety)}
+                        {renderSpecRow(labels.altitude, activeDetailedItem.altitude)}
+                        {renderSpecRow(labels.weight, displayWeight)}
+                        {approved ? renderSpecRow(labels.price, displayPrice) : null}
+                        {renderSpecRow(labels.flavor, activeDetailedItem.flavor)}
+                      </dl>
+
+                      <div className="simple-quantity-block">
+                        <p className="simple-quantity-label">数量</p>
+
+                        <div className="simple-quantity-control">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              removeFromCart(activeWholesaleProduct.id)
+                            }
+                          >
+                            −
+                          </button>
+
+                          <input
+                            type="number"
+                            min="0"
+                            value={cart[activeWholesaleProduct.id] || 0}
+                            onChange={(e) => {
+                              const value = Number(e.target.value);
+                              const safeValue = Number.isNaN(value)
+                                ? 0
+                                : Math.max(0, value);
+
+                              setCart((prev) => {
+                                const next = { ...prev };
+                                if (safeValue === 0) {
+                                  delete next[activeWholesaleProduct.id];
+                                } else {
+                                  next[activeWholesaleProduct.id] = safeValue;
+                                }
+                                return next;
+                              });
+                            }}
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() => addToCart(activeWholesaleProduct.id)}
+                          >
+                            ＋
+                          </button>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="modal-cta-link modal-fade-up"
+                        onClick={() => setActiveItemId(null)}
+                      >
+                        カートに入れる
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <dl className="product-specs product-specs-classic modal-fade-up">
+                        {renderSpecRow(labels.weight, displayWeight)}
+                        {approved ? renderSpecRow(labels.price, displayPrice) : null}
+                      </dl>
+
+                      <div className="simple-quantity-block">
+                        <p className="simple-quantity-label">数量</p>
+
+                        <div className="simple-quantity-control">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              removeFromCart(activeWholesaleProduct.id)
+                            }
+                          >
+                            −
+                          </button>
+
+                          <input
+                            type="number"
+                            min="0"
+                            value={cart[activeWholesaleProduct.id] || 0}
+                            onChange={(e) => {
+                              const value = Number(e.target.value);
+                              const safeValue = Number.isNaN(value)
+                                ? 0
+                                : Math.max(0, value);
+
+                              setCart((prev) => {
+                                const next = { ...prev };
+                                if (safeValue === 0) {
+                                  delete next[activeWholesaleProduct.id];
+                                } else {
+                                  next[activeWholesaleProduct.id] = safeValue;
+                                }
+                                return next;
+                              });
+                            }}
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() => addToCart(activeWholesaleProduct.id)}
+                          >
+                            ＋
+                          </button>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="modal-cta-link modal-fade-up"
+                        onClick={() => setActiveItemId(null)}
+                      >
+                        カートに入れる
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -664,7 +676,6 @@ function OriginalBagCard({ user, approved }) {
         flexDirection: "column",
       }}
     >
-      {/* 画像 */}
       <div
         style={{
           aspectRatio: "1 / 1",
@@ -682,7 +693,6 @@ function OriginalBagCard({ user, approved }) {
         />
       </div>
 
-      {/* テキスト */}
       <div
         style={{
           padding: "1.2rem 1rem 1rem",
