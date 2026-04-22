@@ -1,202 +1,283 @@
 // src/pages/WholesaleJpLoginPage.jsx
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../lib/firebase";
-import { useNavigate, Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+
+const COLORS = {
+  bg: "#050505",
+  panel: "#0b0b0b",
+  border: "rgba(255,255,255,0.08)",
+  borderStrong: "rgba(255,255,255,0.16)",
+  text: "rgba(255,255,255,0.92)",
+  softText: "rgba(255,255,255,0.70)",
+  mutedText: "rgba(255,255,255,0.42)",
+  inputBg: "rgba(255,255,255,0.03)",
+};
 
 export default function WholesaleJpLoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = async () => {
-    setError("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMessage("");
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await login(email, password);
       navigate("/wholesale-jp/dashboard");
-    } catch (err) {
-      console.error(err);
-      setError("メールアドレスまたはパスワードが正しくありません。");
+    } catch (error) {
+      setErrorMessage("メールアドレスまたはパスワードが正しくありません。");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") handleLogin();
-  };
-
   return (
-    <div style={{
-      minHeight: "100vh",
-      backgroundColor: "#2a2a2a",
-      fontFamily: "Cormorant Garamond, serif",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "2rem",
-    }}>
-      <div style={{ width: "100%", maxWidth: "400px" }}>
-
-        {/* タイトル */}
-        <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
-          <Link to="/" style={{ textDecoration: "none" }}>
-            <p style={{
-              fontSize: "0.9rem",
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
-              color: "#e8e2d9",
-              margin: "0 0 0.6rem",
-            }}>
-              Ryuge Coffee
-            </p>
-          </Link>
-          <p style={{
-            fontSize: "0.68rem",
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            color: "#666",
-            margin: 0,
-          }}>
-            Wholesale Login
-          </p>
-        </div>
-
-        {/* エラー */}
-        {error && (
-          <div style={{
-            marginBottom: "1.5rem",
-            padding: "0.8rem 1rem",
-            borderLeft: "2px solid #7a3a3a",
-            backgroundColor: "#3a2a2a",
-            fontSize: "0.75rem",
-            color: "#c08080",
-            letterSpacing: "0.04em",
-            lineHeight: 1.8,
-          }}>
-            {error}
-          </div>
-        )}
-
-        {/* フォーム */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
-          <div>
-            <label style={{
-              fontSize: "0.65rem",
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              color: "#666",
-              display: "block",
-              marginBottom: "0.5rem",
-            }}>
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={handleKeyDown}
-              style={{
-                width: "100%",
-                padding: "0.7rem 0.9rem",
-                backgroundColor: "#333",
-                border: "1px solid #444",
-                color: "#e8e2d9",
-                fontSize: "0.82rem",
-                fontFamily: "Cormorant Garamond, serif",
-                outline: "none",
-                letterSpacing: "0.03em",
-                boxSizing: "border-box",
-              }}
-            />
-          </div>
-
-          <div>
-            <label style={{
-              fontSize: "0.65rem",
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              color: "#666",
-              display: "block",
-              marginBottom: "0.5rem",
-            }}>
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={handleKeyDown}
-              style={{
-                width: "100%",
-                padding: "0.7rem 0.9rem",
-                backgroundColor: "#333",
-                border: "1px solid #444",
-                color: "#e8e2d9",
-                fontSize: "0.82rem",
-                fontFamily: "Cormorant Garamond, serif",
-                outline: "none",
-                letterSpacing: "0.03em",
-                boxSizing: "border-box",
-              }}
-            />
-          </div>
-
-          <button
-            onClick={handleLogin}
-            disabled={loading}
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: COLORS.bg,
+        color: COLORS.text,
+        fontFamily:
+          '"Cormorant Garamond", "Noto Serif JP", "Hiragino Mincho ProN", serif',
+      }}
+    >
+      <header
+        style={{
+          borderBottom: `1px solid ${COLORS.border}`,
+          backgroundColor: "rgba(5,5,5,0.92)",
+          backdropFilter: "blur(8px)",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "1440px",
+            margin: "0 auto",
+            padding: "1.35rem 3.2rem",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Link
+            to="/"
             style={{
-              marginTop: "0.5rem",
-              padding: "0.85rem",
-              backgroundColor: "transparent",
-              color: "#e8e2d9",
-              border: "1px solid #555",
-              fontSize: "0.68rem",
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              cursor: loading ? "not-allowed" : "pointer",
-              opacity: loading ? 0.5 : 1,
-              fontFamily: "Cormorant Garamond, serif",
-              transition: "border-color 0.2s",
+              textDecoration: "none",
+              color: COLORS.text,
+              fontSize: "0.95rem",
+              letterSpacing: "0.18em",
             }}
-            onMouseEnter={e => { if (!loading) e.currentTarget.style.borderColor = "#e8e2d9"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "#555"; }}
           >
-            {loading ? "..." : "Login"}
-          </button>
-        </div>
+            Ryuge Coffee
+          </Link>
 
-        {/* 導線 */}
-        <div style={{
-          textAlign: "center",
-          marginTop: "2rem",
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.8rem",
-        }}>
-          <Link to="/wholesale-jp/register" style={{
-            fontSize: "0.65rem",
-            color: "#666",
-            textDecoration: "underline",
-            letterSpacing: "0.08em",
-          }}>
-            新規お取引のお申し込みはこちら
-          </Link>
-          <Link to="/wholesale-jp" style={{
-            fontSize: "0.65rem",
-            color: "#555",
-            textDecoration: "none",
-            letterSpacing: "0.08em",
-          }}>
-            ← 卸ページへ戻る
+          <Link
+            to="/wholesale-jp"
+            style={{
+              textDecoration: "none",
+              color: COLORS.mutedText,
+              fontSize: "0.78rem",
+              letterSpacing: "0.1em",
+            }}
+          >
+            卸ページへ戻る
           </Link>
         </div>
-      </div>
+      </header>
+
+      <main
+        style={{
+          minHeight: "calc(100vh - 78px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "4rem 2rem",
+        }}
+      >
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "540px",
+          }}
+        >
+          <div style={{ textAlign: "center", marginBottom: "2.2rem" }}>
+            <p
+              style={{
+                margin: "0 0 0.9rem",
+                color: COLORS.text,
+                fontSize: "1.15rem",
+                letterSpacing: "0.16em",
+              }}
+            >
+              RYUGE COFFEE
+            </p>
+
+            <p
+              style={{
+                margin: 0,
+                color: COLORS.mutedText,
+                fontSize: "0.78rem",
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+              }}
+            >
+              Wholesale Login
+            </p>
+          </div>
+
+          <form
+            onSubmit={handleSubmit}
+            style={{
+              backgroundColor: "transparent",
+              padding: 0,
+            }}
+          >
+            <div style={{ marginBottom: "1.2rem" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "0.55rem",
+                  color: COLORS.softText,
+                  fontSize: "0.84rem",
+                  letterSpacing: "0.08em",
+                  fontFamily:
+                    '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                  fontWeight: 500,
+                }}
+              >
+                Email
+              </label>
+
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                style={inputStyle}
+              />
+            </div>
+
+            <div style={{ marginBottom: "1.2rem" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "0.55rem",
+                  color: COLORS.softText,
+                  fontSize: "0.84rem",
+                  letterSpacing: "0.08em",
+                  fontFamily:
+                    '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                  fontWeight: 500,
+                }}
+              >
+                Password
+              </label>
+
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                style={inputStyle}
+              />
+            </div>
+
+            {errorMessage && (
+              <p
+                style={{
+                  margin: "0 0 1rem",
+                  color: "#d8b8b8",
+                  fontSize: "0.9rem",
+                  lineHeight: 1.7,
+                  fontFamily:
+                    '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                }}
+              >
+                {errorMessage}
+              </p>
+            )}
+
+            <button type="submit" disabled={loading} style={submitButtonStyle}>
+              {loading ? "Loading..." : "Login"}
+            </button>
+          </form>
+
+          <div
+            style={{
+              marginTop: "1.6rem",
+              textAlign: "center",
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.8rem",
+            }}
+          >
+            <Link
+              to="/wholesale-jp/register"
+              style={{
+                color: COLORS.softText,
+                fontSize: "0.88rem",
+                textDecoration: "underline",
+                textUnderlineOffset: "3px",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                fontWeight: 500,
+              }}
+            >
+              新規お取引のお申し込みはこちら
+            </Link>
+
+            <Link
+              to="/wholesale-jp"
+              style={{
+                color: COLORS.mutedText,
+                fontSize: "0.84rem",
+                textDecoration: "none",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+              }}
+            >
+              ← 卸ページへ戻る
+            </Link>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
+
+const inputStyle = {
+  width: "100%",
+  height: "56px",
+  backgroundColor: "rgba(255,255,255,0.03)",
+  border: "1px solid rgba(255,255,255,0.12)",
+  color: "rgba(255,255,255,0.96)",
+  padding: "0 1rem",
+  boxSizing: "border-box",
+  fontSize: "16px",
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  fontWeight: 500,
+  outline: "none",
+};
+
+const submitButtonStyle = {
+  width: "100%",
+  height: "56px",
+  marginTop: "0.8rem",
+  background: "none",
+  border: "1px solid rgba(255,255,255,0.16)",
+  color: "rgba(255,255,255,0.92)",
+  cursor: "pointer",
+  fontSize: "0.92rem",
+  letterSpacing: "0.16em",
+  textTransform: "uppercase",
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  fontWeight: 600,
+};

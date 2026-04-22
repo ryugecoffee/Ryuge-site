@@ -1,6 +1,17 @@
+// src/pages/WholesaleJpDashboardPage.jsx
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import RequireApproved from "../components/wholesale/RequireApproved";
+
+const COLORS = {
+  bg: "#050505",
+  panel: "#0b0b0b",
+  border: "rgba(255,255,255,0.08)",
+  borderStrong: "rgba(255,255,255,0.16)",
+  text: "rgba(255,255,255,0.92)",
+  softText: "rgba(255,255,255,0.68)",
+  mutedText: "rgba(255,255,255,0.42)",
+};
 
 export default function WholesaleJpDashboardPage() {
   return (
@@ -17,230 +28,188 @@ function DashboardContent() {
     <div
       style={{
         minHeight: "100vh",
-        backgroundColor: "#2a2a2a",
-        fontFamily: "Cormorant Garamond, serif",
-        color: "#e8e2d9",
+        backgroundColor: COLORS.bg,
+        color: COLORS.text,
+        fontFamily:
+          '"Cormorant Garamond", "Noto Serif JP", "Hiragino Mincho ProN", serif',
       }}
     >
-      {/* ヘッダー */}
-      <div
+      {/* header */}
+      <header
         style={{
-          borderBottom: "1px solid #3a3a3a",
-          backgroundColor: "#2a2a2a",
-          padding: "1.2rem 3rem",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          borderBottom: `1px solid ${COLORS.border}`,
+          backgroundColor: "rgba(5,5,5,0.92)",
+          backdropFilter: "blur(8px)",
           position: "sticky",
           top: 0,
           zIndex: 100,
         }}
       >
-        <Link
-          to="/"
+        <div
           style={{
-            textDecoration: "none",
-            fontSize: "0.9rem",
-            letterSpacing: "0.2em",
-            color: "#e8e2d9",
-            textTransform: "uppercase",
+            maxWidth: "1440px",
+            margin: "0 auto",
+            padding: "1.35rem 3.2rem",
+            display: "grid",
+            gridTemplateColumns: "1fr auto 1fr",
+            alignItems: "center",
           }}
         >
-          Ryuge Coffee
-        </Link>
+          <div>
+            <Link
+              to="/"
+              style={{
+                textDecoration: "none",
+                color: COLORS.text,
+                fontSize: "0.95rem",
+                letterSpacing: "0.18em",
+              }}
+            >
+              Ryuge Coffee
+            </Link>
+          </div>
 
-        <div style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
-          <Link
-            to="/wholesale-jp"
+          <nav
             style={{
-              fontSize: "0.68rem",
-              color: "#888",
-              textDecoration: "none",
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
+              display: "flex",
+              justifyContent: "center",
+              gap: "2rem",
             }}
           >
-            Products
-          </Link>
+            <Link to="/products" style={navLinkStyle}>
+              商品
+            </Link>
+            <Link to="/wholesale-jp" style={navLinkStyle}>
+              卸ページ
+            </Link>
+          </nav>
 
-          <Link
-            to="/wholesale-jp/order"
+          <div
             style={{
-              fontSize: "0.68rem",
-              color: "#888",
-              textDecoration: "none",
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "1.5rem",
+              alignItems: "center",
             }}
           >
-            Order
-          </Link>
-
-          <button
-            onClick={logout}
-            style={{
-              fontSize: "0.68rem",
-              color: "#666",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              padding: 0,
-              fontFamily: "Cormorant Garamond, serif",
-            }}
-          >
-            Logout
-          </button>
+            <button onClick={logout} style={headerButtonStyle}>
+              Logout
+            </button>
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* メイン */}
-      <div style={{ maxWidth: "1080px", margin: "0 auto", padding: "5rem 3rem 7rem" }}>
-        {/* タイトル */}
-        <div style={{ marginBottom: "4rem" }}>
+      <main
+        style={{
+          maxWidth: "1180px",
+          margin: "0 auto",
+          padding: "5rem 3rem 7rem",
+        }}
+      >
+        <div style={{ marginBottom: "3rem" }}>
           <p
             style={{
-              fontSize: "0.65rem",
-              letterSpacing: "0.26em",
+              margin: "0 0 1rem",
+              color: COLORS.mutedText,
+              fontSize: "0.7rem",
+              letterSpacing: "0.24em",
               textTransform: "uppercase",
-              color: "#666",
-              margin: "0 0 0.8rem",
             }}
           >
-            Wholesale — Dashboard
+            Wholesale Dashboard
           </p>
 
           <h1
             style={{
-              fontSize: "1.8rem",
+              margin: "0 0 1rem",
+              fontSize: "2.8rem",
               fontWeight: 400,
-              letterSpacing: "0.06em",
-              color: "#e8e2d9",
-              margin: "0 0 0.6rem",
-              lineHeight: 1.3,
+              letterSpacing: "0.05em",
+              lineHeight: 1.25,
+              color: COLORS.text,
             }}
           >
-            ようこそ
+            ダッシュボード
           </h1>
 
           <p
             style={{
-              fontSize: "0.75rem",
-              color: "#555",
               margin: 0,
-              letterSpacing: "0.06em",
+              color: COLORS.softText,
+              fontSize: "0.92rem",
+              lineHeight: 1.95,
+              letterSpacing: "0.03em",
             }}
           >
             {user?.email}
           </p>
         </div>
 
-        {/* カードグリッド */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-            gap: "1.2rem",
-            marginBottom: "5rem",
+            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+            gap: "1.4rem",
+            marginBottom: "4rem",
           }}
         >
           <DashboardCard
-            eyebrow="Products"
             title="卸商品一覧"
-            description="国内卸価格・商品ラインナップを確認できます。"
-            linkTo="/wholesale-jp"
-            linkLabel="View Products"
+            body="国内卸価格・商品ラインナップをご確認いただけます。"
+            buttonText="商品を見る"
+            to="/wholesale-jp"
           />
 
           <DashboardCard
-            eyebrow="Order"
-            title="発注フォーム"
-            description="商品を選んで発注内容を送信できます。後払い対応。"
-            linkTo="/wholesale-jp/order"
-            linkLabel="Go to Order"
-          />
-
-          <DashboardCard
-            eyebrow="Original"
             title="オリジナルバッグ制作"
-            description="貴社ロゴ入りのドリップバッグ制作のご相談はこちら。"
-            linkHref="mailto:ryugecoffee@gmail.com?subject=オリジナルコーヒーバッグ制作のご相談"
-            linkLabel="Contact"
+            body="貴社ロゴ入りのドリップバッグ制作についてご相談いただけます。"
+            href="mailto:ryugecoffee@gmail.com?subject=オリジナルコーヒーバッグ制作のご相談"
+            buttonText="メールで相談"
           />
 
           <DashboardCard
-            eyebrow="Support"
             title="お問い合わせ"
-            description="ご注文・納期・お支払いについてはメールにてご連絡ください。"
-            linkHref="mailto:ryugecoffee@gmail.com"
-            linkLabel="Send Email"
+            body="ご注文・納期・お支払い条件についてはこちらからご連絡ください。"
+            href="mailto:ryugecoffee@gmail.com?subject=卸販売についてのお問い合わせ"
+            buttonText="メールを送る"
           />
         </div>
 
-        {/* 注意書き */}
         <div
           style={{
-            borderTop: "1px solid #3a3a3a",
+            borderTop: `1px solid ${COLORS.border}`,
             paddingTop: "2rem",
           }}
         >
           <p
             style={{
-              fontSize: "0.72rem",
-              color: "#555",
-              lineHeight: 2,
               margin: 0,
-              letterSpacing: "0.04em",
+              color: COLORS.mutedText,
+              fontSize: "0.8rem",
+              lineHeight: 2,
+              letterSpacing: "0.03em",
             }}
           >
-            このページは承認済みの卸取引先様専用です。内容の転用・共有はご遠慮ください。
+            このページは承認済みのお取引先様専用です。
+            <br />
+            内容の転用・共有はご遠慮ください。
           </p>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
 
-function DashboardCard({ eyebrow, title, description, linkTo, linkHref, linkLabel }) {
-  return (
-    <div
-      style={{
-        backgroundColor: "#333",
-        border: "1px solid #3a3a3a",
-        borderRadius: "2px",
-        padding: "1.8rem 1.6rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "0.5rem",
-        transition: "border-color 0.25s ease",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "#555";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "#3a3a3a";
-      }}
-    >
+function DashboardCard({ title, body, buttonText, to, href }) {
+  const content = (
+    <>
       <p
         style={{
-          fontSize: "0.62rem",
-          letterSpacing: "0.2em",
-          textTransform: "uppercase",
-          color: "#555",
-          margin: 0,
-        }}
-      >
-        {eyebrow}
-      </p>
-
-      <p
-        style={{
-          fontSize: "0.95rem",
-          fontWeight: 500,
-          color: "#e8e2d9",
-          margin: 0,
-          letterSpacing: "0.04em",
+          margin: "0 0 1rem",
+          color: COLORS.text,
+          fontSize: "1.15rem",
+          lineHeight: 1.5,
+          letterSpacing: "0.03em",
         }}
       >
         {title}
@@ -248,65 +217,67 @@ function DashboardCard({ eyebrow, title, description, linkTo, linkHref, linkLabe
 
       <p
         style={{
-          fontSize: "0.75rem",
-          color: "#777",
-          margin: 0,
-          lineHeight: 1.9,
-          letterSpacing: "0.03em",
+          margin: "0 0 1.6rem",
+          color: COLORS.softText,
+          fontSize: "0.85rem",
+          lineHeight: 1.95,
         }}
       >
-        {description}
+        {body}
       </p>
 
-      <div style={{ marginTop: "auto", paddingTop: "1.4rem" }}>
-        {linkTo ? (
-          <Link
-            to={linkTo}
-            style={{
-              fontSize: "0.62rem",
-              color: "#e8e2d9",
-              border: "1px solid #555",
-              padding: "0.4rem 1.1rem",
-              textDecoration: "none",
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              display: "inline-block",
-              transition: "border-color 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "#e8e2d9";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "#555";
-            }}
-          >
-            {linkLabel}
-          </Link>
-        ) : (
-          <a
-            href={linkHref}
-            style={{
-              fontSize: "0.62rem",
-              color: "#e8e2d9",
-              border: "1px solid #555",
-              padding: "0.4rem 1.1rem",
-              textDecoration: "none",
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              display: "inline-block",
-              transition: "border-color 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "#e8e2d9";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "#555";
-            }}
-          >
-            {linkLabel}
-          </a>
-        )}
-      </div>
-    </div>
+      <span style={cardButtonStyle}>{buttonText}</span>
+    </>
+  );
+
+  if (to) {
+    return (
+      <Link to={to} style={cardStyle}>
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <a href={href} style={cardStyle}>
+      {content}
+    </a>
   );
 }
+
+const navLinkStyle = {
+  textDecoration: "none",
+  color: "rgba(255,255,255,0.62)",
+  fontSize: "0.78rem",
+  letterSpacing: "0.08em",
+};
+
+const headerButtonStyle = {
+  background: "none",
+  border: "none",
+  color: "rgba(255,255,255,0.52)",
+  fontSize: "0.76rem",
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  cursor: "pointer",
+  fontFamily: "inherit",
+};
+
+const cardStyle = {
+  display: "block",
+  textDecoration: "none",
+  backgroundColor: COLORS.panel,
+  border: `1px solid ${COLORS.border}`,
+  padding: "1.8rem 1.7rem",
+  minHeight: "220px",
+};
+
+const cardButtonStyle = {
+  display: "inline-block",
+  border: `1px solid ${COLORS.borderStrong}`,
+  color: COLORS.text,
+  padding: "0.7rem 1.2rem",
+  fontSize: "0.72rem",
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+};
