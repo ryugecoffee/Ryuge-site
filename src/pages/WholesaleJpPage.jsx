@@ -49,7 +49,7 @@ const WHOLESALE_PRODUCTS = [
     name: "閻魔",
     subtitle: "Enma",
     description: "静かに残る苦味と余韻",
-    image: "/images/top.enma.jpg",
+    image: "/images/enma.jpg",
     wholesalePrice: 1190,
     unit: "180g",
   },
@@ -60,7 +60,7 @@ const WHOLESALE_PRODUCTS = [
     name: "閻魔",
     subtitle: "Enma",
     description: "明るさと透明感、やわらかな甘さ",
-    image: "/images/top.enma.jpg",
+    image: "/images/enma.jpg",
     wholesalePrice: 1380,
     unit: "180g",
   },
@@ -71,7 +71,7 @@ const WHOLESALE_PRODUCTS = [
     name: "閻魔",
     subtitle: "Enma",
     description: "明るさと輪郭のある浅煎り",
-    image: "/images/top.enma.jpg",
+    image: "/images/enma.jpg",
     wholesalePrice: 1470,
     unit: "180g",
   },
@@ -82,7 +82,7 @@ const WHOLESALE_PRODUCTS = [
     name: "木函",
     subtitle: "Wooden Edition",
     description: "木箱で届く贈り物のような静かなプレミアム",
-    image: "/images/top.woodbox-3.jpg",
+    image: "/images/woodbox-3.jpg",
     wholesalePrice: 1950,
     unit: "100g",
   },
@@ -504,65 +504,54 @@ export default function WholesaleJpPage() {
                       {renderSpecRow(labels.flavor, activeDetailedItem.flavor)}
                     </dl>
 
-                    {approved ? (
-  <>
-    <div className="simple-quantity-block">
-      <p className="simple-quantity-label">数量</p>
+                    <div className="simple-quantity-block">
+                      <p className="simple-quantity-label">数量</p>
 
-      <div className="simple-quantity-control">
-        <button
-          type="button"
-          onClick={() => removeFromCart(activeWholesaleProduct.id)}
-        >
-          −
-        </button>
+                      <div className="simple-quantity-control">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            removeFromCart(activeWholesaleProduct.id)
+                          }
+                        >
+                          −
+                        </button>
 
-        <input
-          type="number"
-          min="0"
-          value={cart[activeWholesaleProduct.id] || 0}
-          onChange={(e) => {
-            const value = Number(e.target.value);
-            const safeValue = Number.isNaN(value) ? 0 : Math.max(0, value);
+                        <input
+                          type="number"
+                          min="0"
+                          value={cart[activeWholesaleProduct.id] || 0}
+                          onChange={(e) => {
+                            const value = Number(e.target.value);
+                            const safeValue = Number.isNaN(value)
+                              ? 0
+                              : Math.max(0, value);
 
-            setCart((prev) => {
-              const next = { ...prev };
-              if (safeValue === 0) delete next[activeWholesaleProduct.id];
-              else next[activeWholesaleProduct.id] = safeValue;
-              return next;
-            });
-          }}
-        />
+                            setCart((prev) => {
+                              const next = { ...prev };
+                              if (safeValue === 0) delete next[activeWholesaleProduct.id];
+                              else next[activeWholesaleProduct.id] = safeValue;
+                              return next;
+                            });
+                          }}
+                        />
 
-        <button
-          type="button"
-          onClick={() => addToCart(activeWholesaleProduct.id)}
-        >
-          ＋
-        </button>
-      </div>
-    </div>
+                        <button
+                          type="button"
+                          onClick={() => addToCart(activeWholesaleProduct.id)}
+                        >
+                          ＋
+                        </button>
+                      </div>
+                    </div>
 
-    <button
-      type="button"
-      className="modal-cta-link modal-fade-up"
-      onClick={() => setActiveItemId(null)}
-    >
-      カートに入れる
-    </button>
-  </>
-) : (
-  <p
-    style={{
-      marginTop: "18px",
-      color: "rgba(255,255,255,0.45)",
-      fontSize: "0.78rem",
-      lineHeight: 1.9,
-    }}
-  >
-    価格と発注にはログインが必要です。
-  </p>
-)}
+                    <button
+                      type="button"
+                      className="modal-cta-link modal-fade-up"
+                      onClick={() => setActiveItemId(null)}
+                    >
+                      カートに入れる
+                    </button>
                   </>
                 ) : (
                   <>
@@ -576,65 +565,54 @@ export default function WholesaleJpPage() {
   : null}
                     </dl>
 
-                    {approved ? (
-  <>
-    <div className="simple-quantity-block">
-      <p className="simple-quantity-label">数量</p>
+                    <div className="simple-quantity-block">
+                      <p className="simple-quantity-label">数量</p>
 
-      <div className="simple-quantity-control">
-        <button
-          type="button"
-          onClick={() => removeFromCart(activeWholesaleProduct.id)}
-        >
-          −
-        </button>
+                      <div className="simple-quantity-control">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            removeFromCart(activeWholesaleProduct.id)
+                          }
+                        >
+                          −
+                        </button>
 
-        <input
-          type="number"
-          min="0"
-          value={cart[activeWholesaleProduct.id] || 0}
-          onChange={(e) => {
-            const value = Number(e.target.value);
-            const safeValue = Number.isNaN(value) ? 0 : Math.max(0, value);
+                        <input
+                          type="number"
+                          min="0"
+                          value={cart[activeWholesaleProduct.id] || 0}
+                          onChange={(e) => {
+                            const value = Number(e.target.value);
+                            const safeValue = Number.isNaN(value)
+                              ? 0
+                              : Math.max(0, value);
 
-            setCart((prev) => {
-              const next = { ...prev };
-              if (safeValue === 0) delete next[activeWholesaleProduct.id];
-              else next[activeWholesaleProduct.id] = safeValue;
-              return next;
-            });
-          }}
-        />
+                            setCart((prev) => {
+                              const next = { ...prev };
+                              if (safeValue === 0) delete next[activeWholesaleProduct.id];
+                              else next[activeWholesaleProduct.id] = safeValue;
+                              return next;
+                            });
+                          }}
+                        />
 
-        <button
-          type="button"
-          onClick={() => addToCart(activeWholesaleProduct.id)}
-        >
-          ＋
-        </button>
-      </div>
-    </div>
+                        <button
+                          type="button"
+                          onClick={() => addToCart(activeWholesaleProduct.id)}
+                        >
+                          ＋
+                        </button>
+                      </div>
+                    </div>
 
-    <button
-      type="button"
-      className="modal-cta-link modal-fade-up"
-      onClick={() => setActiveItemId(null)}
-    >
-      カートに入れる
-    </button>
-  </>
-) : (
-  <p
-    style={{
-      marginTop: "18px",
-      color: "rgba(255,255,255,0.45)",
-      fontSize: "0.78rem",
-      lineHeight: 1.9,
-    }}
-  >
-    価格と発注にはログインが必要です。
-  </p>
-)}
+                    <button
+                      type="button"
+                      className="modal-cta-link modal-fade-up"
+                      onClick={() => setActiveItemId(null)}
+                    >
+                      カートに入れる
+                    </button>
                   </>
                 )}
               </div>
@@ -686,33 +664,25 @@ function OriginalBagCard({ user, approved }) {
         flexDirection: "column",
       }}
     >
+      {/* 画像 */}
       <div
         style={{
           aspectRatio: "1 / 1",
-          background:
-            "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04))",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "0.9rem",
+          overflow: "hidden",
         }}
       >
-        <span style={{ fontSize: "2rem", color: "rgba(255,255,255,0.35)" }}>✦</span>
-        <span
+        <img
+          src="/images/original.jpg"
+          alt=""
           style={{
-            border: "1px solid rgba(255,255,255,0.08)",
-            padding: "0.25rem 0.75rem",
-            color: "rgba(255,255,255,0.35)",
-            fontSize: "0.56rem",
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
           }}
-        >
-          For approved partners
-        </span>
+        />
       </div>
 
+      {/* テキスト */}
       <div
         style={{
           padding: "1.2rem 1rem 1rem",
@@ -741,8 +711,7 @@ function OriginalBagCard({ user, approved }) {
             lineHeight: 1.95,
           }}
         >
-          貴社ロゴ・デザインを反映したオリジナル仕様の制作相談ページです。
-          卸導入後の展開や別注対応について、個別にご案内いたします。
+          オリジナル仕様の制作が可能です。
         </p>
 
         <div
