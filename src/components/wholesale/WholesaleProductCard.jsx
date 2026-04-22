@@ -1,150 +1,197 @@
 // src/components/wholesale/WholesaleProductCard.jsx
 import { useAuth } from "../../contexts/AuthContext";
 
-export default function WholesaleProductCard({ product, quantity = 0, onAdd, onRemove }) {
+export default function WholesaleProductCard({
+  product,
+  quantity = 0,
+  onAdd,
+  onRemove,
+}) {
   const { approved } = useAuth();
 
   return (
     <div
       style={{
-        border: "1px solid #3a3a3a",
-        borderRadius: "2px",
-        overflow: "hidden",
-        backgroundColor: "#333",
+        border: "1px solid rgba(255,255,255,0.08)",
+        backgroundColor: "#0b0b0b",
         display: "flex",
         flexDirection: "column",
         transition: "border-color 0.25s ease",
       }}
-      onMouseEnter={e => e.currentTarget.style.borderColor = "#555"}
-      onMouseLeave={e => e.currentTarget.style.borderColor = "#3a3a3a"}
+      onMouseEnter={(e) =>
+        (e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)")
+      }
+      onMouseLeave={(e) =>
+        (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")
+      }
     >
-      <div style={{ aspectRatio: "1 / 1", overflow: "hidden", backgroundColor: "#3a3a3a" }}>
+      {/* 画像 */}
+      <div
+        style={{
+          aspectRatio: "1 / 1",
+          overflow: "hidden",
+          backgroundColor: "#050505",
+        }}
+      >
         {product.image && (
           <img
             src={product.image}
             alt={product.name}
-            style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.9 }}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              opacity: 0.85,
+            }}
           />
         )}
       </div>
 
-      <div style={{ padding: "1.2rem 1rem", flex: 1, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-        <p style={{
-          fontSize: "0.85rem",
-          fontWeight: 500,
-          margin: 0,
-          color: "#e8e2d9",
-          letterSpacing: "0.04em",
-          lineHeight: 1.5,
-        }}>
+      {/* テキスト */}
+      <div
+        style={{
+          padding: "1.2rem 1rem",
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.5rem",
+        }}
+      >
+        {/* 名前 */}
+        <p
+          style={{
+            fontSize: "0.95rem",
+            margin: 0,
+            color: "rgba(255,255,255,0.92)",
+            letterSpacing: "0.04em",
+            lineHeight: 1.5,
+          }}
+        >
           {product.name}
         </p>
 
+        {/* サブタイトル */}
+        {product.subtitle && (
+          <p
+            style={{
+              fontSize: "0.7rem",
+              color: "rgba(255,255,255,0.45)",
+              margin: 0,
+              letterSpacing: "0.06em",
+            }}
+          >
+            {product.subtitle}
+          </p>
+        )}
+
+        {/* 説明 */}
         {product.description && (
-          <p style={{
-            fontSize: "0.7rem",
-            color: "#777",
-            margin: 0,
-            lineHeight: 1.9,
-          }}>
+          <p
+            style={{
+              fontSize: "0.72rem",
+              color: "rgba(255,255,255,0.5)",
+              margin: 0,
+              lineHeight: 1.9,
+            }}
+          >
             {product.description}
           </p>
         )}
 
-        <div style={{
-          marginTop: "auto",
-          paddingTop: "0.8rem",
-          borderTop: "1px solid #3a3a3a",
-        }}>
+        {/* 下部 */}
+        <div
+          style={{
+            marginTop: "auto",
+            paddingTop: "0.9rem",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
           {approved ? (
             <>
-              <p style={{
-                fontSize: "0.95rem",
-                color: "#e8e2d9",
-                margin: "0 0 0.8rem",
-                letterSpacing: "0.04em",
-              }}>
+              {/* 価格 */}
+              <p
+                style={{
+                  fontSize: "1rem",
+                  color: "rgba(255,255,255,0.92)",
+                  margin: "0 0 0.9rem",
+                  letterSpacing: "0.04em",
+                }}
+              >
                 ¥{product.wholesalePrice?.toLocaleString()}
-                <span style={{ fontSize: "0.65rem", color: "#666", marginLeft: "0.4rem" }}>
+                <span
+                  style={{
+                    fontSize: "0.65rem",
+                    color: "rgba(255,255,255,0.35)",
+                    marginLeft: "0.4rem",
+                  }}
+                >
                   / {product.unit ?? "個"}（税抜）
                 </span>
               </p>
 
-              {/* カート操作 */}
+              {/* ボタン */}
               {quantity === 0 ? (
                 <button
                   onClick={onAdd}
                   style={{
-                    fontSize: "0.62rem",
-                    color: "#e8e2d9",
+                    width: "100%",
                     background: "none",
-                    border: "1px solid #555",
-                    padding: "0.35rem 1rem",
-                    cursor: "pointer",
+                    border: "1px solid rgba(255,255,255,0.18)",
+                    color: "rgba(255,255,255,0.9)",
+                    padding: "0.45rem 0",
+                    fontSize: "0.65rem",
                     letterSpacing: "0.14em",
                     textTransform: "uppercase",
-                    fontFamily: "Cormorant Garamond, serif",
-                    transition: "border-color 0.2s",
-                    width: "100%",
+                    cursor: "pointer",
                   }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = "#e8e2d9"}
-                  onMouseLeave={e => e.currentTarget.style.borderColor = "#555"}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.borderColor =
+                      "rgba(255,255,255,0.8)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.borderColor =
+                      "rgba(255,255,255,0.18)")
+                  }
                 >
-                  カートに追加
+                  ADD
                 </button>
               ) : (
-                <div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
-                  <button
-                    onClick={onRemove}
-                    style={{
-                      width: "28px",
-                      height: "28px",
-                      background: "none",
-                      border: "1px solid #555",
-                      color: "#e8e2d9",
-                      cursor: "pointer",
-                      fontSize: "1rem",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontFamily: "Cormorant Garamond, serif",
-                    }}
-                  >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.8rem",
+                  }}
+                >
+                  <button style={qtyBtn} onClick={onRemove}>
                     −
                   </button>
-                  <span style={{ fontSize: "0.85rem", color: "#e8e2d9", minWidth: "20px", textAlign: "center" }}>
-                    {quantity}
-                  </span>
-                  <button
-                    onClick={onAdd}
+                  <span
                     style={{
-                      width: "28px",
-                      height: "28px",
-                      background: "none",
-                      border: "1px solid #555",
-                      color: "#e8e2d9",
-                      cursor: "pointer",
-                      fontSize: "1rem",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontFamily: "Cormorant Garamond, serif",
+                      fontSize: "0.9rem",
+                      color: "rgba(255,255,255,0.9)",
+                      minWidth: "20px",
+                      textAlign: "center",
                     }}
                   >
+                    {quantity}
+                  </span>
+                  <button style={qtyBtn} onClick={onAdd}>
                     ＋
                   </button>
                 </div>
               )}
             </>
           ) : (
-            <p style={{
-              fontSize: "0.68rem",
-              color: "#555",
-              margin: 0,
-              fontStyle: "italic",
-              letterSpacing: "0.04em",
-            }}>
-              ログイン後に価格を表示
+            <p
+              style={{
+                fontSize: "0.7rem",
+                color: "rgba(255,255,255,0.3)",
+                margin: 0,
+                letterSpacing: "0.04em",
+              }}
+            >
+              Login to view price
             </p>
           )}
         </div>
@@ -152,3 +199,16 @@ export default function WholesaleProductCard({ product, quantity = 0, onAdd, onR
     </div>
   );
 }
+
+const qtyBtn = {
+  width: "28px",
+  height: "28px",
+  background: "none",
+  border: "1px solid rgba(255,255,255,0.18)",
+  color: "rgba(255,255,255,0.9)",
+  cursor: "pointer",
+  fontSize: "1rem",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};

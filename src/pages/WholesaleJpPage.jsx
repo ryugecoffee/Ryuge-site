@@ -1,35 +1,73 @@
 // src/pages/WholesaleJpPage.jsx
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import WholesaleProductCard from "../components/wholesale/WholesaleProductCard";
 
 const WHOLESALE_PRODUCTS = [
   {
-    id: "wh-001",
-    name: "ドリップバッグ｜龍華ブレンド",
-    description: "鎌倉の静けさをイメージした、穏やかな酸味と甘みのブレンド。",
-    image: "/images/product-drip.jpg",
+    id: "wh-enma-100",
+    name: "閻魔",
+    subtitle: "Enma / 100g",
+    description:
+      "龍華珈琲の象徴となる定番。静かな輪郭と余韻を持つ主軸の珈琲。",
+    image: "/images/top.enma.jpg",
+    wholesalePrice: 980,
+    unit: "袋",
+  },
+  {
+    id: "wh-enma-200",
+    name: "閻魔",
+    subtitle: "Enma / 200g",
+    description:
+      "卸導入向けの基本仕様。店頭・ギフトの両方で扱いやすい分量です。",
+    image: "/images/top.enma.jpg",
+    wholesalePrice: 1780,
+    unit: "袋",
+  },
+  {
+    id: "wh-woodbox",
+    name: "木函",
+    subtitle: "Wooden Edition",
+    description:
+      "木の質感と余白を大切にした上位仕様。贈答・特別販売向け。",
+    image: "/images/top.woodbox-3.jpg",
+    wholesalePrice: 2400,
+    unit: "箱",
+  },
+  {
+    id: "wh-oriori-drip",
+    name: "折々",
+    subtitle: "Oriori / Drip Bag",
+    description:
+      "日々の導入に向くドリップバッグ。軽やかに龍華の輪郭を届けます。",
+    image: "/images/top.oriori.jpg",
     wholesalePrice: 180,
     unit: "袋",
   },
   {
-    id: "wh-002",
-    name: "ドリップバッグ｜シングルオリジン",
-    description: "季節ごとに産地が変わるシングルオリジン。",
-    image: "/images/product-single.jpg",
-    wholesalePrice: 210,
-    unit: "袋",
-  },
-  {
-    id: "wh-003",
-    name: "コーヒー豆｜龍華ブレンド 200g",
-    description: "焙煎後すぐに出荷。鮮度を保ったままお届けします。",
-    image: "/images/product-beans.jpg",
-    wholesalePrice: 1200,
+    id: "wh-oriori-seasonal",
+    name: "折々",
+    subtitle: "Oriori / Seasonal",
+    description:
+      "季節ごとに内容が移ろう卸向け提案。時期ごとの売場演出にも対応。",
+    image: "/images/top.oriori.jpg",
+    wholesalePrice: 1100,
     unit: "袋",
   },
 ];
+
+const pageStyles = {
+  bg: "#050505",
+  headerBg: "rgba(5, 5, 5, 0.88)",
+  border: "rgba(255,255,255,0.08)",
+  softText: "rgba(255,255,255,0.72)",
+  mutedText: "rgba(255,255,255,0.42)",
+  strongText: "rgba(255,255,255,0.92)",
+  cardBg: "#0b0b0b",
+  buttonBorder: "rgba(255,255,255,0.18)",
+  buttonHover: "rgba(255,255,255,0.85)",
+};
 
 export default function WholesaleJpPage() {
   const { user, approved, logout } = useAuth();
@@ -54,9 +92,12 @@ export default function WholesaleJpPage() {
 
   const cartCount = Object.values(cart).reduce((a, b) => a + b, 0);
 
-  const cartItems = WHOLESALE_PRODUCTS
-    .filter((p) => cart[p.id])
-    .map((p) => ({ ...p, quantity: cart[p.id] }));
+  const cartItems = useMemo(() => {
+    return WHOLESALE_PRODUCTS.filter((p) => cart[p.id]).map((p) => ({
+      ...p,
+      quantity: cart[p.id],
+    }));
+  }, [cart]);
 
   const handleGoToOrder = () => {
     navigate("/wholesale-jp/order", { state: { cartItems } });
@@ -66,123 +107,150 @@ export default function WholesaleJpPage() {
     <div
       style={{
         minHeight: "100vh",
-        backgroundColor: "#2a2a2a",
-        fontFamily: "Cormorant Garamond, serif",
-        color: "#e8e2d9",
+        backgroundColor: pageStyles.bg,
+        color: pageStyles.strongText,
+        fontFamily:
+          '"Cormorant Garamond", "Noto Serif JP", "Hiragino Mincho ProN", serif',
       }}
     >
-      {/* ヘッダー */}
-      <div
+      {/* Header */}
+      <header
         style={{
-          borderBottom: "1px solid #3a3a3a",
-          backgroundColor: "#2a2a2a",
-          padding: "1.2rem 3rem",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
           position: "sticky",
           top: 0,
           zIndex: 100,
+          backgroundColor: pageStyles.headerBg,
+          backdropFilter: "blur(8px)",
+          borderBottom: `1px solid ${pageStyles.border}`,
         }}
       >
-        <Link
-          to="/"
+        <div
           style={{
-            textDecoration: "none",
-            fontSize: "0.9rem",
-            letterSpacing: "0.2em",
-            color: "#e8e2d9",
-            textTransform: "uppercase",
+            maxWidth: "1440px",
+            margin: "0 auto",
+            padding: "1.3rem 3.4rem",
+            display: "grid",
+            gridTemplateColumns: "1fr auto 1fr",
+            alignItems: "center",
+            gap: "1rem",
           }}
         >
-          Ryuge Coffee
-        </Link>
-
-        <div style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
-          {user && (
+          <div style={{ display: "flex", justifyContent: "flex-start" }}>
             <Link
-              to="/wholesale-jp/dashboard"
+              to="/"
               style={{
-                fontSize: "0.68rem",
-                color: "#888",
                 textDecoration: "none",
-                letterSpacing: "0.14em",
+                color: pageStyles.strongText,
+                fontSize: "0.95rem",
+                letterSpacing: "0.18em",
                 textTransform: "uppercase",
               }}
             >
-              Dashboard
+              RYUGE COFFEE
             </Link>
-          )}
+          </div>
 
-          {approved && cartCount > 0 && (
-            <button
-              onClick={handleGoToOrder}
-              style={{
-                fontSize: "0.68rem",
-                color: "#e8e2d9",
-                background: "none",
-                border: "1px solid #555",
-                padding: "0.4rem 1.2rem",
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                cursor: "pointer",
-                fontFamily: "Cormorant Garamond, serif",
-                transition: "border-color 0.2s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#e8e2d9")}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#555")}
-            >
-              Cart ({cartCount})
-            </button>
-          )}
-
-          {user ? (
-            <button
-              onClick={logout}
-              style={{
-                fontSize: "0.68rem",
-                color: "#666",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                padding: 0,
-                fontFamily: "Cormorant Garamond, serif",
-              }}
-            >
-              Logout
-            </button>
-          ) : (
+          <nav
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "2rem",
+              alignItems: "center",
+            }}
+          >
             <Link
-              to="/wholesale-jp/login"
-              style={{
-                fontSize: "0.68rem",
-                color: "#e8e2d9",
-                textDecoration: "none",
-                border: "1px solid #555",
-                padding: "0.4rem 1.2rem",
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-              }}
+              to="/products"
+              style={navLinkStyle}
             >
-              Login
+              商品
             </Link>
-          )}
+            <Link
+              to="/wholesale-jp"
+              style={navLinkStyle}
+            >
+              卸
+            </Link>
+          </nav>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "1.4rem",
+              alignItems: "center",
+            }}
+          >
+            {user && (
+              <Link
+                to="/wholesale-jp/dashboard"
+                style={rightLinkStyle}
+              >
+                Dashboard
+              </Link>
+            )}
+
+            {approved && cartCount > 0 && (
+              <button
+                onClick={handleGoToOrder}
+                style={{
+                  ...ghostButtonStyle,
+                  padding: "0.45rem 1.1rem",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.borderColor = pageStyles.buttonHover)
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.borderColor = pageStyles.buttonBorder)
+                }
+              >
+                Cart ({cartCount})
+              </button>
+            )}
+
+            {user ? (
+              <button
+                onClick={logout}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: pageStyles.mutedText,
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                  padding: 0,
+                  fontFamily: "inherit",
+                }}
+              >
+                Logout
+              </button>
+            ) : (
+              <Link
+                to="/wholesale-jp/login"
+                style={rightLinkStyle}
+              >
+                Login
+              </Link>
+            )}
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* メイン */}
-      <div style={{ maxWidth: "1300px", margin: "0 auto", padding: "5rem 3rem 7rem" }}>
-        {/* タイトルブロック */}
-        <div style={{ marginBottom: "4rem" }}>
+      <main>
+        <section
+          style={{
+            maxWidth: "1440px",
+            margin: "0 auto",
+            padding: "4.5rem 3.4rem 2rem",
+          }}
+        >
           <p
             style={{
-              fontSize: "0.65rem",
+              margin: "0 0 1rem",
+              color: pageStyles.mutedText,
+              fontSize: "0.72rem",
               letterSpacing: "0.26em",
               textTransform: "uppercase",
-              color: "#666",
-              margin: "0 0 1rem",
             }}
           >
             Wholesale — Japan
@@ -190,171 +258,178 @@ export default function WholesaleJpPage() {
 
           <h1
             style={{
-              fontSize: "2.2rem",
+              margin: "0 0 2rem",
+              color: pageStyles.strongText,
+              fontSize: "3rem",
               fontWeight: 400,
-              letterSpacing: "0.06em",
-              color: "#e8e2d9",
-              margin: "0 0 1.2rem",
-              lineHeight: 1.3,
+              letterSpacing: "0.05em",
+              lineHeight: 1.24,
             }}
           >
             卸販売｜国内
           </h1>
 
-          <p
+          <div
             style={{
-              fontSize: "0.78rem",
-              color: "#777",
-              lineHeight: 2.1,
-              letterSpacing: "0.04em",
-              margin: 0,
+              maxWidth: "760px",
             }}
           >
-            Ryuge Coffeeの卸販売ページです。ご購入には承認済みアカウントが必要です。
-            <br />
-            お取引のご希望は{" "}
-            <a
-              href="mailto:ryugecoffee@gmail.com"
-              style={{ color: "#999", textDecoration: "underline" }}
-            >
-              ryugecoffee@gmail.com
-            </a>{" "}
-            までご連絡ください。
-          </p>
-
-          {!user && (
-            <div
+            <p
               style={{
-                marginTop: "2rem",
-                padding: "1rem 1.4rem",
-                borderLeft: "2px solid #444",
-                backgroundColor: "#333",
-                fontSize: "0.75rem",
-                color: "#888",
+                margin: 0,
+                color: pageStyles.softText,
+                fontSize: "0.94rem",
+                lineHeight: 2.15,
                 letterSpacing: "0.04em",
-                lineHeight: 1.8,
               }}
             >
-              卸価格を確認するには{" "}
+              Ryuge Coffeeの卸販売ページです。一般販売ページの静けさをそのままに、
+              国内向けのお取引導線として整えています。
+              <br />
+              価格閲覧・発注には承認済みアカウントが必要です。お取引のご希望は{" "}
+              <a
+                href="mailto:ryugecoffee@gmail.com"
+                style={{
+                  color: pageStyles.softText,
+                  textDecoration: "underline",
+                  textUnderlineOffset: "3px",
+                }}
+              >
+                ryugecoffee@gmail.com
+              </a>{" "}
+              までご連絡ください。
+            </p>
+          </div>
+
+          {!user && (
+            <div style={noticeStyle}>
+              卸価格の表示と発注には
               <Link
                 to="/wholesale-jp/login"
-                style={{ color: "#e8e2d9", textDecoration: "underline" }}
+                style={{
+                  color: pageStyles.strongText,
+                  margin: "0 0.35em",
+                  textDecoration: "underline",
+                  textUnderlineOffset: "3px",
+                }}
               >
                 ログイン
-              </Link>{" "}
+              </Link>
               が必要です。
             </div>
           )}
 
           {user && !approved && (
-            <div
-              style={{
-                marginTop: "2rem",
-                padding: "1rem 1.4rem",
-                borderLeft: "2px solid #444",
-                backgroundColor: "#333",
-                fontSize: "0.75rem",
-                color: "#888",
-                letterSpacing: "0.04em",
-                lineHeight: 1.8,
-              }}
-            >
-              アカウントの承認をお待ちください。承認後に卸価格が表示されます。
+            <div style={noticeStyle}>
+              アカウント承認待ちです。承認後に卸価格表示と発注が可能になります。
             </div>
           )}
-        </div>
+        </section>
 
-        {/* 商品グリッド */}
-        <div
+        <section
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(5, 1fr)",
-            gap: "1.2rem",
-            marginBottom: "8rem",
+            maxWidth: "1440px",
+            margin: "0 auto",
+            padding: "1.5rem 3.4rem 7rem",
           }}
         >
-          {WHOLESALE_PRODUCTS.map((product) => (
-            <WholesaleProductCard
-              key={product.id}
-              product={product}
-              quantity={cart[product.id] || 0}
-              onAdd={() => addToCart(product.id)}
-              onRemove={() => removeFromCart(product.id)}
-            />
-          ))}
-          <OriginalBagCard user={user} approved={approved} />
-          <ComingSoonCard />
-        </div>
-
-        {/* 承認済み：発注ボタン */}
-        {approved && cartCount > 0 && (
           <div
             style={{
-              position: "fixed",
-              bottom: "2.5rem",
-              right: "2.5rem",
-              zIndex: 200,
+              display: "grid",
+              gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+              gap: "1.35rem",
+              alignItems: "stretch",
             }}
           >
-            <button
-              onClick={handleGoToOrder}
-              style={{
-                backgroundColor: "#e8e2d9",
-                color: "#2a2a2a",
-                border: "none",
-                padding: "1rem 2rem",
-                fontSize: "0.72rem",
-                letterSpacing: "0.16em",
-                textTransform: "uppercase",
-                cursor: "pointer",
-                fontFamily: "Cormorant Garamond, serif",
-                boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
-              }}
-            >
-              発注フォームへ（{cartCount}点）
-            </button>
+            {WHOLESALE_PRODUCTS.map((product) => (
+              <WholesaleProductCard
+                key={product.id}
+                product={product}
+                quantity={cart[product.id] || 0}
+                onAdd={() => addToCart(product.id)}
+                onRemove={() => removeFromCart(product.id)}
+                cardBg={pageStyles.cardBg}
+                borderColor={pageStyles.border}
+                mutedText={pageStyles.mutedText}
+                softText={pageStyles.softText}
+                strongText={pageStyles.strongText}
+                approved={approved}
+              />
+            ))}
+
+            <OriginalBagCard user={user} approved={approved} />
           </div>
-        )}
+        </section>
 
-        {/* フッター注記 */}
-        <div style={{ borderTop: "1px solid #3a3a3a", paddingTop: "3rem" }}>
-          <p
+        <section
+          style={{
+            maxWidth: "1440px",
+            margin: "0 auto",
+            padding: "0 3.4rem 5rem",
+          }}
+        >
+          <div
             style={{
-              fontSize: "0.65rem",
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
-              color: "#555",
-              marginBottom: "1rem",
+              borderTop: `1px solid ${pageStyles.border}`,
+              paddingTop: "2.4rem",
             }}
           >
-            Order & Trade
-          </p>
-
-          <p
-            style={{
-              fontSize: "0.78rem",
-              color: "#666",
-              lineHeight: 2.2,
-              margin: 0,
-              letterSpacing: "0.04em",
-            }}
-          >
-            最低注文数量・納期・お支払い条件については、お問い合わせの上ご確認ください。
-            <br />
-            初回ご注文の前に取引承認が必要です。
-            <a
-              href="mailto:ryugecoffee@gmail.com"
+            <p
               style={{
-                color: "#888",
-                marginLeft: "0.4em",
-                textDecoration: "underline",
+                margin: "0 0 0.9rem",
+                color: pageStyles.mutedText,
+                fontSize: "0.68rem",
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
               }}
             >
-              ryugecoffee@gmail.com
-            </a>
-          </p>
+              Order & Trade
+            </p>
+
+            <p
+              style={{
+                margin: 0,
+                color: pageStyles.softText,
+                fontSize: "0.85rem",
+                lineHeight: 2.1,
+                letterSpacing: "0.04em",
+              }}
+            >
+              最低注文数量・納期・お支払い条件は個別にご案内いたします。
+              卸のお取引は基本的に後払い請求ベースを想定しています。
+            </p>
+          </div>
+        </section>
+      </main>
+
+      {approved && cartCount > 0 && (
+        <div
+          style={{
+            position: "fixed",
+            right: "2.4rem",
+            bottom: "2.4rem",
+            zIndex: 120,
+          }}
+        >
+          <button
+            onClick={handleGoToOrder}
+            style={{
+              backgroundColor: "rgba(255,255,255,0.92)",
+              color: "#050505",
+              border: "none",
+              padding: "1rem 1.8rem",
+              fontSize: "0.72rem",
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
+            }}
+          >
+            発注フォームへ（{cartCount}点）
+          </button>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -363,37 +438,34 @@ function OriginalBagCard({ user, approved }) {
   return (
     <div
       style={{
-        border: "1px solid #3a3a3a",
-        borderRadius: "2px",
-        overflow: "hidden",
-        backgroundColor: "#333",
+        backgroundColor: "#0b0b0b",
+        border: "1px solid rgba(255,255,255,0.08)",
+        minHeight: "100%",
         display: "flex",
         flexDirection: "column",
-        transition: "border-color 0.25s ease",
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#555")}
-      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#3a3a3a")}
     >
       <div
         style={{
           aspectRatio: "1 / 1",
-          backgroundColor: "#3a3a3a",
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04))",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: "0.6rem",
+          gap: "0.9rem",
         }}
       >
-        <span style={{ fontSize: "1.6rem", opacity: 0.25, color: "#e8e2d9" }}>✦</span>
+        <span style={{ fontSize: "2rem", color: "rgba(255,255,255,0.35)" }}>✦</span>
         <span
           style={{
-            fontSize: "0.55rem",
-            letterSpacing: "0.2em",
+            border: "1px solid rgba(255,255,255,0.08)",
+            padding: "0.25rem 0.75rem",
+            color: "rgba(255,255,255,0.35)",
+            fontSize: "0.56rem",
+            letterSpacing: "0.18em",
             textTransform: "uppercase",
-            color: "#666",
-            border: "1px solid #444",
-            padding: "0.2rem 0.6rem",
           }}
         >
           For approved partners
@@ -402,21 +474,19 @@ function OriginalBagCard({ user, approved }) {
 
       <div
         style={{
-          padding: "1.2rem 1rem",
-          flex: 1,
+          padding: "1.2rem 1rem 1rem",
           display: "flex",
           flexDirection: "column",
-          gap: "0.5rem",
+          flex: 1,
         }}
       >
         <p
           style={{
-            fontSize: "0.85rem",
-            fontWeight: 500,
-            margin: 0,
-            color: "#e8e2d9",
-            letterSpacing: "0.04em",
+            margin: "0 0 0.45rem",
+            color: "rgba(255,255,255,0.92)",
+            fontSize: "1rem",
             lineHeight: 1.5,
+            letterSpacing: "0.03em",
           }}
         >
           オリジナルコーヒーバッグ制作
@@ -424,21 +494,21 @@ function OriginalBagCard({ user, approved }) {
 
         <p
           style={{
-            fontSize: "0.7rem",
-            color: "#777",
-            margin: 0,
-            lineHeight: 1.9,
+            margin: "0 0 1.2rem",
+            color: "rgba(255,255,255,0.44)",
+            fontSize: "0.74rem",
+            lineHeight: 1.95,
           }}
         >
-          貴社ロゴ・デザインを印刷したオリジナルドリップバッグを制作します。
-          既存取引先様、または導入をご検討中の法人様向けサービスです。
+          貴社ロゴ・デザインを反映したオリジナル仕様の制作相談ページです。
+          卸導入後の展開や別注対応について、個別にご案内いたします。
         </p>
 
         <div
           style={{
             marginTop: "auto",
-            paddingTop: "0.8rem",
-            borderTop: "1px solid #3a3a3a",
+            paddingTop: "1rem",
+            borderTop: "1px solid rgba(255,255,255,0.08)",
           }}
         >
           {approved ? (
@@ -446,26 +516,37 @@ function OriginalBagCard({ user, approved }) {
               href="mailto:ryugecoffee@gmail.com?subject=オリジナルコーヒーバッグ制作のご相談"
               style={{
                 display: "inline-block",
-                fontSize: "0.62rem",
-                color: "#e8e2d9",
-                border: "1px solid #555",
-                padding: "0.4rem 1rem",
+                color: "rgba(255,255,255,0.9)",
+                border: "1px solid rgba(255,255,255,0.16)",
                 textDecoration: "none",
+                padding: "0.65rem 1rem",
+                fontSize: "0.64rem",
                 letterSpacing: "0.14em",
                 textTransform: "uppercase",
-                transition: "border-color 0.2s",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#e8e2d9")}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#555")}
             >
               制作について相談する
             </a>
           ) : !user ? (
-            <p style={{ fontSize: "0.68rem", color: "#555", margin: 0, lineHeight: 1.8 }}>
+            <p
+              style={{
+                margin: 0,
+                color: "rgba(255,255,255,0.34)",
+                fontSize: "0.68rem",
+                lineHeight: 1.8,
+              }}
+            >
               取引開始後にご案内
             </p>
           ) : (
-            <p style={{ fontSize: "0.68rem", color: "#555", margin: 0, lineHeight: 1.8 }}>
+            <p
+              style={{
+                margin: 0,
+                color: "rgba(255,255,255,0.34)",
+                fontSize: "0.68rem",
+                lineHeight: 1.8,
+              }}
+            >
               承認済み取引先様向けサービス
             </p>
           )}
@@ -475,30 +556,39 @@ function OriginalBagCard({ user, approved }) {
   );
 }
 
-function ComingSoonCard() {
-  return (
-    <div
-      style={{
-        border: "1px dashed #3a3a3a",
-        borderRadius: "2px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        minHeight: "280px",
-        opacity: 0.35,
-      }}
-    >
-      <p
-        style={{
-          fontSize: "0.6rem",
-          letterSpacing: "0.2em",
-          textTransform: "uppercase",
-          color: "#666",
-          margin: 0,
-        }}
-      >
-        Coming Soon
-      </p>
-    </div>
-  );
-}
+const navLinkStyle = {
+  textDecoration: "none",
+  color: "rgba(255,255,255,0.68)",
+  fontSize: "0.82rem",
+  letterSpacing: "0.08em",
+};
+
+const rightLinkStyle = {
+  textDecoration: "none",
+  color: "rgba(255,255,255,0.42)",
+  fontSize: "0.7rem",
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+};
+
+const ghostButtonStyle = {
+  background: "none",
+  border: "1px solid rgba(255,255,255,0.18)",
+  color: "rgba(255,255,255,0.88)",
+  cursor: "pointer",
+  fontSize: "0.68rem",
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  fontFamily: '"Cormorant Garamond", "Noto Serif JP", serif',
+};
+
+const noticeStyle = {
+  marginTop: "1.6rem",
+  padding: "1rem 1.2rem",
+  borderLeft: "1px solid rgba(255,255,255,0.14)",
+  backgroundColor: "rgba(255,255,255,0.03)",
+  color: "rgba(255,255,255,0.55)",
+  fontSize: "0.76rem",
+  lineHeight: 1.95,
+  letterSpacing: "0.04em",
+};
