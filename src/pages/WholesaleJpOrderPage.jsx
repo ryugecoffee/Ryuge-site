@@ -35,9 +35,11 @@ function OrderContent() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const totalAmount = cartItems.reduce(
-    (sum, item) => sum + item.wholesalePrice * item.quantity, 0
-  );
+ const subtotal = cartItems.reduce(
+  (sum, item) => sum + item.wholesalePrice * item.quantity, 0
+);
+
+const totalAmount = Math.floor(subtotal * 1.1);
 
   const handleSubmit = async () => {
     setError("");
@@ -57,7 +59,7 @@ function OrderContent() {
         .join("\n");
 
       const body = encodeURIComponent(
-        `【発注内容】\n${itemLines}\n\n合計：¥${totalAmount.toLocaleString()}（税抜）\n\n` +
+        `【発注内容】\n${itemLines}\n\n合計：¥${totalAmount.toLocaleString()}（税込）\n\n` +
         `【お届け先】\n` +
         `貴社名・店舗名：${form.companyName}\n` +
         `担当者名：${form.contactName}\n` +
@@ -230,12 +232,23 @@ function OrderContent() {
                 borderTop: "1px solid #444",
                 backgroundColor: "#2a2a2a",
               }}>
-                <p style={{ fontSize: "0.68rem", color: "#666", margin: 0, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                  Subtotal（税抜）
-                </p>
-                <p style={{ fontSize: "1rem", color: "#e8e2d9", margin: 0, letterSpacing: "0.04em" }}>
-                  ¥{totalAmount.toLocaleString()}
-                </p>
+                <div>
+  <p style={{ fontSize: "0.68rem", color: "#666", margin: 0 }}>
+    小計
+  </p>
+  <p style={{ fontSize: "0.85rem", margin: 0 }}>
+    ¥{subtotal.toLocaleString()}
+  </p>
+</div>
+
+<div>
+  <p style={{ fontSize: "0.68rem", color: "#666", margin: 0 }}>
+    合計（税込）
+  </p>
+  <p style={{ fontSize: "1rem", margin: 0 }}>
+    ¥{totalAmount.toLocaleString()}
+  </p>
+</div>
               </div>
             </div>
 

@@ -121,7 +121,7 @@ export default function WholesaleProductCard({
                     marginLeft: "0.4rem",
                   }}
                 >
-                  / {product.unit}（税抜）
+                  / {product.unit}（税込）
                 </span>
               </p>
 
