@@ -103,6 +103,18 @@ const pageStyles = {
   buttonHover: "rgba(255,255,255,0.85)",
 };
 
+const COUNTRY_KATAKANA_MAP = {
+  Ethiopia: "エチオピア",
+  Burundi: "ブルンジ",
+  Honduras: "ホンジュラス",
+};
+
+const VARIETY_KATAKANA_MAP = {
+  Bourbon: "ブルボン",
+  Geisha: "ゲイシャ",
+  Gesha: "ゲイシャ",
+};
+
 export default function WholesaleJpPage() {
   const { user, approved, logout } = useAuth();
   const navigate = useNavigate();
@@ -140,23 +152,51 @@ export default function WholesaleJpPage() {
     return parts[parts.length - 1]?.trim() || origin;
   };
 
-  const getLoggedInTitle = () => {
-    if (!activeDetailedItem) {
-      return activeWholesaleProduct?.name || "";
-    }
+  const toKatakanaCountry = (origin = "") => {
+    const country = getCountryOnly(origin);
+    return COUNTRY_KATAKANA_MAP[country] || country;
+  };
 
-    if (activeDetailedItem.id === "enma-ethiopia-dark") {
+  const toKatakanaVariety = (variety = "") => {
+    return VARIETY_KATAKANA_MAP[variety] || variety;
+  };
+
+  const getDetailItemByProduct = (product) => {
+    if (!product || product.detailType !== "productData") return null;
+    return (
+      allDetailedProducts.find((item) => item.id === product.detailId) || null
+    );
+  };
+
+  const getLoggedInDisplayTitleByProduct = (product) => {
+    const detailItem = getDetailItemByProduct(product);
+
+    if (!detailItem) return product?.name || "";
+
+    if (detailItem.id === "enma-ethiopia-dark") {
       return "深煎りの禅";
     }
 
-    const country = getCountryOnly(activeDetailedItem.origin);
-    const variety = activeDetailedItem.variety || "";
+    const country = toKatakanaCountry(detailItem.origin);
+    const variety = toKatakanaVariety(detailItem.variety);
 
     if (country && variety) {
       return `${country} ${variety}`;
     }
 
-    return country || variety || activeWholesaleProduct?.name || "";
+    return country || variety || product?.name || "";
+  };
+
+  const getLoggedInDisplaySubtitleByProduct = (product) => {
+    const detailItem = getDetailItemByProduct(product);
+
+    if (!detailItem) return product?.subtitle || "";
+
+    if (detailItem.id === "enma-ethiopia-dark") {
+      return "";
+    }
+
+    return "";
   };
 
   const modalTitle = !user
@@ -165,11 +205,12 @@ export default function WholesaleJpPage() {
       : activeDetailedItem?.modalTitle?.[lang] ||
         activeDetailedItem?.title?.[lang] ||
         activeWholesaleProduct?.name
-    : getLoggedInTitle();
+    : getLoggedInDisplayTitleByProduct(activeWholesaleProduct);
 
   const modalSummary = isSimpleWholesale
     ? activeWholesaleProduct?.summary || activeWholesaleProduct?.description
-    : activeDetailedItem?.summary?.[lang] || activeWholesaleProduct?.description;
+    : activeDetailedItem?.summary?.[lang] ||
+      activeWholesaleProduct?.description;
 
   const addToCart = (productId) => {
     setCart((prev) => ({ ...prev, [productId]: (prev[productId] || 0) + 1 }));
@@ -425,16 +466,26 @@ export default function WholesaleJpPage() {
               alignItems: "stretch",
             }}
           >
-            {WHOLESALE_PRODUCTS.map((product) => (
-              <WholesaleProductCard
-                key={product.id}
-                product={product}
-                quantity={cart[product.id] || 0}
-                onAdd={() => addToCart(product.id)}
-                onRemove={() => removeFromCart(product.id)}
-                onOpenDetail={() => setActiveItemId(product.id)}
-              />
-            ))}
+            {WHOLESALE_PRODUCTS.map((product) => {
+              const displayProduct = user
+                ? {
+                    ...product,
+                    name: getLoggedInDisplayTitleByProduct(product),
+                    subtitle: getLoggedInDisplaySubtitleByProduct(product),
+                  }
+                : product;
+
+              return (
+                <WholesaleProductCard
+                  key={product.id}
+                  product={displayProduct}
+                  quantity={cart[product.id] || 0}
+                  onAdd={() => addToCart(product.id)}
+                  onRemove={() => removeFromCart(product.id)}
+                  onOpenDetail={() => setActiveItemId(product.id)}
+                />
+              );
+            })}
 
             <OriginalBagCard user={user} approved={approved} />
           </div>
