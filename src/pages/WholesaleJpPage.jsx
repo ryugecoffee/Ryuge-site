@@ -1,69 +1,87 @@
 // src/pages/WholesaleJpPage.jsx
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import WholesaleProductCard from "../components/wholesale/WholesaleProductCard";
+import { PRODUCT_DATA, PRODUCT_SECTIONS } from "../productData";
 
 const WHOLESALE_PRODUCTS = [
   {
     id: "wh-simple-600",
+    detailType: "simple",
     name: "無印",
     subtitle: "Simple Package",
     description: "シンプルなパッケージ仕様。",
     image: "/images/simple.jpg",
     wholesalePrice: 600,
     unit: "100g",
+    summary: "シンプルなパッケージ仕様。",
+    weight: "100g",
   },
   {
     id: "wh-simple-700",
+    detailType: "simple",
     name: "無印",
     subtitle: "Simple Package",
     description: "シンプルなパッケージ仕様。",
     image: "/images/simple.jpg",
     wholesalePrice: 700,
     unit: "100g",
+    summary: "シンプルなパッケージ仕様。",
+    weight: "100g",
   },
   {
     id: "wh-simple-750",
+    detailType: "simple",
     name: "無印",
     subtitle: "Simple Package",
     description: "シンプルなパッケージ仕様。",
     image: "/images/simple.jpg",
     wholesalePrice: 750,
     unit: "100g",
+    summary: "シンプルなパッケージ仕様。",
+    weight: "100g",
   },
   {
     id: "wh-enma-1700",
+    detailType: "productData",
+    detailId: "enma-ethiopia-dark",
     name: "閻魔",
     subtitle: "Enma",
-    description: "龍華珈琲の象徴となる定番。",
+    description: "静かに残る苦味と余韻",
     image: "/images/top.enma.jpg",
     wholesalePrice: 1190,
     unit: "180g",
   },
   {
     id: "wh-enma-1980",
+    detailType: "productData",
+    detailId: "enma-burundi-light",
     name: "閻魔",
     subtitle: "Enma",
-    description: "龍華珈琲の象徴となる定番。",
+    description: "明るさと透明感、やわらかな甘さ",
     image: "/images/top.enma.jpg",
     wholesalePrice: 1380,
     unit: "180g",
   },
   {
     id: "wh-enma-2100",
+    detailType: "productData",
+    detailId: "enma-ethiopia-light",
     name: "閻魔",
     subtitle: "Enma",
-    description: "龍華珈琲の象徴となる定番。",
+    description: "明るさと輪郭のある浅煎り",
     image: "/images/top.enma.jpg",
     wholesalePrice: 1470,
     unit: "180g",
   },
   {
     id: "wh-woodbox",
+    detailType: "productData",
+    detailId: "woodbox-geisha",
     name: "木函",
     subtitle: "Wooden Edition",
-    description: "木箱仕様の特別ライン。",
+    description: "木箱で届く贈り物のような静かなプレミアム",
     image: "/images/top.woodbox-3.jpg",
     wholesalePrice: 1950,
     unit: "100g",
@@ -86,6 +104,34 @@ export default function WholesaleJpPage() {
   const { user, approved, logout } = useAuth();
   const navigate = useNavigate();
   const [cart, setCart] = useState({});
+  const [activeItemId, setActiveItemId] = useState(null);
+
+  const lang = "ja";
+  const labels = PRODUCT_SECTIONS.ja.specLabels;
+
+  const allDetailedProducts = [...PRODUCT_DATA.enma, ...PRODUCT_DATA.woodbox];
+
+  const wholesalePriceMap = {
+    "enma-ethiopia-dark": { price: "¥1,190", priceNumber: 1190, weight: "180g" },
+    "enma-burundi-light": { price: "¥1,380", priceNumber: 1380, weight: "180g" },
+    "enma-ethiopia-light": { price: "¥1,470", priceNumber: 1470, weight: "180g" },
+    "woodbox-geisha": { price: "¥1,950", priceNumber: 1950, weight: "100g" },
+  };
+
+  const activeWholesaleProduct =
+    WHOLESALE_PRODUCTS.find((item) => item.id === activeItemId) || null;
+
+  const activeDetailedItem =
+    activeWholesaleProduct?.detailType === "productData"
+      ? allDetailedProducts.find(
+          (item) => item.id === activeWholesaleProduct.detailId
+        ) || null
+      : null;
+
+  const activeSimpleItem =
+    activeWholesaleProduct?.detailType === "simple"
+      ? activeWholesaleProduct
+      : null;
 
   const addToCart = (productId) => {
     setCart((prev) => ({ ...prev, [productId]: (prev[productId] || 0) + 1 }));
@@ -115,6 +161,31 @@ export default function WholesaleJpPage() {
   const handleGoToOrder = () => {
     navigate("/wholesale-jp/order", { state: { cartItems } });
   };
+
+  const renderSpecRow = (label, value) => {
+    if (!value) return null;
+    return (
+      <div className="product-spec-row" key={label}>
+        <dt>{label}</dt>
+        <dd>{value}</dd>
+      </div>
+    );
+  };
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setActiveItemId(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = activeItemId ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [activeItemId]);
 
   return (
     <div
@@ -323,12 +394,7 @@ export default function WholesaleJpPage() {
                 quantity={cart[product.id] || 0}
                 onAdd={() => addToCart(product.id)}
                 onRemove={() => removeFromCart(product.id)}
-                cardBg={pageStyles.cardBg}
-                borderColor={pageStyles.border}
-                mutedText={pageStyles.mutedText}
-                softText={pageStyles.softText}
-                strongText={pageStyles.strongText}
-                approved={approved}
+                onOpenDetail={() => setActiveItemId(product.id)}
               />
             ))}
 
@@ -376,6 +442,180 @@ export default function WholesaleJpPage() {
           </div>
         </section>
       </main>
+
+      {activeWholesaleProduct && (
+        <div className="modal-backdrop" onClick={() => setActiveItemId(null)}>
+          <div
+            className="modal modal-premium"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button className="modal-close" onClick={() => setActiveItemId(null)}>
+              ×
+            </button>
+
+            <div className="modal-image modal-image-premium">
+              <img
+                src={
+                  activeDetailedItem?.image ||
+                  activeSimpleItem?.image ||
+                  activeWholesaleProduct.image
+                }
+                alt=""
+              />
+            </div>
+
+            <div className="modal-copy modal-copy-premium">
+              <div className="modal-copy-inner modal-copy-classic">
+                <h3
+                  className="modal-product-title modal-title-animate"
+                  style={{ whiteSpace: "pre-line" }}
+                >
+                  {activeDetailedItem?.modalTitle?.[lang] ||
+                    activeDetailedItem?.title?.[lang] ||
+                    activeSimpleItem?.name ||
+                    activeWholesaleProduct.name}
+                </h3>
+
+                <p className="modal-summary modal-product-summary modal-fade-up">
+                  {activeDetailedItem?.summary?.[lang] ||
+                    activeSimpleItem?.summary ||
+                    activeWholesaleProduct.description}
+                </p>
+
+                {activeDetailedItem ? (
+                  <>
+                    <dl className="product-specs product-specs-classic modal-fade-up">
+                      {renderSpecRow(labels.origin, activeDetailedItem.origin)}
+                      {renderSpecRow(labels.producer, activeDetailedItem.producer)}
+                      {renderSpecRow(labels.process, activeDetailedItem.process)}
+                      {renderSpecRow(labels.variety, activeDetailedItem.variety)}
+                      {renderSpecRow(labels.altitude, activeDetailedItem.altitude)}
+                      {renderSpecRow(
+                        labels.weight,
+                        wholesalePriceMap[activeDetailedItem.id]?.weight ||
+                          activeWholesaleProduct.unit
+                      )}
+                      {renderSpecRow(
+                        labels.price,
+                        wholesalePriceMap[activeDetailedItem.id]?.price
+                      )}
+                      {renderSpecRow(labels.flavor, activeDetailedItem.flavor)}
+                    </dl>
+
+                    <div className="simple-quantity-block">
+                      <p className="simple-quantity-label">数量</p>
+
+                      <div className="simple-quantity-control">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            removeFromCart(activeWholesaleProduct.id)
+                          }
+                        >
+                          −
+                        </button>
+
+                        <input
+                          type="number"
+                          min="0"
+                          value={cart[activeWholesaleProduct.id] || 0}
+                          onChange={(e) => {
+                            const value = Number(e.target.value);
+                            const safeValue = Number.isNaN(value)
+                              ? 0
+                              : Math.max(0, value);
+
+                            setCart((prev) => {
+                              const next = { ...prev };
+                              if (safeValue === 0) delete next[activeWholesaleProduct.id];
+                              else next[activeWholesaleProduct.id] = safeValue;
+                              return next;
+                            });
+                          }}
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => addToCart(activeWholesaleProduct.id)}
+                        >
+                          ＋
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="modal-cta-link modal-fade-up"
+                      onClick={() => setActiveItemId(null)}
+                    >
+                      カートに入れる
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <dl className="product-specs product-specs-classic modal-fade-up">
+                      {renderSpecRow(labels.weight, activeSimpleItem?.weight)}
+                      {renderSpecRow(
+                        labels.price,
+                        `¥${activeSimpleItem?.wholesalePrice?.toLocaleString()}`
+                      )}
+                    </dl>
+
+                    <div className="simple-quantity-block">
+                      <p className="simple-quantity-label">数量</p>
+
+                      <div className="simple-quantity-control">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            removeFromCart(activeWholesaleProduct.id)
+                          }
+                        >
+                          −
+                        </button>
+
+                        <input
+                          type="number"
+                          min="0"
+                          value={cart[activeWholesaleProduct.id] || 0}
+                          onChange={(e) => {
+                            const value = Number(e.target.value);
+                            const safeValue = Number.isNaN(value)
+                              ? 0
+                              : Math.max(0, value);
+
+                            setCart((prev) => {
+                              const next = { ...prev };
+                              if (safeValue === 0) delete next[activeWholesaleProduct.id];
+                              else next[activeWholesaleProduct.id] = safeValue;
+                              return next;
+                            });
+                          }}
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => addToCart(activeWholesaleProduct.id)}
+                        >
+                          ＋
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="modal-cta-link modal-fade-up"
+                      onClick={() => setActiveItemId(null)}
+                    >
+                      カートに入れる
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {approved && cartCount > 0 && (
         <div
@@ -432,9 +672,7 @@ function OriginalBagCard({ user, approved }) {
           gap: "0.9rem",
         }}
       >
-        <span style={{ fontSize: "2rem", color: "rgba(255,255,255,0.35)" }}>
-          ✦
-        </span>
+        <span style={{ fontSize: "2rem", color: "rgba(255,255,255,0.35)" }}>✦</span>
         <span
           style={{
             border: "1px solid rgba(255,255,255,0.08)",

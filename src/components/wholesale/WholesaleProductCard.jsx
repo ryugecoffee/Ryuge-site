@@ -6,6 +6,7 @@ export default function WholesaleProductCard({
   quantity = 0,
   onAdd,
   onRemove,
+  onOpenDetail,
 }) {
   const { approved } = useAuth();
 
@@ -17,7 +18,9 @@ export default function WholesaleProductCard({
         display: "flex",
         flexDirection: "column",
         transition: "border-color 0.25s ease",
+        cursor: "pointer",
       }}
+      onClick={onOpenDetail}
       onMouseEnter={(e) =>
         (e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)")
       }
@@ -25,7 +28,6 @@ export default function WholesaleProductCard({
         (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")
       }
     >
-      {/* 画像 */}
       <div
         style={{
           aspectRatio: "1 / 1",
@@ -47,7 +49,6 @@ export default function WholesaleProductCard({
         )}
       </div>
 
-      {/* テキスト */}
       <div
         style={{
           padding: "1.2rem 1rem",
@@ -57,7 +58,6 @@ export default function WholesaleProductCard({
           gap: "0.5rem",
         }}
       >
-        {/* 名前 */}
         <p
           style={{
             fontSize: "0.95rem",
@@ -70,7 +70,6 @@ export default function WholesaleProductCard({
           {product.name}
         </p>
 
-        {/* サブタイトル */}
         {product.subtitle && (
           <p
             style={{
@@ -84,7 +83,6 @@ export default function WholesaleProductCard({
           </p>
         )}
 
-        {/* 説明 */}
         {product.description && (
           <p
             style={{
@@ -98,7 +96,6 @@ export default function WholesaleProductCard({
           </p>
         )}
 
-        {/* 下部 */}
         <div
           style={{
             marginTop: "auto",
@@ -108,7 +105,6 @@ export default function WholesaleProductCard({
         >
           {approved ? (
             <>
-              {/* 価格 */}
               <p
                 style={{
                   fontSize: "1rem",
@@ -125,14 +121,16 @@ export default function WholesaleProductCard({
                     marginLeft: "0.4rem",
                   }}
                 >
-                  / {product.unit ?? "個"}（税抜）
+                  / {product.unit}（税抜）
                 </span>
               </p>
 
-              {/* ボタン */}
               {quantity === 0 ? (
                 <button
-                  onClick={onAdd}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAdd();
+                  }}
                   style={{
                     width: "100%",
                     background: "none",
@@ -163,7 +161,13 @@ export default function WholesaleProductCard({
                     gap: "0.8rem",
                   }}
                 >
-                  <button style={qtyBtn} onClick={onRemove}>
+                  <button
+                    style={qtyBtn}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemove();
+                    }}
+                  >
                     −
                   </button>
                   <span
@@ -176,7 +180,13 @@ export default function WholesaleProductCard({
                   >
                     {quantity}
                   </span>
-                  <button style={qtyBtn} onClick={onAdd}>
+                  <button
+                    style={qtyBtn}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAdd();
+                    }}
+                  >
                     ＋
                   </button>
                 </div>
