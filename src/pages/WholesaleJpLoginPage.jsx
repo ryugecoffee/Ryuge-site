@@ -101,11 +101,13 @@ export default function WholesaleJpLoginPage() {
         }}
       >
         <div
-          style={{
-            width: "100%",
-            maxWidth: "540px",
-          }}
-        >
+  style={{
+    width: "100%",
+    maxWidth: "540px",
+    position: "relative",
+    zIndex: 5,
+  }}
+>
           <div style={{ textAlign: "center", marginBottom: "2.2rem" }}>
             <p
               style={{
@@ -132,12 +134,14 @@ export default function WholesaleJpLoginPage() {
           </div>
 
           <form
-            onSubmit={handleSubmit}
-            style={{
-              backgroundColor: "transparent",
-              padding: 0,
-            }}
-          >
+  onSubmit={handleSubmit}
+  style={{
+    backgroundColor: "transparent",
+    padding: 0,
+    position: "relative",
+    zIndex: 5,
+  }}
+>
             <div style={{ marginBottom: "1.2rem" }}>
               <label
                 style={{
@@ -205,9 +209,16 @@ export default function WholesaleJpLoginPage() {
               </p>
             )}
 
-            <button type="submit" disabled={loading} style={submitButtonStyle}>
-              {loading ? "Loading..." : "Login"}
-            </button>
+            <button
+  type="submit"
+  disabled={loading}
+  style={{
+    ...submitButtonStyle,
+    opacity: loading ? 0.55 : 1,
+  }}
+>
+  {loading ? "Loading..." : "Login"}
+</button>
           </form>
 
           <div
@@ -271,13 +282,19 @@ const submitButtonStyle = {
   width: "100%",
   height: "56px",
   marginTop: "0.8rem",
-  background: "none",
-  border: "1px solid rgba(255,255,255,0.16)",
-  color: "rgba(255,255,255,0.92)",
+  backgroundColor: "transparent",
+  border: "1px solid rgba(255,255,255,0.22)",
+  color: "rgba(255,255,255,0.96)",
   cursor: "pointer",
   fontSize: "0.92rem",
   letterSpacing: "0.16em",
   textTransform: "uppercase",
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   fontWeight: 600,
+  appearance: "none",
+  WebkitAppearance: "none",
+  borderRadius: 0,
+  pointerEvents: "auto",
+  position: "relative",
+  zIndex: 5,
 };
