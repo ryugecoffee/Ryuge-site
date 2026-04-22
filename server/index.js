@@ -13,6 +13,11 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+console.log("FIREBASE_PROJECT_ID exists:", !!process.env.FIREBASE_PROJECT_ID);
+console.log("FIREBASE_CLIENT_EMAIL exists:", !!process.env.FIREBASE_CLIENT_EMAIL);
+console.log("FIREBASE_PRIVATE_KEY exists:", !!process.env.FIREBASE_PRIVATE_KEY);
+console.log("FIREBASE_PROJECT_ID value:", process.env.FIREBASE_PROJECT_ID);
+
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert({
