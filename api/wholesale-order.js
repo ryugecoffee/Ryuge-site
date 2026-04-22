@@ -6,6 +6,12 @@ export default async function handler(req, res) {
   }
 
   try {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      return res.status(500).json({
+        error: "EMAIL_USER または EMAIL_PASS が未設定です。",
+      });
+    }
+
     const {
       cartItems = [],
       companyName = "",
@@ -27,10 +33,7 @@ export default async function handler(req, res) {
     }
 
     const subtotal = cartItems.reduce((sum, item) => {
-      return (
-        sum +
-        Number(item.wholesalePrice || 0) * Number(item.quantity || 0)
-      );
+      return sum + Number(item.wholesalePrice || 0) * Number(item.quantity || 0);
     }, 0);
 
     const totalAmount = Math.floor(subtotal * 1.1);
@@ -63,17 +66,21 @@ ${itemLines}
     `.trim();
 
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: process.env.EMAIL_USER.trim(),
+        pass: process.env.EMAIL_PASS.replace(/\s+/g, ""),
       },
     });
 
+    await transporter.verify();
+
     await transporter.sendMail({
-      from: `"Ryuge Coffee" <${process.env.EMAIL_USER}>`,
+      from: process.env.EMAIL_USER.trim(),
       to: "ryugecoffee@gmail.com",
-      replyTo: email,
+      replyTo: email.trim(),
       subject: `【卸発注】${companyName}`,
       text,
     });
@@ -81,6 +88,9 @@ ${itemLines}
     return res.status(200).json({ ok: true });
   } catch (error) {
     console.error("wholesale-order error:", error);
-    return res.status(500).json({ error: "メール送信に失敗しました。" });
+
+    return res.status(500).json({
+      error: error?.message || "メール送信に失敗しました。",
+    });
   }
 }
