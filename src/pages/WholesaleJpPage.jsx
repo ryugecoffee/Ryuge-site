@@ -495,120 +495,146 @@ export default function WholesaleJpPage() {
                         wholesalePriceMap[activeDetailedItem.id]?.weight ||
                           activeWholesaleProduct.unit
                       )}
-                      {renderSpecRow(
-                        labels.price,
-                        wholesalePriceMap[activeDetailedItem.id]?.price
-                      )}
+                      {approved
+  ? renderSpecRow(
+      labels.price,
+      wholesalePriceMap[activeDetailedItem.id]?.price
+    )
+  : null}
                       {renderSpecRow(labels.flavor, activeDetailedItem.flavor)}
                     </dl>
 
-                    <div className="simple-quantity-block">
-                      <p className="simple-quantity-label">数量</p>
+                    {approved ? (
+  <>
+    <div className="simple-quantity-block">
+      <p className="simple-quantity-label">数量</p>
 
-                      <div className="simple-quantity-control">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            removeFromCart(activeWholesaleProduct.id)
-                          }
-                        >
-                          −
-                        </button>
+      <div className="simple-quantity-control">
+        <button
+          type="button"
+          onClick={() => removeFromCart(activeWholesaleProduct.id)}
+        >
+          −
+        </button>
 
-                        <input
-                          type="number"
-                          min="0"
-                          value={cart[activeWholesaleProduct.id] || 0}
-                          onChange={(e) => {
-                            const value = Number(e.target.value);
-                            const safeValue = Number.isNaN(value)
-                              ? 0
-                              : Math.max(0, value);
+        <input
+          type="number"
+          min="0"
+          value={cart[activeWholesaleProduct.id] || 0}
+          onChange={(e) => {
+            const value = Number(e.target.value);
+            const safeValue = Number.isNaN(value) ? 0 : Math.max(0, value);
 
-                            setCart((prev) => {
-                              const next = { ...prev };
-                              if (safeValue === 0) delete next[activeWholesaleProduct.id];
-                              else next[activeWholesaleProduct.id] = safeValue;
-                              return next;
-                            });
-                          }}
-                        />
+            setCart((prev) => {
+              const next = { ...prev };
+              if (safeValue === 0) delete next[activeWholesaleProduct.id];
+              else next[activeWholesaleProduct.id] = safeValue;
+              return next;
+            });
+          }}
+        />
 
-                        <button
-                          type="button"
-                          onClick={() => addToCart(activeWholesaleProduct.id)}
-                        >
-                          ＋
-                        </button>
-                      </div>
-                    </div>
+        <button
+          type="button"
+          onClick={() => addToCart(activeWholesaleProduct.id)}
+        >
+          ＋
+        </button>
+      </div>
+    </div>
 
-                    <button
-                      type="button"
-                      className="modal-cta-link modal-fade-up"
-                      onClick={() => setActiveItemId(null)}
-                    >
-                      カートに入れる
-                    </button>
+    <button
+      type="button"
+      className="modal-cta-link modal-fade-up"
+      onClick={() => setActiveItemId(null)}
+    >
+      カートに入れる
+    </button>
+  </>
+) : (
+  <p
+    style={{
+      marginTop: "18px",
+      color: "rgba(255,255,255,0.45)",
+      fontSize: "0.78rem",
+      lineHeight: 1.9,
+    }}
+  >
+    価格と発注にはログインが必要です。
+  </p>
+)}
                   </>
                 ) : (
                   <>
                     <dl className="product-specs product-specs-classic modal-fade-up">
                       {renderSpecRow(labels.weight, activeSimpleItem?.weight)}
-                      {renderSpecRow(
-                        labels.price,
-                        `¥${activeSimpleItem?.wholesalePrice?.toLocaleString()}`
-                      )}
+                      {approved
+  ? renderSpecRow(
+      labels.price,
+      `¥${activeSimpleItem?.wholesalePrice?.toLocaleString()}`
+    )
+  : null}
                     </dl>
 
-                    <div className="simple-quantity-block">
-                      <p className="simple-quantity-label">数量</p>
+                    {approved ? (
+  <>
+    <div className="simple-quantity-block">
+      <p className="simple-quantity-label">数量</p>
 
-                      <div className="simple-quantity-control">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            removeFromCart(activeWholesaleProduct.id)
-                          }
-                        >
-                          −
-                        </button>
+      <div className="simple-quantity-control">
+        <button
+          type="button"
+          onClick={() => removeFromCart(activeWholesaleProduct.id)}
+        >
+          −
+        </button>
 
-                        <input
-                          type="number"
-                          min="0"
-                          value={cart[activeWholesaleProduct.id] || 0}
-                          onChange={(e) => {
-                            const value = Number(e.target.value);
-                            const safeValue = Number.isNaN(value)
-                              ? 0
-                              : Math.max(0, value);
+        <input
+          type="number"
+          min="0"
+          value={cart[activeWholesaleProduct.id] || 0}
+          onChange={(e) => {
+            const value = Number(e.target.value);
+            const safeValue = Number.isNaN(value) ? 0 : Math.max(0, value);
 
-                            setCart((prev) => {
-                              const next = { ...prev };
-                              if (safeValue === 0) delete next[activeWholesaleProduct.id];
-                              else next[activeWholesaleProduct.id] = safeValue;
-                              return next;
-                            });
-                          }}
-                        />
+            setCart((prev) => {
+              const next = { ...prev };
+              if (safeValue === 0) delete next[activeWholesaleProduct.id];
+              else next[activeWholesaleProduct.id] = safeValue;
+              return next;
+            });
+          }}
+        />
 
-                        <button
-                          type="button"
-                          onClick={() => addToCart(activeWholesaleProduct.id)}
-                        >
-                          ＋
-                        </button>
-                      </div>
-                    </div>
+        <button
+          type="button"
+          onClick={() => addToCart(activeWholesaleProduct.id)}
+        >
+          ＋
+        </button>
+      </div>
+    </div>
 
-                    <button
-                      type="button"
-                      className="modal-cta-link modal-fade-up"
-                      onClick={() => setActiveItemId(null)}
-                    >
-                      カートに入れる
-                    </button>
+    <button
+      type="button"
+      className="modal-cta-link modal-fade-up"
+      onClick={() => setActiveItemId(null)}
+    >
+      カートに入れる
+    </button>
+  </>
+) : (
+  <p
+    style={{
+      marginTop: "18px",
+      color: "rgba(255,255,255,0.45)",
+      fontSize: "0.78rem",
+      lineHeight: 1.9,
+    }}
+  >
+    価格と発注にはログインが必要です。
+  </p>
+)}
                   </>
                 )}
               </div>
