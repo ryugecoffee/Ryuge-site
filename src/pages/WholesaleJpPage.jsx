@@ -82,7 +82,7 @@ const WHOLESALE_PRODUCTS = [
     name: "木函",
     subtitle: "Wooden Edition",
     description: "木箱で届く贈り物のような静かなプレミアム",
-    image: "/images/woodbox-3.jpg",
+    image: "/images/woodbox.jpg",
     wholesalePrice: 1950,
     unit: "100g",
   },
