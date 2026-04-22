@@ -17,20 +17,20 @@ export default function WholesaleJpOrderCompletePage() {
       }}
     >
       <div style={{ width: "100%", maxWidth: "520px", textAlign: "center" }}>
-        {/* eyebrow */}
         <p
           style={{
-            fontSize: "0.65rem",
-            letterSpacing: "0.26em",
+            fontFamily: "Inter, sans-serif",
+            fontSize: "0.7rem",
+            fontWeight: 500,
+            letterSpacing: "0.12em",
             textTransform: "uppercase",
-            color: "#666",
+            color: "rgba(255,255,255,0.55)",
             margin: "0 0 1.5rem",
           }}
         >
           Wholesale — Order Complete
         </p>
 
-        {/* タイトル */}
         <h1
           style={{
             fontSize: "1.8rem",
@@ -44,7 +44,6 @@ export default function WholesaleJpOrderCompletePage() {
           ご注文を受け付けました
         </h1>
 
-        {/* 説明文 */}
         <p
           style={{
             fontSize: "0.8rem",
@@ -68,7 +67,6 @@ export default function WholesaleJpOrderCompletePage() {
           までご連絡ください。
         </p>
 
-        {/* 区切り線 */}
         <div
           style={{
             width: "40px",
@@ -78,7 +76,6 @@ export default function WholesaleJpOrderCompletePage() {
           }}
         />
 
-        {/* ボタン群 */}
         <div
           style={{
             display: "flex",
@@ -109,7 +106,9 @@ export default function WholesaleJpOrderCompletePage() {
           <Link
             to="/wholesale-jp/dashboard"
             style={{
+              fontFamily: "Inter, sans-serif",
               fontSize: "0.65rem",
+              fontWeight: 500,
               color: "#666",
               textDecoration: "none",
               letterSpacing: "0.1em",
