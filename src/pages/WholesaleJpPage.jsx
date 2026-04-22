@@ -8,72 +8,65 @@ const WHOLESALE_PRODUCTS = [
   {
     id: "wh-simple-600",
     name: "無印",
-    subtitle: "Simple Package / 100g",
-    description:
-      "最もシンプルな卸向け仕様。導入しやすい価格帯で展開するベースライン。",
+    subtitle: "Simple Package",
+    description: "シンプルなパッケージ仕様。",
     image: "/images/simple.jpg",
     wholesalePrice: 600,
-    unit: "袋",
+    unit: "100g",
   },
   {
     id: "wh-simple-700",
     name: "無印",
-    subtitle: "Simple Package / 100g",
-    description:
-      "中間帯のブレンドやシングルオリジン向けの無印仕様。",
+    subtitle: "Simple Package",
+    description: "シンプルなパッケージ仕様。",
     image: "/images/simple.jpg",
     wholesalePrice: 700,
-    unit: "袋",
+    unit: "100g",
   },
   {
     id: "wh-simple-750",
     name: "無印",
-    subtitle: "Simple Package / 100g",
-    description:
-      "やや上位グレードの豆に対応した無印仕様。",
+    subtitle: "Simple Package",
+    description: "シンプルなパッケージ仕様。",
     image: "/images/simple.jpg",
     wholesalePrice: 750,
-    unit: "袋",
+    unit: "100g",
   },
   {
     id: "wh-enma-1700",
     name: "閻魔",
-    subtitle: "Enma / 180g",
-    description:
-      "龍華珈琲の象徴となる定番。静かな輪郭と余韻を持つ主軸の珈琲。",
+    subtitle: "Enma",
+    description: "龍華珈琲の象徴となる定番。",
     image: "/images/top.enma.jpg",
     wholesalePrice: 1190,
-    unit: "袋",
+    unit: "180g",
   },
   {
     id: "wh-enma-1980",
     name: "閻魔",
-    subtitle: "Enma / 180g",
-    description:
-      "中間グレードの構成。バランスと個性を両立したライン。",
+    subtitle: "Enma",
+    description: "龍華珈琲の象徴となる定番。",
     image: "/images/top.enma.jpg",
     wholesalePrice: 1380,
-    unit: "袋",
+    unit: "180g",
   },
   {
     id: "wh-enma-2100",
     name: "閻魔",
-    subtitle: "Enma / 180g",
-    description:
-      "上位グレード。より繊細な香味と奥行きを持つ構成。",
+    subtitle: "Enma",
+    description: "龍華珈琲の象徴となる定番。",
     image: "/images/top.enma.jpg",
     wholesalePrice: 1470,
-    unit: "袋",
+    unit: "180g",
   },
   {
     id: "wh-woodbox",
     name: "木函",
-    subtitle: "Wooden Edition / 100g",
-    description:
-      "木の質感と余白を大切にした上位仕様。贈答・特別販売向け。",
+    subtitle: "Wooden Edition",
+    description: "木箱仕様の特別ライン。",
     image: "/images/top.woodbox-3.jpg",
     wholesalePrice: 1950,
-    unit: "箱",
+    unit: "100g",
   },
 ];
 
@@ -133,7 +126,6 @@ export default function WholesaleJpPage() {
           '"Cormorant Garamond", "Noto Serif JP", "Hiragino Mincho ProN", serif',
       }}
     >
-      {/* Header */}
       <header
         style={{
           position: "sticky",
@@ -252,31 +244,6 @@ export default function WholesaleJpPage() {
             padding: "4.5rem 3.4rem 2rem",
           }}
         >
-          <p
-            style={{
-              margin: "0 0 1rem",
-              color: pageStyles.mutedText,
-              fontSize: "0.72rem",
-              letterSpacing: "0.26em",
-              textTransform: "uppercase",
-            }}
-          >
-            Wholesale — Japan
-          </p>
-
-          <h1
-            style={{
-              margin: "0 0 2rem",
-              color: pageStyles.strongText,
-              fontSize: "3rem",
-              fontWeight: 400,
-              letterSpacing: "0.05em",
-              lineHeight: 1.24,
-            }}
-          >
-            卸販売｜国内
-          </h1>
-
           <div
             style={{
               maxWidth: "760px",
