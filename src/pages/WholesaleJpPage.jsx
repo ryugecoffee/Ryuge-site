@@ -6,54 +6,74 @@ import WholesaleProductCard from "../components/wholesale/WholesaleProductCard";
 
 const WHOLESALE_PRODUCTS = [
   {
-    id: "wh-enma-100",
-    name: "閻魔",
-    subtitle: "Enma / 100g",
+    id: "wh-simple-600",
+    name: "無印",
+    subtitle: "Simple Package / 100g",
     description:
-      "龍華珈琲の象徴となる定番。静かな輪郭と余韻を持つ主軸の珈琲。",
-    image: "/images/top.enma.jpg",
-    wholesalePrice: 980,
+      "最もシンプルな卸向け仕様。導入しやすい価格帯で展開するベースライン。",
+    image: "/images/simple.jpg",
+    wholesalePrice: 600,
     unit: "袋",
   },
   {
-    id: "wh-enma-200",
-    name: "閻魔",
-    subtitle: "Enma / 200g",
+    id: "wh-simple-700",
+    name: "無印",
+    subtitle: "Simple Package / 100g",
     description:
-      "卸導入向けの基本仕様。店頭・ギフトの両方で扱いやすい分量です。",
+      "中間帯のブレンドやシングルオリジン向けの無印仕様。",
+    image: "/images/simple.jpg",
+    wholesalePrice: 700,
+    unit: "袋",
+  },
+  {
+    id: "wh-simple-750",
+    name: "無印",
+    subtitle: "Simple Package / 100g",
+    description:
+      "やや上位グレードの豆に対応した無印仕様。",
+    image: "/images/simple.jpg",
+    wholesalePrice: 750,
+    unit: "袋",
+  },
+  {
+    id: "wh-enma-1700",
+    name: "閻魔",
+    subtitle: "Enma / 180g",
+    description:
+      "龍華珈琲の象徴となる定番。静かな輪郭と余韻を持つ主軸の珈琲。",
     image: "/images/top.enma.jpg",
-    wholesalePrice: 1780,
+    wholesalePrice: 1190,
+    unit: "袋",
+  },
+  {
+    id: "wh-enma-1980",
+    name: "閻魔",
+    subtitle: "Enma / 180g",
+    description:
+      "中間グレードの構成。バランスと個性を両立したライン。",
+    image: "/images/top.enma.jpg",
+    wholesalePrice: 1380,
+    unit: "袋",
+  },
+  {
+    id: "wh-enma-2100",
+    name: "閻魔",
+    subtitle: "Enma / 180g",
+    description:
+      "上位グレード。より繊細な香味と奥行きを持つ構成。",
+    image: "/images/top.enma.jpg",
+    wholesalePrice: 1470,
     unit: "袋",
   },
   {
     id: "wh-woodbox",
     name: "木函",
-    subtitle: "Wooden Edition",
+    subtitle: "Wooden Edition / 100g",
     description:
       "木の質感と余白を大切にした上位仕様。贈答・特別販売向け。",
     image: "/images/top.woodbox-3.jpg",
-    wholesalePrice: 2400,
+    wholesalePrice: 1950,
     unit: "箱",
-  },
-  {
-    id: "wh-oriori-drip",
-    name: "折々",
-    subtitle: "Oriori / Drip Bag",
-    description:
-      "日々の導入に向くドリップバッグ。軽やかに龍華の輪郭を届けます。",
-    image: "/images/top.oriori.jpg",
-    wholesalePrice: 180,
-    unit: "袋",
-  },
-  {
-    id: "wh-oriori-seasonal",
-    name: "折々",
-    subtitle: "Oriori / Seasonal",
-    description:
-      "季節ごとに内容が移ろう卸向け提案。時期ごとの売場演出にも対応。",
-    image: "/images/top.oriori.jpg",
-    wholesalePrice: 1100,
-    unit: "袋",
   },
 ];
 
@@ -158,16 +178,10 @@ export default function WholesaleJpPage() {
               alignItems: "center",
             }}
           >
-            <Link
-              to="/products"
-              style={navLinkStyle}
-            >
+            <Link to="/products" style={navLinkStyle}>
               商品
             </Link>
-            <Link
-              to="/wholesale-jp"
-              style={navLinkStyle}
-            >
+            <Link to="/wholesale-jp" style={navLinkStyle}>
               卸
             </Link>
           </nav>
@@ -181,10 +195,7 @@ export default function WholesaleJpPage() {
             }}
           >
             {user && (
-              <Link
-                to="/wholesale-jp/dashboard"
-                style={rightLinkStyle}
-              >
+              <Link to="/wholesale-jp/dashboard" style={rightLinkStyle}>
                 Dashboard
               </Link>
             )}
@@ -225,10 +236,7 @@ export default function WholesaleJpPage() {
                 Logout
               </button>
             ) : (
-              <Link
-                to="/wholesale-jp/login"
-                style={rightLinkStyle}
-              >
+              <Link to="/wholesale-jp/login" style={rightLinkStyle}>
                 Login
               </Link>
             )}
@@ -457,7 +465,9 @@ function OriginalBagCard({ user, approved }) {
           gap: "0.9rem",
         }}
       >
-        <span style={{ fontSize: "2rem", color: "rgba(255,255,255,0.35)" }}>✦</span>
+        <span style={{ fontSize: "2rem", color: "rgba(255,255,255,0.35)" }}>
+          ✦
+        </span>
         <span
           style={{
             border: "1px solid rgba(255,255,255,0.08)",
