@@ -1,6 +1,10 @@
 // src/contexts/AuthContext.jsx
 import { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import {
+  onAuthStateChanged,
+  signOut,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../lib/firebase";
 
@@ -20,6 +24,7 @@ export function AuthProvider({ children }) {
         try {
           const docRef = doc(db, "users", firebaseUser.uid);
           const docSnap = await getDoc(docRef);
+
           if (docSnap.exists()) {
             const data = docSnap.data();
             setApproved(data.approved === true);
@@ -44,10 +49,23 @@ export function AuthProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
+  const login = (email, password) => {
+    return signInWithEmailAndPassword(auth, email, password);
+  };
+
   const logout = () => signOut(auth);
 
   return (
-    <AuthContext.Provider value={{ user, approved, isAdmin, loading, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        approved,
+        isAdmin,
+        loading,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
