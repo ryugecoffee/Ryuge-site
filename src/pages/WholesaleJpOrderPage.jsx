@@ -1,4 +1,3 @@
-// src/pages/WholesaleJpOrderPage.jsx
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -35,169 +34,205 @@ function OrderContent() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
- const subtotal = cartItems.reduce(
-  (sum, item) => sum + item.wholesalePrice * item.quantity, 0
-);
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + Number(item.wholesalePrice || 0) * Number(item.quantity || 0),
+    0
+  );
 
-const totalAmount = Math.floor(subtotal * 1.1);
+  const totalAmount = Math.floor(subtotal * 1.1);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setError("");
 
-    if (!form.companyName || !form.contactName || !form.email || !form.phone || !form.address) {
+    if (
+      !form.companyName ||
+      !form.contactName ||
+      !form.email ||
+      !form.phone ||
+      !form.address
+    ) {
       setError("必須項目をすべてご入力ください。");
+      return;
+    }
+
+    if (cartItems.length === 0) {
+      setError("商品が選択されていません。");
       return;
     }
 
     setLoading(true);
 
     try {
-      // メール送信（mailto形式でフォールバック）
-      const subject = encodeURIComponent("【卸発注】" + form.companyName);
-      const itemLines = cartItems
-        .map((item) => `・${item.name} × ${item.quantity}（¥${(item.wholesalePrice * item.quantity).toLocaleString()}）`)
-        .join("\n");
+      const res = await fetch("/api/wholesale-order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          cartItems,
+          companyName: form.companyName,
+          contactName: form.contactName,
+          email: form.email,
+          phone: form.phone,
+          postalCode: form.postalCode,
+          address: form.address,
+          note: form.note,
+          paymentMethod: "後払い（請求書払い）",
+        }),
+      });
 
-      const body = encodeURIComponent(
-        `【発注内容】\n${itemLines}\n\n合計：¥${totalAmount.toLocaleString()}（税込）\n\n` +
-        `【お届け先】\n` +
-        `貴社名・店舗名：${form.companyName}\n` +
-        `担当者名：${form.contactName}\n` +
-        `メール：${form.email}\n` +
-        `電話番号：${form.phone}\n` +
-        `郵便番号：${form.postalCode}\n` +
-        `住所：${form.address}\n` +
-        `備考：${form.note || "なし"}\n\n` +
-        `お支払い方法：後払い（請求書払い）`
-      );
+      const data = await res.json();
 
-      window.location.href = `mailto:ryugecoffee@gmail.com?subject=${subject}&body=${body}`;
+      if (!res.ok) {
+        throw new Error(data.error || "送信に失敗しました。");
+      }
 
-      // 少し待ってから完了ページへ
-      setTimeout(() => {
-        navigate("/wholesale-jp/order/complete");
-      }, 1000);
+      navigate("/wholesale-jp/order/complete");
     } catch (e) {
       console.error(e);
-      setError("送信に失敗しました。直接メールにてご連絡ください。");
+      setError(e.message || "送信に失敗しました。時間をおいて再度お試しください。");
       setLoading(false);
     }
   };
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      backgroundColor: "#2a2a2a",
-      fontFamily: "Cormorant Garamond, serif",
-      color: "#e8e2d9",
-    }}>
-
-      {/* ヘッダー */}
-      <div style={{
-        borderBottom: "1px solid #3a3a3a",
+    <div
+      style={{
+        minHeight: "100vh",
         backgroundColor: "#2a2a2a",
-        padding: "1.2rem 3rem",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        position: "sticky",
-        top: 0,
-        zIndex: 100,
-      }}>
-        <Link to="/" style={{
-          textDecoration: "none",
-          fontSize: "0.9rem",
-          letterSpacing: "0.2em",
-          color: "#e8e2d9",
-          textTransform: "uppercase",
-        }}>
+        fontFamily: "Cormorant Garamond, serif",
+        color: "#e8e2d9",
+      }}
+    >
+      <div
+        style={{
+          borderBottom: "1px solid #3a3a3a",
+          backgroundColor: "#2a2a2a",
+          padding: "1.2rem 3rem",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          position: "sticky",
+          top: 0,
+          zIndex: 100,
+        }}
+      >
+        <Link
+          to="/"
+          style={{
+            textDecoration: "none",
+            fontSize: "0.9rem",
+            letterSpacing: "0.2em",
+            color: "#e8e2d9",
+            textTransform: "uppercase",
+          }}
+        >
           Ryuge Coffee
         </Link>
+
         <div style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
-          <Link to="/wholesale-jp" style={{
-            fontSize: "0.68rem",
-            color: "#888",
-            textDecoration: "none",
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-          }}>
+          <Link
+            to="/wholesale-jp"
+            style={{
+              fontSize: "0.68rem",
+              color: "#888",
+              textDecoration: "none",
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+            }}
+          >
             ← Products
           </Link>
-          <button onClick={logout} style={{
-            fontSize: "0.68rem",
-            color: "#666",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            padding: 0,
-            fontFamily: "Cormorant Garamond, serif",
-          }}>
+
+          <button
+            onClick={logout}
+            style={{
+              fontSize: "0.68rem",
+              color: "#666",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              padding: 0,
+              fontFamily: "Cormorant Garamond, serif",
+            }}
+          >
             Logout
           </button>
         </div>
       </div>
 
       <div style={{ maxWidth: "860px", margin: "0 auto", padding: "5rem 3rem 7rem" }}>
-
-        {/* タイトル */}
         <div style={{ marginBottom: "3.5rem" }}>
-          <p style={{
-            fontSize: "0.65rem",
-            letterSpacing: "0.26em",
-            textTransform: "uppercase",
-            color: "#666",
-            margin: "0 0 0.8rem",
-          }}>
+          <p
+            style={{
+              fontSize: "0.65rem",
+              letterSpacing: "0.26em",
+              textTransform: "uppercase",
+              color: "#666",
+              margin: "0 0 0.8rem",
+            }}
+          >
             Wholesale — Order
           </p>
-          <h1 style={{
-            fontSize: "1.8rem",
-            fontWeight: 400,
-            letterSpacing: "0.06em",
-            color: "#e8e2d9",
-            margin: 0,
-            lineHeight: 1.3,
-          }}>
+
+          <h1
+            style={{
+              fontSize: "1.8rem",
+              fontWeight: 400,
+              letterSpacing: "0.06em",
+              color: "#e8e2d9",
+              margin: 0,
+              lineHeight: 1.3,
+            }}
+          >
             発注フォーム
           </h1>
         </div>
 
-        {/* カートが空の場合 */}
         {cartItems.length === 0 && (
-          <div style={{
-            padding: "2rem",
-            borderLeft: "2px solid #444",
-            backgroundColor: "#333",
-            marginBottom: "3rem",
-          }}>
+          <div
+            style={{
+              padding: "2rem",
+              borderLeft: "2px solid #444",
+              backgroundColor: "#333",
+              marginBottom: "3rem",
+            }}
+          >
             <p style={{ fontSize: "0.78rem", color: "#888", margin: 0, lineHeight: 1.9 }}>
               選択された商品がありません。
-              <Link to="/wholesale-jp" style={{ color: "#e8e2d9", marginLeft: "0.5em", textDecoration: "underline" }}>
+              <Link
+                to="/wholesale-jp"
+                style={{ color: "#e8e2d9", marginLeft: "0.5em", textDecoration: "underline" }}
+              >
                 商品ページへ戻る
               </Link>
             </p>
           </div>
         )}
 
-        {/* 注文内容確認 */}
         {cartItems.length > 0 && (
           <div style={{ marginBottom: "3.5rem" }}>
-            <p style={{
-              fontSize: "0.65rem",
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
-              color: "#555",
-              margin: "0 0 1.2rem",
-            }}>
+            <p
+              style={{
+                fontSize: "0.65rem",
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                color: "#555",
+                margin: "0 0 1.2rem",
+              }}
+            >
               Order Summary
             </p>
 
-            <div style={{
-              border: "1px solid #3a3a3a",
-              backgroundColor: "#333",
-            }}>
+            <div
+              style={{
+                border: "1px solid #3a3a3a",
+                backgroundColor: "#333",
+              }}
+            >
               {cartItems.map((item, i) => (
                 <div
                   key={item.id}
@@ -210,90 +245,110 @@ const totalAmount = Math.floor(subtotal * 1.1);
                   }}
                 >
                   <div>
-                    <p style={{ fontSize: "0.82rem", color: "#e8e2d9", margin: "0 0 0.2rem", letterSpacing: "0.03em" }}>
+                    <p
+                      style={{
+                        fontSize: "0.82rem",
+                        color: "#e8e2d9",
+                        margin: "0 0 0.2rem",
+                        letterSpacing: "0.03em",
+                      }}
+                    >
                       {item.name}
                     </p>
                     <p style={{ fontSize: "0.68rem", color: "#666", margin: 0 }}>
-                      ¥{item.wholesalePrice.toLocaleString()} × {item.quantity}
+                      ¥{Number(item.wholesalePrice || 0).toLocaleString()} × {item.quantity}
                     </p>
                   </div>
-                  <p style={{ fontSize: "0.85rem", color: "#e8e2d9", margin: 0, letterSpacing: "0.04em" }}>
-                    ¥{(item.wholesalePrice * item.quantity).toLocaleString()}
+
+                  <p
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "#e8e2d9",
+                      margin: 0,
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    ¥
+                    {(
+                      Number(item.wholesalePrice || 0) * Number(item.quantity || 0)
+                    ).toLocaleString()}
                   </p>
                 </div>
               ))}
 
-              {/* 合計 */}
-              <div style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "1.2rem 1.4rem",
-                borderTop: "1px solid #444",
-                backgroundColor: "#2a2a2a",
-              }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "1.2rem 1.4rem",
+                  borderTop: "1px solid #444",
+                  backgroundColor: "#2a2a2a",
+                }}
+              >
                 <div>
-  <p style={{ fontSize: "0.68rem", color: "#666", margin: 0 }}>
-    小計
-  </p>
-  <p style={{ fontSize: "0.85rem", margin: 0 }}>
-    ¥{subtotal.toLocaleString()}
-  </p>
-</div>
+                  <p style={{ fontSize: "0.68rem", color: "#666", margin: 0 }}>小計</p>
+                  <p style={{ fontSize: "0.85rem", margin: 0 }}>
+                    ¥{subtotal.toLocaleString()}
+                  </p>
+                </div>
 
-<div>
-  <p style={{ fontSize: "0.68rem", color: "#666", margin: 0 }}>
-    合計（税込）
-  </p>
-  <p style={{ fontSize: "1rem", margin: 0 }}>
-    ¥{totalAmount.toLocaleString()}
-  </p>
-</div>
+                <div>
+                  <p style={{ fontSize: "0.68rem", color: "#666", margin: 0 }}>
+                    合計（税込）
+                  </p>
+                  <p style={{ fontSize: "1rem", margin: 0 }}>
+                    ¥{totalAmount.toLocaleString()}
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* 支払い方法 */}
-            <div style={{
-              marginTop: "1rem",
-              padding: "0.8rem 1.4rem",
-              borderLeft: "2px solid #444",
-              backgroundColor: "#333",
-              fontSize: "0.72rem",
-              color: "#777",
-              letterSpacing: "0.04em",
-              lineHeight: 1.8,
-            }}>
+            <div
+              style={{
+                marginTop: "1rem",
+                padding: "0.8rem 1.4rem",
+                borderLeft: "2px solid #444",
+                backgroundColor: "#333",
+                fontSize: "0.72rem",
+                color: "#777",
+                letterSpacing: "0.04em",
+                lineHeight: 1.8,
+              }}
+            >
               お支払い方法：<span style={{ color: "#aaa" }}>後払い（請求書払い）</span>
               　※ 発注確認後、請求書をお送りします。
             </div>
           </div>
         )}
 
-        {/* エラー */}
         {error && (
-          <div style={{
-            marginBottom: "1.5rem",
-            padding: "0.8rem 1rem",
-            borderLeft: "2px solid #7a3a3a",
-            backgroundColor: "#3a2a2a",
-            fontSize: "0.75rem",
-            color: "#c08080",
-            letterSpacing: "0.04em",
-            lineHeight: 1.8,
-          }}>
+          <div
+            style={{
+              marginBottom: "1.5rem",
+              padding: "0.8rem 1rem",
+              borderLeft: "2px solid #7a3a3a",
+              backgroundColor: "#3a2a2a",
+              fontSize: "0.75rem",
+              color: "#c08080",
+              letterSpacing: "0.04em",
+              lineHeight: 1.8,
+            }}
+          >
             {error}
           </div>
         )}
 
-        {/* 入力フォーム */}
-        <div>
-          <p style={{
-            fontSize: "0.65rem",
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            color: "#555",
-            margin: "0 0 1.5rem",
-          }}>
+        <form onSubmit={handleSubmit}>
+          <p
+            style={{
+              fontSize: "0.65rem",
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: "#555",
+              margin: "0 0 1.5rem",
+            }}
+          >
             Delivery Information
           </p>
 
@@ -351,18 +406,20 @@ const totalAmount = Math.floor(subtotal * 1.1);
               placeholder="例：神奈川県鎌倉市..."
             />
 
-            {/* 備考 */}
             <div>
-              <label style={{
-                fontSize: "0.65rem",
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                color: "#666",
-                display: "block",
-                marginBottom: "0.5rem",
-              }}>
+              <label
+                style={{
+                  fontSize: "0.65rem",
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  color: "#666",
+                  display: "block",
+                  marginBottom: "0.5rem",
+                }}
+              >
                 備考
               </label>
+
               <textarea
                 name="note"
                 value={form.note}
@@ -386,9 +443,8 @@ const totalAmount = Math.floor(subtotal * 1.1);
               />
             </div>
 
-            {/* 送信ボタン */}
             <button
-              onClick={handleSubmit}
+              type="submit"
               disabled={loading || cartItems.length === 0}
               style={{
                 marginTop: "1rem",
@@ -399,51 +455,73 @@ const totalAmount = Math.floor(subtotal * 1.1);
                 fontSize: "0.72rem",
                 letterSpacing: "0.18em",
                 textTransform: "uppercase",
-                cursor: (loading || cartItems.length === 0) ? "not-allowed" : "pointer",
-                opacity: (loading || cartItems.length === 0) ? 0.4 : 1,
+                cursor: loading || cartItems.length === 0 ? "not-allowed" : "pointer",
+                opacity: loading || cartItems.length === 0 ? 0.4 : 1,
                 fontFamily: "Cormorant Garamond, serif",
                 transition: "border-color 0.2s",
               }}
-              onMouseEnter={e => { if (!loading) e.currentTarget.style.borderColor = "#e8e2d9"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = "#666"; }}
+              onMouseEnter={(e) => {
+                if (!loading && cartItems.length > 0) {
+                  e.currentTarget.style.borderColor = "#e8e2d9";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "#666";
+              }}
             >
               {loading ? "送信中..." : "注文を送信する"}
             </button>
 
-            <p style={{
-              fontSize: "0.68rem",
-              color: "#555",
-              margin: 0,
-              lineHeight: 1.9,
-              letterSpacing: "0.03em",
-              textAlign: "center",
-            }}>
-              送信後、内容確認のうえご連絡いたします。<br />
+            <p
+              style={{
+                fontSize: "0.68rem",
+                color: "#555",
+                margin: 0,
+                lineHeight: 1.9,
+                letterSpacing: "0.03em",
+                textAlign: "center",
+              }}
+            >
+              送信後、内容確認のうえご連絡いたします。
+              <br />
               決済は行われません。
             </p>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
 }
 
-function OrderField({ label, name, type = "text", value, onChange, required, placeholder }) {
+function OrderField({
+  label,
+  name,
+  type = "text",
+  value,
+  onChange,
+  required,
+  placeholder,
+}) {
   return (
     <div>
-      <label style={{
-        fontSize: "0.65rem",
-        letterSpacing: "0.14em",
-        textTransform: "uppercase",
-        color: "#666",
-        display: "block",
-        marginBottom: "0.5rem",
-      }}>
+      <label
+        style={{
+          fontSize: "0.65rem",
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          color: "#666",
+          display: "block",
+          marginBottom: "0.5rem",
+        }}
+      >
         {label}
         {required && (
-          <span style={{ color: "#7a5a5a", marginLeft: "0.4rem", fontSize: "0.6rem" }}>*</span>
+          <span style={{ color: "#7a5a5a", marginLeft: "0.4rem", fontSize: "0.6rem" }}>
+            *
+          </span>
         )}
       </label>
+
       <input
         type={type}
         name={name}
