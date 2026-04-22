@@ -6,11 +6,26 @@ const express = require("express");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const cors = require("cors");
 const nodemailer = require("nodemailer");
+const admin = require("firebase-admin");
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
+
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY
+        ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
+        : undefined,
+    }),
+  });
+}
+
+const db = admin.firestore();
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -159,7 +174,12 @@ function calcShipping(items, prefecture, countryType, zoneKey) {
     const baseShipping = INTERNATIONAL_SHIPPING[zoneKey || prefecture] ?? 8100;
     const beans = countBeans(safeItems);
     const bags = countBags(safeItems);
-    return applyInternationalShippingDiscount(baseShipping, beans, bags, zoneKey || prefecture);
+    return applyInternationalShippingDiscount(
+      baseShipping,
+      beans,
+      bags,
+      zoneKey || prefecture
+    );
   }
 
   if (subtotal >= 5000) return 0;
@@ -191,25 +211,51 @@ function applyCoupon(subtotal, shipping, couponCode) {
   }
 
   if (coupon.type === "shipping") {
-    const discountedShipping = Math.max(0, shipping - Math.round(shipping * (coupon.value / 100)));
+    const discountedShipping = Math.max(
+      0,
+      shipping - Math.round(shipping * (coupon.value / 100))
+    );
     return { subtotal, shipping: discountedShipping };
   }
 
   return { subtotal, shipping };
 }
 
+function escapeHtml(str = "") {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 // ===== 共通メール送信 =====
 async function sendUnifiedReceiptEmail(type, data) {
-  const { email, name, lang = "ja", items = [], total, shipping, address, planTitle } = data;
+  const {
+    email,
+    name,
+    lang = "ja",
+    items = [],
+    total,
+    shipping,
+    address,
+    planTitle,
+  } = data;
 
   if (!email) return;
 
   const isSubscription = type === "subscription";
 
   const subjects = {
-    ja: isSubscription ? "定期購入ありがとうございます | Ryuge Coffee" : "ご注文ありがとうございます | Ryuge Coffee",
-    en: isSubscription ? "Thank you for your subscription | Ryuge Coffee" : "Thank you for your order | Ryuge Coffee",
-    es: isSubscription ? "Gracias por tu suscripción | Ryuge Coffee" : "Gracias por tu pedido | Ryuge Coffee",
+    ja: isSubscription
+      ? "定期購入ありがとうございます | Ryuge Coffee"
+      : "ご注文ありがとうございます | Ryuge Coffee",
+    en: isSubscription
+      ? "Thank you for your subscription | Ryuge Coffee"
+      : "Thank you for your order | Ryuge Coffee",
+    es: isSubscription
+      ? "Gracias por tu suscripción | Ryuge Coffee"
+      : "Gracias por tu pedido | Ryuge Coffee",
   };
 
   const headlines = {
@@ -231,23 +277,27 @@ async function sendUnifiedReceiptEmail(type, data) {
   };
 
   const shippingLabels = { ja: "送料", en: "Shipping", es: "Envío" };
-  const totalLabels    = { ja: "合計", en: "Total",    es: "Total" };
-  const freeLabels     = { ja: "無料", en: "Free",     es: "Gratis" };
-  const addressLabels  = { ja: "お届け先", en: "Shipping Address", es: "Dirección" };
-  const manageLabels   = {
+  const totalLabels = { ja: "合計", en: "Total", es: "Total" };
+  const freeLabels = { ja: "無料", en: "Free", es: "Gratis" };
+  const addressLabels = {
+    ja: "お届け先",
+    en: "Shipping Address",
+    es: "Dirección",
+  };
+  const manageLabels = {
     ja: "定期購入の管理（解約・支払い変更）",
     en: "Manage your subscription (cancel / update payment)",
     es: "Gestionar suscripción (cancelar / actualizar pago)",
   };
 
-  const subject      = subjects[lang]      || subjects.ja;
-  const headline     = headlines[lang]     || headlines.ja;
-  const bodyText     = bodyTexts[lang]     || bodyTexts.ja;
+  const subject = subjects[lang] || subjects.ja;
+  const headline = headlines[lang] || headlines.ja;
+  const bodyText = bodyTexts[lang] || bodyTexts.ja;
   const shippingLabel = shippingLabels[lang] || shippingLabels.ja;
-  const totalLabel    = totalLabels[lang]    || totalLabels.ja;
-  const freeLabel     = freeLabels[lang]     || freeLabels.ja;
-  const addressLabel  = addressLabels[lang]  || addressLabels.ja;
-  const manageLabel   = manageLabels[lang]   || manageLabels.ja;
+  const totalLabel = totalLabels[lang] || totalLabels.ja;
+  const freeLabel = freeLabels[lang] || freeLabels.ja;
+  const addressLabel = addressLabels[lang] || addressLabels.ja;
+  const manageLabel = manageLabels[lang] || manageLabels.ja;
 
   let itemRows = "";
   if (isSubscription && planTitle) {
@@ -258,19 +308,33 @@ async function sendUnifiedReceiptEmail(type, data) {
         <td style="padding:10px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ccc;text-align:right;">—</td>
       </tr>`;
   } else {
-    itemRows = items.map((item) => `
+    itemRows = items
+      .map(
+        (item) => `
       <tr>
         <td style="padding:10px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ccc;">${item.title || ""}</td>
         <td style="padding:10px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#888;text-align:center;">× ${item.quantity || 1}</td>
         <td style="padding:10px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ccc;text-align:right;">¥${((item.price || 0) * (item.quantity || 1)).toLocaleString()}</td>
-      </tr>`).join("");
+      </tr>`
+      )
+      .join("");
   }
 
-  const shippingDisplay = (shipping === 0 || isSubscription) ? freeLabel : `¥${Number(shipping || 0).toLocaleString()}`;
-  const totalDisplay    = isSubscription ? "—" : `¥${Number(total || 0).toLocaleString()}`;
+  const shippingDisplay =
+    shipping === 0 || isSubscription
+      ? freeLabel
+      : `¥${Number(shipping || 0).toLocaleString()}`;
+
+  const totalDisplay = isSubscription
+    ? "—"
+    : `¥${Number(total || 0).toLocaleString()}`;
 
   const greeting = name
-    ? (lang === "ja" ? `${name} 様` : lang === "es" ? `Hola ${name},` : `Hi ${name},`)
+    ? lang === "ja"
+      ? `${name} 様`
+      : lang === "es"
+      ? `Hola ${name},`
+      : `Hi ${name},`
     : "";
 
   const html = `
@@ -366,16 +430,17 @@ async function sendAdminNotificationEmail(type, data) {
   const itemLines = isSubscription
     ? planTitle || "サブスクプラン"
     : (Array.isArray(items) ? items : [])
-        .map((item) => `${item.title} × ${item.quantity}　¥${((item.price || 0) * (item.quantity || 0)).toLocaleString()}`)
+        .map(
+          (item) =>
+            `${item.title} × ${item.quantity}　¥${((item.price || 0) * (item.quantity || 0)).toLocaleString()}`
+        )
         .join("\n");
 
   const shippingLine = isSubscription
     ? "送料：無料"
     : `送料：${shipping === 0 ? "無料" : `¥${Number(shipping || 0).toLocaleString()}`}`;
 
-  const totalLine = isSubscription
-    ? ""
-    : `合計：¥${Number(total || 0).toLocaleString()}`;
+  const totalLine = isSubscription ? "" : `合計：¥${Number(total || 0).toLocaleString()}`;
 
   await transporter.sendMail({
     from: `"Ryuge Coffee" <${process.env.EMAIL_USER}>`,
@@ -393,6 +458,128 @@ ${itemLines}
 ${shippingLine}
 ${totalLine}
 `.trim(),
+  });
+}
+
+// ===== 卸申請 管理者通知メール =====
+async function sendWholesaleAdminEmail(data) {
+  const {
+    companyName,
+    contactName,
+    businessType,
+    email,
+    message,
+    submittedAt,
+  } = data;
+
+  const adminAddresses = "ryugecoffee@gmail.com";
+  const subject = "【卸申請】新しい申請が届きました";
+
+  const safeCompanyName = companyName || "未入力";
+  const safeContactName = contactName || "未入力";
+  const safeBusinessType = businessType || "未入力";
+  const safeEmail = email || "未入力";
+  const safeMessage = message || "なし";
+  const safeSubmittedAt = submittedAt || "不明";
+
+  const text = `Ryuge Coffee 卸登録フォームから新しい申請が届きました。
+
+【会社名・店舗名】
+${safeCompanyName}
+
+【担当者名】
+${safeContactName}
+
+【業種】
+${safeBusinessType}
+
+【メールアドレス】
+${safeEmail}
+
+【ご要望・ご質問】
+${safeMessage}
+
+【申請日時】
+${safeSubmittedAt}
+`;
+
+  const html = `
+<!DOCTYPE html>
+<html lang="ja">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0d0d0d;font-family:'Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0d0d;padding:48px 0;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background:#111;border-radius:16px;overflow:hidden;max-width:560px;width:100%;">
+          <tr>
+            <td style="padding:40px 48px 32px;border-bottom:1px solid #1e1e1e;">
+              <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#444;">Ryuge Coffee</p>
+              <h1 style="margin:0;font-size:22px;font-weight:400;color:#e8e8e8;line-height:1.3;">新しい卸申請が届きました</h1>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:28px 48px 8px;">
+              <p style="margin:0;font-size:14px;line-height:1.8;color:#888;">
+                卸登録フォームから新しい申請が送信されました。内容は以下です。
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:12px 48px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:12px;color:#666;width:180px;">会社名・店舗名</td>
+                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ddd;">${escapeHtml(safeCompanyName)}</td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:12px;color:#666;">担当者名</td>
+                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ddd;">${escapeHtml(safeContactName)}</td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:12px;color:#666;">業種</td>
+                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ddd;">${escapeHtml(safeBusinessType)}</td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:12px;color:#666;">メールアドレス</td>
+                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ddd;">${escapeHtml(safeEmail)}</td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:12px;color:#666;vertical-align:top;">ご要望・ご質問</td>
+                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ddd;line-height:1.8;">${escapeHtml(safeMessage).replace(/\n/g, "<br>")}</td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:12px;color:#666;">申請日時</td>
+                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ddd;">${escapeHtml(safeSubmittedAt)}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:24px 48px 40px;border-top:1px solid #1e1e1e;">
+              <p style="margin:0;font-size:12px;color:#444;line-height:1.7;">
+                Ryuge Coffee<br>
+                <a href="https://ryuge.biz" style="color:#555;text-decoration:none;">ryuge.biz</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  await transporter.sendMail({
+    from: `"Ryuge Coffee" <${process.env.EMAIL_USER}>`,
+    to: adminAddresses,
+    subject,
+    text,
+    html,
+    replyTo: safeEmail !== "未入力" ? safeEmail : undefined,
   });
 }
 
@@ -453,6 +640,67 @@ app.post("/create-payment-intent", async (req, res) => {
   }
 });
 
+// ===== 卸申請 =====
+app.post("/wholesale-register", async (req, res) => {
+  try {
+    const {
+      uid,
+      companyName,
+      contactName,
+      businessType,
+      email,
+      message,
+    } = req.body;
+
+    if (!uid || !companyName || !contactName || !email) {
+      return res.status(400).json({
+        error: "必須項目が不足しています。",
+      });
+    }
+
+    const submittedAt = new Date().toLocaleString("ja-JP", {
+      timeZone: "Asia/Tokyo",
+    });
+
+    const userData = {
+      uid,
+      email,
+      companyName,
+      contactName,
+      businessType: businessType || "",
+      message: message || "",
+      approved: false,
+      status: "pending",
+      role: "user",
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    await db.collection("wholesaleUsers").doc(uid).set(userData, { merge: true });
+
+    try {
+      await sendWholesaleAdminEmail({
+        companyName,
+        contactName,
+        businessType,
+        email,
+        message,
+        submittedAt,
+      });
+    } catch (mailErr) {
+      console.error("wholesale-register admin mail error:", mailErr);
+    }
+
+    return res.status(200).json({
+      ok: true,
+      message: "申請を受け付けました。",
+    });
+  } catch (err) {
+    console.error("wholesale-register error:", err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // ===== 通常購入完了 =====
 app.post("/order-complete", async (req, res) => {
   try {
@@ -466,7 +714,6 @@ app.post("/order-complete", async (req, res) => {
     const fullAddress = [postalCode, prefecture, address].filter(Boolean).join(" ");
 
     try {
-      // お客様へのレシートメール
       await sendUnifiedReceiptEmail("order", {
         email,
         name,
@@ -481,7 +728,6 @@ app.post("/order-complete", async (req, res) => {
     }
 
     try {
-      // 管理者への通知メール
       await sendAdminNotificationEmail("order", {
         name,
         email,
@@ -518,12 +764,12 @@ app.post("/subscription-complete", async (req, res) => {
       return res.status(404).json({ error: "Session not found" });
     }
 
-    const meta      = session.metadata || {};
-    const email     = session.customer_email || meta.customerEmail || "";
-    const name      = meta.customerName || "";
-    const lang      = meta.lang || "ja";
+    const meta = session.metadata || {};
+    const email = session.customer_email || meta.customerEmail || "";
+    const name = meta.customerName || "";
+    const lang = meta.lang || "ja";
     const planTitle = meta.planTitle || meta.planId || "";
-    const address   = [meta.postalCode, meta.prefecture, meta.address].filter(Boolean).join(" ");
+    const address = [meta.postalCode, meta.prefecture, meta.address].filter(Boolean).join(" ");
 
     const order = {
       email,
@@ -531,15 +777,14 @@ app.post("/subscription-complete", async (req, res) => {
       lang,
       planTitle,
       address,
-      postalCode:     meta.postalCode  || "",
-      prefecture:     meta.prefecture  || "",
-      shipping:       0,
-      total:          null,
+      postalCode: meta.postalCode || "",
+      prefecture: meta.prefecture || "",
+      shipping: 0,
+      total: null,
       isSubscription: true,
     };
 
     try {
-      // お客様へのレシートメール
       await sendUnifiedReceiptEmail("subscription", {
         email, name, lang,
         items: [], total: null, shipping: 0,
@@ -550,7 +795,6 @@ app.post("/subscription-complete", async (req, res) => {
     }
 
     try {
-      // 管理者への通知メール
       await sendAdminNotificationEmail("subscription", {
         name, email, address, planTitle,
       });
