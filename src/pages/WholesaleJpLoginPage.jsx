@@ -23,20 +23,26 @@ export default function WholesaleJpLoginPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setErrorMessage("");
-    setLoading(true);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setErrorMessage("");
+  setLoading(true);
 
-    try {
-      await login(email, password);
-      navigate("/wholesale-jp/dashboard");
-    } catch (error) {
-      setErrorMessage("メールアドレスまたはパスワードが正しくありません。");
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    await login(email, password);
+    navigate("/wholesale-jp/dashboard");
+  } catch (error) {
+    console.error("LOGIN ERROR:", error);
+    console.error("LOGIN ERROR CODE:", error?.code);
+    console.error("LOGIN ERROR MESSAGE:", error?.message);
+
+    setErrorMessage(
+      `ログイン失敗: ${error?.code || "unknown-error"}`
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div
