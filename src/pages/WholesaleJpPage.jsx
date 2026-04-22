@@ -134,11 +134,38 @@ export default function WholesaleJpPage() {
     ? `¥${activeWholesaleProduct.wholesalePrice?.toLocaleString()}`
     : "";
 
-  const modalTitle = isSimpleWholesale
-    ? activeWholesaleProduct?.name
-    : activeDetailedItem?.modalTitle?.[lang] ||
-      activeDetailedItem?.title?.[lang] ||
-      activeWholesaleProduct?.name;
+  const getCountryOnly = (origin = "") => {
+    if (!origin) return "";
+    const parts = origin.split(",");
+    return parts[parts.length - 1]?.trim() || origin;
+  };
+
+  const getLoggedInTitle = () => {
+    if (!activeDetailedItem) {
+      return activeWholesaleProduct?.name || "";
+    }
+
+    if (activeDetailedItem.id === "enma-ethiopia-dark") {
+      return "深煎りの禅";
+    }
+
+    const country = getCountryOnly(activeDetailedItem.origin);
+    const variety = activeDetailedItem.variety || "";
+
+    if (country && variety) {
+      return `${country} ${variety}`;
+    }
+
+    return country || variety || activeWholesaleProduct?.name || "";
+  };
+
+  const modalTitle = !user
+    ? isSimpleWholesale
+      ? activeWholesaleProduct?.name
+      : activeDetailedItem?.modalTitle?.[lang] ||
+        activeDetailedItem?.title?.[lang] ||
+        activeWholesaleProduct?.name
+    : getLoggedInTitle();
 
   const modalSummary = isSimpleWholesale
     ? activeWholesaleProduct?.summary || activeWholesaleProduct?.description
