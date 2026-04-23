@@ -42,6 +42,14 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("mail transporter verify error:", error);
+  } else {
+    console.log("mail transporter ready:", success);
+  }
+});
+
 const YUPACK_SHIPPING = {
   北海道: 1410,
   青森県: 880,
