@@ -115,6 +115,9 @@ const VARIETY_KATAKANA_MAP = {
   Gesha: "ゲイシャ",
 };
 
+const baseFontFamily =
+  'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif';
+
 export default function WholesaleJpPage() {
   const { user, approved, logout } = useAuth();
   const navigate = useNavigate();
@@ -272,8 +275,7 @@ export default function WholesaleJpPage() {
         minHeight: "100vh",
         backgroundColor: pageStyles.bg,
         color: pageStyles.strongText,
-        fontFamily:
-          '"Cormorant Garamond", "Noto Serif JP", "Hiragino Mincho ProN", serif',
+        fontFamily: baseFontFamily,
       }}
     >
       <header
@@ -372,7 +374,7 @@ export default function WholesaleJpPage() {
                   textTransform: "uppercase",
                   cursor: "pointer",
                   padding: 0,
-                  fontFamily: "inherit",
+                  fontFamily: baseFontFamily,
                 }}
               >
                 Logout
@@ -411,24 +413,36 @@ export default function WholesaleJpPage() {
               Ryuge Coffeeの卸販売ページです。一般販売ページの静けさをそのままに、
               国内向けのお取引導線として整えています。
               <br />
-              価格閲覧・発注には承認済みアカウントが必要です。お取引のご希望は{" "}
-              <a
-                href="mailto:ryugecoffee@gmail.com"
+              価格閲覧・発注には承認済みアカウントが必要です。お取引開始前の登録は{" "}
+              <Link
+                to="/wholesale-jp/register"
                 style={{
                   color: pageStyles.softText,
                   textDecoration: "underline",
                   textUnderlineOffset: "3px",
                 }}
               >
-                ryugecoffee@gmail.com
-              </a>{" "}
-              までご連絡ください。
+                こちら
+              </Link>
+              {" "}からお願いいたします。
             </p>
           </div>
 
           {!user && (
             <div style={noticeStyle}>
               卸価格の表示と発注には
+              <Link
+                to="/wholesale-jp/register"
+                style={{
+                  color: pageStyles.strongText,
+                  margin: "0 0.35em",
+                  textDecoration: "underline",
+                  textUnderlineOffset: "3px",
+                }}
+              >
+                登録
+              </Link>
+              または
               <Link
                 to="/wholesale-jp/login"
                 style={{
@@ -731,7 +745,7 @@ export default function WholesaleJpPage() {
               letterSpacing: "0.15em",
               textTransform: "uppercase",
               cursor: "pointer",
-              fontFamily: "inherit",
+              fontFamily: baseFontFamily,
               boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
             }}
           >
@@ -877,7 +891,7 @@ const ghostButtonStyle = {
   fontSize: "0.68rem",
   letterSpacing: "0.12em",
   textTransform: "uppercase",
-  fontFamily: '"Cormorant Garamond", "Noto Serif JP", serif',
+  fontFamily: baseFontFamily,
 };
 
 const noticeStyle = {
