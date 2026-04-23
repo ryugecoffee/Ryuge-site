@@ -13,6 +13,9 @@ const COLORS = {
   mutedText: "rgba(255,255,255,0.42)",
 };
 
+const baseFontFamily =
+  'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif';
+
 export default function WholesaleJpDashboardPage() {
   return (
     <RequireApproved>
@@ -30,11 +33,9 @@ function DashboardContent() {
         minHeight: "100vh",
         backgroundColor: COLORS.bg,
         color: COLORS.text,
-        fontFamily:
-          '"Cormorant Garamond", "Noto Serif JP", "Hiragino Mincho ProN", serif',
+        fontFamily: baseFontFamily,
       }}
     >
-      {/* header */}
       <header
         style={{
           borderBottom: `1px solid ${COLORS.border}`,
@@ -49,20 +50,23 @@ function DashboardContent() {
           style={{
             maxWidth: "1440px",
             margin: "0 auto",
-            padding: "1.35rem 3.2rem",
+            padding: "0.9rem 1rem",
             display: "grid",
-            gridTemplateColumns: "1fr auto 1fr",
+            gridTemplateColumns: "1fr auto auto",
             alignItems: "center",
+            gap: "0.8rem",
           }}
         >
-          <div>
+          <div style={{ minWidth: 0 }}>
             <Link
               to="/"
               style={{
                 textDecoration: "none",
                 color: COLORS.text,
-                fontSize: "0.95rem",
-                letterSpacing: "0.18em",
+                fontSize: "0.78rem",
+                letterSpacing: "0.14em",
+                whiteSpace: "nowrap",
+                textTransform: "uppercase",
               }}
             >
               Ryuge Coffee
@@ -73,13 +77,14 @@ function DashboardContent() {
             style={{
               display: "flex",
               justifyContent: "center",
-              gap: "2rem",
+              gap: "0.9rem",
+              minWidth: 0,
             }}
           >
-            <Link to="/products" style={navLinkStyle}>
+            <Link to="/products" style={mobileNavLinkStyle}>
               商品
             </Link>
-            <Link to="/wholesale-jp" style={navLinkStyle}>
+            <Link to="/wholesale-jp" style={mobileNavLinkStyle}>
               卸ページ
             </Link>
           </nav>
@@ -88,7 +93,6 @@ function DashboardContent() {
             style={{
               display: "flex",
               justifyContent: "flex-end",
-              gap: "1.5rem",
               alignItems: "center",
             }}
           >
@@ -103,16 +107,16 @@ function DashboardContent() {
         style={{
           maxWidth: "1180px",
           margin: "0 auto",
-          padding: "5rem 3rem 7rem",
+          padding: "1.5rem 0.75rem 4rem",
         }}
       >
-        <div style={{ marginBottom: "3rem" }}>
+        <div style={{ marginBottom: "1.4rem" }}>
           <p
             style={{
-              margin: "0 0 1rem",
+              margin: "0 0 0.5rem",
               color: COLORS.mutedText,
-              fontSize: "0.7rem",
-              letterSpacing: "0.24em",
+              fontSize: "0.55rem",
+              letterSpacing: "0.2em",
               textTransform: "uppercase",
             }}
           >
@@ -121,10 +125,10 @@ function DashboardContent() {
 
           <h1
             style={{
-              margin: "0 0 1rem",
-              fontSize: "2.8rem",
-              fontWeight: 400,
-              letterSpacing: "0.05em",
+              margin: "0 0 0.6rem",
+              fontSize: "1.25rem",
+              fontWeight: 500,
+              letterSpacing: "0.03em",
               lineHeight: 1.25,
               color: COLORS.text,
             }}
@@ -136,9 +140,10 @@ function DashboardContent() {
             style={{
               margin: 0,
               color: COLORS.softText,
-              fontSize: "0.92rem",
-              lineHeight: 1.95,
-              letterSpacing: "0.03em",
+              fontSize: "0.66rem",
+              lineHeight: 1.7,
+              letterSpacing: "0.02em",
+              overflowWrap: "anywhere",
             }}
           >
             {user?.email}
@@ -149,8 +154,9 @@ function DashboardContent() {
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-            gap: "1.4rem",
-            marginBottom: "4rem",
+            gap: "0.45rem",
+            marginBottom: "2rem",
+            alignItems: "stretch",
           }}
         >
           <DashboardCard
@@ -164,30 +170,30 @@ function DashboardContent() {
             title="オリジナルバッグ制作"
             body="貴社ロゴ入りのドリップバッグ制作についてご相談いただけます。"
             href="mailto:ryugecoffee@gmail.com?subject=オリジナルコーヒーバッグ制作のご相談"
-            buttonText="メールで相談"
+            buttonText="メール相談"
           />
 
           <DashboardCard
             title="お問い合わせ"
             body="ご注文・納期・お支払い条件についてはこちらからご連絡ください。"
             href="mailto:ryugecoffee@gmail.com?subject=卸販売についてのお問い合わせ"
-            buttonText="メールを送る"
+            buttonText="メール送信"
           />
         </div>
 
         <div
           style={{
             borderTop: `1px solid ${COLORS.border}`,
-            paddingTop: "2rem",
+            paddingTop: "1rem",
           }}
         >
           <p
             style={{
               margin: 0,
               color: COLORS.mutedText,
-              fontSize: "0.8rem",
-              lineHeight: 2,
-              letterSpacing: "0.03em",
+              fontSize: "0.58rem",
+              lineHeight: 1.8,
+              letterSpacing: "0.02em",
             }}
           >
             このページは承認済みのお取引先様専用です。
@@ -205,11 +211,18 @@ function DashboardCard({ title, body, buttonText, to, href }) {
     <>
       <p
         style={{
-          margin: "0 0 1rem",
+          margin: "0 0 0.45rem",
           color: COLORS.text,
-          fontSize: "1.15rem",
-          lineHeight: 1.5,
-          letterSpacing: "0.03em",
+          fontSize: "0.66rem",
+          lineHeight: 1.45,
+          letterSpacing: "0.02em",
+          minHeight: "2.1em",
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden",
+          wordBreak: "keep-all",
+          overflowWrap: "anywhere",
         }}
       >
         {title}
@@ -217,10 +230,16 @@ function DashboardCard({ title, body, buttonText, to, href }) {
 
       <p
         style={{
-          margin: "0 0 1.6rem",
+          margin: "0 0 0.7rem",
           color: COLORS.softText,
-          fontSize: "0.85rem",
-          lineHeight: 1.95,
+          fontSize: "0.48rem",
+          lineHeight: 1.55,
+          minHeight: "4.8em",
+          display: "-webkit-box",
+          WebkitLineClamp: 4,
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden",
+          overflowWrap: "anywhere",
         }}
       >
         {body}
@@ -245,39 +264,48 @@ function DashboardCard({ title, body, buttonText, to, href }) {
   );
 }
 
-const navLinkStyle = {
+const mobileNavLinkStyle = {
   textDecoration: "none",
   color: "rgba(255,255,255,0.62)",
-  fontSize: "0.78rem",
-  letterSpacing: "0.08em",
+  fontSize: "0.58rem",
+  letterSpacing: "0.06em",
+  whiteSpace: "nowrap",
 };
 
 const headerButtonStyle = {
   background: "none",
   border: "none",
   color: "rgba(255,255,255,0.52)",
-  fontSize: "0.76rem",
-  letterSpacing: "0.12em",
+  fontSize: "0.58rem",
+  letterSpacing: "0.1em",
   textTransform: "uppercase",
   cursor: "pointer",
-  fontFamily: "inherit",
+  fontFamily: baseFontFamily,
+  padding: 0,
+  whiteSpace: "nowrap",
 };
 
 const cardStyle = {
-  display: "block",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "space-between",
   textDecoration: "none",
   backgroundColor: COLORS.panel,
   border: `1px solid ${COLORS.border}`,
-  padding: "1.8rem 1.7rem",
-  minHeight: "220px",
+  padding: "0.7rem 0.5rem",
+  minHeight: "150px",
+  aspectRatio: "0.92 / 1",
+  boxSizing: "border-box",
 };
 
 const cardButtonStyle = {
   display: "inline-block",
   border: `1px solid ${COLORS.borderStrong}`,
   color: COLORS.text,
-  padding: "0.7rem 1.2rem",
-  fontSize: "0.72rem",
-  letterSpacing: "0.14em",
+  padding: "0.38rem 0.42rem",
+  fontSize: "0.42rem",
+  letterSpacing: "0.08em",
   textTransform: "uppercase",
+  textAlign: "center",
+  lineHeight: 1.2,
 };
