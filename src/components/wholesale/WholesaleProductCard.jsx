@@ -28,6 +28,7 @@ export default function WholesaleProductCard({
         (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")
       }
     >
+      {/* 画像 */}
       <div
         style={{
           aspectRatio: "1 / 1",
@@ -49,22 +50,23 @@ export default function WholesaleProductCard({
         )}
       </div>
 
+      {/* テキスト */}
       <div
         style={{
-          padding: "1.2rem 1rem",
+          padding: "1rem",
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          gap: "0.5rem",
+          gap: "0.4rem",
         }}
       >
         <p
           style={{
-            fontSize: "0.95rem",
+            fontSize: "0.9rem",
             margin: 0,
             color: "rgba(255,255,255,0.92)",
             letterSpacing: "0.04em",
-            lineHeight: 1.5,
+            lineHeight: 1.4,
           }}
         >
           {product.name}
@@ -73,10 +75,10 @@ export default function WholesaleProductCard({
         {product.subtitle && (
           <p
             style={{
-              fontSize: "0.7rem",
+              fontSize: "0.65rem",
               color: "rgba(255,255,255,0.45)",
               margin: 0,
-              letterSpacing: "0.06em",
+              letterSpacing: "0.05em",
             }}
           >
             {product.subtitle}
@@ -86,20 +88,21 @@ export default function WholesaleProductCard({
         {product.description && (
           <p
             style={{
-              fontSize: "0.72rem",
+              fontSize: "0.68rem",
               color: "rgba(255,255,255,0.5)",
               margin: 0,
-              lineHeight: 1.9,
+              lineHeight: 1.7,
             }}
           >
             {product.description}
           </p>
         )}
 
+        {/* 下部 */}
         <div
           style={{
             marginTop: "auto",
-            paddingTop: "0.9rem",
+            paddingTop: "0.8rem",
             borderTop: "1px solid rgba(255,255,255,0.06)",
           }}
         >
@@ -107,21 +110,21 @@ export default function WholesaleProductCard({
             <>
               <p
                 style={{
-                  fontSize: "1rem",
+                  fontSize: "0.9rem",
                   color: "rgba(255,255,255,0.92)",
-                  margin: "0 0 0.9rem",
+                  margin: "0 0 0.7rem",
                   letterSpacing: "0.04em",
                 }}
               >
                 ¥{product.wholesalePrice?.toLocaleString()}
                 <span
                   style={{
-                    fontSize: "0.65rem",
+                    fontSize: "0.6rem",
                     color: "rgba(255,255,255,0.35)",
-                    marginLeft: "0.4rem",
+                    marginLeft: "0.3rem",
                   }}
                 >
-                  / {product.unit}（税込）
+                  / {product.unit}
                 </span>
               </p>
 
@@ -136,20 +139,12 @@ export default function WholesaleProductCard({
                     background: "none",
                     border: "1px solid rgba(255,255,255,0.18)",
                     color: "rgba(255,255,255,0.9)",
-                    padding: "0.45rem 0",
-                    fontSize: "0.65rem",
-                    letterSpacing: "0.14em",
+                    padding: "0.4rem 0",
+                    fontSize: "0.6rem",
+                    letterSpacing: "0.12em",
                     textTransform: "uppercase",
                     cursor: "pointer",
                   }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.borderColor =
-                      "rgba(255,255,255,0.8)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.borderColor =
-                      "rgba(255,255,255,0.18)")
-                  }
                 >
                   ADD
                 </button>
@@ -158,7 +153,7 @@ export default function WholesaleProductCard({
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "0.8rem",
+                    justifyContent: "space-between",
                   }}
                 >
                   <button
@@ -170,16 +165,16 @@ export default function WholesaleProductCard({
                   >
                     −
                   </button>
+
                   <span
                     style={{
-                      fontSize: "0.9rem",
+                      fontSize: "0.85rem",
                       color: "rgba(255,255,255,0.9)",
-                      minWidth: "20px",
-                      textAlign: "center",
                     }}
                   >
                     {quantity}
                   </span>
+
                   <button
                     style={qtyBtn}
                     onClick={(e) => {
@@ -195,7 +190,7 @@ export default function WholesaleProductCard({
           ) : (
             <p
               style={{
-                fontSize: "0.7rem",
+                fontSize: "0.65rem",
                 color: "rgba(255,255,255,0.3)",
                 margin: 0,
                 letterSpacing: "0.04em",
@@ -211,13 +206,13 @@ export default function WholesaleProductCard({
 }
 
 const qtyBtn = {
-  width: "28px",
-  height: "28px",
+  width: "26px",
+  height: "26px",
   background: "none",
   border: "1px solid rgba(255,255,255,0.18)",
   color: "rgba(255,255,255,0.9)",
   cursor: "pointer",
-  fontSize: "1rem",
+  fontSize: "0.9rem",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
