@@ -115,6 +115,8 @@ const VARIETY_KATAKANA_MAP = {
   Gesha: "ゲイシャ",
 };
 
+const DESKTOP_CANVAS_WIDTH = 1280;
+
 const baseFontFamily =
   'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif';
 
@@ -123,6 +125,10 @@ export default function WholesaleJpPage() {
   const navigate = useNavigate();
   const [cart, setCart] = useState({});
   const [activeItemId, setActiveItemId] = useState(null);
+  const [viewportWidth, setViewportWidth] = useState(() => {
+    if (typeof window === "undefined") return DESKTOP_CANVAS_WIDTH;
+    return window.innerWidth;
+  });
 
   const lang = "ja";
   const labels = PRODUCT_SECTIONS.ja.specLabels;
@@ -148,6 +154,12 @@ export default function WholesaleJpPage() {
   const displayPrice = activeWholesaleProduct
     ? `¥${activeWholesaleProduct.wholesalePrice?.toLocaleString()}`
     : "";
+
+  const isCompactViewport = viewportWidth <= 768;
+
+  const pageScale = isCompactViewport
+    ? Math.max(0.36, Math.min(1, viewportWidth / DESKTOP_CANVAS_WIDTH))
+    : 1;
 
   const getCountryOnly = (origin = "") => {
     if (!origin) return "";
@@ -263,13 +275,23 @@ export default function WholesaleJpPage() {
   }, []);
 
   useEffect(() => {
+    const onResize = () => {
+      setViewportWidth(window.innerWidth);
+    };
+
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  useEffect(() => {
     document.body.style.overflow = activeItemId ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
   }, [activeItemId]);
 
-  return (
+  const pageBody = (
     <div
       style={{
         minHeight: "100vh",
@@ -475,7 +497,7 @@ export default function WholesaleJpPage() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+              gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
               gap: "1.35rem",
               alignItems: "stretch",
             }}
@@ -545,6 +567,63 @@ export default function WholesaleJpPage() {
           </div>
         </section>
       </main>
+
+      {approved && cartCount > 0 && (
+        <div
+          style={{
+            position: "fixed",
+            right: isCompactViewport ? "1rem" : "2.4rem",
+            bottom: isCompactViewport ? "1rem" : "2.4rem",
+            zIndex: 120,
+          }}
+        >
+          <button
+            onClick={handleGoToOrder}
+            style={{
+              backgroundColor: "rgba(255,255,255,0.92)",
+              color: "#050505",
+              border: "none",
+              padding: isCompactViewport ? "0.85rem 1.2rem" : "1rem 1.8rem",
+              fontSize: isCompactViewport ? "0.64rem" : "0.72rem",
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+              fontFamily: baseFontFamily,
+              boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
+            }}
+          >
+            発注フォームへ（{cartCount}点）
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      <div
+        style={{
+          minHeight: "100vh",
+          backgroundColor: pageStyles.bg,
+          overflowX: isCompactViewport ? "auto" : "visible",
+          overflowY: "visible",
+        }}
+      >
+        {isCompactViewport ? (
+          <div
+            style={{
+              width: `${DESKTOP_CANVAS_WIDTH}px`,
+              minWidth: `${DESKTOP_CANVAS_WIDTH}px`,
+              margin: "0 auto",
+              zoom: pageScale,
+            }}
+          >
+            {pageBody}
+          </div>
+        ) : (
+          pageBody
+        )}
+      </div>
 
       {activeWholesaleProduct && (
         <div className="modal-backdrop" onClick={() => setActiveItemId(null)}>
@@ -724,36 +803,7 @@ export default function WholesaleJpPage() {
           )}
         </div>
       )}
-
-      {approved && cartCount > 0 && (
-        <div
-          style={{
-            position: "fixed",
-            right: "2.4rem",
-            bottom: "2.4rem",
-            zIndex: 120,
-          }}
-        >
-          <button
-            onClick={handleGoToOrder}
-            style={{
-              backgroundColor: "rgba(255,255,255,0.92)",
-              color: "#050505",
-              border: "none",
-              padding: "1rem 1.8rem",
-              fontSize: "0.72rem",
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
-              cursor: "pointer",
-              fontFamily: baseFontFamily,
-              boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
-            }}
-          >
-            発注フォームへ（{cartCount}点）
-          </button>
-        </div>
-      )}
-    </div>
+    </>
   );
 }
 
