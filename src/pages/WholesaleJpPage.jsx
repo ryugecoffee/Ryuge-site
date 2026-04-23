@@ -1,4 +1,3 @@
-// src/pages/WholesaleJpPage.jsx
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -98,7 +97,6 @@ const pageStyles = {
   softText: "rgba(255,255,255,0.72)",
   mutedText: "rgba(255,255,255,0.42)",
   strongText: "rgba(255,255,255,0.92)",
-  cardBg: "#0b0b0b",
   buttonBorder: "rgba(255,255,255,0.18)",
   buttonHover: "rgba(255,255,255,0.85)",
 };
@@ -131,17 +129,16 @@ export default function WholesaleJpPage() {
   const isMobile = viewportWidth <= 768;
   const isTablet = viewportWidth > 768 && viewportWidth <= 1100;
 
-  const contentPaddingX = isMobile ? "1rem" : isTablet ? "1.6rem" : "3.4rem";
-  const heroTopPadding = isMobile ? "2rem" : "4.5rem";
+  const contentPaddingX = isMobile ? "0.75rem" : isTablet ? "1.6rem" : "3.4rem";
+  const heroTopPadding = isMobile ? "1.5rem" : "4.5rem";
   const productGridColumns = isMobile
-    ? "repeat(2, minmax(0, 1fr))"
+    ? "repeat(5, minmax(0, 1fr))"
     : isTablet
-      ? "repeat(3, minmax(0, 1fr))"
+      ? "repeat(4, minmax(0, 1fr))"
       : "repeat(5, minmax(0, 1fr))";
 
   const lang = "ja";
   const labels = PRODUCT_SECTIONS.ja.specLabels;
-
   const allDetailedProducts = [...PRODUCT_DATA.enma, ...PRODUCT_DATA.woodbox];
 
   const activeWholesaleProduct =
@@ -198,22 +195,14 @@ export default function WholesaleJpPage() {
     const country = toKatakanaCountry(detailItem.origin);
     const variety = toKatakanaVariety(detailItem.variety);
 
-    if (country && variety) {
-      return `${country} ${variety}`;
-    }
-
+    if (country && variety) return `${country} ${variety}`;
     return country || variety || product?.name || "";
   };
 
   const getLoggedInDisplaySubtitleByProduct = (product) => {
     const detailItem = getDetailItemByProduct(product);
-
     if (!detailItem) return product?.subtitle || "";
-
-    if (detailItem.id === "enma-ethiopia-dark") {
-      return "";
-    }
-
+    if (detailItem.id === "enma-ethiopia-dark") return "";
     return "";
   };
 
@@ -313,26 +302,20 @@ export default function WholesaleJpPage() {
           style={{
             maxWidth: "1440px",
             margin: "0 auto",
-            padding: isMobile ? "1rem" : "1.3rem 3.4rem",
+            padding: isMobile ? "0.75rem" : "1.3rem 3.4rem",
             display: "grid",
             gridTemplateColumns: isMobile ? "1fr auto" : "1fr auto 1fr",
             alignItems: "center",
-            gap: isMobile ? "0.8rem" : "1rem",
+            gap: isMobile ? "0.6rem" : "1rem",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-start",
-              minWidth: 0,
-            }}
-          >
+          <div style={{ display: "flex", justifyContent: "flex-start", minWidth: 0 }}>
             <Link
               to="/"
               style={{
                 textDecoration: "none",
                 color: pageStyles.strongText,
-                fontSize: isMobile ? "0.78rem" : "0.95rem",
+                fontSize: isMobile ? "0.72rem" : "0.95rem",
                 letterSpacing: isMobile ? "0.14em" : "0.18em",
                 textTransform: "uppercase",
                 whiteSpace: "nowrap",
@@ -351,12 +334,8 @@ export default function WholesaleJpPage() {
                 alignItems: "center",
               }}
             >
-              <Link to="/products" style={navLinkStyle}>
-                商品
-              </Link>
-              <Link to="/wholesale-jp" style={navLinkStyle}>
-                卸
-              </Link>
+              <Link to="/products" style={navLinkStyle}>商品</Link>
+              <Link to="/wholesale-jp" style={navLinkStyle}>卸</Link>
             </nav>
           )}
 
@@ -364,7 +343,7 @@ export default function WholesaleJpPage() {
             style={{
               display: "flex",
               justifyContent: "flex-end",
-              gap: isMobile ? "0.8rem" : "1.4rem",
+              gap: isMobile ? "0.6rem" : "1.4rem",
               alignItems: "center",
               minWidth: 0,
             }}
@@ -380,8 +359,8 @@ export default function WholesaleJpPage() {
                 onClick={handleGoToOrder}
                 style={{
                   ...ghostButtonStyle,
-                  padding: isMobile ? "0.38rem 0.7rem" : "0.45rem 1.1rem",
-                  fontSize: isMobile ? "0.58rem" : "0.68rem",
+                  padding: isMobile ? "0.3rem 0.5rem" : "0.45rem 1.1rem",
+                  fontSize: isMobile ? "0.52rem" : "0.68rem",
                 }}
               >
                 Cart ({cartCount})
@@ -395,7 +374,7 @@ export default function WholesaleJpPage() {
                   background: "none",
                   border: "none",
                   color: pageStyles.mutedText,
-                  fontSize: isMobile ? "0.6rem" : "0.7rem",
+                  fontSize: isMobile ? "0.55rem" : "0.7rem",
                   letterSpacing: "0.12em",
                   textTransform: "uppercase",
                   cursor: "pointer",
@@ -411,7 +390,7 @@ export default function WholesaleJpPage() {
                 to="/wholesale-jp/login"
                 style={{
                   ...rightLinkStyle,
-                  fontSize: isMobile ? "0.6rem" : rightLinkStyle.fontSize,
+                  fontSize: isMobile ? "0.55rem" : rightLinkStyle.fontSize,
                 }}
               >
                 Login
@@ -423,18 +402,14 @@ export default function WholesaleJpPage() {
         {isMobile && (
           <div
             style={{
-              padding: "0 1rem 0.9rem",
+              padding: "0 0.75rem 0.7rem",
               display: "flex",
-              gap: "1rem",
+              gap: "0.9rem",
               borderTop: `1px solid ${pageStyles.border}`,
             }}
           >
-            <Link to="/products" style={mobileNavLinkStyle}>
-              商品
-            </Link>
-            <Link to="/wholesale-jp" style={mobileNavLinkStyle}>
-              卸
-            </Link>
+            <Link to="/products" style={mobileNavLinkStyle}>商品</Link>
+            <Link to="/wholesale-jp" style={mobileNavLinkStyle}>卸</Link>
             {user && (
               <Link to="/wholesale-jp/dashboard" style={mobileNavLinkStyle}>
                 Dashboard
@@ -449,20 +424,16 @@ export default function WholesaleJpPage() {
           style={{
             maxWidth: "1440px",
             margin: "0 auto",
-            padding: `${heroTopPadding} ${contentPaddingX} 1.5rem`,
+            padding: `${heroTopPadding} ${contentPaddingX} 1rem`,
           }}
         >
-          <div
-            style={{
-              maxWidth: isMobile ? "100%" : "760px",
-            }}
-          >
+          <div style={{ maxWidth: isMobile ? "100%" : "760px" }}>
             <p
               style={{
                 margin: 0,
                 color: pageStyles.softText,
-                fontSize: isMobile ? "0.82rem" : "0.94rem",
-                lineHeight: isMobile ? 1.95 : 2.15,
+                fontSize: isMobile ? "0.68rem" : "0.94rem",
+                lineHeight: isMobile ? 1.8 : 2.15,
                 letterSpacing: "0.04em",
               }}
             >
@@ -479,8 +450,8 @@ export default function WholesaleJpPage() {
                 }}
               >
                 こちら
-              </Link>
-              {" "}からお願いいたします。
+              </Link>{" "}
+              からお願いいたします。
             </p>
           </div>
 
@@ -488,9 +459,10 @@ export default function WholesaleJpPage() {
             <div
               style={{
                 ...noticeStyle,
-                marginTop: isMobile ? "1.2rem" : "1.6rem",
-                fontSize: isMobile ? "0.7rem" : noticeStyle.fontSize,
-                lineHeight: isMobile ? 1.85 : noticeStyle.lineHeight,
+                marginTop: isMobile ? "0.9rem" : "1.6rem",
+                padding: isMobile ? "0.7rem 0.8rem" : noticeStyle.padding,
+                fontSize: isMobile ? "0.58rem" : noticeStyle.fontSize,
+                lineHeight: isMobile ? 1.7 : noticeStyle.lineHeight,
               }}
             >
               卸価格の表示と発注には
@@ -498,7 +470,7 @@ export default function WholesaleJpPage() {
                 to="/wholesale-jp/register"
                 style={{
                   color: pageStyles.strongText,
-                  margin: "0 0.35em",
+                  margin: "0 0.25em",
                   textDecoration: "underline",
                   textUnderlineOffset: "3px",
                 }}
@@ -510,7 +482,7 @@ export default function WholesaleJpPage() {
                 to="/wholesale-jp/login"
                 style={{
                   color: pageStyles.strongText,
-                  margin: "0 0.35em",
+                  margin: "0 0.25em",
                   textDecoration: "underline",
                   textUnderlineOffset: "3px",
                 }}
@@ -525,9 +497,10 @@ export default function WholesaleJpPage() {
             <div
               style={{
                 ...noticeStyle,
-                marginTop: isMobile ? "1.2rem" : "1.6rem",
-                fontSize: isMobile ? "0.7rem" : noticeStyle.fontSize,
-                lineHeight: isMobile ? 1.85 : noticeStyle.lineHeight,
+                marginTop: isMobile ? "0.9rem" : "1.6rem",
+                padding: isMobile ? "0.7rem 0.8rem" : noticeStyle.padding,
+                fontSize: isMobile ? "0.58rem" : noticeStyle.fontSize,
+                lineHeight: isMobile ? 1.7 : noticeStyle.lineHeight,
               }}
             >
               アカウント承認待ちです。承認後に卸価格表示と発注が可能になります。
@@ -539,14 +512,14 @@ export default function WholesaleJpPage() {
           style={{
             maxWidth: "1440px",
             margin: "0 auto",
-            padding: `1rem ${contentPaddingX} ${isMobile ? "5.5rem" : "7rem"}`,
+            padding: `0.7rem ${contentPaddingX} ${isMobile ? "4.8rem" : "7rem"}`,
           }}
         >
           <div
             style={{
               display: "grid",
               gridTemplateColumns: productGridColumns,
-              gap: isMobile ? "0.75rem" : "1.35rem",
+              gap: isMobile ? "0.4rem" : "1.35rem",
               alignItems: "stretch",
             }}
           >
@@ -579,20 +552,20 @@ export default function WholesaleJpPage() {
           style={{
             maxWidth: "1440px",
             margin: "0 auto",
-            padding: `0 ${contentPaddingX} ${isMobile ? "5rem" : "5rem"}`,
+            padding: `0 ${contentPaddingX} 5rem`,
           }}
         >
           <div
             style={{
               borderTop: `1px solid ${pageStyles.border}`,
-              paddingTop: isMobile ? "1.6rem" : "2.4rem",
+              paddingTop: isMobile ? "1.1rem" : "2.4rem",
             }}
           >
             <p
               style={{
-                margin: "0 0 0.9rem",
+                margin: "0 0 0.6rem",
                 color: pageStyles.mutedText,
-                fontSize: isMobile ? "0.62rem" : "0.68rem",
+                fontSize: isMobile ? "0.54rem" : "0.68rem",
                 letterSpacing: "0.22em",
                 textTransform: "uppercase",
               }}
@@ -604,8 +577,8 @@ export default function WholesaleJpPage() {
               style={{
                 margin: 0,
                 color: pageStyles.softText,
-                fontSize: isMobile ? "0.78rem" : "0.85rem",
-                lineHeight: isMobile ? 1.95 : 2.1,
+                fontSize: isMobile ? "0.64rem" : "0.85rem",
+                lineHeight: isMobile ? 1.75 : 2.1,
                 letterSpacing: "0.04em",
               }}
             >
@@ -619,30 +592,17 @@ export default function WholesaleJpPage() {
       {activeWholesaleProduct && (
         <div className="modal-backdrop" onClick={() => setActiveItemId(null)}>
           {!user ? (
-            <div
-              className="modal modal-premium"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                className="modal-close"
-                onClick={() => setActiveItemId(null)}
-              >
+            <div className="modal modal-premium" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-close" onClick={() => setActiveItemId(null)}>
                 ×
               </button>
-
               <div className="modal-image modal-image-premium">
                 <img src={activeWholesaleProduct.image} alt="" />
               </div>
             </div>
           ) : (
-            <div
-              className="modal modal-premium"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                className="modal-close"
-                onClick={() => setActiveItemId(null)}
-              >
+            <div className="modal modal-premium" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-close" onClick={() => setActiveItemId(null)}>
                 ×
               </button>
 
@@ -678,13 +638,10 @@ export default function WholesaleJpPage() {
 
                       <div className="simple-quantity-block">
                         <p className="simple-quantity-label">数量</p>
-
                         <div className="simple-quantity-control">
                           <button
                             type="button"
-                            onClick={() =>
-                              removeFromCart(activeWholesaleProduct.id)
-                            }
+                            onClick={() => removeFromCart(activeWholesaleProduct.id)}
                           >
                             −
                           </button>
@@ -737,13 +694,10 @@ export default function WholesaleJpPage() {
 
                       <div className="simple-quantity-block">
                         <p className="simple-quantity-label">数量</p>
-
                         <div className="simple-quantity-control">
                           <button
                             type="button"
-                            onClick={() =>
-                              removeFromCart(activeWholesaleProduct.id)
-                            }
+                            onClick={() => removeFromCart(activeWholesaleProduct.id)}
                           >
                             −
                           </button>
@@ -799,8 +753,8 @@ export default function WholesaleJpPage() {
         <div
           style={{
             position: "fixed",
-            right: isMobile ? "1rem" : "2.4rem",
-            bottom: isMobile ? "1rem" : "2.4rem",
+            right: isMobile ? "0.75rem" : "2.4rem",
+            bottom: isMobile ? "0.75rem" : "2.4rem",
             zIndex: 120,
           }}
         >
@@ -810,9 +764,9 @@ export default function WholesaleJpPage() {
               backgroundColor: "rgba(255,255,255,0.92)",
               color: "#050505",
               border: "none",
-              padding: isMobile ? "0.85rem 1.15rem" : "1rem 1.8rem",
-              fontSize: isMobile ? "0.64rem" : "0.72rem",
-              letterSpacing: "0.15em",
+              padding: isMobile ? "0.7rem 0.9rem" : "1rem 1.8rem",
+              fontSize: isMobile ? "0.56rem" : "0.72rem",
+              letterSpacing: "0.12em",
               textTransform: "uppercase",
               cursor: "pointer",
               fontFamily: baseFontFamily,
@@ -838,12 +792,7 @@ function OriginalBagCard({ user, approved }) {
         flexDirection: "column",
       }}
     >
-      <div
-        style={{
-          aspectRatio: "1 / 1",
-          overflow: "hidden",
-        }}
-      >
+      <div style={{ aspectRatio: "1 / 1", overflow: "hidden" }}>
         <img
           src="/images/original.jpg"
           alt=""
@@ -857,7 +806,7 @@ function OriginalBagCard({ user, approved }) {
 
       <div
         style={{
-          padding: "1.2rem 1rem 1rem",
+          padding: viewportPadding(approved, user),
           display: "flex",
           flexDirection: "column",
           flex: 1,
@@ -865,11 +814,11 @@ function OriginalBagCard({ user, approved }) {
       >
         <p
           style={{
-            margin: "0 0 0.45rem",
+            margin: "0 0 0.25rem",
             color: "rgba(255,255,255,0.92)",
-            fontSize: "1rem",
+            fontSize: "0.64rem",
             lineHeight: 1.5,
-            letterSpacing: "0.03em",
+            letterSpacing: "0.02em",
           }}
         >
           オリジナルコーヒーバッグ制作
@@ -877,10 +826,10 @@ function OriginalBagCard({ user, approved }) {
 
         <p
           style={{
-            margin: "0 0 1.2rem",
+            margin: "0 0 0.5rem",
             color: "rgba(255,255,255,0.44)",
-            fontSize: "0.74rem",
-            lineHeight: 1.95,
+            fontSize: "0.5rem",
+            lineHeight: 1.65,
           }}
         >
           オリジナル仕様の制作が可能です。
@@ -889,7 +838,7 @@ function OriginalBagCard({ user, approved }) {
         <div
           style={{
             marginTop: "auto",
-            paddingTop: "1rem",
+            paddingTop: "0.45rem",
             borderTop: "1px solid rgba(255,255,255,0.08)",
           }}
         >
@@ -901,21 +850,21 @@ function OriginalBagCard({ user, approved }) {
                 color: "rgba(255,255,255,0.9)",
                 border: "1px solid rgba(255,255,255,0.16)",
                 textDecoration: "none",
-                padding: "0.65rem 1rem",
-                fontSize: "0.64rem",
-                letterSpacing: "0.14em",
+                padding: "0.35rem 0.45rem",
+                fontSize: "0.42rem",
+                letterSpacing: "0.08em",
                 textTransform: "uppercase",
               }}
             >
-              制作について相談する
+              制作相談
             </a>
           ) : !user ? (
             <p
               style={{
                 margin: 0,
                 color: "rgba(255,255,255,0.34)",
-                fontSize: "0.68rem",
-                lineHeight: 1.8,
+                fontSize: "0.44rem",
+                lineHeight: 1.55,
               }}
             >
               取引開始後にご案内
@@ -925,17 +874,21 @@ function OriginalBagCard({ user, approved }) {
               style={{
                 margin: 0,
                 color: "rgba(255,255,255,0.34)",
-                fontSize: "0.68rem",
-                lineHeight: 1.8,
+                fontSize: "0.44rem",
+                lineHeight: 1.55,
               }}
             >
-              承認済み取引先様向けサービス
+              承認済み取引先様向け
             </p>
           )}
         </div>
       </div>
     </div>
   );
+}
+
+function viewportPadding() {
+  return "0.5rem 0.45rem 0.45rem";
 }
 
 const navLinkStyle = {
@@ -948,7 +901,7 @@ const navLinkStyle = {
 const mobileNavLinkStyle = {
   textDecoration: "none",
   color: "rgba(255,255,255,0.62)",
-  fontSize: "0.68rem",
+  fontSize: "0.58rem",
   letterSpacing: "0.08em",
 };
 

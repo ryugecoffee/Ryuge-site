@@ -1,4 +1,3 @@
-// src/components/wholesale/WholesaleProductCard.jsx
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function WholesaleProductCard({
@@ -19,6 +18,7 @@ export default function WholesaleProductCard({
         flexDirection: "column",
         transition: "border-color 0.25s ease",
         cursor: "pointer",
+        minWidth: 0,
       }}
       onClick={onOpenDetail}
       onMouseEnter={(e) =>
@@ -28,7 +28,6 @@ export default function WholesaleProductCard({
         (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")
       }
     >
-      {/* 画像 */}
       <div
         style={{
           aspectRatio: "1 / 1",
@@ -50,23 +49,25 @@ export default function WholesaleProductCard({
         )}
       </div>
 
-      {/* テキスト */}
       <div
         style={{
-          padding: "1rem",
+          padding: "0.5rem 0.45rem 0.45rem",
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          gap: "0.4rem",
+          gap: "0.22rem",
+          minWidth: 0,
         }}
       >
         <p
           style={{
-            fontSize: "0.9rem",
+            fontSize: "0.62rem",
             margin: 0,
             color: "rgba(255,255,255,0.92)",
-            letterSpacing: "0.04em",
-            lineHeight: 1.4,
+            letterSpacing: "0.02em",
+            lineHeight: 1.35,
+            wordBreak: "keep-all",
+            overflowWrap: "anywhere",
           }}
         >
           {product.name}
@@ -75,10 +76,12 @@ export default function WholesaleProductCard({
         {product.subtitle && (
           <p
             style={{
-              fontSize: "0.65rem",
+              fontSize: "0.42rem",
               color: "rgba(255,255,255,0.45)",
               margin: 0,
-              letterSpacing: "0.05em",
+              letterSpacing: "0.02em",
+              lineHeight: 1.35,
+              overflowWrap: "anywhere",
             }}
           >
             {product.subtitle}
@@ -88,21 +91,21 @@ export default function WholesaleProductCard({
         {product.description && (
           <p
             style={{
-              fontSize: "0.68rem",
+              fontSize: "0.42rem",
               color: "rgba(255,255,255,0.5)",
               margin: 0,
-              lineHeight: 1.7,
+              lineHeight: 1.55,
+              overflowWrap: "anywhere",
             }}
           >
             {product.description}
           </p>
         )}
 
-        {/* 下部 */}
         <div
           style={{
             marginTop: "auto",
-            paddingTop: "0.8rem",
+            paddingTop: "0.4rem",
             borderTop: "1px solid rgba(255,255,255,0.06)",
           }}
         >
@@ -110,18 +113,20 @@ export default function WholesaleProductCard({
             <>
               <p
                 style={{
-                  fontSize: "0.9rem",
+                  fontSize: "0.6rem",
                   color: "rgba(255,255,255,0.92)",
-                  margin: "0 0 0.7rem",
-                  letterSpacing: "0.04em",
+                  margin: "0 0 0.45rem",
+                  letterSpacing: "0.02em",
+                  lineHeight: 1.35,
                 }}
               >
                 ¥{product.wholesalePrice?.toLocaleString()}
                 <span
                   style={{
-                    fontSize: "0.6rem",
+                    display: "block",
+                    fontSize: "0.4rem",
                     color: "rgba(255,255,255,0.35)",
-                    marginLeft: "0.3rem",
+                    marginTop: "0.12rem",
                   }}
                 >
                   / {product.unit}
@@ -139,9 +144,9 @@ export default function WholesaleProductCard({
                     background: "none",
                     border: "1px solid rgba(255,255,255,0.18)",
                     color: "rgba(255,255,255,0.9)",
-                    padding: "0.4rem 0",
-                    fontSize: "0.6rem",
-                    letterSpacing: "0.12em",
+                    padding: "0.24rem 0",
+                    fontSize: "0.4rem",
+                    letterSpacing: "0.08em",
                     textTransform: "uppercase",
                     cursor: "pointer",
                   }}
@@ -154,6 +159,7 @@ export default function WholesaleProductCard({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
+                    gap: "0.18rem",
                   }}
                 >
                   <button
@@ -168,7 +174,7 @@ export default function WholesaleProductCard({
 
                   <span
                     style={{
-                      fontSize: "0.85rem",
+                      fontSize: "0.52rem",
                       color: "rgba(255,255,255,0.9)",
                     }}
                   >
@@ -190,10 +196,11 @@ export default function WholesaleProductCard({
           ) : (
             <p
               style={{
-                fontSize: "0.65rem",
+                fontSize: "0.4rem",
                 color: "rgba(255,255,255,0.3)",
                 margin: 0,
-                letterSpacing: "0.04em",
+                letterSpacing: "0.02em",
+                lineHeight: 1.45,
               }}
             >
               Login to view price
@@ -206,14 +213,15 @@ export default function WholesaleProductCard({
 }
 
 const qtyBtn = {
-  width: "26px",
-  height: "26px",
+  width: "18px",
+  height: "18px",
   background: "none",
   border: "1px solid rgba(255,255,255,0.18)",
   color: "rgba(255,255,255,0.9)",
   cursor: "pointer",
-  fontSize: "0.9rem",
+  fontSize: "0.62rem",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
+  padding: 0,
 };
