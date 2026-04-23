@@ -1,3 +1,4 @@
+// src/components/wholesale/WholesaleProductCard.jsx
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function WholesaleProductCard({
@@ -19,6 +20,7 @@ export default function WholesaleProductCard({
         transition: "border-color 0.25s ease",
         cursor: "pointer",
         minWidth: 0,
+        height: "100%",
       }}
       onClick={onOpenDetail}
       onMouseEnter={(e) =>
@@ -33,6 +35,7 @@ export default function WholesaleProductCard({
           aspectRatio: "1 / 1",
           overflow: "hidden",
           backgroundColor: "#050505",
+          flexShrink: 0,
         }}
       >
         {product.image && (
@@ -55,7 +58,6 @@ export default function WholesaleProductCard({
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          gap: "0.22rem",
           minWidth: 0,
         }}
       >
@@ -68,39 +70,48 @@ export default function WholesaleProductCard({
             lineHeight: 1.35,
             wordBreak: "keep-all",
             overflowWrap: "anywhere",
+            minHeight: "1.7em",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
           }}
         >
           {product.name}
         </p>
 
-        {product.subtitle && (
-          <p
-            style={{
-              fontSize: "0.42rem",
-              color: "rgba(255,255,255,0.45)",
-              margin: 0,
-              letterSpacing: "0.02em",
-              lineHeight: 1.35,
-              overflowWrap: "anywhere",
-            }}
-          >
-            {product.subtitle}
-          </p>
-        )}
+        <p
+          style={{
+            fontSize: "0.42rem",
+            color: "rgba(255,255,255,0.45)",
+            margin: "0.18rem 0 0",
+            letterSpacing: "0.02em",
+            lineHeight: 1.35,
+            minHeight: "2.7em",
+            display: "-webkit-box",
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
+          {product.subtitle || " "}
+        </p>
 
-        {product.description && (
-          <p
-            style={{
-              fontSize: "0.42rem",
-              color: "rgba(255,255,255,0.5)",
-              margin: 0,
-              lineHeight: 1.55,
-              overflowWrap: "anywhere",
-            }}
-          >
-            {product.description}
-          </p>
-        )}
+        <p
+          style={{
+            fontSize: "0.42rem",
+            color: "rgba(255,255,255,0.5)",
+            margin: "0.2rem 0 0",
+            lineHeight: 1.55,
+            minHeight: "4.8em",
+            display: "-webkit-box",
+            WebkitLineClamp: 4,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
+          {product.description || " "}
+        </p>
 
         <div
           style={{
@@ -118,6 +129,7 @@ export default function WholesaleProductCard({
                   margin: "0 0 0.45rem",
                   letterSpacing: "0.02em",
                   lineHeight: 1.35,
+                  minHeight: "2.1em",
                 }}
               >
                 ¥{product.wholesalePrice?.toLocaleString()}
@@ -149,6 +161,7 @@ export default function WholesaleProductCard({
                     letterSpacing: "0.08em",
                     textTransform: "uppercase",
                     cursor: "pointer",
+                    minHeight: "18px",
                   }}
                 >
                   ADD
@@ -160,6 +173,7 @@ export default function WholesaleProductCard({
                     alignItems: "center",
                     justifyContent: "space-between",
                     gap: "0.18rem",
+                    minHeight: "18px",
                   }}
                 >
                   <button
@@ -201,6 +215,7 @@ export default function WholesaleProductCard({
                 margin: 0,
                 letterSpacing: "0.02em",
                 lineHeight: 1.45,
+                minHeight: "2.2em",
               }}
             >
               Login to view price
