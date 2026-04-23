@@ -115,8 +115,6 @@ const VARIETY_KATAKANA_MAP = {
   Gesha: "ゲイシャ",
 };
 
-const DESKTOP_CANVAS_WIDTH = 1280;
-
 const baseFontFamily =
   'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif';
 
@@ -126,9 +124,20 @@ export default function WholesaleJpPage() {
   const [cart, setCart] = useState({});
   const [activeItemId, setActiveItemId] = useState(null);
   const [viewportWidth, setViewportWidth] = useState(() => {
-    if (typeof window === "undefined") return DESKTOP_CANVAS_WIDTH;
+    if (typeof window === "undefined") return 1440;
     return window.innerWidth;
   });
+
+  const isMobile = viewportWidth <= 768;
+  const isTablet = viewportWidth > 768 && viewportWidth <= 1100;
+
+  const contentPaddingX = isMobile ? "1rem" : isTablet ? "1.6rem" : "3.4rem";
+  const heroTopPadding = isMobile ? "2rem" : "4.5rem";
+  const productGridColumns = isMobile
+    ? "repeat(2, minmax(0, 1fr))"
+    : isTablet
+      ? "repeat(3, minmax(0, 1fr))"
+      : "repeat(5, minmax(0, 1fr))";
 
   const lang = "ja";
   const labels = PRODUCT_SECTIONS.ja.specLabels;
@@ -154,12 +163,6 @@ export default function WholesaleJpPage() {
   const displayPrice = activeWholesaleProduct
     ? `¥${activeWholesaleProduct.wholesalePrice?.toLocaleString()}`
     : "";
-
-  const isCompactViewport = viewportWidth <= 768;
-
-  const pageScale = isCompactViewport
-    ? Math.max(0.36, Math.min(1, viewportWidth / DESKTOP_CANVAS_WIDTH))
-    : 1;
 
   const getCountryOnly = (origin = "") => {
     if (!origin) return "";
@@ -275,11 +278,7 @@ export default function WholesaleJpPage() {
   }, []);
 
   useEffect(() => {
-    const onResize = () => {
-      setViewportWidth(window.innerWidth);
-    };
-
-    onResize();
+    const onResize = () => setViewportWidth(window.innerWidth);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
@@ -291,7 +290,7 @@ export default function WholesaleJpPage() {
     };
   }, [activeItemId]);
 
-  const pageBody = (
+  return (
     <div
       style={{
         minHeight: "100vh",
@@ -314,53 +313,63 @@ export default function WholesaleJpPage() {
           style={{
             maxWidth: "1440px",
             margin: "0 auto",
-            padding: "1.3rem 3.4rem",
+            padding: isMobile ? "1rem" : "1.3rem 3.4rem",
             display: "grid",
-            gridTemplateColumns: "1fr auto 1fr",
+            gridTemplateColumns: isMobile ? "1fr auto" : "1fr auto 1fr",
             alignItems: "center",
-            gap: "1rem",
+            gap: isMobile ? "0.8rem" : "1rem",
           }}
         >
-          <div style={{ display: "flex", justifyContent: "flex-start" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-start",
+              minWidth: 0,
+            }}
+          >
             <Link
               to="/"
               style={{
                 textDecoration: "none",
                 color: pageStyles.strongText,
-                fontSize: "0.95rem",
-                letterSpacing: "0.18em",
+                fontSize: isMobile ? "0.78rem" : "0.95rem",
+                letterSpacing: isMobile ? "0.14em" : "0.18em",
                 textTransform: "uppercase",
+                whiteSpace: "nowrap",
               }}
             >
               RYUGE COFFEE
             </Link>
           </div>
 
-          <nav
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: "2rem",
-              alignItems: "center",
-            }}
-          >
-            <Link to="/products" style={navLinkStyle}>
-              商品
-            </Link>
-            <Link to="/wholesale-jp" style={navLinkStyle}>
-              卸
-            </Link>
-          </nav>
+          {!isMobile && (
+            <nav
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: "2rem",
+                alignItems: "center",
+              }}
+            >
+              <Link to="/products" style={navLinkStyle}>
+                商品
+              </Link>
+              <Link to="/wholesale-jp" style={navLinkStyle}>
+                卸
+              </Link>
+            </nav>
+          )}
 
           <div
             style={{
               display: "flex",
               justifyContent: "flex-end",
-              gap: "1.4rem",
+              gap: isMobile ? "0.8rem" : "1.4rem",
               alignItems: "center",
+              minWidth: 0,
             }}
           >
-            {user && (
+            {!isMobile && user && (
               <Link to="/wholesale-jp/dashboard" style={rightLinkStyle}>
                 Dashboard
               </Link>
@@ -371,14 +380,9 @@ export default function WholesaleJpPage() {
                 onClick={handleGoToOrder}
                 style={{
                   ...ghostButtonStyle,
-                  padding: "0.45rem 1.1rem",
+                  padding: isMobile ? "0.38rem 0.7rem" : "0.45rem 1.1rem",
+                  fontSize: isMobile ? "0.58rem" : "0.68rem",
                 }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.borderColor = pageStyles.buttonHover)
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.borderColor = pageStyles.buttonBorder)
-                }
               >
                 Cart ({cartCount})
               </button>
@@ -391,23 +395,53 @@ export default function WholesaleJpPage() {
                   background: "none",
                   border: "none",
                   color: pageStyles.mutedText,
-                  fontSize: "0.7rem",
+                  fontSize: isMobile ? "0.6rem" : "0.7rem",
                   letterSpacing: "0.12em",
                   textTransform: "uppercase",
                   cursor: "pointer",
                   padding: 0,
                   fontFamily: baseFontFamily,
+                  whiteSpace: "nowrap",
                 }}
               >
                 Logout
               </button>
             ) : (
-              <Link to="/wholesale-jp/login" style={rightLinkStyle}>
+              <Link
+                to="/wholesale-jp/login"
+                style={{
+                  ...rightLinkStyle,
+                  fontSize: isMobile ? "0.6rem" : rightLinkStyle.fontSize,
+                }}
+              >
                 Login
               </Link>
             )}
           </div>
         </div>
+
+        {isMobile && (
+          <div
+            style={{
+              padding: "0 1rem 0.9rem",
+              display: "flex",
+              gap: "1rem",
+              borderTop: `1px solid ${pageStyles.border}`,
+            }}
+          >
+            <Link to="/products" style={mobileNavLinkStyle}>
+              商品
+            </Link>
+            <Link to="/wholesale-jp" style={mobileNavLinkStyle}>
+              卸
+            </Link>
+            {user && (
+              <Link to="/wholesale-jp/dashboard" style={mobileNavLinkStyle}>
+                Dashboard
+              </Link>
+            )}
+          </div>
+        )}
       </header>
 
       <main>
@@ -415,20 +449,20 @@ export default function WholesaleJpPage() {
           style={{
             maxWidth: "1440px",
             margin: "0 auto",
-            padding: "4.5rem 3.4rem 2rem",
+            padding: `${heroTopPadding} ${contentPaddingX} 1.5rem`,
           }}
         >
           <div
             style={{
-              maxWidth: "760px",
+              maxWidth: isMobile ? "100%" : "760px",
             }}
           >
             <p
               style={{
                 margin: 0,
                 color: pageStyles.softText,
-                fontSize: "0.94rem",
-                lineHeight: 2.15,
+                fontSize: isMobile ? "0.82rem" : "0.94rem",
+                lineHeight: isMobile ? 1.95 : 2.15,
                 letterSpacing: "0.04em",
               }}
             >
@@ -451,7 +485,14 @@ export default function WholesaleJpPage() {
           </div>
 
           {!user && (
-            <div style={noticeStyle}>
+            <div
+              style={{
+                ...noticeStyle,
+                marginTop: isMobile ? "1.2rem" : "1.6rem",
+                fontSize: isMobile ? "0.7rem" : noticeStyle.fontSize,
+                lineHeight: isMobile ? 1.85 : noticeStyle.lineHeight,
+              }}
+            >
               卸価格の表示と発注には
               <Link
                 to="/wholesale-jp/register"
@@ -481,7 +522,14 @@ export default function WholesaleJpPage() {
           )}
 
           {user && !approved && (
-            <div style={noticeStyle}>
+            <div
+              style={{
+                ...noticeStyle,
+                marginTop: isMobile ? "1.2rem" : "1.6rem",
+                fontSize: isMobile ? "0.7rem" : noticeStyle.fontSize,
+                lineHeight: isMobile ? 1.85 : noticeStyle.lineHeight,
+              }}
+            >
               アカウント承認待ちです。承認後に卸価格表示と発注が可能になります。
             </div>
           )}
@@ -491,14 +539,14 @@ export default function WholesaleJpPage() {
           style={{
             maxWidth: "1440px",
             margin: "0 auto",
-            padding: "1.5rem 3.4rem 7rem",
+            padding: `1rem ${contentPaddingX} ${isMobile ? "5.5rem" : "7rem"}`,
           }}
         >
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
-              gap: "1.35rem",
+              gridTemplateColumns: productGridColumns,
+              gap: isMobile ? "0.75rem" : "1.35rem",
               alignItems: "stretch",
             }}
           >
@@ -531,20 +579,20 @@ export default function WholesaleJpPage() {
           style={{
             maxWidth: "1440px",
             margin: "0 auto",
-            padding: "0 3.4rem 5rem",
+            padding: `0 ${contentPaddingX} ${isMobile ? "5rem" : "5rem"}`,
           }}
         >
           <div
             style={{
               borderTop: `1px solid ${pageStyles.border}`,
-              paddingTop: "2.4rem",
+              paddingTop: isMobile ? "1.6rem" : "2.4rem",
             }}
           >
             <p
               style={{
                 margin: "0 0 0.9rem",
                 color: pageStyles.mutedText,
-                fontSize: "0.68rem",
+                fontSize: isMobile ? "0.62rem" : "0.68rem",
                 letterSpacing: "0.22em",
                 textTransform: "uppercase",
               }}
@@ -556,8 +604,8 @@ export default function WholesaleJpPage() {
               style={{
                 margin: 0,
                 color: pageStyles.softText,
-                fontSize: "0.85rem",
-                lineHeight: 2.1,
+                fontSize: isMobile ? "0.78rem" : "0.85rem",
+                lineHeight: isMobile ? 1.95 : 2.1,
                 letterSpacing: "0.04em",
               }}
             >
@@ -567,63 +615,6 @@ export default function WholesaleJpPage() {
           </div>
         </section>
       </main>
-
-      {approved && cartCount > 0 && (
-        <div
-          style={{
-            position: "fixed",
-            right: isCompactViewport ? "1rem" : "2.4rem",
-            bottom: isCompactViewport ? "1rem" : "2.4rem",
-            zIndex: 120,
-          }}
-        >
-          <button
-            onClick={handleGoToOrder}
-            style={{
-              backgroundColor: "rgba(255,255,255,0.92)",
-              color: "#050505",
-              border: "none",
-              padding: isCompactViewport ? "0.85rem 1.2rem" : "1rem 1.8rem",
-              fontSize: isCompactViewport ? "0.64rem" : "0.72rem",
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
-              cursor: "pointer",
-              fontFamily: baseFontFamily,
-              boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
-            }}
-          >
-            発注フォームへ（{cartCount}点）
-          </button>
-        </div>
-      )}
-    </div>
-  );
-
-  return (
-    <>
-      <div
-        style={{
-          minHeight: "100vh",
-          backgroundColor: pageStyles.bg,
-          overflowX: isCompactViewport ? "auto" : "visible",
-          overflowY: "visible",
-        }}
-      >
-        {isCompactViewport ? (
-          <div
-            style={{
-              width: `${DESKTOP_CANVAS_WIDTH}px`,
-              minWidth: `${DESKTOP_CANVAS_WIDTH}px`,
-              margin: "0 auto",
-              zoom: pageScale,
-            }}
-          >
-            {pageBody}
-          </div>
-        ) : (
-          pageBody
-        )}
-      </div>
 
       {activeWholesaleProduct && (
         <div className="modal-backdrop" onClick={() => setActiveItemId(null)}>
@@ -803,7 +794,36 @@ export default function WholesaleJpPage() {
           )}
         </div>
       )}
-    </>
+
+      {approved && cartCount > 0 && (
+        <div
+          style={{
+            position: "fixed",
+            right: isMobile ? "1rem" : "2.4rem",
+            bottom: isMobile ? "1rem" : "2.4rem",
+            zIndex: 120,
+          }}
+        >
+          <button
+            onClick={handleGoToOrder}
+            style={{
+              backgroundColor: "rgba(255,255,255,0.92)",
+              color: "#050505",
+              border: "none",
+              padding: isMobile ? "0.85rem 1.15rem" : "1rem 1.8rem",
+              fontSize: isMobile ? "0.64rem" : "0.72rem",
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+              fontFamily: baseFontFamily,
+              boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
+            }}
+          >
+            発注フォームへ（{cartCount}点）
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -922,6 +942,13 @@ const navLinkStyle = {
   textDecoration: "none",
   color: "rgba(255,255,255,0.68)",
   fontSize: "0.82rem",
+  letterSpacing: "0.08em",
+};
+
+const mobileNavLinkStyle = {
+  textDecoration: "none",
+  color: "rgba(255,255,255,0.62)",
+  fontSize: "0.68rem",
   letterSpacing: "0.08em",
 };
 
