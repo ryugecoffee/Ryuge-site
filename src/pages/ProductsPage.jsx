@@ -313,11 +313,33 @@ useEffect(() => {
             onClick={(e) => e.stopPropagation()}
           >
             <button
-              className="modal-close"
-              onClick={() => setActiveItemId(null)}
-            >
-              ×
-            </button>
+  type="button"
+  className="modal-close"
+  aria-label="閉じる"
+  onClick={() => setActiveItemId(null)}
+  style={{
+    position: "absolute",
+    top: "12px",
+    right: "12px",
+    zIndex: 50,
+    width: "38px",
+    height: "38px",
+    borderRadius: "999px",
+    border: "1px solid rgba(232, 226, 217, 0.35)",
+    background: "rgba(0, 0, 0, 0.62)",
+    color: "#e8e2d9",
+    fontSize: "22px",
+    lineHeight: "1",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    backdropFilter: "blur(8px)",
+    WebkitBackdropFilter: "blur(8px)",
+  }}
+>
+  ×
+</button>
 
             <div className="modal-image modal-image-premium">
               {activeItem?.image && (
