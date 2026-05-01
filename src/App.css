@@ -4320,3 +4320,31 @@ html[lang="es"] .products-hero-overlay h1 {
     right: 10px !important;
   }
 }
+.modal-close-safe {
+  position: fixed;
+  top: 86px;
+  right: 16px;
+  z-index: 9999;
+  min-width: 58px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(232, 226, 217, 0.35);
+  background: rgba(0, 0, 0, 0.68);
+  color: #e8e2d9;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+@media (max-width: 640px) {
+  .modal-close-safe {
+    top: 76px;
+    right: 12px;
+  }
+}
