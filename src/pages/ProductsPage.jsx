@@ -673,31 +673,70 @@ useEffect(() => {
                         </div>
                       )}
                     </>
-                  ) : activeItem.id === "oriori-wheel" ? (
+                  ) : activeItem.id === "oriori-apps" ? (
                     <>
-                      <p className="modal-summary modal-product-summary modal-fade-up">
-                        {activeItem.description?.[lang] ||
-                          activeItem.description?.en ||
-                          activeItem.summary?.[lang] ||
-                          activeItem.summary?.en}
-                      </p>
+  <p className="modal-summary modal-product-summary modal-fade-up">
+    {activeItem.description?.[lang] ||
+      activeItem.description?.en ||
+      activeItem.summary?.[lang] ||
+      activeItem.summary?.en}
+  </p>
 
-                      <a
-                        href={activeItem.link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="modal-cta-link modal-fade-up"
-                        style={{
-                          marginTop: "16px",
-                          display: "inline-block",
-                          textAlign: "center",
-                        }}
-                      >
-                        {activeItem.buttonLabel?.[lang] ||
-                          activeItem.buttonLabel?.en ||
-                          "Open Site"}
-                      </a>
-                    </>
+  <div
+    className="apps-link-list modal-fade-up"
+    style={{
+      marginTop: "22px",
+      display: "grid",
+      gap: "18px",
+    }}
+  >
+    {(activeItem.apps || []).map((app) => (
+      <div
+        key={app.url}
+        className="apps-link-item"
+        style={{
+          padding: "18px 0",
+          borderTop: "1px solid rgba(255,255,255,0.12)",
+        }}
+      >
+        <h4
+          style={{
+            margin: "0 0 8px",
+            fontSize: "18px",
+            letterSpacing: "0.02em",
+            color: "rgba(255,255,255,0.9)",
+          }}
+        >
+          {app.title?.[lang] || app.title?.en}
+        </h4>
+
+        <p
+          style={{
+            margin: "0 0 14px",
+            fontSize: "14px",
+            lineHeight: 1.8,
+            color: "rgba(255,255,255,0.62)",
+          }}
+        >
+          {app.text?.[lang] || app.text?.en}
+        </p>
+
+        <a
+          href={app.url}
+          target="_blank"
+          rel="noreferrer"
+          className="modal-cta-link"
+          style={{
+            display: "inline-block",
+            textAlign: "center",
+          }}
+        >
+          {app.buttonLabel?.[lang] || app.buttonLabel?.en || "Open App"}
+        </a>
+      </div>
+    ))}
+  </div>
+</>
                   ) : (
                     <>
                       <dl className="product-specs product-specs-classic modal-fade-up">

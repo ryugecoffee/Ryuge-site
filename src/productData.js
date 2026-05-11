@@ -4,9 +4,9 @@ export const PRODUCT_SECTIONS = {
     enmaTitle: "閻魔",
     woodboxLabel: "Mokkan",
     woodboxTitle: "木函",
-    orioriLabel: "Oriori",
-    orioriTitle: "折々",
-    orioriIntro: "折々の時間に寄り添う、三つの静かなサービス",
+    orioriLabel: "Ryuge Apps",
+orioriTitle: "Ryuge Apps",
+orioriIntro: "味わう、記録する、遊ぶための小さなウェブアプリ。",
     buyButton: "購入する",
     specLabels: {
       origin: "生産地",
@@ -25,9 +25,9 @@ export const PRODUCT_SECTIONS = {
     enmaTitle: "閻魔",
     woodboxLabel: "Mokkan",
     woodboxTitle: "木函",
-    orioriLabel: "Oriori",
-    orioriTitle: "折々",
-    orioriIntro: "Three quiet services shaped for changing seasons",
+    orioriLabel: "Ryuge Apps",
+orioriTitle: "Ryuge Apps",
+orioriIntro: "Small web apps for tasting, recording, and playing with coffee.",
     buyButton: "Buy",
     specLabels: {
       origin: "Origin",
@@ -46,9 +46,9 @@ export const PRODUCT_SECTIONS = {
     enmaTitle: "閻魔",
     woodboxLabel: "Mokkan",
     woodboxTitle: "木函",
-    orioriLabel: "Oriori",
-    orioriTitle: "折々",
-    orioriIntro: "Tres servicios silenciosos para distintos momentos",
+    orioriLabel: "Ryuge Apps",
+orioriTitle: "Ryuge Apps",
+orioriIntro: "Pequeñas aplicaciones web para saborear, registrar y jugar con el café.",
     buyButton: "Comprar",
     specLabels: {
       origin: "Origen",
@@ -480,34 +480,66 @@ export const PRODUCT_DATA = {
       isSoldOut: false,
     },
     {
-      id: "oriori-wheel",
-      image: "/images/oriori.wheel.jpg",
+  id: "oriori-apps",
+  image: "/images/oriori.wheel.jpg",
+  title: {
+    ja: "Ryuge Apps",
+    en: "Ryuge Apps",
+    es: "Ryuge Apps",
+  },
+  modalTitle: {
+    ja: "Ryuge Apps",
+    en: "Ryuge Apps",
+    es: "Ryuge Apps",
+  },
+  summary: {
+    ja: "味わいを記録し、遊ぶための小さなウェブアプリ",
+    en: "Small web apps for tasting, recording, and playing with coffee",
+    es: "Pequeñas aplicaciones web para saborear, registrar y jugar con el café",
+  },
+  description: {
+    ja: "フレーバーホイール、珈琲品種診断など、コーヒーを少し違う角度から楽しむための小さなアプリをまとめています。",
+    en: "A small collection of coffee apps, including the Flavor Coffee Wheel and What Coffee Are You?",
+    es: "Una pequeña colección de apps de café, incluyendo Flavor Coffee Wheel y What Coffee Are You?",
+  },
+  apps: [
+    {
       title: {
-        ja: "フレーバーホイール",
-        en: "Flavor Wheel",
-        es: "Flavor Wheel",
+        ja: "Flavor Coffee Wheel",
+        en: "Flavor Coffee Wheel",
+        es: "Flavor Coffee Wheel",
       },
-      modalTitle: {
-        ja: "フレーバーホイール",
-        en: "Flavor Wheel",
-        es: "Flavor Wheel",
-      },
-      summary: {
-        ja: "味わいを記録し、言葉にするためのサイト",
-        en: "A site for recording and describing flavor",
-        es: "Un sitio para registrar y expresar sabores",
-      },
-      description: {
-        ja: "選んだフレーバーを記録し、コメントとともに保存できるテイスティング用サイトです。",
-        en: "A tasting site where you can record selected flavors and save them with notes.",
-        es: "Un sitio de cata donde puedes registrar los sabores seleccionados y guardarlos con notas.",
+      text: {
+        ja: "味わいを記録し、コメントとともに保存できるテイスティングアプリ。",
+        en: "A tasting app for selecting coffee flavors and saving them with your notes.",
+        es: "Una aplicación de cata para seleccionar sabores del café y guardarlos con tus notas.",
       },
       buttonLabel: {
-        ja: "サイトを見る",
-        en: "Open Site",
-        es: "Ver sitio",
+        ja: "アプリを開く",
+        en: "Open App",
+        es: "Abrir app",
       },
-      link: "https://flavorcoffeewheel.com"
+      url: "https://flavorcoffeewheel.com",
     },
+    {
+      title: {
+        ja: "珈琲品種性格診断",
+        en: "What Coffee Are You?",
+        es: "¿Qué café eres?",
+      },
+      text: {
+        ja: "あなたの性格をコーヒー品種にたとえる小さな診断アプリ。",
+        en: "A small personality quiz that matches you with a coffee variety.",
+        es: "Un pequeño test de personalidad que te compara con una variedad de café.",
+      },
+      buttonLabel: {
+        ja: "診断する",
+        en: "Take the Quiz",
+        es: "Hacer el test",
+      },
+      url: "https://whatcoffeeareyou.com",
+    },
+  ],
+},
   ],
 };
