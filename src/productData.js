@@ -117,7 +117,7 @@ export const PRODUCT_DATA = {
       priceNumber: 2100,
       flavor: "Blackberry, Strawberry, Full Body",
       link: "https://square.link/u/xxxxx",
-      isSoldOut: false,
+      isSoldOut: true,
     },
     {
       id: "enma-burundi-light",
