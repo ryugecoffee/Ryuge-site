@@ -555,7 +555,7 @@ export const PRODUCT_DATA = {
       en: "Draw a Fortune",
       es: "Sacar la fortuna",
     },
-    url: "ここにおみくじサイトのURL",
+    url: "https://coffeeomikuji.com",
   },
 ],
 },
