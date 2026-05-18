@@ -503,43 +503,61 @@ export const PRODUCT_DATA = {
     es: "Una pequeña colección de apps de café, incluyendo Flavor Coffee Wheel y What Coffee Are You?",
   },
   apps: [
-    {
-      title: {
-        ja: "Flavor Coffee Wheel",
-        en: "Flavor Coffee Wheel",
-        es: "Flavor Coffee Wheel",
-      },
-      text: {
-        ja: "味わいを記録し、コメントとともに保存できるテイスティングアプリ。",
-        en: "A tasting app for selecting coffee flavors and saving them with your notes.",
-        es: "Una aplicación de cata para seleccionar sabores del café y guardarlos con tus notas.",
-      },
-      buttonLabel: {
-        ja: "アプリを開く",
-        en: "Open App",
-        es: "Abrir app",
-      },
-      url: "https://flavorcoffeewheel.com",
+  {
+    title: {
+      ja: "Flavor Coffee Wheel",
+      en: "Flavor Coffee Wheel",
+      es: "Flavor Coffee Wheel",
     },
-    {
-      title: {
-        ja: "珈琲品種性格診断",
-        en: "What Coffee Are You?",
-        es: "¿Qué café eres?",
-      },
-      text: {
-        ja: "あなたの性格をコーヒー品種にたとえる小さな診断アプリ。",
-        en: "A small personality quiz that matches you with a coffee variety.",
-        es: "Un pequeño test de personalidad que te compara con una variedad de café.",
-      },
-      buttonLabel: {
-        ja: "診断する",
-        en: "Take the Quiz",
-        es: "Hacer el test",
-      },
-      url: "https://whatcoffeeareyou.com",
+    text: {
+      ja: "味わいを記録し、コメントとともに保存できるテイスティングアプリ。",
+      en: "A tasting app for selecting coffee flavors and saving them with your notes.",
+      es: "Una aplicación de cata para seleccionar sabores del café y guardarlos con tus notas.",
     },
-  ],
+    buttonLabel: {
+      ja: "アプリを開く",
+      en: "Open App",
+      es: "Abrir app",
+    },
+    url: "https://flavorcoffeewheel.com",
+  },
+  {
+    title: {
+      ja: "珈琲品種性格診断",
+      en: "What Coffee Are You?",
+      es: "¿Qué café eres?",
+    },
+    text: {
+      ja: "あなたの性格をコーヒー品種にたとえる小さな診断アプリ。",
+      en: "A small personality quiz that matches you with a coffee variety.",
+      es: "Un pequeño test de personalidad que te compara con una variedad de café.",
+    },
+    buttonLabel: {
+      ja: "診断する",
+      en: "Take the Quiz",
+      es: "Hacer el test",
+    },
+    url: "https://whatcoffeeareyou.com",
+  },
+  {
+    title: {
+      ja: "珈琲おみくじ",
+      en: "Coffee Fortune",
+      es: "Fortuna del Café",
+    },
+    text: {
+      ja: "今日の気分にそっと寄り添う、龍華珈琲の小さなおみくじアプリ。",
+      en: "A small coffee fortune app from Ryuge Coffee, made for your day.",
+      es: "Una pequeña app de fortuna del café de Ryuge Coffee para acompañar tu día.",
+    },
+    buttonLabel: {
+      ja: "おみくじを引く",
+      en: "Draw a Fortune",
+      es: "Sacar la fortuna",
+    },
+    url: "ここにおみくじサイトのURL",
+  },
+],
 },
   ],
 };
