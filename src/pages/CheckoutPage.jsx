@@ -12,8 +12,7 @@ import {
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
-const FLAT_SHIPPING = 880;
-const FREE_SHIPPING_THRESHOLD = 3000;
+const SINGLE_ITEM_SHIPPING = 200;
 
 const PREFECTURES = [
   "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
@@ -179,12 +178,13 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
     [cartItems]
   );
 
+  const totalQuantity = useMemo(
+    () => (cartItems || []).filter((i) => !isSubscriptionItem(i)).reduce((sum, i) => sum + (i.quantity || 0), 0),
+    [cartItems]
+  );
+
   // 送料を先にフロントで計算して即表示
-  const computedShipping = hasSubscription
-    ? 0
-    : cartSubtotal >= FREE_SHIPPING_THRESHOLD
-    ? 0
-    : FLAT_SHIPPING;
+  const computedShipping = hasSubscription ? 0 : totalQuantity <= 1 ? SINGLE_ITEM_SHIPPING : 0;
 
   useEffect(() => {
     if (!cartItems || cartItems.length === 0) return;

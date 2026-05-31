@@ -8,16 +8,16 @@ const TEXT = {
       "ご注文確定後、3〜7営業日以内に発送いたします。土日は出荷をお休みしております。",
     sections: [
       {
-        title: "¥3,000以上で送料無料",
-        body: "ご注文合計が¥3,000以上の場合、送料無料となります。",
+        title: "1個注文：送料¥200",
+        body: "1個のみのご注文は、送料¥200となります。",
       },
       {
-        title: "全国一律 ¥880（ゆうパック60サイズ）",
-        body: "¥3,000未満のご注文は、全国一律¥880のゆうパックでお届けします。",
+        title: "2個以上のご注文：送料無料",
+        body: "2個以上のご注文（混在含む）は送料無料です。",
       },
       {
         title: "サブスクリプションは送料無料",
-        body: "サブスクリプション商品は金額にかかわらず送料無料です。",
+        body: "サブスクリプション商品は送料無料です。",
       },
     ],
     note:
@@ -32,16 +32,16 @@ const TEXT = {
       "Orders are usually shipped within 3–7 business days after confirmation. We do not ship on weekends.",
     sections: [
       {
-        title: "Free shipping on orders over ¥3,000",
-        body: "Orders totaling ¥3,000 or more qualify for free shipping.",
+        title: "1 item: ¥200 shipping",
+        body: "Orders with a single item are charged ¥200 for shipping.",
       },
       {
-        title: "Flat rate ¥880 (Yu-Pack, 60 size)",
-        body: "Orders under ¥3,000 are shipped via Yu-Pack at a flat rate of ¥880.",
+        title: "2 or more items: Free shipping",
+        body: "Orders of 2 or more items (any combination) ship free.",
       },
       {
         title: "Subscriptions ship free",
-        body: "All subscription products include free shipping regardless of order total.",
+        body: "All subscription products include free shipping.",
       },
     ],
     note:
@@ -56,16 +56,16 @@ const TEXT = {
       "Los pedidos se envían normalmente dentro de 3–7 días hábiles tras la confirmación. No realizamos envíos los fines de semana.",
     sections: [
       {
-        title: "Envío gratis en pedidos superiores a ¥3,000",
-        body: "Los pedidos con un total de ¥3,000 o más tienen envío gratuito.",
+        title: "1 artículo: envío ¥200",
+        body: "Los pedidos de un solo artículo tienen un coste de envío de ¥200.",
       },
       {
-        title: "Tarifa fija ¥880 (Yu-Pack, 60)",
-        body: "Los pedidos inferiores a ¥3,000 se envían por Yu-Pack a una tarifa fija de ¥880.",
+        title: "2 artículos o más: envío gratis",
+        body: "Los pedidos de 2 o más artículos (cualquier combinación) tienen envío gratuito.",
       },
       {
         title: "Las suscripciones tienen envío gratis",
-        body: "Todos los productos de suscripción incluyen envío gratuito sin importar el total del pedido.",
+        body: "Todos los productos de suscripción incluyen envío gratuito.",
       },
     ],
     note:

@@ -1,4 +1,4 @@
-import { useCart } from "../context/CartContext";
+import { useCart } from "../CartContext";
 
 export default function CartDrawer({ lang }) {
   const {
@@ -11,12 +11,10 @@ export default function CartDrawer({ lang }) {
     addToCart,
   } = useCart();
 
-  const FREE_SHIPPING_THRESHOLD = 6000;
-  const remainingForFreeShipping = Math.max(
-    0,
-    FREE_SHIPPING_THRESHOLD - cartTotal
-  );
-  const isFreeShippingReached = remainingForFreeShipping === 0;
+  const totalQuantity = cartItems
+    .filter((i) => !i.id?.startsWith("subscription-"))
+    .reduce((sum, i) => sum + (i.quantity || 0), 0);
+  const isFreeShippingReached = totalQuantity >= 2;
 
   const bagRecommendations = [
     {
@@ -133,10 +131,10 @@ export default function CartDrawer({ lang }) {
             <div className="cart-upsell">
               <p className="cart-upsell-shipping">
                 {lang === "ja"
-                  ? `あと ¥${remainingForFreeShipping.toLocaleString()} で送料無料`
+                  ? "もう1個追加で送料無料"
                   : lang === "es"
-                  ? `Envío gratis con ¥${remainingForFreeShipping.toLocaleString()} más`
-                  : `Add ¥${remainingForFreeShipping.toLocaleString()} more for free shipping`}
+                  ? "Añade 1 artículo más para envío gratis"
+                  : "Add 1 more item for free shipping"}
               </p>
 
               <div className="cart-upsell-list">
