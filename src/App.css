@@ -1590,14 +1590,15 @@ html[lang="es"] .products-hero-overlay h1 {
 }
 
 .oriori-services-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 320px);
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 28px;
   margin-top: 8px;
 }
 
 .oriori-service-card {
+  width: 320px;
   position: relative;
   overflow: hidden;
   background: #0b0b0b;

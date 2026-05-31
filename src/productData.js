@@ -147,7 +147,7 @@ export const PRODUCT_DATA = {
       altitude: "1500–1700m",
       weight: "180g",
       price: "¥1,700",
-      priceNumber: 1700,
+      priceNumber: 1900,
       flavor: "Orange, Plum, Apricot, Floral, Black Tea",
       link: "https://square.link/u/xxxxx",
       isSoldOut: false,
