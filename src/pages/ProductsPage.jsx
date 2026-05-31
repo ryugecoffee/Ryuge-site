@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import SiteFooter from "../components/SiteFooter";
 import { PRODUCT_DATA, PRODUCT_SECTIONS } from "../productData";
 import { useCart } from "../CartContext";
+import { trackViewItem } from "../lib/analytics";
 
 const DEFAULT_SUBSCRIPTION_PLAN = "basic";
 
@@ -202,7 +203,7 @@ export default function ProductsPage({ lang }) {
               <article
                 key={item.id}
                 className="products-enma-static-card"
-                onClick={() => setActiveItemId(item.id)}
+                onClick={() => { setActiveItemId(item.id); trackViewItem(item); }}
               >
                 <img src={item.image} alt="" />
 
@@ -252,7 +253,7 @@ export default function ProductsPage({ lang }) {
               <article
                 key={item.id}
                 className="products-enma-static-card products-woodbox-card"
-                onClick={() => setActiveItemId(item.id)}
+                onClick={() => { setActiveItemId(item.id); trackViewItem(item); }}
               >
                 <img src={item.image} alt="" />
 
@@ -283,7 +284,7 @@ export default function ProductsPage({ lang }) {
               <article
                 key={item.id}
                 className="oriori-service-card"
-                onClick={() => setActiveItemId(item.id)}
+                onClick={() => { setActiveItemId(item.id); trackViewItem(item); }}
               >
                 <img src={item.image} alt="" />
 

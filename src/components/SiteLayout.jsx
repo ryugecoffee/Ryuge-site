@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Outlet, Link, useNavigate } from "react-router-dom";
 import { useCart } from "../CartContext";
+import { trackViewCart, trackFreeShippingPromotion } from "../lib/analytics";
 
 export default function SiteLayout({ lang, setLang }) {
   const {
@@ -18,6 +19,12 @@ export default function SiteLayout({ lang, setLang }) {
   useEffect(() => {
     document.body.style.overflow = isCartOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
+  }, [isCartOpen]);
+
+  useEffect(() => {
+    if (isCartOpen && !hasSubscription && remaining > 0) {
+      trackFreeShippingPromotion(remaining, FREE_SHIPPING);
+    }
   }, [isCartOpen]);
 
   useEffect(() => {
@@ -42,7 +49,7 @@ export default function SiteLayout({ lang, setLang }) {
         <div className="site-header-side left" />
         <Link to="/" className="site-logo centered-logo">Ryuge Coffee</Link>
         <div className="lang-switch header-lang-switch">
-          <button type="button" className="cart-indicator" onClick={() => setIsCartOpen(true)}>
+          <button type="button" className="cart-indicator" onClick={() => { setIsCartOpen(true); trackViewCart(cartItems, cartTotal); }}>
             {lang === "ja" ? "カート" : lang === "es" ? "Carrito" : "Cart"}
             {cartCount > 0 && ` (${cartCount})`}
           </button>
