@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import SiteFooter from "../components/SiteFooter";
 import { PRODUCT_DATA, PRODUCT_SECTIONS } from "../productData";
+import { useCart } from "../CartContext";
 
 const DEFAULT_SUBSCRIPTION_PLAN = "basic";
 
@@ -32,19 +33,9 @@ const SOLD_OUT_TEXT = {
   es: "Agotado",
 };
 
-export default function ProductsPage({ lang, cartItems, setCartItems }) {
+export default function ProductsPage({ lang }) {
   const location = useLocation();
-
-useEffect(() => {
-  if (location.hash === "#oriori") {
-    const target = document.getElementById("oriori-section");
-    if (target) {
-      setTimeout(() => {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 50);
-    }
-  }
-}, [location]);
+  const { setItem } = useCart();
   const page = PAGE_TEXT[lang] || PAGE_TEXT.ja;
   const sectionText = PRODUCT_SECTIONS[lang] || PRODUCT_SECTIONS.ja;
   const labels = sectionText.specLabels;
@@ -106,19 +97,17 @@ useEffect(() => {
   }, [activeItem]);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
-  useEffect(() => {
-  if (location.hash === "#oriori") {
-    const target = document.getElementById("oriori-section");
-    if (target) {
-      setTimeout(() => {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 50);
+    if (location.hash === "#oriori") {
+      const target = document.getElementById("oriori-section");
+      if (target) {
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 50);
+      }
+    } else {
+      window.scrollTo(0, 0);
     }
-  }
-}, [location]);
+  }, [location]);
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -226,6 +215,7 @@ useEffect(() => {
                 <div className="products-enma-card-text">
                   <h3>{item.title?.[lang]}</h3>
                   <p>{item.summary?.[lang]}</p>
+                  {item.price && <p className="product-card-price">{item.price}</p>}
                 </div>
               </article>
             ))}
@@ -275,6 +265,7 @@ useEffect(() => {
                 <div className="products-enma-card-text">
                   <h3>{item.title?.[lang]}</h3>
                   <p>{item.summary?.[lang]}</p>
+                  {item.price && <p className="product-card-price">{item.price}</p>}
                 </div>
               </article>
             ))}
@@ -443,26 +434,16 @@ useEffect(() => {
                           const unitPrice =
                             priceMap[currentSubscriptionPlan.id] ?? 0;
 
-                          setCartItems((prev) => {
-                            const id = `subscription-${currentSubscriptionPlan.id}`;
-                            const otherItems = prev.filter(
-                              (item) => item.id !== id
-                            );
-
-                            return [
-                              ...otherItems,
-                              {
-                                id,
-                                title: `${
-                                  activeItem.title?.[lang] || "サブスクリプション"
-                                } — ${currentSubscriptionPlan.name}`,
-                                price: unitPrice,
-                                quantity: 1,
-                                category: "subscription",
-                                size: "100g",
-                              },
-                            ];
-                          });
+                          setItem(
+                            {
+                              id: `subscription-${currentSubscriptionPlan.id}`,
+                              name: `${activeItem.title?.[lang] || "サブスクリプション"} — ${currentSubscriptionPlan.name}`,
+                              price: unitPrice,
+                              category: "subscription",
+                              size: "100g",
+                            },
+                            1
+                          );
 
                           setActiveItemId(null);
                         }}
@@ -638,28 +619,15 @@ useEffect(() => {
                                   ? 350
                                   : 500;
 
-                              setCartItems((prev) => {
-                                const id = currentCoffeeBagVariant.id;
-                                const otherItems = prev.filter(
-                                  (item) => item.id !== id
-                                );
-
-                                return [
-                                  ...otherItems,
-                                  {
-                                    id,
-                                    title:
-                                      currentCoffeeBagVariant.name?.[lang] ||
-                                      currentCoffeeBagVariant.name?.en,
-                                    price: unitPrice,
-                                    quantity: qty,
-                                    category:
-                                      currentCoffeeBagVariant.id === "coffee-bag"
-                                        ? "bag"
-                                        : "tea-bag",
-                                  },
-                                ];
-                              });
+                              setItem(
+                                {
+                                  id: currentCoffeeBagVariant.id,
+                                  name: currentCoffeeBagVariant.name?.[lang] || currentCoffeeBagVariant.name?.en,
+                                  price: unitPrice,
+                                  category: currentCoffeeBagVariant.id === "coffee-bag" ? "bag" : "tea-bag",
+                                },
+                                qty
+                              );
 
                               setActiveItemId(null);
                             }}
@@ -807,28 +775,16 @@ useEffect(() => {
                           type="button"
                           className="modal-cta-link modal-fade-up"
                           onClick={() => {
-                            setCartItems((prev) => {
-                              const otherItems = prev.filter(
-                                (item) => item.id !== activeItem.id
-                              );
-
-                              if (simpleQuantity === 0) return otherItems;
-
-                              return [
-                                ...otherItems,
-                                {
-                                  id: activeItem.id,
-                                  title:
-                                    activeItem.title?.[lang] ||
-                                    activeItem.title?.en ||
-                                    activeItem.title,
-                                  price: activeItem.priceNumber ?? 0,
-                                  quantity: simpleQuantity,
-                                  category: activeItem.category,
-                                  size: activeItem.size,
-                                },
-                              ];
-                            });
+                            setItem(
+                              {
+                                id: activeItem.id,
+                                name: activeItem.title?.[lang] || activeItem.title?.en || activeItem.title,
+                                price: activeItem.priceNumber ?? 0,
+                                category: activeItem.category,
+                                size: activeItem.size,
+                              },
+                              simpleQuantity
+                            );
 
                             setActiveItemId(null);
                           }}

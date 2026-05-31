@@ -146,6 +146,32 @@ export const PRODUCT_DATA = {
       link: "https://square.link/u/xxxxx",
       isSoldOut: false,
     },
+    {
+      id: "enma-coffee-bag",
+      image: "/images/enma-coffee-bag.jpg",
+      category: "bag",
+      size: "8個入り",
+      title: {
+        ja: "閻魔 珈琲バッグ",
+        en: "ENMA Coffee Bag",
+        es: "ENMA Coffee Bag",
+      },
+      modalTitle: {
+        ja: "閻魔 珈琲バッグ",
+        en: "ENMA Coffee Bag",
+        es: "ENMA Coffee Bag",
+      },
+      summary: {
+        ja: "スペシャルティコーヒーを手軽に",
+        en: "Specialty coffee, effortless",
+        es: "Café de especialidad, sin esfuerzo",
+      },
+      weight: "8個入り",
+      price: "¥2,400",
+      priceNumber: 2400,
+      flavor: "1杯あたり¥300",
+      isSoldOut: false,
+    },
   ],
 
   woodbox: [
@@ -212,6 +238,32 @@ export const PRODUCT_DATA = {
       flavor:
         "Floral, Earl Grey, Stone Fruit, Pear, Honey, Bright Acidity, Round Mouthfeel, Elegant",
       link: "https://square.link/u/xxxxx",
+      isSoldOut: false,
+    },
+    {
+      id: "woodbox-tea-bag",
+      image: "/images/woodbox-tea-bag.jpg",
+      category: "tea-bag",
+      size: "8個入り",
+      title: {
+        ja: "木函 煎茶バッグ",
+        en: "WOOD BOX Sencha Bag",
+        es: "WOOD BOX Sencha Bag",
+      },
+      modalTitle: {
+        ja: "木函 煎茶バッグ",
+        en: "WOOD BOX Sencha Bag",
+        es: "WOOD BOX Sencha Bag",
+      },
+      summary: {
+        ja: "上質なお茶を木函に",
+        en: "Premium tea in a wooden box",
+        es: "Té premium en caja de madera",
+      },
+      weight: "8個入り",
+      price: "¥2,800",
+      priceNumber: 2800,
+      flavor: "1杯あたり¥350",
       isSoldOut: false,
     },
   ],
@@ -363,121 +415,6 @@ export const PRODUCT_DATA = {
       },
 
       link: "https://square.link/u/xxxxx",
-    },
-    {
-      id: "oriori-bag",
-      image: "/images/coffee-bag.jpg",
-      title: {
-        ja: "バッグシリーズ",
-        en: "Bag Series",
-        es: "Bag Series",
-      },
-      modalTitle: {
-        ja: "バッグシリーズ",
-        en: "Bag Series",
-        es: "Bag Series",
-      },
-      summary: {
-        ja: "日々の合間に寄り添う、静かな一杯",
-        en: "A quiet cup for everyday moments",
-        es: "Una taza tranquila para el día a día",
-      },
-
-     variants: [
-  {
-    id: "coffee-bag",
-    tabLabel: {
-      ja: "閻魔",
-      en: "ENMA",
-      es: "ENMA",
-    },
-    name: {
-      ja: "珈琲バッグ　閻魔　深煎りの禅",
-      en: "Coffee Bag – ENMA / Deep Roasted Zen",
-      es: "Bolsa de café – ENMA / Zen de tueste profundo",
-    },
-    note: {
-      ja: "静かに残る苦味と余韻",
-      en: "Deep bitterness with a quiet finish",
-      es: "Amargor profundo con final suave",
-    },
-    brew: {
-      ja: [
-        "マグカップに入れ、160ccのお湯を注ぎ、2分ほど待ってお召し上がりください。",
-      ],
-      en: [
-        "Place the bag in a mug, pour 160ml of hot water, and wait about 2 minutes.",
-      ],
-      es: [
-        "Coloque la bolsa en una taza, vierta 160ml de agua caliente y espere unos 2 minutos.",
-      ],
-    },
-    quantities: [
-      { id: "1", label: "1個" },
-      { id: "3", label: "3個" },
-      { id: "5", label: "5個" },
-    ],
-    button: {
-      ja: "購入する",
-      en: "Buy",
-      es: "Comprar",
-    },
-    link: "https://square.link/u/xxxxx",
-  },
-  {
-    id: "tea-bag",
-    tabLabel: {
-      ja: "地蔵",
-      en: "JIZO",
-      es: "JIZO",
-    },
-    name: {
-      ja: "お茶バッグ　地蔵　静寂の余韻",
-      en: "Tea Bag – JIZO / Quiet Aftertaste",
-      es: "Bolsa de té – JIZO / Eco tranquilo",
-    },
-    note: {
-      ja: "寺の時間に寄り添う、やわらかな一杯",
-      en: "A softer, quieter cup",
-      es: "Una taza suave y tranquila",
-    },
-    teaTypes: {
-      ja: ["煎茶"],
-      en: ["Sencha"],
-      es: ["Sencha"],
-    },
-    brew: {
-      ja: [
-        "一煎目：200ccで1分",
-        "二煎目：200ccで10秒",
-        "三煎目：200ccで10秒",
-      ],
-      en: [
-        "1st infusion: 200ml for 1 minute",
-        "2nd infusion: 200ml for 10 seconds",
-        "3rd infusion: 200ml for 10 seconds",
-      ],
-      es: [
-        "Primera infusión: 200ml durante 1 minuto",
-        "Segunda infusión: 200ml durante 10 segundos",
-        "Tercera infusión: 200ml durante 10 segundos",
-      ],
-    },
-    quantities: [
-      { id: "1", label: "1個" },
-      { id: "3", label: "3個" },
-      { id: "5", label: "5個" },
-    ],
-    button: {
-      ja: "購入する",
-      en: "Buy",
-      es: "Comprar",
-    },
-    link: "https://square.link/u/xxxxx",
-  },
-],
-
-      isSoldOut: false,
     },
     {
   id: "oriori-apps",
