@@ -1543,12 +1543,6 @@ html[lang="es"] .products-hero-overlay h1 {
   background: #111;
 }
 
-.products-bag-card img {
-  object-fit: cover;
-  transform: none;
-  filter: brightness(0.82);
-}
-
 .product-card-weight {
   margin: 4px 0 0;
   font-size: 11px;
@@ -1784,9 +1778,9 @@ html[lang="es"] .products-hero-overlay h1 {
 }
 
 .modal-close-safe {
-  position: fixed;
-  top: 86px;
-  right: 16px;
+  position: absolute;
+  top: 20px;
+  right: 20px;
   z-index: 9999;
   min-width: 58px;
   height: 34px;
@@ -2887,17 +2881,20 @@ html[lang="es"] .products-hero-overlay h1 {
   }
 
   .products-enma-static-card,
-  .products-woodbox-card {
+  .products-woodbox-card,
+  .products-bag-card {
     aspect-ratio: 0.82 / 1.08;
     min-height: 0;
   }
 
-  .products-woodbox-card img {
+  .products-woodbox-card img,
+  .products-bag-card img {
     transform: scale(0.78);
   }
 
   .products-enma-static-card,
   .products-woodbox-card,
+  .products-bag-card,
   .oriori-service-card {
     min-width: 0;
   }
@@ -3003,7 +3000,7 @@ html[lang="es"] .products-hero-overlay h1 {
   }
 
   .modal-close-safe {
-    top: 76px;
+    top: 16px;
     right: 12px;
   }
 
@@ -3155,8 +3152,8 @@ html[lang="es"] .products-hero-overlay h1 {
   }
 
   .modal-close-safe {
-    top: 76px;
-    right: 12px;
+    top: 14px;
+    right: 10px;
   }
 }
 
