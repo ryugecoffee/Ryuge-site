@@ -302,7 +302,7 @@ export default function ProductsPage({ lang }) {
             {(products.bag || []).map((item) => (
               <article
                 key={item.id}
-                className="products-enma-static-card products-woodbox-card"
+                className="products-enma-static-card products-woodbox-card products-bag-card"
                 onClick={() => { setActiveItemId(item.id); trackViewItem(item); }}
               >
                 <img src={item.image} alt="" />
@@ -316,6 +316,7 @@ export default function ProductsPage({ lang }) {
                 <div className="products-enma-card-text">
                   <h3>{item.title?.[lang]}</h3>
                   <p>{item.summary?.[lang]}</p>
+                  {item.weight && <p className="product-card-weight">{item.weight}</p>}
                   {item.price && <p className="product-card-price">{item.price}</p>}
                 </div>
               </article>
