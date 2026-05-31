@@ -78,7 +78,7 @@ ryugecoffee@gmail.com
   return (
     <div className="legal-page">
       <h1>{t.title}</h1>
-      <p style={{ whiteSpace: "pre-line" }}>{t.content}</p>
+      <p className="pre-line">{t.content}</p>
     </div>
   );
 }

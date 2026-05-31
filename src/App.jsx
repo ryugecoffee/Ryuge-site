@@ -12,7 +12,7 @@ import ShippingPage from "./pages/ShippingPage";
 import RefundPolicy from "./pages/RefundPolicy";
 import { Analytics } from "@vercel/analytics/react";
 import AccessSection from "./pages/AccessSection";
-import { pageview, trackAddToCart } from "./lib/analytics";
+import { pageview } from "./lib/analytics";
 
 // 卸ページ
 import WholesaleJpPage from "./pages/WholesaleJpPage";
@@ -33,99 +33,26 @@ export default function App() {
     return localStorage.getItem("site-lang") || "ja";
   });
 
-  const [cartItems, setCartItems] = useState(() => {
-    const savedCart = localStorage.getItem("cart-items");
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
-
   useEffect(() => {
     pageview(location.pathname + location.search);
   }, [location]);
-
-  const addToCart = (product, quantity = 1) => {
-    setCartItems((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
-      if (existing) {
-        return prev.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-      }
-      return [
-        ...prev,
-        {
-          id: product.id,
-          title: product.title || product.name || "Product",
-          price: product.priceNumber ?? product.price ?? 0,
-          image: product.image || "",
-          quantity,
-        },
-      ];
-    });
-    trackAddToCart(product, quantity);
-  };
-
-  const removeFromCart = (id) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const updateCartQuantity = (id, nextQuantity) => {
-    if (nextQuantity <= 0) {
-      setCartItems((prev) => prev.filter((item) => item.id !== id));
-      return;
-    }
-    setCartItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, quantity: nextQuantity } : item
-      )
-    );
-  };
-
-  const clearCart = () => {
-    setCartItems([]);
-    localStorage.removeItem("cart-items");
-  };
 
   useEffect(() => {
     localStorage.setItem("site-lang", lang);
   }, [lang]);
 
-  useEffect(() => {
-    localStorage.setItem("cart-items", JSON.stringify(cartItems));
-  }, [cartItems]);
-
   return (
     <AuthProvider>
       <>
-        {/* 👇 これが今回の追加（最重要） */}
         <ScrollToTop />
 
         <Routes>
           <Route path="/" element={<HomePage lang={lang} setLang={setLang} />} />
 
           <Route
-            element={
-              <SiteLayout
-                lang={lang}
-                setLang={setLang}
-                cartItems={cartItems}
-                removeFromCart={removeFromCart}
-                updateCartQuantity={updateCartQuantity}
-                addToCart={addToCart}
-              />
-            }
+            element={<SiteLayout lang={lang} setLang={setLang} />}
           >
-            <Route
-              path="/products"
-              element={
-                <ProductsPage
-                  lang={lang}
-                  cartItems={cartItems}
-                  setCartItems={setCartItems}
-                />
-              }
-            />
+            <Route path="/products" element={<ProductsPage lang={lang} />} />
             <Route path="/privacy" element={<PrivacyPolicy lang={lang} />} />
             <Route path="/terms" element={<Terms lang={lang} />} />
             <Route path="/shipping" element={<ShippingPage lang={lang} />} />
@@ -134,17 +61,7 @@ export default function App() {
             <Route path="/access" element={<AccessSection lang={lang} />} />
           </Route>
 
-          <Route
-            path="/checkout"
-            element={
-              <CheckoutPage
-                cartItems={cartItems}
-                setCartItems={setCartItems}
-                clearCart={clearCart}
-                lang={lang}
-              />
-            }
-          />
+          <Route path="/checkout" element={<CheckoutPage lang={lang} />} />
           <Route path="/checkout/complete" element={<CheckoutCompletePage />} />
 
           {/* 卸ページ */}
