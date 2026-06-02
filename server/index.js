@@ -482,6 +482,27 @@ app.post("/wholesale-register", async (req, res) => {
   }
 });
 
+// ===== 卸ユーザー削除 =====
+app.post("/wholesale-delete-user", async (req, res) => {
+  try {
+    const { uid } = req.body;
+    if (!uid) return res.status(400).json({ error: "uid is required" });
+
+    try {
+      await admin.auth().deleteUser(uid);
+    } catch (authErr) {
+      if (authErr.code !== "auth/user-not-found") {
+        console.error("Auth delete error:", authErr);
+      }
+    }
+
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error("wholesale-delete-user error:", err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // ===== 卸発注 =====
 app.post("/wholesale-order", async (req, res) => {
   try {

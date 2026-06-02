@@ -6,6 +6,7 @@ import {
   getDocs,
   doc,
   updateDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../contexts/AuthContext";
@@ -263,6 +264,22 @@ function UsersPanel() {
     }
   };
 
+  const handleDelete = async (uid, companyName) => {
+    if (!window.confirm(`「${companyName || uid}」を削除しますか？\nFirestoreとFirebase Authenticationの両方から削除されます。`)) return;
+    try {
+      await fetch(`${API_BASE}/wholesale-delete-user`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid }),
+      });
+      await deleteDoc(doc(db, "wholesaleUsers", uid));
+      setUsers((prev) => prev.filter((u) => u.id !== uid));
+    } catch (e) {
+      console.error("Delete user error:", e);
+      alert("削除に失敗しました");
+    }
+  };
+
   const counts = {
     all: users.length,
     pending: users.filter((u) => u.status === "pending").length,
@@ -377,6 +394,7 @@ function UsersPanel() {
               onApprove={() => handleApprove(user.id)}
               onReject={() => handleReject(user.id)}
               onRevoke={() => handleRevoke(user.id)}
+              onDelete={() => handleDelete(user.id, user.companyName)}
             />
           ))}
         </div>
@@ -385,7 +403,7 @@ function UsersPanel() {
   );
 }
 
-function UserRow({ user, onApprove, onReject, onRevoke }) {
+function UserRow({ user, onApprove, onReject, onRevoke, onDelete }) {
   const [open, setOpen] = useState(false);
 
   const createdAt = user.createdAt?.toDate
@@ -464,6 +482,7 @@ function UserRow({ user, onApprove, onReject, onRevoke }) {
           {user.status === "rejected" && (
             <ActionButton label="再承認" onClick={onApprove} color={C.green} />
           )}
+          <ActionButton label="削除" onClick={onDelete} color={C.red} />
         </div>
       </div>
 
@@ -682,6 +701,17 @@ function OrdersPanel() {
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  const handleDeleteOrder = async (orderId) => {
+    if (!window.confirm("この注文を削除しますか？")) return;
+    try {
+      await deleteDoc(doc(db, "wholesaleOrders", orderId));
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+    } catch (e) {
+      console.error("Delete order error:", e);
+      alert("削除に失敗しました");
+    }
+  };
 
   const handleStatusChange = async (orderId, newStatus) => {
     setUpdating(orderId);
@@ -905,6 +935,12 @@ function OrdersPanel() {
                       disabled={isUpdating}
                     />
                   )}
+                  <ActionButton
+                    label="削除"
+                    onClick={() => handleDeleteOrder(order.id)}
+                    color={C.red}
+                    disabled={isUpdating}
+                  />
                 </div>
               </div>
             );
