@@ -103,44 +103,31 @@ export default function WholesaleJpRegisterPage() {
     setLoading(true);
 
     try {
-      const credential = await createUserWithEmailAndPassword(
-        auth,
-        form.email,
-        form.password
-      );
-
-      const uid = credential.user.uid;
-
-      const payload = {
-        uid,
-        email: form.email,
-        companyName: form.companyName,
-        contactName: form.contactName,
-        businessType: form.businessType,
-        postalCode: form.postalCode,
-        prefecture: form.prefecture,
-        city: form.city,
-        building: form.building,
-        message: form.message,
-      };
-
-      const response = await fetch(`${API_BASE}/wholesale-register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(data.error || "申請送信に失敗しました。");
-      }
-
+      await doRegister();
       setDone(true);
     } catch (err) {
       console.error(err);
       if (err.code === "auth/email-already-in-use") {
-        setError("このメールアドレスはすでに登録されています。");
+        // 孤立したAuthアカウントを削除してリトライ
+        try {
+          const cleanRes = await fetch(`${API_BASE}/wholesale-delete-user-by-email`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: form.email }),
+          });
+          const cleanData = await cleanRes.json().catch(() => ({}));
+          if (!cleanRes.ok) {
+            // Firestoreに残っている → 現役ユーザー
+            setError(cleanData.error || "このメールアドレスはすでに登録されています。");
+            return;
+          }
+          // 孤立Auth削除成功 → 再登録
+          await doRegister();
+          setDone(true);
+        } catch (retryErr) {
+          console.error("retry register error:", retryErr);
+          setError(retryErr.message || "登録に失敗しました。しばらくしてから再度お試しください。");
+        }
       } else if (err.code === "auth/invalid-email") {
         setError("メールアドレスの形式が正しくありません。");
       } else if (err.message) {
@@ -150,6 +137,42 @@ export default function WholesaleJpRegisterPage() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 登録処理本体（リトライ用に切り出し）
+  const doRegister = async () => {
+    const credential = await createUserWithEmailAndPassword(
+      auth,
+      form.email,
+      form.password
+    );
+
+    const uid = credential.user.uid;
+
+    const payload = {
+      uid,
+      email: form.email,
+      companyName: form.companyName,
+      contactName: form.contactName,
+      businessType: form.businessType,
+      postalCode: form.postalCode,
+      prefecture: form.prefecture,
+      city: form.city,
+      building: form.building,
+      message: form.message,
+    };
+
+    const response = await fetch(`${API_BASE}/wholesale-register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.error || "申請送信に失敗しました。");
     }
   };
 

@@ -503,35 +503,56 @@ app.post("/wholesale-delete-user", async (req, res) => {
   }
 });
 
-// ===== 卸発注 =====
+// ===== 卸ユーザー削除（メールアドレス指定） =====
+// 登録時に auth/email-already-in-use が起きた場合の孤立Authアカウント削除用
+app.post("/wholesale-delete-user-by-email", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "email is required" });
+
+    // Firestoreにドキュメントが残っている場合は削除しない（現役ユーザー）
+    const snap = await db.collection("wholesaleUsers").where("email", "==", email).get();
+    if (!snap.empty) {
+      return res.status(409).json({ error: "このメールアドレスはすでに登録されています。" });
+    }
+
+    // Firestoreになければ孤立Auth → 削除してOK
+    try {
+      const userRecord = await admin.auth().getUserByEmail(email);
+      await admin.auth().deleteUser(userRecord.uid);
+    } catch (authErr) {
+      if (authErr.code !== "auth/user-not-found") {
+        console.error("Auth getUserByEmail/deleteUser error:", authErr);
+      }
+      // user-not-found は問題なし
+    }
+
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error("wholesale-delete-user-by-email error:", err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== 卸発注（メール通知のみ。Firestore保存はクライアント側で実施済み） =====
 app.post("/wholesale-order", async (req, res) => {
   try {
     const {
-      uid = "",
       cartItems = [],
+      items: reqItems = [],
       companyName = "",
       email = "",
       total = 0,
       shipping = 0,
     } = req.body;
 
-    const items = (Array.isArray(cartItems) ? cartItems : []).map((item) => ({
+    // cartItems（フロント送信）または items（直接送信）どちらでも受け取る
+    const sourceItems = reqItems.length > 0 ? reqItems : cartItems;
+    const items = (Array.isArray(sourceItems) ? sourceItems : []).map((item) => ({
       name: item.name || "商品",
-      quantity: Number(item.quantity || 0),
-      wholesalePrice: Number(item.wholesalePrice || 0),
+      quantity: Number(item.quantity || item.qty || 0),
+      wholesalePrice: Number(item.wholesalePrice || item.unitPrice || 0),
     }));
-
-    // Firestoreに保存
-    await db.collection("wholesaleOrders").add({
-      uid,
-      companyName,
-      email,
-      items,
-      total: Number(total),
-      shipping: Number(shipping),
-      status: "pending",
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
 
     // 管理者メール送信
     const adminAddresses = "ryugecoffee@gmail.com, ryuka2452533@icloud.com";
@@ -543,14 +564,18 @@ app.post("/wholesale-order", async (req, res) => {
         const lineTotal = item.wholesalePrice * item.quantity;
         return `・${item.name} × ${item.quantity}（¥${lineTotal.toLocaleString()}）`;
       })
-      .join("\n");
+      .join("\n") || "（商品情報なし）";
+
+    const shippingLabel = shipping === "free" || shipping === 0 ? "無料" :
+                          shipping === "actual_cost" ? "実費" :
+                          `¥${Number(shipping).toLocaleString()}`;
 
     const text = `会社名: ${companyName}
 メール: ${email}
 注文内容:
 ${itemLines}
 合計: ¥${Number(total).toLocaleString()}
-送料: ¥${Number(shipping).toLocaleString()}
+送料: ${shippingLabel}
 発注日時: ${createdAtStr}
 管理画面: https://ryuge.biz/wholesale-jp/admin`;
 
