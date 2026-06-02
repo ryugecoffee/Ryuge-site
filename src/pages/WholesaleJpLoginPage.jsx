@@ -23,12 +23,12 @@ export default function WholesaleJpLoginPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // authLoading が完了し、ログイン済み + 権限ありなら自動リダイレクト
+  // すでにログイン済み（authLoading完了後にuserが存在）なら自動リダイレクト
   useEffect(() => {
-    if (!authLoading && user && (approved || isAdmin)) {
+    if (!authLoading && user) {
       navigate("/wholesale-jp/dashboard", { replace: true });
     }
-  }, [authLoading, user, approved, isAdmin, navigate]);
+  }, [authLoading, user, navigate]);
 
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -37,7 +37,7 @@ const handleSubmit = async (e) => {
 
   try {
     await login(email, password);
-    // navigate はしない — 上の useEffect が authLoading 完了後にリダイレクトする
+    // login() 完了 → onAuthStateChanged が user をセット → 上の useEffect がリダイレクト
   } catch (error) {
     console.error("LOGIN ERROR:", error);
     console.error("LOGIN ERROR CODE:", error?.code);
