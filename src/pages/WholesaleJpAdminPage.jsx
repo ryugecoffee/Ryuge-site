@@ -64,10 +64,10 @@ function AdminContent() {
       >
         <Link
           to="/"
+          className="site-logo"
           style={{
             textDecoration: "none",
             fontSize: "0.95rem",
-            letterSpacing: "0.2em",
             color: C.text,
             textTransform: "uppercase",
           }}

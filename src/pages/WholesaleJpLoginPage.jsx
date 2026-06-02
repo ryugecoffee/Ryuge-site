@@ -84,11 +84,11 @@ export default function WholesaleJpLoginPage() {
         >
           <Link
             to="/"
+            className="site-logo"
             style={{
               textDecoration: "none",
               color: COLORS.text,
               fontSize: "0.95rem",
-              letterSpacing: "0.18em",
             }}
           >
             Ryuge Coffee
@@ -127,11 +127,11 @@ export default function WholesaleJpLoginPage() {
         >
           <div style={{ textAlign: "center", marginBottom: "2.2rem" }}>
             <p
+              className="site-logo"
               style={{
                 margin: "0 0 0.9rem",
                 color: COLORS.text,
                 fontSize: "1.15rem",
-                letterSpacing: "0.16em",
               }}
             >
               RYUGE COFFEE

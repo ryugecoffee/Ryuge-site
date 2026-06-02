@@ -8,8 +8,16 @@ h1, h2, h3, h4 {
   font-family: "Cormorant Garamond", serif;
 }
 
-body, p, button, input, label, select, textarea, nav, span, a, div {
+body, p, button, input, label, select, textarea, nav, span, a, li, div {
   font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ロゴ統一：全ページ共通 */
+.site-logo,
+.centered-logo,
+.home-header .site-logo {
+  font-family: "Cormorant Garamond", serif !important;
+  letter-spacing: 0.08em;
 }
 
 /* ============================================================
@@ -418,9 +426,7 @@ html[lang="en"] .product-copy h3 {
 .site-logo.center,
 .centered-logo {
   justify-self: center;
-  font-family: "Cormorant Garamond", serif;
   font-size: 18px;
-  letter-spacing: 0.08em;
 }
 
 .header-lang-switch {

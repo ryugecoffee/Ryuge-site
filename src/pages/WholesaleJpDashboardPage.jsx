@@ -193,11 +193,11 @@ function DashboardContent() {
         >
           <Link
             to="/"
+            className="site-logo"
             style={{
               textDecoration: "none",
               color: C.text,
               fontSize: "1.05rem",
-              letterSpacing: "0.2em",
               fontWeight: 600,
               textTransform: "uppercase",
               flexShrink: 0,

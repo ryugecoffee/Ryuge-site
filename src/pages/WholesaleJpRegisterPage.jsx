@@ -201,9 +201,9 @@ export default function WholesaleJpRegisterPage() {
         <div style={{ textAlign: "center", marginBottom: "2.8rem" }}>
           <Link to="/" style={{ textDecoration: "none" }}>
             <p
+              className="site-logo"
               style={{
                 fontSize: "1rem",
-                letterSpacing: "0.2em",
                 textTransform: "uppercase",
                 color: C.text,
                 margin: "0 0 0.6rem",
