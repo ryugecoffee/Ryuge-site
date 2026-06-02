@@ -6,7 +6,7 @@ import SiteFooter from "../components/SiteFooter";
 
 const UI = {
   ja: {
-    brand: "RYUGE COFFEE",
+    brand: "Ryuge Coffee",
     heroEyebrow: "鎌倉の静けさを、一杯の中へ",
     heroTitle: "Another Day,\nAnother Coffee",
     heroText:

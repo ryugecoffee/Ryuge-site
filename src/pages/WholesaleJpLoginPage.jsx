@@ -134,7 +134,7 @@ export default function WholesaleJpLoginPage() {
                 fontSize: "1.15rem",
               }}
             >
-              RYUGE COFFEE
+              Ryuge Coffee
             </p>
             <p
               style={{

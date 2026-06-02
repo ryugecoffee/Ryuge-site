@@ -6,7 +6,7 @@ export default function Header({ lang, setLang, UI_TEXT }) {
   return (
     <header className="site-header">
       {/* 左：ロゴ */}
-      <div className="brand">RYUGE COFFEE</div>
+      <div className="brand site-logo">Ryuge Coffee</div>
 
       {/* 中央：法律ナビ（←追加） */}
       <nav className="header-nav">

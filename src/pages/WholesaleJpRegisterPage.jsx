@@ -210,7 +210,7 @@ export default function WholesaleJpRegisterPage() {
                 fontWeight: 600,
               }}
             >
-              RYUGE COFFEE
+              Ryuge Coffee
             </p>
           </Link>
           <p
