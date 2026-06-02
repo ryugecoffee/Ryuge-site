@@ -6,17 +6,46 @@ import { Link } from "react-router-dom";
 
 const API_BASE = "https://ryuge-site.onrender.com";
 
-const baseFontFamily =
+const FONT =
   'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif';
+
+const PREFECTURES = [
+  "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
+  "茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県",
+  "新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県",
+  "静岡県","愛知県","三重県","滋賀県","京都府","大阪府","兵庫県",
+  "奈良県","和歌山県","鳥取県","島根県","岡山県","広島県","山口県",
+  "徳島県","香川県","愛媛県","高知県","福岡県","佐賀県","長崎県",
+  "熊本県","大分県","宮崎県","鹿児島県","沖縄県",
+];
+
+const C = {
+  bg: "#2a2a2a",
+  surface: "#333",
+  border: "#444",
+  text: "#e8e2d9",
+  soft: "#a6a6a6",
+  muted: "#777",
+  green: "#8fb08f",
+  red: "#d7a0a0",
+  redBorder: "#9a4c4c",
+  redBg: "#3a2a2a",
+};
 
 export default function WholesaleJpRegisterPage() {
   const [form, setForm] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
     companyName: "",
     contactName: "",
     businessType: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    // 住所
+    postalCode: "",
+    prefecture: "",
+    city: "",
+    building: "",
+    // その他
     message: "",
   });
 
@@ -32,7 +61,14 @@ export default function WholesaleJpRegisterPage() {
   }, [form.password, form.confirmPassword]);
 
   const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    // 郵便番号は数字のみ・7桁まで
+    if (name === "postalCode") {
+      const numeric = value.replace(/[^0-9]/g, "").slice(0, 7);
+      setForm((prev) => ({ ...prev, postalCode: numeric }));
+      return;
+    }
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async () => {
@@ -59,6 +95,11 @@ export default function WholesaleJpRegisterPage() {
       return;
     }
 
+    if (form.postalCode && form.postalCode.length !== 7) {
+      setError("郵便番号は7桁で入力してください（ハイフン不要）。");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -70,19 +111,23 @@ export default function WholesaleJpRegisterPage() {
 
       const uid = credential.user.uid;
 
+      const payload = {
+        uid,
+        email: form.email,
+        companyName: form.companyName,
+        contactName: form.contactName,
+        businessType: form.businessType,
+        postalCode: form.postalCode,
+        prefecture: form.prefecture,
+        city: form.city,
+        building: form.building,
+        message: form.message,
+      };
+
       const response = await fetch(`${API_BASE}/wholesale-register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          uid,
-          email: form.email,
-          companyName: form.companyName,
-          contactName: form.contactName,
-          businessType: form.businessType,
-          message: form.message,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json().catch(() => ({}));
@@ -94,7 +139,6 @@ export default function WholesaleJpRegisterPage() {
       setDone(true);
     } catch (err) {
       console.error(err);
-
       if (err.code === "auth/email-already-in-use") {
         setError("このメールアドレスはすでに登録されています。");
       } else if (err.code === "auth/invalid-email") {
@@ -109,74 +153,67 @@ export default function WholesaleJpRegisterPage() {
     }
   };
 
+  /* 完了画面 */
   if (done) {
     return (
       <div
         style={{
           minHeight: "100vh",
-          backgroundColor: "#2a2a2a",
+          backgroundColor: C.bg,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontFamily: baseFontFamily,
+          fontFamily: FONT,
           padding: "2rem",
         }}
       >
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "480px",
-            textAlign: "center",
-          }}
-        >
+        <div style={{ width: "100%", maxWidth: "480px", textAlign: "center" }}>
           <p
             style={{
-              fontSize: "0.68rem",
+              fontSize: "0.72rem",
               letterSpacing: "0.2em",
               textTransform: "uppercase",
-              color: "#777",
+              color: C.muted,
               marginBottom: "1.5rem",
             }}
           >
             Registration Complete
           </p>
-
           <h1
             style={{
-              fontSize: "1.5rem",
+              fontSize: "1.6rem",
               fontWeight: 500,
-              color: "#e8e2d9",
+              color: C.text,
               letterSpacing: "0.04em",
               margin: "0 0 1.5rem",
             }}
           >
             ご登録ありがとうございます
           </h1>
-
           <p
             style={{
-              fontSize: "0.92rem",
-              color: "#a6a6a6",
-              lineHeight: 1.9,
+              fontSize: "0.95rem",
+              color: C.soft,
+              lineHeight: 2,
               margin: "0 0 2.5rem",
-              letterSpacing: "0.01em",
             }}
           >
-            お申し込みを受け付けました。<br />
-            内容を確認の上、承認が完了次第ご連絡いたします。<br />
+            お申し込みを受け付けました。
+            <br />
+            内容を確認の上、承認が完了次第ご連絡いたします。
+            <br />
             今しばらくお待ちください。
           </p>
-
           <Link
             to="/wholesale-jp"
             style={{
               display: "inline-block",
-              fontSize: "0.78rem",
-              color: "#e8e2d9",
+              fontSize: "0.82rem",
+              color: C.text,
               border: "1px solid #555",
-              padding: "0.75rem 1.6rem",
+              padding: "0.85rem 1.8rem",
               textDecoration: "none",
-              letterSpacing: "0.12em",
+              letterSpacing: "0.14em",
               textTransform: "uppercase",
             }}
           >
@@ -187,42 +224,43 @@ export default function WholesaleJpRegisterPage() {
     );
   }
 
+  /* 登録フォーム */
   return (
     <div
       style={{
         minHeight: "100vh",
-        backgroundColor: "#2a2a2a",
-        fontFamily: baseFontFamily,
+        backgroundColor: C.bg,
+        fontFamily: FONT,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        padding: "3rem 2rem",
+        padding: "4rem 2rem",
       }}
     >
-      <div style={{ width: "100%", maxWidth: "480px" }}>
-        <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
+      <div style={{ width: "100%", maxWidth: "520px" }}>
+        {/* ロゴ */}
+        <div style={{ textAlign: "center", marginBottom: "2.8rem" }}>
           <Link to="/" style={{ textDecoration: "none" }}>
             <p
               style={{
-                fontSize: "0.95rem",
-                letterSpacing: "0.18em",
+                fontSize: "1rem",
+                letterSpacing: "0.2em",
                 textTransform: "uppercase",
-                color: "#e8e2d9",
+                color: C.text,
                 margin: "0 0 0.6rem",
-                fontWeight: 500,
+                fontWeight: 600,
               }}
             >
               RYUGE COFFEE
             </p>
           </Link>
-
           <p
             style={{
-              fontSize: "0.72rem",
+              fontSize: "0.75rem",
               letterSpacing: "0.18em",
               textTransform: "uppercase",
-              color: "#777",
+              color: C.muted,
               margin: 0,
             }}
           >
@@ -230,16 +268,16 @@ export default function WholesaleJpRegisterPage() {
           </p>
         </div>
 
+        {/* エラー */}
         {error && (
           <div
             style={{
               marginBottom: "1.5rem",
-              padding: "0.9rem 1rem",
-              borderLeft: "2px solid #9a4c4c",
-              backgroundColor: "#3a2a2a",
-              fontSize: "0.84rem",
-              color: "#d7a0a0",
-              letterSpacing: "0.01em",
+              padding: "0.9rem 1.1rem",
+              borderLeft: `2px solid ${C.redBorder}`,
+              backgroundColor: C.redBg,
+              fontSize: "0.9rem",
+              color: C.red,
               lineHeight: 1.7,
             }}
           >
@@ -247,7 +285,10 @@ export default function WholesaleJpRegisterPage() {
           </div>
         )}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.3rem" }}>
+          {/* 基本情報 */}
+          <SectionDivider label="基本情報" />
+
           <FormField
             label="貴社名・店舗名"
             name="companyName"
@@ -255,7 +296,6 @@ export default function WholesaleJpRegisterPage() {
             onChange={handleChange}
             required
           />
-
           <FormField
             label="担当者名"
             name="contactName"
@@ -263,7 +303,6 @@ export default function WholesaleJpRegisterPage() {
             onChange={handleChange}
             required
           />
-
           <FormField
             label="業種"
             name="businessType"
@@ -271,6 +310,84 @@ export default function WholesaleJpRegisterPage() {
             onChange={handleChange}
             placeholder="例：カフェ、ホテル、雑貨店 など"
           />
+
+          {/* 住所 */}
+          <SectionDivider label="住所" />
+
+          <FormField
+            label="郵便番号"
+            name="postalCode"
+            value={form.postalCode}
+            onChange={handleChange}
+            placeholder="例：1234567（ハイフン不要）"
+            note="数字7桁"
+            inputMode="numeric"
+          />
+
+          <div>
+            <label style={labelStyle}>
+              都道府県
+            </label>
+            <div style={{ position: "relative" }}>
+              <select
+                name="prefecture"
+                value={form.prefecture}
+                onChange={handleChange}
+                style={{
+                  width: "100%",
+                  padding: "0.85rem 2.5rem 0.85rem 0.95rem",
+                  backgroundColor: C.surface,
+                  border: `1px solid ${C.border}`,
+                  color: form.prefecture ? C.text : C.muted,
+                  fontSize: "0.95rem",
+                  fontFamily: FONT,
+                  outline: "none",
+                  appearance: "none",
+                  WebkitAppearance: "none",
+                  boxSizing: "border-box",
+                  cursor: "pointer",
+                }}
+              >
+                <option value="">選択してください</option>
+                {PREFECTURES.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+              <span
+                style={{
+                  position: "absolute",
+                  right: "1rem",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: C.muted,
+                  pointerEvents: "none",
+                  fontSize: "0.7rem",
+                }}
+              >
+                ▼
+              </span>
+            </div>
+          </div>
+
+          <FormField
+            label="市区町村・番地"
+            name="city"
+            value={form.city}
+            onChange={handleChange}
+            placeholder="例：渋谷区神南1-2-3"
+          />
+          <FormField
+            label="建物名・部屋番号"
+            name="building"
+            value={form.building}
+            onChange={handleChange}
+            placeholder="任意"
+          />
+
+          {/* アカウント情報 */}
+          <SectionDivider label="アカウント情報" />
 
           <FormField
             label="メールアドレス"
@@ -306,9 +423,8 @@ export default function WholesaleJpRegisterPage() {
             <p
               style={{
                 margin: "-0.4rem 0 0",
-                fontSize: "0.78rem",
-                color: passwordsMatch ? "#8fb08f" : "#d7a0a0",
-                lineHeight: 1.6,
+                fontSize: "0.85rem",
+                color: passwordsMatch ? C.green : C.red,
               }}
             >
               {passwordsMatch
@@ -317,20 +433,13 @@ export default function WholesaleJpRegisterPage() {
             </p>
           )}
 
+          {/* メッセージ */}
+          <SectionDivider label="その他" />
+
           <div>
-            <label
-              style={{
-                fontSize: "0.68rem",
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: "#777",
-                display: "block",
-                marginBottom: "0.5rem",
-              }}
-            >
+            <label style={labelStyle}>
               お取引についてのご要望・ご質問
             </label>
-
             <textarea
               name="message"
               value={form.message}
@@ -339,42 +448,41 @@ export default function WholesaleJpRegisterPage() {
               placeholder="任意"
               style={{
                 width: "100%",
-                padding: "0.8rem 0.95rem",
-                backgroundColor: "#333",
-                border: "1px solid #444",
-                color: "#e8e2d9",
-                fontSize: "0.9rem",
-                fontFamily: baseFontFamily,
+                padding: "0.85rem 0.95rem",
+                backgroundColor: C.surface,
+                border: `1px solid ${C.border}`,
+                color: C.text,
+                fontSize: "0.95rem",
+                fontFamily: FONT,
                 outline: "none",
                 resize: "vertical",
                 lineHeight: 1.8,
-                letterSpacing: "0.01em",
                 boxSizing: "border-box",
               }}
             />
           </div>
 
+          {/* 送信ボタン */}
           <button
             onClick={handleSubmit}
             disabled={loading || !passwordsMatch}
             style={{
               marginTop: "0.5rem",
-              padding: "0.9rem",
+              padding: "1rem",
               backgroundColor: "transparent",
-              color: "#e8e2d9",
+              color: C.text,
               border: "1px solid #555",
-              fontSize: "0.76rem",
-              letterSpacing: "0.14em",
+              fontSize: "0.82rem",
+              letterSpacing: "0.16em",
               textTransform: "uppercase",
               cursor: loading || !passwordsMatch ? "not-allowed" : "pointer",
               opacity: loading || !passwordsMatch ? 0.5 : 1,
-              fontFamily: baseFontFamily,
+              fontFamily: FONT,
               transition: "border-color 0.2s",
             }}
             onMouseEnter={(e) => {
-              if (!loading && passwordsMatch) {
-                e.currentTarget.style.borderColor = "#e8e2d9";
-              }
+              if (!loading && passwordsMatch)
+                e.currentTarget.style.borderColor = C.text;
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.borderColor = "#555";
@@ -388,7 +496,7 @@ export default function WholesaleJpRegisterPage() {
           <Link
             to="/wholesale-jp/login"
             style={{
-              fontSize: "0.72rem",
+              fontSize: "0.82rem",
               color: "#888",
               textDecoration: "underline",
               letterSpacing: "0.03em",
@@ -402,6 +510,45 @@ export default function WholesaleJpRegisterPage() {
   );
 }
 
+/* ====================================================
+   共通コンポーネント
+==================================================== */
+const labelStyle = {
+  fontSize: "0.72rem",
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+  color: "#777",
+  display: "block",
+  marginBottom: "0.5rem",
+};
+
+function SectionDivider({ label }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "0.8rem",
+        marginTop: "0.5rem",
+      }}
+    >
+      <p
+        style={{
+          margin: 0,
+          fontSize: "0.68rem",
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          color: "#555",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {label}
+      </p>
+      <div style={{ flex: 1, height: "1px", backgroundColor: "#3a3a3a" }} />
+    </div>
+  );
+}
+
 function FormField({
   label,
   name,
@@ -411,60 +558,38 @@ function FormField({
   required,
   placeholder,
   note,
+  inputMode,
 }) {
   return (
     <div>
-      <label
-        style={{
-          fontSize: "0.68rem",
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          color: "#777",
-          display: "block",
-          marginBottom: "0.5rem",
-        }}
-      >
+      <label style={labelStyle}>
         {label}
         {required && (
-          <span
-            style={{
-              color: "#9a6a6a",
-              marginLeft: "0.4rem",
-              fontSize: "0.62rem",
-            }}
-          >
+          <span style={{ color: "#9a6a6a", marginLeft: "0.4rem", fontSize: "0.65rem" }}>
             *
           </span>
         )}
         {note && (
-          <span
-            style={{
-              color: "#666",
-              marginLeft: "0.6rem",
-              fontSize: "0.62rem",
-              textTransform: "none",
-              letterSpacing: 0,
-            }}
-          >
+          <span style={{ color: "#555", marginLeft: "0.6rem", fontSize: "0.65rem", textTransform: "none", letterSpacing: 0 }}>
             {note}
           </span>
         )}
       </label>
-
       <input
         type={type}
         name={name}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
+        inputMode={inputMode}
         style={{
           width: "100%",
-          padding: "0.8rem 0.95rem",
+          padding: "0.85rem 0.95rem",
           backgroundColor: "#333",
           border: "1px solid #444",
           color: "#e8e2d9",
-          fontSize: "0.9rem",
-          fontFamily: baseFontFamily,
+          fontSize: "0.95rem",
+          fontFamily: FONT,
           outline: "none",
           letterSpacing: "0.01em",
           boxSizing: "border-box",
@@ -486,43 +611,19 @@ function PasswordField({
 }) {
   return (
     <div>
-      <label
-        style={{
-          fontSize: "0.68rem",
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          color: "#777",
-          display: "block",
-          marginBottom: "0.5rem",
-        }}
-      >
+      <label style={labelStyle}>
         {label}
         {required && (
-          <span
-            style={{
-              color: "#9a6a6a",
-              marginLeft: "0.4rem",
-              fontSize: "0.62rem",
-            }}
-          >
+          <span style={{ color: "#9a6a6a", marginLeft: "0.4rem", fontSize: "0.65rem" }}>
             *
           </span>
         )}
         {note && (
-          <span
-            style={{
-              color: "#666",
-              marginLeft: "0.6rem",
-              fontSize: "0.62rem",
-              textTransform: "none",
-              letterSpacing: 0,
-            }}
-          >
+          <span style={{ color: "#555", marginLeft: "0.6rem", fontSize: "0.65rem", textTransform: "none", letterSpacing: 0 }}>
             {note}
           </span>
         )}
       </label>
-
       <div style={{ position: "relative" }}>
         <input
           type={visible ? "text" : "password"}
@@ -531,18 +632,16 @@ function PasswordField({
           onChange={onChange}
           style={{
             width: "100%",
-            padding: "0.8rem 3rem 0.8rem 0.95rem",
+            padding: "0.85rem 3rem 0.85rem 0.95rem",
             backgroundColor: "#333",
             border: "1px solid #444",
             color: "#e8e2d9",
-            fontSize: "0.9rem",
-            fontFamily: baseFontFamily,
+            fontSize: "0.95rem",
+            fontFamily: FONT,
             outline: "none",
-            letterSpacing: "0.01em",
             boxSizing: "border-box",
           }}
         />
-
         <button
           type="button"
           onClick={onToggleVisible}
@@ -550,16 +649,15 @@ function PasswordField({
           style={{
             position: "absolute",
             top: "50%",
-            right: "0.7rem",
+            right: "0.75rem",
             transform: "translateY(-50%)",
             background: "none",
             border: "none",
-            color: "#999",
+            color: "#888",
             cursor: "pointer",
-            fontSize: "1rem",
+            fontSize: "1.1rem",
             lineHeight: 1,
             padding: 0,
-            fontFamily: baseFontFamily,
           }}
         >
           {visible ? "◉" : "◌"}
