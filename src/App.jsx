@@ -14,7 +14,11 @@ import { Analytics } from "@vercel/analytics/react";
 import AccessSection from "./pages/AccessSection";
 import { pageview } from "./lib/analytics";
 
-import WholesaleJpPage from "./pages/WholesaleJpPage";
+import WholesaleJpLoginPage from "./pages/WholesaleJpLoginPage";
+import WholesaleJpRegisterPage from "./pages/WholesaleJpRegisterPage";
+import WholesaleJpDashboardPage from "./pages/WholesaleJpDashboardPage";
+import WholesaleJpAdminPage from "./pages/WholesaleJpAdminPage";
+import WholesaleJpOrderCompletePage from "./pages/WholesaleJpOrderCompletePage";
 
 import { AuthProvider } from "./contexts/AuthContext";
 import ScrollToTop from "./components/ScrollToTop";
@@ -57,7 +61,12 @@ export default function App() {
           <Route path="/checkout" element={<CheckoutPage lang={lang} />} />
           <Route path="/checkout/complete" element={<CheckoutCompletePage />} />
 
-          <Route path="/wholesale-jp" element={<WholesaleJpPage />} />
+          <Route path="/wholesale-jp" element={<WholesaleJpLoginPage />} />
+          <Route path="/wholesale-jp/login" element={<WholesaleJpLoginPage />} />
+          <Route path="/wholesale-jp/register" element={<WholesaleJpRegisterPage />} />
+          <Route path="/wholesale-jp/dashboard" element={<WholesaleJpDashboardPage />} />
+          <Route path="/wholesale-jp/admin" element={<WholesaleJpAdminPage />} />
+          <Route path="/wholesale-jp/order-complete" element={<WholesaleJpOrderCompletePage />} />
         </Routes>
 
         <Analytics />
