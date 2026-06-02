@@ -169,7 +169,6 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
   const [error, setError] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [couponStatus, setCouponStatus] = useState("idle");
-  const [couponDiscount, setCouponDiscount] = useState(null);
 
   const hasSubscription = useMemo(
     () => (cartItems || []).some((item) => isSubscriptionItem(item)),
@@ -252,14 +251,11 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
       const data = await res.json();
       if (res.ok && data.valid) {
         setCouponStatus("valid");
-        setCouponDiscount(data.discount || null);
       } else {
         setCouponStatus("invalid");
-        setCouponDiscount(null);
       }
     } catch {
       setCouponStatus("invalid");
-      setCouponDiscount(null);
     }
   };
 
@@ -353,8 +349,6 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
       setError(err.message || t.paymentFailed);
       setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const displayShipping = shipping ?? computedShipping;

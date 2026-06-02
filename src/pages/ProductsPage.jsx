@@ -46,9 +46,6 @@ export default function ProductsPage({ lang }) {
   const [selectedSubscriptionPlan, setSelectedSubscriptionPlan] = useState(
     DEFAULT_SUBSCRIPTION_PLAN
   );
-  const [selectedCoffeeBagVariant, setSelectedCoffeeBagVariant] =
-    useState("coffee-bag");
-  const [selectedBagQuantity, setSelectedBagQuantity] = useState("1");
   const [showEnmaHeading, setShowEnmaHeading] = useState(false);
   const [simpleQuantity, setSimpleQuantity] = useState(1);
   const [showWoodboxHeading, setShowWoodboxHeading] = useState(false);
@@ -71,23 +68,9 @@ export default function ProductsPage({ lang }) {
     subscriptionPlans[0] ||
     null;
 
-  const currentCoffeeBagVariant =
-    activeItem?.id === "oriori-bag"
-      ? activeItem.variants?.find((v) => v.id === selectedCoffeeBagVariant) ||
-        activeItem.variants?.[0] ||
-        null
-      : null;
-
   useEffect(() => {
     if (activeItem?.id === "oriori-subscription") {
       setSelectedSubscriptionPlan(DEFAULT_SUBSCRIPTION_PLAN);
-    }
-  }, [activeItem]);
-
-  useEffect(() => {
-    if (activeItem?.id === "oriori-bag") {
-      setSelectedCoffeeBagVariant("coffee-bag");
-      setSelectedBagQuantity("1");
     }
   }, [activeItem]);
 
@@ -477,173 +460,7 @@ export default function ProductsPage({ lang }) {
                       activeItem.summary}
                   </p>
 
-                  {activeItem.id === "oriori-bag" ? (
-                    <>
-                      <div className="coffeebag-variant-tabs modal-fade-up">
-                        {(activeItem.variants || []).map((v) => (
-                          <button
-                            key={v.id}
-                            type="button"
-                            className={`coffeebag-variant-tab ${
-                              currentCoffeeBagVariant?.id === v.id
-                                ? "active"
-                                : ""
-                            }`}
-                            onClick={() => {
-                              setSelectedCoffeeBagVariant(v.id);
-                              setSelectedBagQuantity("1");
-                            }}
-                          >
-                            {v.tabLabel?.[lang] || v.tabLabel?.en}
-                          </button>
-                        ))}
-                      </div>
-
-                      {currentCoffeeBagVariant && (
-                        <div className="coffeebag-variant-panel modal-fade-up">
-                          <strong className="coffeebag-variant-title">
-                            {currentCoffeeBagVariant.name?.[lang] ||
-                              currentCoffeeBagVariant.name?.en}
-                          </strong>
-
-                          <p className="coffeebag-variant-note">
-                            {currentCoffeeBagVariant.note?.[lang] ||
-                              currentCoffeeBagVariant.note?.en}
-                          </p>
-
-                          <p
-                            style={{
-                              fontSize: "13px",
-                              color: "rgba(255,255,255,0.6)",
-                              margin: "4px 0 0",
-                            }}
-                          >
-                            ¥
-                            {(
-                              currentCoffeeBagVariant?.id === "coffee-bag"
-                                ? 350
-                                : 500
-                            ).toLocaleString()}{" "}
-                            / {lang === "ja" ? "個" : lang === "es" ? "ud." : "each"}
-                          </p>
-
-                          <div className="coffeebag-brew-block">
-                            <p className="coffeebag-block-label">
-                              {lang === "ja"
-                                ? "抽出方法"
-                                : lang === "es"
-                                ? "Preparación"
-                                : "How to Brew"}
-                            </p>
-
-                            <div className="coffeebag-steps">
-                              {(
-                                currentCoffeeBagVariant.brew?.[lang] ||
-                                currentCoffeeBagVariant.brew?.en ||
-                                []
-                              ).map((step, i) => (
-                                <p key={i}>{step}</p>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="coffeebag-quantity-block">
-                            <p className="coffeebag-block-label">
-                              {lang === "ja"
-                                ? "購入個数"
-                                : lang === "es"
-                                ? "Cantidad"
-                                : "Quantity"}
-                            </p>
-
-                            <div className="simple-quantity-control">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setSelectedBagQuantity((prev) =>
-                                    String(Math.max(1, Number(prev) - 1))
-                                  )
-                                }
-                              >
-                                −
-                              </button>
-
-                              <input
-                                type="number"
-                                min="1"
-                                value={selectedBagQuantity}
-                                onChange={(e) => {
-                                  const v = Number(e.target.value);
-                                  if (!isNaN(v) && v >= 1) {
-                                    setSelectedBagQuantity(String(v));
-                                  }
-                                }}
-                              />
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setSelectedBagQuantity((prev) =>
-                                    String(Number(prev) + 1)
-                                  )
-                                }
-                              >
-                                ＋
-                              </button>
-                            </div>
-
-                            <p
-                              style={{
-                                marginTop: "10px",
-                                fontSize: "13px",
-                                color: "rgba(255,255,255,0.6)",
-                              }}
-                            >
-                              ¥
-                              {(
-                                (currentCoffeeBagVariant?.id === "coffee-bag"
-                                  ? 350
-                                  : 500) * Number(selectedBagQuantity)
-                              ).toLocaleString()}
-                            </p>
-                          </div>
-
-                          <button
-                            type="button"
-                            className="modal-cta-link"
-                            style={{ marginTop: "16px" }}
-                            onClick={() => {
-                              const qty = Number(selectedBagQuantity);
-                              if (qty <= 0) return;
-
-                              const unitPrice =
-                                currentCoffeeBagVariant.id === "coffee-bag"
-                                  ? 350
-                                  : 500;
-
-                              setItem(
-                                {
-                                  id: currentCoffeeBagVariant.id,
-                                  name: currentCoffeeBagVariant.name?.[lang] || currentCoffeeBagVariant.name?.en,
-                                  price: unitPrice,
-                                  category: currentCoffeeBagVariant.id === "coffee-bag" ? "bag" : "tea-bag",
-                                },
-                                qty
-                              );
-
-                              setActiveItemId(null);
-                            }}
-                          >
-                            {lang === "ja"
-                              ? "カートに入れる"
-                              : lang === "es"
-                              ? "Añadir al carrito"
-                              : "Add to cart"}
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  ) : activeItem.id === "oriori-apps" ? (
+                  {activeItem.id === "oriori-apps" ? (
                     <>
   <p className="modal-summary modal-product-summary modal-fade-up">
     {activeItem.description?.[lang] ||

@@ -7,8 +7,8 @@ export const PRODUCT_SECTIONS = {
     bagLabel: "Bag Series",
     bagTitle: "バッグシリーズ",
     orioriLabel: "Oriori",
-orioriTitle: "折々",
-orioriIntro: "折々の時間に寄り添う、三つの静かなサービス",
+    orioriTitle: "折々",
+    orioriIntro: "折々の時間に寄り添う、三つの静かなサービス",
     buyButton: "購入する",
     specLabels: {
       origin: "生産地",
@@ -30,8 +30,8 @@ orioriIntro: "折々の時間に寄り添う、三つの静かなサービス",
     bagLabel: "Bag Series",
     bagTitle: "Bag Series",
     orioriLabel: "Oriori",
-orioriTitle: "折々",
-orioriIntro: "Three quiet services shaped for changing seasons",
+    orioriTitle: "折々",
+    orioriIntro: "Three quiet services shaped for changing seasons",
     buyButton: "Buy",
     specLabels: {
       origin: "Origin",
@@ -53,8 +53,8 @@ orioriIntro: "Three quiet services shaped for changing seasons",
     bagLabel: "Bag Series",
     bagTitle: "Bag Series",
     orioriLabel: "Oriori",
-orioriTitle: "折々",
-orioriIntro: "Tres servicios silenciosos para distintos momentos",
+    orioriTitle: "折々",
+    orioriIntro: "Tres servicios silenciosos para distintos momentos",
     buyButton: "Comprar",
     specLabels: {
       origin: "Origen",
@@ -84,7 +84,7 @@ export const PRODUCT_DATA = {
       summary: {
         ja: "静かに残る苦味と余韻",
         en: "Deep bitterness with a quiet finish",
-        es: "Deep bitterness with a quiet finish",
+        es: "Amargura profunda con un final tranquilo",
       },
       origin: "Sidama, Ethiopia",
       producer: "Nigusse Gemeda",
@@ -111,7 +111,7 @@ export const PRODUCT_DATA = {
       summary: {
         ja: "明るさと輪郭のある浅煎り",
         en: "A light roast with brightness and contour",
-        es: "A light roast with brightness and contour",
+        es: "Un tueste ligero con brillo y contorno",
       },
       origin: "Sidama, Ethiopia",
       producer: "Karamo / Nigusse Gemeda",
@@ -138,7 +138,7 @@ export const PRODUCT_DATA = {
       summary: {
         ja: "明るさと透明感、やわらかな甘さ",
         en: "Brightness and clarity with a gentle sweetness",
-        es: "Brightness and clarity with a gentle sweetness",
+        es: "Brillo y claridad con una dulzura suave",
       },
       origin: "Muyinga, Burundi",
       producer: "Karambo Washing Station",
@@ -173,7 +173,7 @@ export const PRODUCT_DATA = {
       summary: {
         ja: "華やかさと丸みを備えた特別な一本",
         en: "A special release with floral clarity and round sweetness",
-        es: "A special release with floral clarity and round sweetness",
+        es: "Una edición especial con claridad floral y dulzura redonda",
       },
       origin: "Herrera, Tolima, Colombia",
       producer: "Newerley Gutierrez",
@@ -205,7 +205,7 @@ export const PRODUCT_DATA = {
       summary: {
         ja: "木箱で届く贈り物のような静かなプレミアム",
         en: "A quiet premium format, like a gift",
-        es: "A quiet premium format, like a gift",
+        es: "Un formato premium silencioso, como un regalo",
       },
       origin: "La Paz, Honduras",
       producer: "Otilio Hernandez",
@@ -315,12 +315,12 @@ export const PRODUCT_DATA = {
       title: {
         ja: "サブスクリプション",
         en: "Subscription",
-        es: "Subscription",
+        es: "Suscripción",
       },
       summary: {
         ja: "季節に寄り添う定期便",
         en: "A recurring delivery shaped by the season",
-        es: "A recurring delivery shaped by the season",
+        es: "Una entrega periódica marcada por la estación",
       },
 
       plans: {
