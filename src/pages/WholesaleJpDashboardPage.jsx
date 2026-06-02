@@ -160,7 +160,7 @@ export default function WholesaleJpDashboardPage() {
 }
 
 function DashboardContent() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const [tab, setTab] = useState("products");
 
   const NAV_TABS = [
@@ -236,22 +236,37 @@ function DashboardContent() {
             ))}
           </nav>
 
-          <button
-            onClick={logout}
-            style={{
-              background: "none",
-              border: "none",
-              color: C.muted,
-              fontSize: "0.82rem",
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              cursor: "pointer",
-              fontFamily: FONT,
-              flexShrink: 0,
-            }}
-          >
-            Logout
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "1.4rem", flexShrink: 0 }}>
+            {isAdmin && (
+              <Link
+                to="/wholesale-jp/admin"
+                style={{
+                  color: C.amber,
+                  fontSize: "0.78rem",
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  textDecoration: "none",
+                }}
+              >
+                管理画面
+              </Link>
+            )}
+            <button
+              onClick={logout}
+              style={{
+                background: "none",
+                border: "none",
+                color: C.muted,
+                fontSize: "0.82rem",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                cursor: "pointer",
+                fontFamily: FONT,
+              }}
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </header>
 
