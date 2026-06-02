@@ -52,11 +52,9 @@ export default function ProductsPage({ lang }) {
   const [showEnmaHeading, setShowEnmaHeading] = useState(false);
   const [simpleQuantity, setSimpleQuantity] = useState(1);
   const [showWoodboxHeading, setShowWoodboxHeading] = useState(false);
-  const [showBagHeading, setShowBagHeading] = useState(false);
 
   const enmaSectionRef = useRef(null);
   const woodboxSectionRef = useRef(null);
-  const bagSectionRef = useRef(null);
 
   const activeItem =
     [...products.enma, ...products.woodbox, ...(products.bag || []), ...products.oriori].find(
@@ -130,13 +128,11 @@ export default function ProductsPage({ lang }) {
   useEffect(() => {
     const enmaNode = enmaSectionRef.current;
     const woodboxNode = woodboxSectionRef.current;
-    const bagNode = bagSectionRef.current;
 
     if (!enmaNode || !woodboxNode) return;
 
     let enmaTriggered = false;
     let woodboxTriggered = false;
-    let bagTriggered = false;
 
     const handleScroll = () => {
       const triggerLine = window.innerHeight * 0.6;
@@ -157,16 +153,6 @@ export default function ProductsPage({ lang }) {
           woodboxTriggered = true;
           setTimeout(() => {
             setShowWoodboxHeading(true);
-          }, 2000);
-        }
-      }
-
-      if (bagNode && !bagTriggered) {
-        const bagTop = bagNode.getBoundingClientRect().top;
-        if (bagTop <= triggerLine) {
-          bagTriggered = true;
-          setTimeout(() => {
-            setShowBagHeading(true);
           }, 2000);
         }
       }
@@ -287,43 +273,6 @@ export default function ProductsPage({ lang }) {
           </div>
         </section>
 
-        <section className="products-showcase-section products-bag-section">
-          <div
-            ref={bagSectionRef}
-            className={`products-section-heading products-heading-animate ${
-              showBagHeading ? "is-hidden" : ""
-            }`}
-          >
-            <p className="products-section-label">{sectionText.bagLabel}</p>
-            <h2>{sectionText.bagTitle}</h2>
-          </div>
-
-          <div className="products-two-col">
-            {(products.bag || []).map((item) => (
-              <article
-                key={item.id}
-                className="products-enma-static-card products-woodbox-card products-bag-card"
-                onClick={() => { setActiveItemId(item.id); trackViewItem(item); }}
-              >
-                <img src={item.image} alt="" />
-
-                {item.isSoldOut && (
-                  <span className="product-soldout-badge">
-                    {SOLD_OUT_TEXT[lang]}
-                  </span>
-                )}
-
-                <div className="products-enma-card-text">
-                  <h3>{item.title?.[lang]}</h3>
-                  <p>{item.summary?.[lang]}</p>
-                  {item.weight && <p className="product-card-weight">{item.weight}</p>}
-                  {item.price && <p className="product-card-price">{item.price}</p>}
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
         <section className="oriori-services-section" id="oriori-section">
           <div className="oriori-heading">
             <h2>{sectionText.orioriTitle}</h2>
@@ -331,14 +280,13 @@ export default function ProductsPage({ lang }) {
           </div>
 
           <div className="oriori-services-grid">
-            {products.oriori.map((item) => (
+            {[...(products.bag || []), ...products.oriori].map((item) => (
               <article
                 key={item.id}
                 className="oriori-service-card"
                 onClick={() => { setActiveItemId(item.id); trackViewItem(item); }}
               >
                 <img src={item.image} alt="" />
-
                 <div className="oriori-service-copy">
                   <h3>{item.title?.[lang]}</h3>
                   <p>{item.summary?.[lang]}</p>
