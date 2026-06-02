@@ -199,9 +199,9 @@ function UsersPanel() {
         .map((d) => ({ id: d.id, ...d.data() }))
         .filter((u) => u.role !== "admin")
         .sort((a, b) => {
-          const ta = a.createdAt?.toMillis?.() ?? 0;
-          const tb = b.createdAt?.toMillis?.() ?? 0;
-          return tb - ta;
+          const aTime = a.createdAt?.toMillis?.() || 0;
+          const bTime = b.createdAt?.toMillis?.() || 0;
+          return bTime - aTime;
         });
       setUsers(data);
     } catch (e) {
