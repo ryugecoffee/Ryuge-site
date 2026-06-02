@@ -2,7 +2,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth } from "../lib/firebase";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const API_BASE = "https://ryuge-site.onrender.com";
 
@@ -628,11 +628,18 @@ function PasswordField({
    登録完了画面（signOut してからログインページへ誘導）
 ==================================================== */
 function DoneScreen() {
-  useEffect(() => {
-    // 登録直後はログイン済み状態のため signOut してセッションをクリア
-    signOut(auth).catch(() => {});
-  }, []);
+  const navigate = useNavigate();
 
+  useEffect(() => {
+    // 登録直後はログイン済み状態のため signOut してからログインページへ
+    signOut(auth)
+      .catch(() => {})
+      .finally(() => {
+        navigate("/wholesale-jp/login", { replace: true });
+      });
+  }, [navigate]);
+
+  // signOut 完了まで一瞬表示される待機画面
   return (
     <div
       style={{
@@ -642,7 +649,6 @@ function DoneScreen() {
         alignItems: "center",
         justifyContent: "center",
         fontFamily: FONT,
-        padding: "2rem",
       }}
     >
       <div style={{ width: "100%", maxWidth: "480px", textAlign: "center" }}>
@@ -673,7 +679,7 @@ function DoneScreen() {
             fontSize: "0.95rem",
             color: C.soft,
             lineHeight: 2,
-            margin: "0 0 2.5rem",
+            margin: 0,
           }}
         >
           お申し込みを受け付けました。
@@ -682,21 +688,6 @@ function DoneScreen() {
           <br />
           今しばらくお待ちください。
         </p>
-        <Link
-          to="/wholesale-jp/login"
-          style={{
-            display: "inline-block",
-            fontSize: "0.82rem",
-            color: C.text,
-            border: "1px solid #555",
-            padding: "0.85rem 1.8rem",
-            textDecoration: "none",
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-          }}
-        >
-          ログインページへ
-        </Link>
       </div>
     </div>
   );

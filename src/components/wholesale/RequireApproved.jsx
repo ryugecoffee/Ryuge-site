@@ -20,13 +20,7 @@ export default function RequireApproved({ children }) {
     return children;
   }
 
-  // それ以外 → 権限なし表示
-  return (
-    <div className="wholesale-denied">
-      <p>このページにアクセスする権限がありません。</p>
-      <p className="wholesale-denied-note">
-        承認済みアカウントでログインしてください。
-      </p>
-    </div>
-  );
+  // 未承認（pending / rejected）→ ログインページへ戻す
+  // ログインページ側で「承認待ち」メッセージを表示する
+  return <Navigate to="/wholesale-jp/login" replace />;
 }
