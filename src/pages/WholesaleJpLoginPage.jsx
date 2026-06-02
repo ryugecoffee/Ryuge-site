@@ -63,8 +63,6 @@ export default function WholesaleJpLoginPage() {
         minHeight: "100vh",
         backgroundColor: COLORS.bg,
         color: COLORS.text,
-        fontFamily:
-          '"Cormorant Garamond", "Noto Serif JP", "Hiragino Mincho ProN", serif',
       }}
     >
       <header
@@ -191,8 +189,6 @@ export default function WholesaleJpLoginPage() {
                   color: "#d8b8b8",
                   fontSize: "0.9rem",
                   lineHeight: 1.7,
-                  fontFamily:
-                    '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
                 }}
               >
                 {errorMessage}
@@ -222,7 +218,6 @@ export default function WholesaleJpLoginPage() {
                 fontSize: "0.9rem",
                 color: COLORS.softText,
                 lineHeight: 1.8,
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
               }}
             >
               ご登録ありがとうございます。<br />
@@ -247,8 +242,6 @@ export default function WholesaleJpLoginPage() {
                 fontSize: "0.88rem",
                 textDecoration: "underline",
                 textUnderlineOffset: "3px",
-                fontFamily:
-                  '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
                 fontWeight: 500,
               }}
             >
@@ -261,8 +254,6 @@ export default function WholesaleJpLoginPage() {
                 color: COLORS.mutedText,
                 fontSize: "0.84rem",
                 textDecoration: "none",
-                fontFamily:
-                  '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
               }}
             >
               {BACK_LABEL.ja}
@@ -280,7 +271,7 @@ const labelStyle = {
   color: "rgba(255,255,255,0.70)",
   fontSize: "0.84rem",
   letterSpacing: "0.08em",
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+
   fontWeight: 500,
 };
 
@@ -293,7 +284,7 @@ const inputStyle = {
   padding: "0 1rem",
   boxSizing: "border-box",
   fontSize: "16px",
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+
   fontWeight: 500,
   outline: "none",
 };
@@ -309,7 +300,7 @@ const submitButtonStyle = {
   fontSize: "0.92rem",
   letterSpacing: "0.16em",
   textTransform: "uppercase",
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+
   fontWeight: 600,
   appearance: "none",
   WebkitAppearance: "none",

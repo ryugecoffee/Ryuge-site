@@ -1,4 +1,18 @@
 /* ============================================================
+   FONT RULES
+   h1–h4       → Cormorant Garamond (serif / 見出し)
+   UI elements → Inter (sans-serif / 本文・ボタン等)
+============================================================ */
+
+h1, h2, h3, h4 {
+  font-family: "Cormorant Garamond", serif;
+}
+
+body, p, button, input, label, select, textarea, nav, span, a, div {
+  font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ============================================================
    VARIABLES & RESET
 ============================================================ */
 

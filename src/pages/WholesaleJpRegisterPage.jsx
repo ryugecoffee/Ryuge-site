@@ -6,8 +6,6 @@ import { Link, useNavigate } from "react-router-dom";
 
 const API_BASE = "https://ryuge-site.onrender.com";
 
-const FONT =
-  'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif';
 
 const PREFECTURES = [
   "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
@@ -187,7 +185,7 @@ export default function WholesaleJpRegisterPage() {
       style={{
         minHeight: "100vh",
         backgroundColor: C.bg,
-        fontFamily: FONT,
+
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -297,7 +295,7 @@ export default function WholesaleJpRegisterPage() {
                   border: `1px solid ${C.border}`,
                   color: form.prefecture ? C.text : C.muted,
                   fontSize: "0.95rem",
-                  fontFamily: FONT,
+          
                   outline: "none",
                   appearance: "none",
                   WebkitAppearance: "none",
@@ -410,7 +408,7 @@ export default function WholesaleJpRegisterPage() {
                 border: `1px solid ${C.border}`,
                 color: C.text,
                 fontSize: "0.95rem",
-                fontFamily: FONT,
+        
                 outline: "none",
                 resize: "vertical",
                 lineHeight: 1.8,
@@ -434,7 +432,7 @@ export default function WholesaleJpRegisterPage() {
               textTransform: "uppercase",
               cursor: loading || !passwordsMatch ? "not-allowed" : "pointer",
               opacity: loading || !passwordsMatch ? 0.5 : 1,
-              fontFamily: FONT,
+      
               transition: "border-color 0.2s",
             }}
             onMouseEnter={(e) => {
@@ -546,7 +544,7 @@ function FormField({
           border: "1px solid #444",
           color: "#e8e2d9",
           fontSize: "0.95rem",
-          fontFamily: FONT,
+  
           outline: "none",
           letterSpacing: "0.01em",
           boxSizing: "border-box",
@@ -594,7 +592,7 @@ function PasswordField({
             border: "1px solid #444",
             color: "#e8e2d9",
             fontSize: "0.95rem",
-            fontFamily: FONT,
+    
             outline: "none",
             boxSizing: "border-box",
           }}
@@ -648,7 +646,7 @@ function DoneScreen() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontFamily: FONT,
+
       }}
     >
       <div style={{ width: "100%", maxWidth: "480px", textAlign: "center" }}>

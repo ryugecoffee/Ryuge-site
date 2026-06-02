@@ -7,7 +7,6 @@ export default function WholesaleJpOrderCompletePage() {
       style={{
         minHeight: "100vh",
         backgroundColor: "#2a2a2a",
-        fontFamily: "Cormorant Garamond, serif",
         color: "#e8e2d9",
         display: "flex",
         flexDirection: "column",
@@ -19,7 +18,7 @@ export default function WholesaleJpOrderCompletePage() {
       <div style={{ width: "100%", maxWidth: "520px", textAlign: "center" }}>
         <p
           style={{
-            fontFamily: "Inter, sans-serif",
+
             fontSize: "0.7rem",
             fontWeight: 500,
             letterSpacing: "0.12em",
@@ -106,7 +105,7 @@ export default function WholesaleJpOrderCompletePage() {
           <Link
             to="/wholesale-jp/dashboard"
             style={{
-              fontFamily: "Inter, sans-serif",
+  
               fontSize: "0.65rem",
               fontWeight: 500,
               color: "#666",

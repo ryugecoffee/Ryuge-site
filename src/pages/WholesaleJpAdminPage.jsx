@@ -12,7 +12,6 @@ import { db } from "../lib/firebase";
 import { useAuth } from "../contexts/AuthContext";
 import RequireAdmin from "../components/wholesale/RequireAdmin";
 
-const FONT = "Cormorant Garamond, serif";
 
 const C = {
   bg: "#2a2a2a",
@@ -45,7 +44,6 @@ function AdminContent() {
       style={{
         minHeight: "100vh",
         backgroundColor: C.bg,
-        fontFamily: FONT,
         color: C.text,
       }}
     >
@@ -100,7 +98,7 @@ function AdminContent() {
               letterSpacing: "0.14em",
               textTransform: "uppercase",
               padding: 0,
-              fontFamily: FONT,
+
             }}
           >
             Logout
@@ -168,7 +166,7 @@ function AdminContent() {
                 padding: "0.9rem 1.8rem",
                 cursor: "pointer",
                 marginBottom: "-1px",
-                fontFamily: FONT,
+  
                 transition: "color 0.15s",
               }}
             >
@@ -324,7 +322,7 @@ function UsersPanel() {
               padding: "0.75rem 1.4rem",
               cursor: "pointer",
               marginBottom: "-1px",
-              fontFamily: FONT,
+
               transition: "color 0.15s",
             }}
           >
@@ -563,7 +561,7 @@ function ShipModal({ order, onClose, onShipped }) {
           padding: "2.5rem",
           width: "480px",
           maxWidth: "90vw",
-          fontFamily: FONT,
+
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -600,7 +598,7 @@ function ShipModal({ order, onClose, onShipped }) {
               color: C.text,
               fontSize: "0.85rem",
               padding: "0.7rem 0.9rem",
-              fontFamily: FONT,
+
               outline: "none",
               boxSizing: "border-box",
             }}
@@ -622,7 +620,7 @@ function ShipModal({ order, onClose, onShipped }) {
               padding: "0.55rem 1.2rem",
               cursor: "pointer",
               letterSpacing: "0.1em",
-              fontFamily: FONT,
+
             }}
           >
             キャンセル
@@ -638,7 +636,7 @@ function ShipModal({ order, onClose, onShipped }) {
               padding: "0.55rem 1.4rem",
               cursor: submitting ? "not-allowed" : "pointer",
               letterSpacing: "0.1em",
-              fontFamily: FONT,
+
               opacity: submitting ? 0.5 : 1,
             }}
           >
@@ -793,7 +791,7 @@ function OrdersPanel() {
               padding: "0.75rem 1.4rem",
               cursor: "pointer",
               marginBottom: "-1px",
-              fontFamily: FONT,
+
               transition: "color 0.15s",
             }}
           >
@@ -967,7 +965,6 @@ function ActionButton({ label, onClick, color, disabled }) {
         padding: "0.35rem 0.75rem",
         cursor: disabled ? "not-allowed" : "pointer",
         letterSpacing: "0.1em",
-        fontFamily: FONT,
         opacity: disabled ? 0.4 : 0.85,
         transition: "opacity 0.15s",
       }}

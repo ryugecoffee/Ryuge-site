@@ -35,8 +35,6 @@ const C = {
   amber: "#b09850",
 };
 
-const FONT =
-  'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif';
 
 // productData.js の全商品を id → isSoldOut のマップに変換
 const SOLDOUT_MAP = (() => {
@@ -170,7 +168,7 @@ function DashboardContent() {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: C.bg, color: C.text, fontFamily: FONT }}>
+    <div style={{ minHeight: "100vh", backgroundColor: C.bg, color: C.text, }}>
       {/* ヘッダー */}
       <header
         style={{
@@ -226,7 +224,7 @@ function DashboardContent() {
                   padding: "0 1.4rem",
                   height: "64px",
                   cursor: "pointer",
-                  fontFamily: FONT,
+    
                   transition: "color 0.15s",
                   whiteSpace: "nowrap",
                 }}
@@ -261,7 +259,7 @@ function DashboardContent() {
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
                 cursor: "pointer",
-                fontFamily: FONT,
+  
               }}
             >
               Logout
@@ -528,7 +526,7 @@ function ProductsTab({ user }) {
                       color: qty <= 0 ? C.muted : C.text,
                       fontSize: "1.1rem",
                       cursor: qty <= 0 ? "not-allowed" : "pointer",
-                      fontFamily: FONT,
+        
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -553,7 +551,7 @@ function ProductsTab({ user }) {
                       color: C.text,
                       fontSize: "1rem",
                       padding: "0",
-                      fontFamily: FONT,
+        
                       outline: "none",
                       boxSizing: "border-box",
                       textAlign: "center",
@@ -572,7 +570,7 @@ function ProductsTab({ user }) {
                       color: (product.maxQty !== null && qty >= product.maxQty) ? C.muted : C.text,
                       fontSize: "1.1rem",
                       cursor: (product.maxQty !== null && qty >= product.maxQty) ? "not-allowed" : "pointer",
-                      fontFamily: FONT,
+        
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -711,7 +709,7 @@ function ProductsTab({ user }) {
             letterSpacing: "0.14em",
             textTransform: "uppercase",
             cursor: canSubmit && !submitting ? "pointer" : "not-allowed",
-            fontFamily: FONT,
+          
             transition: "border-color 0.15s",
           }}
           onMouseEnter={(e) => {
@@ -971,7 +969,7 @@ function AccountTab({ user }) {
                         color: C.text,
                         padding: "0 1rem",
                         fontSize: "0.95rem",
-                        fontFamily: FONT,
+          
                         outline: "none",
                         boxSizing: "border-box",
                       }}
@@ -1056,7 +1054,7 @@ const primaryBtnStyle = {
   fontSize: "0.9rem",
   letterSpacing: "0.1em",
   cursor: "pointer",
-  fontFamily: FONT,
+
 };
 
 const secondaryBtnStyle = {
@@ -1068,5 +1066,5 @@ const secondaryBtnStyle = {
   fontSize: "0.9rem",
   letterSpacing: "0.1em",
   cursor: "pointer",
-  fontFamily: FONT,
+
 };
