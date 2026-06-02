@@ -19,6 +19,10 @@ const TEXT = {
         title: "サブスクリプションは送料無料",
         body: "サブスクリプション商品は送料無料です。",
       },
+      {
+        title: "配送方法について",
+        body: "1個注文の場合、商品により小型便または通常便（いずれも送料¥200）でお届けします。2個以上のご注文は送料無料です。配送方法の詳細はご注文内容により異なります。",
+      },
     ],
     shippingNote: "昨今の価格高騰の中でも、より多くの方に自宅でコーヒーを楽しんでいただけるよう、全国一律の送料設定としております。その分、包装は簡易的なものとなっておりますが、ご理解いただけますと幸いです。",
     note:
@@ -44,6 +48,10 @@ const TEXT = {
         title: "Subscriptions ship free",
         body: "All subscription products include free shipping.",
       },
+      {
+        title: "Shipping method",
+        body: "For single-item orders, we ship via compact or standard mail (¥200 flat). Orders of 2 or more items ship free. Shipping method may vary depending on your order.",
+      },
     ],
     shippingNote: "To make specialty coffee accessible to as many people as possible despite rising costs, we keep our shipping rates low nationwide. Packaging is kept simple to reflect this.",
     note:
@@ -68,6 +76,10 @@ const TEXT = {
       {
         title: "Las suscripciones tienen envío gratis",
         body: "Todos los productos de suscripción incluyen envío gratuito.",
+      },
+      {
+        title: "Método de envío",
+        body: "Para pedidos de un artículo, enviamos por correo compacto o estándar (¥200 fijo). Los pedidos de 2 o más artículos tienen envío gratuito. El método de envío puede variar según tu pedido.",
       },
     ],
     shippingNote: "Para que el café de especialidad sea accesible a todos a pesar del aumento de costos, mantenemos tarifas de envío bajas en todo Japón. El embalaje es sencillo para reflejar esto.",
