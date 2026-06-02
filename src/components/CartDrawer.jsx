@@ -21,7 +21,7 @@ export default function CartDrawer({ lang }) {
       id: "coffee-bag",
       name:
         lang === "ja"
-          ? "珈琲バッグ"
+          ? "珈琲袋"
           : lang === "es"
           ? "Bolsa de café"
           : "Coffee Bag",
@@ -31,7 +31,7 @@ export default function CartDrawer({ lang }) {
       id: "tea-bag",
       name:
         lang === "ja"
-          ? "お茶バッグ"
+          ? "一煎袋"
           : lang === "es"
           ? "Bolsa de té"
           : "Tea Bag",

@@ -114,12 +114,12 @@ const WHOLESALE_CATALOG = [
   {
     id: "enma-coffee-bag",
     productDataId: "enma-coffee-bag",
-    name: "閻魔 珈琲バッグ",
+    name: "閻魔 珈琲袋",
     size: "8個入り",
     retailPrice: 2400,
     unitPrice: 1680,
     description:
-      "スペシャルティコーヒーを手軽に。お湯を注いで2分待つだけ。シングルサーブのドリップバッグで本格的なコーヒーをご提供。",
+      "スペシャルティ珈琲を手軽に。お湯を注いで2分待つだけ。シングルサーブの珈琲袋で本格的なコーヒーをご提供。",
     minQty: 6,
     maxQty: 40,
     orderNote: "41個以上はお問い合わせください",
@@ -128,12 +128,12 @@ const WHOLESALE_CATALOG = [
   {
     id: "woodbox-tea-bag",
     productDataId: "woodbox-tea-bag",
-    name: "木函 ほうじ茶バッグ",
+    name: "木函 ほうじ茶一煎袋",
     size: "8個入り",
     retailPrice: 2800,
     unitPrice: 1960,
     description:
-      "上質なほうじ茶をバッグに。珈琲バッグと並べてご提供いただける茶のシリーズ。コーヒーとお茶のペアリング提案にも。",
+      "上質なほうじ茶を一煎袋に。珈琲袋と並べてご提供いただける茶のシリーズ。珈琲とお茶のペアリング提案にも。",
     minQty: 6,
     maxQty: 40,
     orderNote: "41個以上はお問い合わせください",

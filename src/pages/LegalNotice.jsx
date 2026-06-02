@@ -35,7 +35,7 @@ export default function LegalNotice({ lang = "ja" }) {
       noteValue: "商品の特性上、味や香りには個人差があります。",
       product: "販売商品について",
       productValue:
-        "当店ではRyuge Coffeeとして、焙煎コーヒー豆、珈琲バッグ、お茶商品の販売を行っています。",
+        "当店ではRyuge Coffeeとして、焙煎コーヒー豆、珈琲袋、お茶商品の販売を行っています。",
     },
 
     en: {

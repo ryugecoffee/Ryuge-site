@@ -424,7 +424,7 @@ export default function ProductsPage({ lang }) {
                           setItem(
                             {
                               id: `subscription-${currentSubscriptionPlan.id}`,
-                              name: `${activeItem.title?.[lang] || "サブスクリプション"} — ${currentSubscriptionPlan.name}`,
+                              name: `${activeItem.title?.[lang] || "定期便"} — ${currentSubscriptionPlan.name}`,
                               price: unitPrice,
                               category: "subscription",
                               size: "100g",

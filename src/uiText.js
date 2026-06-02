@@ -26,9 +26,9 @@ export const UI_TEXT = {
     seasonalTitle: "折々",
     seasonalLead: "季節ごとに移ろう、小さな提案",
 
-    seasonalBagTitle: "珈琲バッグ",
+    seasonalBagTitle: "珈琲袋",
     seasonalBagText: "日々の中に静かに置ける、軽やかなプロダクト。",
-    subscriptionTitle: "サブスクリプション",
+    subscriptionTitle: "定期便",
     subscriptionText: "定期的に届く、龍華珈琲の時間。",
     wheelTitle: "フレーバーホイール",
     wheelText: "味わいを記録し、言葉にするためのウェブツール。",

@@ -24,7 +24,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import ScrollToTop from "./components/ScrollToTop";
 
 const BANNER_TEXT = {
-  ja: "全国どこでも：1個注文 送料¥200 / 2個以上 送料無料 / サブスクリプション 送料無料",
+  ja: "全国どこでも：1個注文 送料¥200 / 2個以上 送料無料 / 定期便 送料無料",
   en: "Japan-wide shipping: ¥200 for 1 item / Free for 2+ items / Free for subscriptions",
   es: "Envío en todo Japón: ¥200 por 1 artículo / Gratis con 2 o más / Gratis con suscripción",
 };

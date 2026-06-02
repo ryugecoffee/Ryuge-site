@@ -8,7 +8,7 @@ export default function SiteFooter({ lang }) {
       brand: "Ryuge Coffee",
       tagline: "Quietly crafted in Kamakura",
       company: "運営会社：株式会社龍華",
-      description: "焙煎珈琲豆・珈琲／お茶バッグの販売サイト",
+      description: "焙煎珈琲豆・珈琲／一煎袋の販売サイト",
       instagram: "Instagram",
       contact: "お問合せ / 卸販売について",
       email: "ryugecoffee@gmail.com",
