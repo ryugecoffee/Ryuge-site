@@ -709,16 +709,31 @@ export default function ProductsPage({ lang }) {
 </>
                   ) : (
                     <>
-                      <dl className="product-specs product-specs-classic modal-fade-up">
-                        {renderSpecRow(labels.origin, activeItem.origin)}
-                        {renderSpecRow(labels.producer, activeItem.producer)}
-                        {renderSpecRow(labels.process, activeItem.process)}
-                        {renderSpecRow(labels.variety, activeItem.variety)}
-                        {renderSpecRow(labels.altitude, activeItem.altitude)}
-                        {renderSpecRow(labels.weight, activeItem.weight)}
-                        {renderSpecRow(labels.price, activeItem.price)}
-                        {renderSpecRow(labels.flavor, activeItem.flavor)}
-                      </dl>
+                      {(activeItem.category === "bag" || activeItem.category === "tea-bag") ? (
+                        <div className="modal-brew-block modal-fade-up">
+                          <p className="modal-brew-label">
+                            {lang === "ja" ? "淹れ方" : lang === "es" ? "Preparación" : "How to Brew"}
+                          </p>
+                          <div className="modal-brew-steps">
+                            {(activeItem.brew?.[lang] || []).map((step, i) => (
+                              <p key={i}>{step}</p>
+                            ))}
+                          </div>
+                          {renderSpecRow(labels.weight, activeItem.weight)}
+                          {renderSpecRow(labels.price, activeItem.price)}
+                        </div>
+                      ) : (
+                        <dl className="product-specs product-specs-classic modal-fade-up">
+                          {renderSpecRow(labels.origin, activeItem.origin)}
+                          {renderSpecRow(labels.producer, activeItem.producer)}
+                          {renderSpecRow(labels.process, activeItem.process)}
+                          {renderSpecRow(labels.variety, activeItem.variety)}
+                          {renderSpecRow(labels.altitude, activeItem.altitude)}
+                          {renderSpecRow(labels.weight, activeItem.weight)}
+                          {renderSpecRow(labels.price, activeItem.price)}
+                          {renderSpecRow(labels.flavor, activeItem.flavor)}
+                        </dl>
+                      )}
 
                       <div className="simple-quantity-block">
                         <p className="simple-quantity-label">

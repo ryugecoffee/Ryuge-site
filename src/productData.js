@@ -246,7 +246,20 @@ export const PRODUCT_DATA = {
       weight: "8個入り",
       price: "¥2,400",
       priceNumber: 2400,
-      flavor: "1杯あたり¥300",
+      brew: {
+        ja: [
+          "160mlのお湯を注いで約2分待つ",
+          "味が薄い場合はスプーンで数回押すと味が出ます",
+        ],
+        en: [
+          "Pour 160ml of hot water and wait about 2 minutes",
+          "If the flavor is light, press the bag a few times with a spoon",
+        ],
+        es: [
+          "Vierte 160ml de agua caliente y espera unos 2 minutos",
+          "Si el sabor es suave, presiona la bolsa unas veces con una cuchara",
+        ],
+      },
       isSoldOut: false,
     },
     {
@@ -272,7 +285,23 @@ export const PRODUCT_DATA = {
       weight: "8個入り",
       price: "¥2,800",
       priceNumber: 2800,
-      flavor: "1杯あたり¥350",
+      brew: {
+        ja: [
+          "お湯を200ml注いで約1分",
+          "二煎目は200mlで約10秒",
+          "三煎目は200mlで約10秒",
+        ],
+        en: [
+          "Pour 200ml of hot water and steep for about 1 minute",
+          "Second brew: 200ml for about 10 seconds",
+          "Third brew: 200ml for about 10 seconds",
+        ],
+        es: [
+          "Vierte 200ml de agua caliente e infusiona durante 1 minuto",
+          "Segunda infusión: 200ml durante unos 10 segundos",
+          "Tercera infusión: 200ml durante unos 10 segundos",
+        ],
+      },
       isSoldOut: false,
     },
   ],

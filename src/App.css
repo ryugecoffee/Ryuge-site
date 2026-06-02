@@ -3388,3 +3388,24 @@ html[lang="es"] .story-body {
   letter-spacing: 0.06em;
 }
 
+
+.modal-brew-label {
+  margin: 0 0 10px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(245, 241, 232, 0.42);
+}
+
+.modal-brew-steps {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.modal-brew-steps p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.75;
+  color: rgba(245, 241, 232, 0.78);
+}
