@@ -50,16 +50,13 @@ transporter.verify((error, success) => {
   }
 });
 
-const FLAT_SHIPPING = 880;
-const FREE_SHIPPING_THRESHOLD = 3000;
-
 // ===== クーポン定義 =====
 const COUPONS = {
   WELCOME10: { type: "percent", value: 10, label: "10% OFF" },
   FREESHIP: { type: "shipping", value: 100, label: "送料補助" },
 };
 
-// ===== 送料計算（全国一律） =====
+// ===== 送料計算（1個¥200、2個以上無料、サブスク無料） =====
 function calcShipping(items) {
   const safeItems = Array.isArray(items) ? items : [];
 
@@ -68,12 +65,12 @@ function calcShipping(items) {
   );
   if (hasSubscription) return 0;
 
-  const subtotal = safeItems.reduce(
-    (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0),
+  const totalQuantity = safeItems.reduce(
+    (sum, item) => sum + Number(item.quantity || 0),
     0
   );
 
-  return subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : FLAT_SHIPPING;
+  return totalQuantity <= 1 ? 200 : 0;
 }
 
 // ===== クーポン適用 =====
@@ -469,7 +466,7 @@ app.get("/", (req, res) => {
 
 app.post("/create-payment-intent", async (req, res) => {
   try {
-    const { items, couponCode, email, name, address, prefecture } = req.body;
+    const { items, couponCode, email, name, address, prefecture, shipping: clientShipping } = req.body;
 
     const safeItems = Array.isArray(items) ? items : [];
 
@@ -478,7 +475,9 @@ app.post("/create-payment-intent", async (req, res) => {
       0
     );
 
-    let shipping = calcShipping(safeItems);
+    let shipping = (clientShipping !== undefined && clientShipping !== null)
+      ? Number(clientShipping)
+      : calcShipping(safeItems);
 
     const afterCoupon = applyCoupon(subtotal, shipping, couponCode);
     subtotal = afterCoupon.subtotal;
