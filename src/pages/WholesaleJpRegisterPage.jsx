@@ -2,7 +2,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth } from "../lib/firebase";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const API_BASE = "https://ryuge-site.onrender.com";
 
@@ -102,6 +102,8 @@ export default function WholesaleJpRegisterPage() {
 
     try {
       await doRegister();
+      // 登録成功後は即座に signOut してセッションをクリアしてから完了画面へ
+      await signOut(auth).catch(() => {});
       setDone(true);
     } catch (err) {
       console.error(err);
@@ -121,6 +123,7 @@ export default function WholesaleJpRegisterPage() {
           }
           // 孤立Auth削除成功 → 再登録
           await doRegister();
+          await signOut(auth).catch(() => {});
           setDone(true);
         } catch (retryErr) {
           console.error("retry register error:", retryErr);
@@ -626,18 +629,17 @@ function PasswordField({
    登録完了画面（signOut してからログインページへ誘導）
 ==================================================== */
 function DoneScreen() {
-  const navigate = useNavigate();
-
   useEffect(() => {
-    // 登録直後はログイン済み状態のため signOut してからログインページへ
+    // handleSubmit で signOut 済みだが念のり再実行してから
+    // window.location.replace でフルリロード（React/Firebase キャッシュを完全クリア）
     signOut(auth)
       .catch(() => {})
       .finally(() => {
-        navigate("/wholesale-jp/login", { replace: true });
+        window.location.replace("/wholesale-jp/login");
       });
-  }, [navigate]);
+  }, []);
 
-  // signOut 完了まで一瞬表示される待機画面
+  // リダイレクトまでの一瞬だけ表示
   return (
     <div
       style={{
@@ -646,7 +648,6 @@ function DoneScreen() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-
       }}
     >
       <div style={{ width: "100%", maxWidth: "480px", textAlign: "center" }}>
