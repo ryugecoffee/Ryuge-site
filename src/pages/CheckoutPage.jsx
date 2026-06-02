@@ -221,8 +221,10 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || t.checkoutInitError);
 
-        setShipping(data.shipping);
-        setTotal(data.total);
+        // 送料はフロントで計算した値を正とし、サーバー値で上書きしない
+        // クーポン適用時はサーバーが割引後合計を計算するのでそちらを使う
+        setShipping(computedShipping);
+        setTotal(couponStatus === "valid" ? data.total : cartSubtotal + computedShipping);
         setClientSecret(data.clientSecret);
       } catch (err) {
         setShipping(computedShipping);
