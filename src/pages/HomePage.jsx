@@ -714,15 +714,17 @@ export default function HomePage({ lang, setLang }) {
 <span
   className="text-link"
   onClick={() => {
+    const id = selectedProduct.id;
     setSelectedProduct(null);
-    navigate("/products");
+    navigate(`/products#${id}`);
   }}
   role="button"
   tabIndex={0}
   onKeyDown={(e) => {
     if (e.key === "Enter" || e.key === " ") {
+      const id = selectedProduct.id;
       setSelectedProduct(null);
-      navigate("/products");
+      navigate(`/products#${id}`);
     }
   }}
 >

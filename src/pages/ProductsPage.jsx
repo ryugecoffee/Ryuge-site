@@ -81,8 +81,10 @@ export default function ProductsPage({ lang }) {
   }, [activeItem]);
 
   useEffect(() => {
-    if (location.hash === "#oriori") {
-      const target = document.getElementById("oriori-section");
+    const hash = location.hash;
+    if (hash) {
+      const id = hash.replace("#", "");
+      const target = document.getElementById(id);
       if (target) {
         setTimeout(() => {
           target.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -170,7 +172,7 @@ export default function ProductsPage({ lang }) {
           </div>
         </section>
 
-        <section className="products-showcase-section products-enma-section">
+        <section className="products-showcase-section products-enma-section" id="enma">
           <div
             ref={enmaSectionRef}
             className={`products-section-heading products-heading-animate ${
@@ -220,7 +222,7 @@ export default function ProductsPage({ lang }) {
           </div>
         </section>
 
-        <section className="products-showcase-section products-woodbox-section">
+        <section className="products-showcase-section products-woodbox-section" id="woodbox">
           <div
             ref={woodboxSectionRef}
             className={`products-section-heading products-heading-animate ${
@@ -256,7 +258,7 @@ export default function ProductsPage({ lang }) {
           </div>
         </section>
 
-        <section className="oriori-services-section" id="oriori-section">
+        <section className="oriori-services-section" id="oriori">
           <div className="oriori-heading">
             <h2>{sectionText.orioriTitle}</h2>
             <p>{sectionText.orioriIntro}</p>
