@@ -271,12 +271,12 @@ export const PRODUCT_DATA = {
       category: "tea-bag",
       size: "8個入り",
       title: {
-        ja: "木函 ほうじ茶バッグ",
+        ja: "木函 ほうじ茶袋",
         en: "WOOD BOX Hojicha Bag",
         es: "WOOD BOX Hojicha Bag",
       },
       modalTitle: {
-        ja: "木函 ほうじ茶バッグ",
+        ja: "木函 ほうじ茶袋",
         en: "WOOD BOX Hojicha Bag",
         es: "WOOD BOX Hojicha Bag",
       },
