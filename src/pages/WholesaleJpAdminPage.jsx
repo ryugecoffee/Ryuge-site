@@ -645,13 +645,32 @@ function OrdersPanel() {
     setLoading(true);
     try {
       const snap = await getDocs(collection(db, "wholesaleOrders"));
-      const data = snap.docs
+      let data = snap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
         .sort((a, b) => {
           const aTime = a.createdAt?.toMillis?.() || 0;
           const bTime = b.createdAt?.toMillis?.() || 0;
           return bTime - aTime;
         });
+
+      // companyName が欠けている注文は wholesaleUsers から uid で補完
+      const missingUids = [...new Set(
+        data
+          .filter((o) => !o.companyName && o.uid)
+          .map((o) => o.uid)
+      )];
+      if (missingUids.length > 0) {
+        const usersSnap = await getDocs(collection(db, "wholesaleUsers"));
+        const userMap = {};
+        usersSnap.docs.forEach((d) => { userMap[d.id] = d.data(); });
+        data = data.map((o) => {
+          if (!o.companyName && o.uid && userMap[o.uid]) {
+            return { ...o, companyName: userMap[o.uid].companyName || "", email: o.email || userMap[o.uid].email || "" };
+          }
+          return o;
+        });
+      }
+
       setOrders(data);
     } catch (e) {
       console.error("Orders fetch error:", e);
@@ -690,7 +709,7 @@ function OrdersPanel() {
 
   const counts = {
     all:       orders.length,
-    pending:   orders.filter((o) => o.status === "pending").length,
+    pending:   orders.filter((o) => !o.status || o.status === "pending").length,
     shipped:   orders.filter((o) => o.status === "shipped").length,
     cancelled: orders.filter((o) => o.status === "cancelled").length,
   };
@@ -698,6 +717,8 @@ function OrdersPanel() {
   const filtered =
     filterStatus === "all"
       ? orders
+      : filterStatus === "pending"
+      ? orders.filter((o) => !o.status || o.status === "pending")
       : orders.filter((o) => o.status === filterStatus);
 
   return (
@@ -860,7 +881,7 @@ function OrdersPanel() {
                   {st.label}
                 </p>
                 <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                  {order.status === "pending" && (
+                  {(!order.status || order.status === "pending") && (
                     <ActionButton
                       label="発送する"
                       onClick={() => setShipTarget(order)}
@@ -868,7 +889,7 @@ function OrdersPanel() {
                       disabled={isUpdating}
                     />
                   )}
-                  {order.status !== "pending" && (
+                  {order.status && order.status !== "pending" && (
                     <ActionButton
                       label="受付中に戻す"
                       onClick={() => handleStatusChange(order.id, "pending")}
