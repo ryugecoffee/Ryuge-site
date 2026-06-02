@@ -316,7 +316,7 @@ export const PRODUCT_DATA = {
       size: "100g",
       image: "/images/oriori-1.jpg",
       title: {
-        ja: "サブスクリプション",
+        ja: "定期便",
         en: "Subscription",
         es: "Suscripción",
       },
@@ -337,8 +337,8 @@ export const PRODUCT_DATA = {
             priceNumber: 2000,
             frequency: "月1回",
             shipping: "送料込み",
-            items: ["珈琲バッグ ×8"],
-            note: "スペシャルティコーヒーを手軽に楽しめる定期便。お湯を注ぐだけで本格的な一杯。",
+            items: ["閻魔 珈琲バッグ ×8"],
+            note: "急須も、ミルも、必要ない。お湯を注ぐだけで、閻魔が整う。毎月8個をお届けします。",
             button: "珈琲バッグ定期便を選ぶ",
           },
           {
@@ -379,8 +379,8 @@ export const PRODUCT_DATA = {
             priceNumber: 2000,
             frequency: "Monthly",
             shipping: "Shipping included",
-            items: ["Coffee Bag ×8"],
-            note: "A monthly delivery of specialty coffee bags. Just pour hot water for a refined cup, anytime.",
+            items: ["ENMA Coffee Bag ×8"],
+            note: "No grinder, no fuss. Just pour hot water and Enma is ready. Eight bags delivered every month.",
             button: "Choose Coffee Bag",
           },
           {
@@ -421,8 +421,8 @@ export const PRODUCT_DATA = {
             priceNumber: 2000,
             frequency: "Mensual",
             shipping: "Envío incluido",
-            items: ["Coffee Bag ×8"],
-            note: "Una entrega mensual de bolsas de café de especialidad. Solo añade agua caliente para disfrutar una taza auténtica.",
+            items: ["ENMA Coffee Bag ×8"],
+            note: "Sin molinillo, sin complicaciones. Solo agua caliente y Enma está listo. Ocho bolsas entregadas cada mes.",
             button: "Elegir Coffee Bags",
           },
           {
