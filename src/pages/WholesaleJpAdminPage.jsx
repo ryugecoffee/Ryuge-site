@@ -489,6 +489,149 @@ function UserRow({ user, onApprove, onReject, onRevoke }) {
 }
 
 /* ====================================================
+   発送モーダル
+==================================================== */
+const API_BASE = "https://ryuge-site.onrender.com";
+
+function ShipModal({ order, onClose, onShipped }) {
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setError("");
+    try {
+      const res = await fetch(`${API_BASE}/wholesale-ship`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: order.id, trackingNumber }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "発送処理に失敗しました");
+      }
+      onShipped();
+      onClose();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const itemLabel = (order.items || [])
+    .map((i) => `${i.name} ×${i.quantity}`)
+    .join("、");
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(0,0,0,0.7)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          backgroundColor: C.surface,
+          border: `1px solid ${C.border}`,
+          padding: "2.5rem",
+          width: "480px",
+          maxWidth: "90vw",
+          fontFamily: FONT,
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p style={{ fontSize: "0.6rem", letterSpacing: "0.22em", textTransform: "uppercase", color: C.muted, margin: "0 0 1rem" }}>
+          発送処理
+        </p>
+        <h2 style={{ fontSize: "1.3rem", fontWeight: 400, color: C.text, margin: "0 0 1.8rem" }}>
+          発送完了にする
+        </h2>
+
+        <div style={{ marginBottom: "1.5rem" }}>
+          <p style={{ fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", color: C.faint, margin: "0 0 0.4rem" }}>取引先</p>
+          <p style={{ fontSize: "0.9rem", color: C.text, margin: 0 }}>{order.companyName || "—"}</p>
+        </div>
+
+        <div style={{ marginBottom: "2rem" }}>
+          <p style={{ fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", color: C.faint, margin: "0 0 0.4rem" }}>注文内容</p>
+          <p style={{ fontSize: "0.82rem", color: C.soft, margin: 0, lineHeight: 1.7 }}>{itemLabel || "—"}</p>
+        </div>
+
+        <div style={{ marginBottom: "2rem" }}>
+          <label style={{ fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", color: C.faint, display: "block", marginBottom: "0.6rem" }}>
+            追跡番号（任意）
+          </label>
+          <input
+            type="text"
+            value={trackingNumber}
+            onChange={(e) => setTrackingNumber(e.target.value)}
+            placeholder="例：1234567890123"
+            style={{
+              width: "100%",
+              backgroundColor: C.bg,
+              border: `1px solid ${C.border}`,
+              color: C.text,
+              fontSize: "0.85rem",
+              padding: "0.7rem 0.9rem",
+              fontFamily: FONT,
+              outline: "none",
+              boxSizing: "border-box",
+            }}
+          />
+        </div>
+
+        {error && (
+          <p style={{ fontSize: "0.78rem", color: C.red, margin: "0 0 1rem" }}>{error}</p>
+        )}
+
+        <div style={{ display: "flex", gap: "0.8rem", justifyContent: "flex-end" }}>
+          <button
+            onClick={onClose}
+            style={{
+              fontSize: "0.68rem",
+              color: C.muted,
+              background: "none",
+              border: `1px solid ${C.border}`,
+              padding: "0.55rem 1.2rem",
+              cursor: "pointer",
+              letterSpacing: "0.1em",
+              fontFamily: FONT,
+            }}
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={submitting}
+            style={{
+              fontSize: "0.68rem",
+              color: C.green,
+              background: "none",
+              border: `1px solid ${C.green}`,
+              padding: "0.55rem 1.4rem",
+              cursor: submitting ? "not-allowed" : "pointer",
+              letterSpacing: "0.1em",
+              fontFamily: FONT,
+              opacity: submitting ? 0.5 : 1,
+            }}
+          >
+            {submitting ? "処理中..." : "発送完了にする"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ====================================================
    注文一覧パネル
 ==================================================== */
 function OrdersPanel() {
@@ -496,16 +639,20 @@ function OrdersPanel() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("all");
   const [updating, setUpdating] = useState(null);
+  const [shipTarget, setShipTarget] = useState(null);
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const q = query(
-        collection(db, "wholesaleOrders"),
-        orderBy("createdAt", "desc")
-      );
-      const snap = await getDocs(q);
-      setOrders(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      const snap = await getDocs(collection(db, "wholesaleOrders"));
+      const data = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => {
+          const aTime = a.createdAt?.toMillis?.() || 0;
+          const bTime = b.createdAt?.toMillis?.() || 0;
+          return bTime - aTime;
+        });
+      setOrders(data);
     } catch (e) {
       console.error("Orders fetch error:", e);
     } finally {
@@ -555,6 +702,14 @@ function OrdersPanel() {
 
   return (
     <div>
+      {shipTarget && (
+        <ShipModal
+          order={shipTarget}
+          onClose={() => setShipTarget(null)}
+          onShipped={fetchOrders}
+        />
+      )}
+
       {/* フィルター */}
       <div
         style={{
@@ -622,7 +777,7 @@ function OrdersPanel() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "120px 1.2fr 1.8fr 80px 110px 100px 200px",
+              gridTemplateColumns: "120px 1.2fr 1.8fr 80px 110px 100px 220px",
               gap: "1rem",
               backgroundColor: C.bg,
               padding: "0.75rem 1.3rem",
@@ -660,7 +815,7 @@ function OrdersPanel() {
               .map((i) => `${i.name} ×${i.quantity}`)
               .join(" / ");
             const totalQty = (order.items || []).reduce(
-              (s, i) => s + i.quantity,
+              (s, i) => s + Number(i.quantity || 0),
               0
             );
             const st = STATUS[order.status] || {
@@ -674,7 +829,7 @@ function OrdersPanel() {
                 key={order.id}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "120px 1.2fr 1.8fr 80px 110px 100px 200px",
+                  gridTemplateColumns: "120px 1.2fr 1.8fr 80px 110px 100px 220px",
                   gap: "1rem",
                   backgroundColor: C.surface,
                   padding: "1.1rem 1.3rem",
@@ -704,21 +859,20 @@ function OrdersPanel() {
                 <p style={{ margin: 0, fontSize: "0.78rem", color: st.color }}>
                   {st.label}
                 </p>
-                {/* ステータス変更 */}
                 <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                  {order.status !== "pending" && (
+                  {order.status === "pending" && (
                     <ActionButton
-                      label="受付中"
-                      onClick={() => handleStatusChange(order.id, "pending")}
-                      color={C.amber}
+                      label="発送する"
+                      onClick={() => setShipTarget(order)}
+                      color={C.green}
                       disabled={isUpdating}
                     />
                   )}
-                  {order.status !== "shipped" && (
+                  {order.status !== "pending" && (
                     <ActionButton
-                      label="発送済"
-                      onClick={() => handleStatusChange(order.id, "shipped")}
-                      color={C.green}
+                      label="受付中に戻す"
+                      onClick={() => handleStatusChange(order.id, "pending")}
+                      color={C.amber}
                       disabled={isUpdating}
                     />
                   )}

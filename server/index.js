@@ -486,6 +486,7 @@ app.post("/wholesale-register", async (req, res) => {
 app.post("/wholesale-order", async (req, res) => {
   try {
     const {
+      uid = "",
       cartItems = [],
       companyName = "",
       email = "",
@@ -493,19 +494,35 @@ app.post("/wholesale-order", async (req, res) => {
       shipping = 0,
     } = req.body;
 
+    const items = (Array.isArray(cartItems) ? cartItems : []).map((item) => ({
+      name: item.name || "商品",
+      quantity: Number(item.quantity || 0),
+      wholesalePrice: Number(item.wholesalePrice || 0),
+    }));
+
+    // Firestoreに保存
+    await db.collection("wholesaleOrders").add({
+      uid,
+      companyName,
+      email,
+      items,
+      total: Number(total),
+      shipping: Number(shipping),
+      status: "pending",
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // 管理者メール送信
     const adminAddresses = "ryugecoffee@gmail.com, ryuka2452533@icloud.com";
     const subject = "【龍華珈琲】新規卸発注が届きました";
+    const createdAtStr = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
 
-    const itemLines = (Array.isArray(cartItems) ? cartItems : [])
+    const itemLines = items
       .map((item) => {
-        const name = item.name || "商品";
-        const qty = Number(item.quantity || 0);
-        const lineTotal = Number(item.wholesalePrice || 0) * qty;
-        return `・${name} × ${qty}（¥${lineTotal.toLocaleString()}）`;
+        const lineTotal = item.wholesalePrice * item.quantity;
+        return `・${item.name} × ${item.quantity}（¥${lineTotal.toLocaleString()}）`;
       })
       .join("\n");
-
-    const createdAt = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
 
     const text = `会社名: ${companyName}
 メール: ${email}
@@ -513,7 +530,7 @@ app.post("/wholesale-order", async (req, res) => {
 ${itemLines}
 合計: ¥${Number(total).toLocaleString()}
 送料: ¥${Number(shipping).toLocaleString()}
-発注日時: ${createdAt}
+発注日時: ${createdAtStr}
 管理画面: https://ryuge.biz/wholesale-jp/admin`;
 
     await transporter.sendMail({
@@ -527,6 +544,62 @@ ${itemLines}
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error("wholesale-order error:", err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== 卸発送通知 =====
+app.post("/wholesale-ship", async (req, res) => {
+  try {
+    const { orderId, trackingNumber = "" } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({ error: "orderId is required" });
+    }
+
+    const orderRef = db.collection("wholesaleOrders").doc(orderId);
+    const orderSnap = await orderRef.get();
+
+    if (!orderSnap.exists) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    const orderData = orderSnap.data();
+
+    await orderRef.update({
+      status: "shipped",
+      trackingNumber: trackingNumber || "",
+      shippedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    const { companyName = "", email = "" } = orderData;
+
+    if (email) {
+      const trackingLine = trackingNumber
+        ? `■ 追跡番号：${trackingNumber}\n■ 追跡URL：https://trackings.post.japanpost.jp/services/srv/search/?requestNo=${trackingNumber}`
+        : "■ 追跡番号：なし";
+
+      const text = `${companyName} ご担当者様
+
+このたびはご注文いただきありがとうございます。
+本日、ご注文商品を発送いたしましたのでお知らせします。
+
+${trackingLine}
+
+ご不明な点はryugecoffee@gmail.comまでご連絡ください。
+龍華珈琲`;
+
+      await transporter.sendMail({
+        from: `"龍華珈琲" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: "【龍華珈琲】ご注文商品を発送いたしました",
+        text,
+      });
+    }
+
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error("wholesale-ship error:", err);
     return res.status(500).json({ error: err.message });
   }
 });
