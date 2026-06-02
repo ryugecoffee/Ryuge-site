@@ -351,18 +351,18 @@ export default function ProductsPage({ lang }) {
 
       {activeItem && (
         <div className="modal-backdrop" onClick={() => setActiveItemId(null)}>
-          <button
-            type="button"
-            className="modal-close-safe"
-            aria-label="閉じる"
-            onClick={() => setActiveItemId(null)}
-          >
-            戻る
-          </button>
           <div
             className="modal modal-premium"
             onClick={(e) => e.stopPropagation()}
           >
+            <button
+              type="button"
+              className="modal-close-safe"
+              aria-label="閉じる"
+              onClick={() => setActiveItemId(null)}
+            >
+              戻る
+            </button>
 
             <div className="modal-image modal-image-premium">
               {activeItem?.image && (
