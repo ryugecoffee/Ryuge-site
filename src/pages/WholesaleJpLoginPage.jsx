@@ -1,5 +1,5 @@
 // src/pages/WholesaleJpLoginPage.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -15,13 +15,20 @@ const COLORS = {
 };
 
 export default function WholesaleJpLoginPage() {
-  const { login } = useAuth();
+  const { login, user, approved, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // authLoading が完了し、ログイン済み + 権限ありなら自動リダイレクト
+  useEffect(() => {
+    if (!authLoading && user && (approved || isAdmin)) {
+      navigate("/wholesale-jp/dashboard", { replace: true });
+    }
+  }, [authLoading, user, approved, isAdmin, navigate]);
 
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -30,7 +37,7 @@ const handleSubmit = async (e) => {
 
   try {
     await login(email, password);
-    navigate("/wholesale-jp/dashboard");
+    // navigate はしない — 上の useEffect が authLoading 完了後にリダイレクトする
   } catch (error) {
     console.error("LOGIN ERROR:", error);
     console.error("LOGIN ERROR CODE:", error?.code);
