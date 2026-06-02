@@ -209,6 +209,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
               items: cartItems,
               prefecture,
               countryType: "japan",
+              shipping: computedShipping,
               couponCode: couponStatus === "valid" ? couponCode : "",
               email: "tmp@tmp.com",
               name: "tmp",
