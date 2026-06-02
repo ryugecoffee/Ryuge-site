@@ -290,6 +290,8 @@ export default function ProductsPage({ lang }) {
                 <div className="oriori-service-copy">
                   <h3>{item.title?.[lang]}</h3>
                   <p>{item.summary?.[lang]}</p>
+                  {item.weight && <p className="product-card-weight">{item.weight}</p>}
+                  {item.price && <p className="product-card-price">{item.price}</p>}
                 </div>
               </article>
             ))}
