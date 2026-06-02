@@ -15,40 +15,40 @@ const COLORS = {
 };
 
 export default function WholesaleJpLoginPage() {
-  const { login, user, approved, isAdmin, loading: authLoading } = useAuth();
+  const { login, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
 
-  // authLoading 完了 かつ user が存在 → ダッシュボードへ
-  // （ログイン直後 & 既存セッション両方をカバー）
-  // AuthContext は onAuthStateChanged 発火時に loading=true にリセットし、
-  // Firestore フェッチ完了後に loading=false にするため、
-  // このタイミングでは approved/isAdmin が正しくセットされている
+  // すでにログイン済み かつ authLoading 完了済み → ダッシュボードへ自動遷移
+  // （ページリロード時・既存セッション時のリダイレクト）
+  // ※ authLoading 中はリダイレクトしない（Firestore 取得完了前に判定しないため）
   useEffect(() => {
     if (!authLoading && user) {
       navigate("/wholesale-jp/dashboard", { replace: true });
     }
   }, [authLoading, user, navigate]);
 
+  // ログインフォーム送信
+  // login() 完了 → onAuthStateChanged が発火 → AuthContext が loading=true にリセット
+  // → Firestore フェッチ → approved/isAdmin セット → loading=false
+  // → 上の useEffect が !authLoading && user を検知 → navigate
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
-    setLoading(true);
+    setFormLoading(true);
 
     try {
       await login(email, password);
-      // navigate はここでは呼ばない
-      // login() 完了 → onAuthStateChanged が loading=true にリセット後 user をセット
-      // → Firestore フェッチ完了 → loading=false → 上の useEffect がリダイレクト
+      // navigate は useEffect に委譲（login() 直後は AuthContext がまだ更新中のため）
     } catch (error) {
       console.error("LOGIN ERROR:", error.code, error.message);
       setErrorMessage(`ログイン失敗: ${error?.code || "unknown-error"}`);
     } finally {
-      setLoading(false);
+      setFormLoading(false);
     }
   };
 
@@ -115,13 +115,13 @@ export default function WholesaleJpLoginPage() {
         }}
       >
         <div
-  style={{
-    width: "100%",
-    maxWidth: "540px",
-    position: "relative",
-    zIndex: 5,
-  }}
->
+          style={{
+            width: "100%",
+            maxWidth: "540px",
+            position: "relative",
+            zIndex: 5,
+          }}
+        >
           <div style={{ textAlign: "center", marginBottom: "2.2rem" }}>
             <p
               style={{
@@ -133,7 +133,6 @@ export default function WholesaleJpLoginPage() {
             >
               RYUGE COFFEE
             </p>
-
             <p
               style={{
                 margin: 0,
@@ -148,30 +147,16 @@ export default function WholesaleJpLoginPage() {
           </div>
 
           <form
-  onSubmit={handleSubmit}
-  style={{
-    backgroundColor: "transparent",
-    padding: 0,
-    position: "relative",
-    zIndex: 5,
-  }}
->
+            onSubmit={handleSubmit}
+            style={{
+              backgroundColor: "transparent",
+              padding: 0,
+              position: "relative",
+              zIndex: 5,
+            }}
+          >
             <div style={{ marginBottom: "1.2rem" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "0.55rem",
-                  color: COLORS.softText,
-                  fontSize: "0.84rem",
-                  letterSpacing: "0.08em",
-                  fontFamily:
-                    '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-                  fontWeight: 500,
-                }}
-              >
-                Email
-              </label>
-
+              <label style={labelStyle}>Email</label>
               <input
                 type="email"
                 value={email}
@@ -183,21 +168,7 @@ export default function WholesaleJpLoginPage() {
             </div>
 
             <div style={{ marginBottom: "1.2rem" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "0.55rem",
-                  color: COLORS.softText,
-                  fontSize: "0.84rem",
-                  letterSpacing: "0.08em",
-                  fontFamily:
-                    '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-                  fontWeight: 500,
-                }}
-              >
-                Password
-              </label>
-
+              <label style={labelStyle}>Password</label>
               <input
                 type="password"
                 value={password}
@@ -224,15 +195,15 @@ export default function WholesaleJpLoginPage() {
             )}
 
             <button
-  type="submit"
-  disabled={loading}
-  style={{
-    ...submitButtonStyle,
-    opacity: loading ? 0.55 : 1,
-  }}
->
-  {loading ? "Loading..." : "Login"}
-</button>
+              type="submit"
+              disabled={formLoading}
+              style={{
+                ...submitButtonStyle,
+                opacity: formLoading ? 0.55 : 1,
+              }}
+            >
+              {formLoading ? "Loading..." : "Login"}
+            </button>
           </form>
 
           <div
@@ -277,6 +248,16 @@ export default function WholesaleJpLoginPage() {
     </div>
   );
 }
+
+const labelStyle = {
+  display: "block",
+  marginBottom: "0.55rem",
+  color: "rgba(255,255,255,0.70)",
+  fontSize: "0.84rem",
+  letterSpacing: "0.08em",
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  fontWeight: 500,
+};
 
 const inputStyle = {
   width: "100%",

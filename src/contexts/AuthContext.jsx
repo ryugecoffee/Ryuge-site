@@ -18,10 +18,12 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      // 認証状態が変わるたびに loading=true にリセット
+      // （Firestore フェッチが完了するまで loading=false にしない）
       setLoading(true);
-      setUser(firebaseUser);
 
       if (firebaseUser) {
+        setUser(firebaseUser);
         try {
           const docRef = doc(db, "wholesaleUsers", firebaseUser.uid);
           const docSnap = await getDoc(docRef);
@@ -40,32 +42,26 @@ export function AuthProvider({ children }) {
           setIsAdmin(false);
         }
       } else {
+        setUser(null);
         setApproved(false);
         setIsAdmin(false);
       }
 
+      // Firestore フェッチ完了（または未ログイン確定）後に loading=false
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  const login = (email, password) => {
-    return signInWithEmailAndPassword(auth, email, password);
-  };
+  const login = (email, password) =>
+    signInWithEmailAndPassword(auth, email, password);
 
   const logout = () => signOut(auth);
 
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        approved,
-        isAdmin,
-        loading,
-        login,
-        logout,
-      }}
+      value={{ user, approved, isAdmin, loading, login, logout }}
     >
       {children}
     </AuthContext.Provider>
