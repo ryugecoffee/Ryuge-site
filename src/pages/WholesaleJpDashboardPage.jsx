@@ -58,6 +58,20 @@ const SOLDOUT_MAP = (() => {
 // minQty: 最低発注数、maxQty: 上限（null = 無制限）、step: 1個単位
 const WHOLESALE_CATALOG = [
   {
+    id: "zen-dark-simple",
+    productDataId: null, // 卸専用。productData.js に存在しないため isSoldOut 連動なし
+    name: "禅の深煎り 簡易包装",
+    size: "100g",
+    retailPrice: null,
+    unitPrice: 600,
+    description:
+      "卸専用商品。最低限のシンプル包装で、コストを抑えた業務用ロット向け深煎りコーヒー。店頭販売・コース提供に。",
+    minQty: 5,
+    maxQty: null,
+    orderNote: null,
+    wholesaleOnly: true,
+  },
+  {
     id: "enma-ethiopia-dark",
     productDataId: "enma-ethiopia-dark",
     name: "閻魔 深煎り",
@@ -109,8 +123,8 @@ const WHOLESALE_CATALOG = [
     description:
       "スペシャルティコーヒーを手軽に。お湯を注いで2分待つだけ。シングルサーブのドリップバッグで本格的なコーヒーをご提供。",
     minQty: 6,
-    maxQty: 24,
-    orderNote: "25個以上はお問い合わせください",
+    maxQty: 40,
+    orderNote: "41個以上はお問い合わせください",
     wholesaleOnly: false,
   },
   {
@@ -119,27 +133,13 @@ const WHOLESALE_CATALOG = [
     name: "木函 ほうじ茶バッグ",
     size: "8個入り",
     retailPrice: 2800,
-    unitPrice: 1680,
+    unitPrice: 1960,
     description:
       "上質なほうじ茶をバッグに。珈琲バッグと並べてご提供いただける茶のシリーズ。コーヒーとお茶のペアリング提案にも。",
     minQty: 6,
-    maxQty: 24,
-    orderNote: "25個以上はお問い合わせください",
+    maxQty: 40,
+    orderNote: "41個以上はお問い合わせください",
     wholesaleOnly: false,
-  },
-  {
-    id: "zen-dark-simple",
-    productDataId: null, // 卸専用。productData.js に存在しないため isSoldOut 連動なし
-    name: "禅の深煎り 簡易包装",
-    size: "100g",
-    retailPrice: null,
-    unitPrice: 600,
-    description:
-      "卸専用商品。最低限のシンプル包装で、コストを抑えた業務用ロット向け深煎りコーヒー。店頭販売・コース提供に。",
-    minQty: 5,
-    maxQty: null,
-    orderNote: null,
-    wholesaleOnly: true,
   },
 ];
 
@@ -268,6 +268,12 @@ function DashboardContent() {
 /* ====================================================
    商品タブ（カート一括発注）
 ==================================================== */
+const PAYMENT_NOTE = {
+  ja: "お支払いは請求書払いです。商品に請求書を同封してお届けします。送料は請求書に記載いたします。",
+  en: "Payment is by invoice. An invoice will be enclosed with your order. Shipping costs will be included on the invoice.",
+  es: "El pago es mediante factura. La factura se adjuntará con su pedido. Los gastos de envío se incluirán en la factura.",
+};
+
 function ProductsTab({ user }) {
   const products = getAvailableProducts();
 
@@ -278,6 +284,23 @@ function ProductsTab({ user }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitDone, setSubmitDone] = useState(false);
   const [submitError, setSubmitError] = useState("");
+
+  // 在庫数: { productId: number | null }
+  const [inventory, setInventory] = useState({});
+
+  useEffect(() => {
+    const fetchInventory = async () => {
+      try {
+        const snap = await getDocs(collection(db, "wholesaleInventory"));
+        const inv = {};
+        snap.forEach((d) => { inv[d.id] = d.data().stock ?? null; });
+        setInventory(inv);
+      } catch (e) {
+        // 取得失敗時は非表示にするだけ
+      }
+    };
+    fetchInventory();
+  }, []);
 
   // 数量変更（バリデーション付き）
   const setQty = (id, raw) => {
@@ -437,7 +460,7 @@ function ProductsTab({ user }) {
                     </span>
                   )}
                 </div>
-                <p style={{ margin: "0 0 0.5rem", fontSize: "0.86rem", color: C.soft, lineHeight: 1.7 }}>
+                <p style={{ margin: "0 0 0.5rem", fontSize: "0.86rem", color: "rgba(255,255,255,0.85)", lineHeight: 1.7 }}>
                   {product.description}
                 </p>
                 <div style={{ display: "flex", gap: "1.2rem", flexWrap: "wrap" }}>
@@ -466,6 +489,11 @@ function ProductsTab({ user }) {
                 {product.retailPrice && (
                   <p style={{ margin: "0.2rem 0 0", fontSize: "0.72rem", color: C.muted }}>
                     ({Math.round((1 - product.unitPrice / product.retailPrice) * 100)}%OFF)
+                  </p>
+                )}
+                {inventory[product.id] != null && (
+                  <p style={{ margin: "0.3rem 0 0", fontSize: "0.72rem", color: C.muted }}>
+                    在庫 {inventory[product.id]}
                   </p>
                 )}
               </div>
@@ -515,6 +543,25 @@ function ProductsTab({ user }) {
             </div>
           );
         })}
+      </div>
+
+      {/* 支払い方法の説明 */}
+      <div
+        style={{
+          border: `1px solid ${C.border}`,
+          backgroundColor: C.surface,
+          padding: "1.4rem 1.6rem",
+          marginBottom: "2rem",
+        }}
+      >
+        <p style={{ margin: "0 0 0.8rem", fontSize: "0.68rem", letterSpacing: "0.16em", textTransform: "uppercase", color: C.muted }}>
+          Payment / Pago
+        </p>
+        {Object.entries(PAYMENT_NOTE).map(([lang, text]) => (
+          <p key={lang} style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.8 }}>
+            {text}
+          </p>
+        ))}
       </div>
 
       {/* カート集計・発注 */}
@@ -574,7 +621,7 @@ function ProductsTab({ user }) {
           </div>
           {!freeShipping && cartTotal > 0 && (
             <p style={{ margin: "0.5rem 0 0", fontSize: "0.75rem", color: C.muted, textAlign: "right" }}>
-              ¥{(FREE_SHIPPING_THRESHOLD - cartTotal).toLocaleString()}以上で送料無料
+              あと¥{(FREE_SHIPPING_THRESHOLD - cartTotal).toLocaleString()}で送料無料
             </p>
           )}
         </div>
