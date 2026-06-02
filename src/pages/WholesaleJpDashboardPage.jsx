@@ -732,13 +732,20 @@ function OrdersTab({ user }) {
     if (!user) return;
     const fetchOrders = async () => {
       try {
+        // orderBy を使わずクライアントソートすることでインデックス不要にする
         const q = query(
           collection(db, "wholesaleOrders"),
-          where("uid", "==", user.uid),
-          orderBy("createdAt", "desc")
+          where("uid", "==", user.uid)
         );
         const snap = await getDocs(q);
-        setOrders(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        const docs = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => {
+            const ta = a.createdAt?.toDate?.() ?? new Date(0);
+            const tb = b.createdAt?.toDate?.() ?? new Date(0);
+            return tb - ta; // 新しい順
+          });
+        setOrders(docs);
       } catch (e) {
         console.error("Orders fetch error:", e);
         setError("注文履歴の取得に失敗しました。");
@@ -838,7 +845,7 @@ const ACCOUNT_FIELDS = [
   { key: "postalCode",   label: "郵便番号",           editable: true },
   { key: "prefecture",   label: "都道府県",           editable: true },
   { key: "city",         label: "市区町村・番地",     editable: true },
-  { key: "address",      label: "建物名・部屋番号",   editable: true },
+  { key: "building",     label: "建物名・部屋番号",   editable: true },
 ];
 
 function AccountTab({ user }) {
@@ -849,23 +856,55 @@ function AccountTab({ user }) {
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
 
+  // Firestoreドキュメントの参照を保持（自動ID対応）
+  const [docRef, setDocRef] = useState(null);
+
   useEffect(() => {
     if (!user) return;
-    getDoc(doc(db, "wholesaleUsers", user.uid))
-      .then((snap) => {
-        if (snap.exists()) {
-          setData(snap.data());
-          setForm(snap.data());
+    const fetchAccount = async () => {
+      // まず uid をドキュメントIDとして直接取得を試みる
+      try {
+        const direct = await getDoc(doc(db, "wholesaleUsers", user.uid));
+        if (direct.exists()) {
+          setDocRef(doc(db, "wholesaleUsers", user.uid));
+          setData(direct.data());
+          setForm(direct.data());
+          return;
         }
-      })
-      .catch(console.error);
+      } catch (_) {}
+
+      // 見つからなければ uid フィールドでクエリ（サーバーが addDoc で作成した場合）
+      try {
+        const q = query(
+          collection(db, "wholesaleUsers"),
+          where("uid", "==", user.uid)
+        );
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          const d = snap.docs[0];
+          setDocRef(d.ref);
+          setData(d.data());
+          setForm(d.data());
+        } else {
+          // ドキュメントが存在しない場合は空オブジェクトで初期化
+          setData({});
+          setForm({});
+        }
+      } catch (e) {
+        console.error("Account fetch error:", e);
+        setData({});
+        setForm({});
+      }
+    };
+    fetchAccount();
   }, [user]);
 
   const handleSave = async () => {
     setSaving(true);
     setSaveError("");
+    const ref = docRef || doc(db, "wholesaleUsers", user.uid);
     try {
-      await updateDoc(doc(db, "wholesaleUsers", user.uid), form);
+      await updateDoc(ref, form);
       setData({ ...form });
       setEditing(false);
       setSaved(true);
