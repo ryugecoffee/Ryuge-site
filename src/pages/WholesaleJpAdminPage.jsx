@@ -6,8 +6,6 @@ import {
   getDocs,
   doc,
   updateDoc,
-  orderBy,
-  query,
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../contexts/AuthContext";
@@ -196,14 +194,15 @@ function UsersPanel() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const q = query(
-        collection(db, "wholesaleUsers"),
-        orderBy("createdAt", "desc")
-      );
-      const snap = await getDocs(q);
+      const snap = await getDocs(collection(db, "wholesaleUsers"));
       const data = snap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
-        .filter((u) => u.role !== "admin");
+        .filter((u) => u.role !== "admin")
+        .sort((a, b) => {
+          const ta = a.createdAt?.toMillis?.() ?? 0;
+          const tb = b.createdAt?.toMillis?.() ?? 0;
+          return tb - ta;
+        });
       setUsers(data);
     } catch (e) {
       console.error("Fetch error:", e);

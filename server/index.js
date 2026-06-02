@@ -344,116 +344,29 @@ async function sendWholesaleAdminEmail(data) {
     businessType,
     email,
     message,
-    submittedAt,
   } = data;
 
-  const adminAddresses = "ryugecoffee@gmail.com";
-  const subject = "【卸申請】新しい申請が届きました";
+  const adminAddresses = "ryugecoffee@gmail.com, ryuka2452533@icloud.com";
+  const subject = "【龍華珈琲】新規卸申請が届きました";
 
   const safeCompanyName = companyName || "未入力";
   const safeContactName = contactName || "未入力";
   const safeBusinessType = businessType || "未入力";
   const safeEmail = email || "未入力";
   const safeMessage = message || "なし";
-  const safeSubmittedAt = submittedAt || "不明";
 
-  const text = `Ryuge Coffee 卸登録フォームから新しい申請が届きました。
-
-【会社名・店舗名】
-${safeCompanyName}
-
-【担当者名】
-${safeContactName}
-
-【業種】
-${safeBusinessType}
-
-【メールアドレス】
-${safeEmail}
-
-【ご要望・ご質問】
-${safeMessage}
-
-【申請日時】
-${safeSubmittedAt}
-`;
-
-  const html = `
-<!DOCTYPE html>
-<html lang="ja">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#0d0d0d;font-family:'Helvetica Neue',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0d0d;padding:48px 0;">
-    <tr>
-      <td align="center">
-        <table width="560" cellpadding="0" cellspacing="0" style="background:#111;border-radius:16px;overflow:hidden;max-width:560px;width:100%;">
-          <tr>
-            <td style="padding:40px 48px 32px;border-bottom:1px solid #1e1e1e;">
-              <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#444;">Ryuge Coffee</p>
-              <h1 style="margin:0;font-size:22px;font-weight:400;color:#e8e8e8;line-height:1.3;">新しい卸申請が届きました</h1>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:28px 48px 8px;">
-              <p style="margin:0;font-size:14px;line-height:1.8;color:#888;">
-                卸登録フォームから新しい申請が送信されました。内容は以下です。
-              </p>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:12px 48px 40px;">
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:12px;color:#666;width:180px;">会社名・店舗名</td>
-                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ddd;">${escapeHtml(safeCompanyName)}</td>
-                </tr>
-                <tr>
-                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:12px;color:#666;">担当者名</td>
-                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ddd;">${escapeHtml(safeContactName)}</td>
-                </tr>
-                <tr>
-                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:12px;color:#666;">業種</td>
-                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ddd;">${escapeHtml(safeBusinessType)}</td>
-                </tr>
-                <tr>
-                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:12px;color:#666;">メールアドレス</td>
-                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ddd;">${escapeHtml(safeEmail)}</td>
-                </tr>
-                <tr>
-                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:12px;color:#666;vertical-align:top;">ご要望・ご質問</td>
-                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ddd;line-height:1.8;">${escapeHtml(safeMessage).replace(/\n/g, "<br>")}</td>
-                </tr>
-                <tr>
-                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:12px;color:#666;">申請日時</td>
-                  <td style="padding:14px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ddd;">${escapeHtml(safeSubmittedAt)}</td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:24px 48px 40px;border-top:1px solid #1e1e1e;">
-              <p style="margin:0;font-size:12px;color:#444;line-height:1.7;">
-                Ryuge Coffee<br>
-                <a href="https://ryuge.biz" style="color:#555;text-decoration:none;">ryuge.biz</a>
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+  const text = `会社名: ${safeCompanyName}
+担当者名: ${safeContactName}
+メール: ${safeEmail}
+業種: ${safeBusinessType}
+メッセージ: ${safeMessage}
+承認はこちら: https://ryuge.biz/wholesale-jp/admin`;
 
   await transporter.sendMail({
     from: `"Ryuge Coffee" <${process.env.EMAIL_USER}>`,
     to: adminAddresses,
     subject,
     text,
-    html,
     replyTo: safeEmail !== "未入力" ? safeEmail : undefined,
   });
 }
