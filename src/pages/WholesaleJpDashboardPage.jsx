@@ -16,8 +16,10 @@ import {
 import { db } from "../lib/firebase";
 import { useAuth } from "../contexts/AuthContext";
 import RequireApproved from "../components/wholesale/RequireApproved";
+import { PRODUCT_DATA } from "../productData";
 
 const API_BASE = "https://ryuge-site.onrender.com";
+const FREE_SHIPPING_THRESHOLD = 16000;
 
 const C = {
   bg: "#050505",
@@ -36,18 +38,118 @@ const C = {
 const FONT =
   'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif';
 
-// 卸商品マスタ（isSoldOut: true の商品は非表示）
-const WHOLESALE_PRODUCTS = [
+// productData.js の全商品を id → isSoldOut のマップに変換
+const SOLDOUT_MAP = (() => {
+  const map = {};
+  const allProducts = [
+    ...(PRODUCT_DATA.enma || []),
+    ...(PRODUCT_DATA.woodbox || []),
+    ...(PRODUCT_DATA.bag || []),
+    ...(PRODUCT_DATA.oriori || []),
+  ];
+  allProducts.forEach((p) => {
+    map[p.id] = p.isSoldOut === true;
+  });
+  return map;
+})();
+
+// 卸商品マスタ
+// productDataId: productData.js の id と紐づけ（null = 卸専用）
+// minQty: 最低発注数、maxQty: 上限（null = 無制限）、step: 1個単位
+const WHOLESALE_CATALOG = [
   {
-    id: "enma",
-    name: "閻魔 珈琲バッグ",
+    id: "enma-ethiopia-dark",
+    productDataId: "enma-ethiopia-dark",
+    name: "閻魔 深煎り",
+    size: "180g",
+    retailPrice: 1700,
+    unitPrice: 1190,
     description:
-      "Ryuge Coffeeの看板商品。深く力強い閻魔ブレンドをドリップバッグに仕上げました。シングルサーブで手軽に本格的なコーヒー体験を提供できます。",
+      "静かに残る苦味と余韻。深煎りの中に感じる丸みと、奥行きのある甘さ。スペシャルティの深煎りを卸価格でお届けします。",
+    minQty: 1,
+    maxQty: null,
+    orderNote: null,
+    wholesaleOnly: false,
+  },
+  {
+    id: "enma-burundi-light",
+    productDataId: "enma-burundi-light",
+    name: "閻魔 ブルンジ浅煎り",
+    size: "180g",
+    retailPrice: 1900,
+    unitPrice: 1330,
+    description:
+      "明るさと透明感、やわらかな甘さ。ブルンジ産ウォッシュドのクリーンな酸味と、オレンジ・アプリコットのような果実感。",
+    minQty: 1,
+    maxQty: null,
+    orderNote: null,
+    wholesaleOnly: false,
+  },
+  {
+    id: "woodbox-geisha",
+    productDataId: "woodbox-geisha",
+    name: "木函 ホンジュラスゲイシャ",
+    size: "100g",
+    retailPrice: 2600,
+    unitPrice: 1950,
+    description:
+      "木箱で届く贈り物のような静かなプレミアム。フローラルで透明感のあるゲイシャ種。ギフト需要にも最適な一品。",
+    minQty: 1,
+    maxQty: null,
+    orderNote: null,
+    wholesaleOnly: false,
+  },
+  {
+    id: "enma-coffee-bag",
+    productDataId: "enma-coffee-bag",
+    name: "閻魔 珈琲バッグ",
+    size: "8個入り",
+    retailPrice: 2400,
     unitPrice: 1680,
+    description:
+      "スペシャルティコーヒーを手軽に。お湯を注いで2分待つだけ。シングルサーブのドリップバッグで本格的なコーヒーをご提供。",
     minQty: 6,
-    isSoldOut: false,
+    maxQty: 24,
+    orderNote: "25個以上はお問い合わせください",
+    wholesaleOnly: false,
+  },
+  {
+    id: "woodbox-tea-bag",
+    productDataId: "woodbox-tea-bag",
+    name: "木函 ほうじ茶バッグ",
+    size: "8個入り",
+    retailPrice: 2800,
+    unitPrice: 1680,
+    description:
+      "上質なほうじ茶をバッグに。珈琲バッグと並べてご提供いただける茶のシリーズ。コーヒーとお茶のペアリング提案にも。",
+    minQty: 6,
+    maxQty: 24,
+    orderNote: "25個以上はお問い合わせください",
+    wholesaleOnly: false,
+  },
+  {
+    id: "zen-dark-simple",
+    productDataId: null, // 卸専用。productData.js に存在しないため isSoldOut 連動なし
+    name: "禅の深煎り 簡易包装",
+    size: "100g",
+    retailPrice: null,
+    unitPrice: 600,
+    description:
+      "卸専用商品。最低限のシンプル包装で、コストを抑えた業務用ロット向け深煎りコーヒー。店頭販売・コース提供に。",
+    minQty: 5,
+    maxQty: null,
+    orderNote: null,
+    wholesaleOnly: true,
   },
 ];
+
+// isSoldOut 連動フィルター適用済みリスト（卸専用は常に表示）
+function getAvailableProducts() {
+  return WHOLESALE_CATALOG.filter((p) => {
+    if (p.wholesaleOnly || p.productDataId === null) return true;
+    return !SOLDOUT_MAP[p.productDataId];
+  });
+}
 
 export default function WholesaleJpDashboardPage() {
   return (
@@ -63,19 +165,12 @@ function DashboardContent() {
 
   const NAV_TABS = [
     { key: "products", label: "商品" },
-    { key: "orders", label: "注文履歴" },
-    { key: "account", label: "アカウント" },
+    { key: "orders",   label: "注文履歴" },
+    { key: "account",  label: "アカウント" },
   ];
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: C.bg,
-        color: C.text,
-        fontFamily: FONT,
-      }}
-    >
+    <div style={{ minHeight: "100vh", backgroundColor: C.bg, color: C.text, fontFamily: FONT }}>
       {/* ヘッダー */}
       <header
         style={{
@@ -98,7 +193,6 @@ function DashboardContent() {
             height: "64px",
           }}
         >
-          {/* ロゴ */}
           <Link
             to="/"
             style={{
@@ -114,7 +208,6 @@ function DashboardContent() {
             Ryuge Coffee
           </Link>
 
-          {/* タブナビ */}
           <nav style={{ display: "flex" }}>
             {NAV_TABS.map(({ key, label }) => (
               <button
@@ -143,7 +236,6 @@ function DashboardContent() {
             ))}
           </nav>
 
-          {/* ログアウト */}
           <button
             onClick={logout}
             style={{
@@ -164,80 +256,102 @@ function DashboardContent() {
       </header>
 
       {/* コンテンツ */}
-      <main
-        style={{
-          maxWidth: "1200px",
-          margin: "0 auto",
-          padding: "3rem 2rem 8rem",
-        }}
-      >
+      <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "3rem 2rem 8rem" }}>
         {tab === "products" && <ProductsTab user={user} />}
-        {tab === "orders" && <OrdersTab user={user} />}
-        {tab === "account" && <AccountTab user={user} />}
+        {tab === "orders"   && <OrdersTab user={user} />}
+        {tab === "account"  && <AccountTab user={user} />}
       </main>
     </div>
   );
 }
 
 /* ====================================================
-   商品タブ
+   商品タブ（カート一括発注）
 ==================================================== */
 function ProductsTab({ user }) {
-  const [quantities, setQuantities] = useState({});
-  const [orderingId, setOrderingId] = useState(null);
-  const [doneId, setDoneId] = useState(null);
-  const [error, setError] = useState("");
+  const products = getAvailableProducts();
 
-  const products = WHOLESALE_PRODUCTS.filter((p) => !p.isSoldOut);
+  // 数量: { productId: number }（0 = 未選択）
+  const [quantities, setQuantities] = useState(
+    () => Object.fromEntries(products.map((p) => [p.id, 0]))
+  );
+  const [submitting, setSubmitting] = useState(false);
+  const [submitDone, setSubmitDone] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
-  const handleOrder = async (product) => {
-    const qty = quantities[product.id] || product.minQty;
-    setOrderingId(product.id);
-    setError("");
-    setDoneId(null);
+  // 数量変更（バリデーション付き）
+  const setQty = (id, raw) => {
+    const product = products.find((p) => p.id === id);
+    let v = parseInt(raw, 10);
+    if (isNaN(v) || v < 0) v = 0;
+    if (product.maxQty !== null && v > product.maxQty) v = product.maxQty;
+    setQuantities((prev) => ({ ...prev, [id]: v }));
+  };
+
+  // カート内商品（qty > 0）
+  const cartItems = products
+    .filter((p) => quantities[p.id] > 0)
+    .map((p) => ({
+      ...p,
+      qty: quantities[p.id],
+      subtotal: quantities[p.id] * p.unitPrice,
+    }));
+
+  // バリデーション（最低個数チェック）
+  const validationErrors = cartItems
+    .filter((item) => item.qty < item.minQty)
+    .map((item) => `「${item.name}」は最低${item.minQty}個からの発注です。`);
+
+  const cartTotal = cartItems.reduce((s, i) => s + i.subtotal, 0);
+  const freeShipping = cartTotal >= FREE_SHIPPING_THRESHOLD;
+  const canSubmit = cartItems.length > 0 && validationErrors.length === 0;
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+    setSubmitting(true);
+    setSubmitError("");
 
     try {
-      // ユーザー情報取得
       const userSnap = await getDoc(doc(db, "wholesaleUsers", user.uid));
       const userData = userSnap.exists() ? userSnap.data() : {};
+
+      const orderItems = cartItems.map((item) => ({
+        id: item.id,
+        name: item.name,
+        size: item.size,
+        quantity: item.qty,
+        unitPrice: item.unitPrice,
+        subtotal: item.subtotal,
+      }));
 
       const orderData = {
         uid: user.uid,
         companyName: userData.companyName || "",
         email: user.email || "",
-        items: [
-          {
-            id: product.id,
-            name: product.name,
-            quantity: qty,
-            unitPrice: product.unitPrice,
-            subtotal: qty * product.unitPrice,
-          },
-        ],
-        total: qty * product.unitPrice,
+        items: orderItems,
+        total: cartTotal,
+        shipping: freeShipping ? "free" : "actual_cost",
         status: "pending",
         createdAt: serverTimestamp(),
       };
 
-      // Firestore に保存
       await addDoc(collection(db, "wholesaleOrders"), orderData);
 
-      // サーバーにメール通知（失敗しても続行）
+      // メール通知（失敗しても続行）
       fetch(`${API_BASE}/wholesale-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...orderData,
-          createdAt: new Date().toISOString(),
-        }),
+        body: JSON.stringify({ ...orderData, createdAt: new Date().toISOString() }),
       }).catch(() => {});
 
-      setDoneId(product.id);
+      setSubmitDone(true);
+      // 数量リセット
+      setQuantities(Object.fromEntries(products.map((p) => [p.id, 0])));
     } catch (e) {
       console.error("Order error:", e);
-      setError("発注に失敗しました。時間をおいて再度お試しください。");
+      setSubmitError("発注に失敗しました。時間をおいて再度お試しください。");
     } finally {
-      setOrderingId(null);
+      setSubmitting(false);
     }
   };
 
@@ -245,224 +359,270 @@ function ProductsTab({ user }) {
     <div>
       <SectionHeader label="Wholesale Products" title="商品一覧" />
 
-      {error && <ErrorBanner message={error} />}
-
-      <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-        {products.length === 0 ? (
-          <p style={{ color: C.muted, fontSize: "0.95rem" }}>
-            現在取り扱い中の卸商品はありません。
-          </p>
-        ) : (
-          products.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              qty={quantities[product.id] || product.minQty}
-              onQtyChange={(v) =>
-                setQuantities((prev) => ({ ...prev, [product.id]: v }))
-              }
-              onOrder={() => handleOrder(product)}
-              isOrdering={orderingId === product.id}
-              isDone={doneId === product.id}
-            />
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ProductCard({ product, qty, onQtyChange, onOrder, isOrdering, isDone }) {
-  const subtotal = qty * product.unitPrice;
-
-  return (
-    <div
-      style={{
-        border: `1px solid ${C.border}`,
-        backgroundColor: C.surface,
-        padding: "2.5rem",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          flexWrap: "wrap",
-          gap: "2rem",
-        }}
-      >
-        {/* 商品情報 */}
-        <div style={{ flex: "1 1 320px" }}>
-          <p
-            style={{
-              margin: "0 0 0.5rem",
-              fontSize: "0.7rem",
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
-              color: C.muted,
-            }}
-          >
-            Wholesale
-          </p>
-          <h2
-            style={{
-              margin: "0 0 1rem",
-              fontSize: "1.4rem",
-              fontWeight: 500,
-              letterSpacing: "0.04em",
-            }}
-          >
-            {product.name}
-          </h2>
-          <p
-            style={{
-              margin: "0 0 1.5rem",
-              fontSize: "0.95rem",
-              color: C.soft,
-              lineHeight: 1.9,
-            }}
-          >
-            {product.description}
-          </p>
-          <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: C.muted }}>
-            卸価格{" "}
-            <span style={{ fontSize: "1.2rem", color: C.text, fontWeight: 600 }}>
-              ¥{product.unitPrice.toLocaleString()}
-            </span>{" "}
-            / 個（税別）
-          </p>
-          <p style={{ margin: 0, fontSize: "0.82rem", color: C.muted }}>
-            最低発注：{product.minQty}個単位（6の倍数）
-          </p>
-        </div>
-
-        {/* 注文フォーム */}
+      {/* 発注完了バナー */}
+      {submitDone && (
         <div
           style={{
-            flex: "0 0 260px",
+            marginBottom: "2rem",
+            padding: "1rem 1.4rem",
+            border: `1px solid ${C.green}`,
+            color: C.green,
+            fontSize: "0.95rem",
+            lineHeight: 1.7,
             display: "flex",
-            flexDirection: "column",
-            gap: "1.2rem",
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
-          {/* 数量選択 */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.78rem",
-                color: C.muted,
-                marginBottom: "0.5rem",
-                letterSpacing: "0.1em",
-              }}
-            >
-              数量
-            </label>
-            <div style={{ position: "relative" }}>
-              <select
-                value={qty}
-                onChange={(e) => onQtyChange(Number(e.target.value))}
-                style={{
-                  width: "100%",
-                  height: "52px",
-                  backgroundColor: C.bg,
-                  border: `1px solid ${C.borderMid}`,
-                  color: C.text,
-                  fontSize: "1.05rem",
-                  padding: "0 2.5rem 0 1rem",
-                  fontFamily: FONT,
-                  appearance: "none",
-                  WebkitAppearance: "none",
-                  cursor: "pointer",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              >
-                {[6, 12, 18, 24].map((n) => (
-                  <option key={n} value={n}>
-                    {n} 個
-                  </option>
-                ))}
-              </select>
-              <span
-                style={{
-                  position: "absolute",
-                  right: "1rem",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: C.muted,
-                  pointerEvents: "none",
-                  fontSize: "0.7rem",
-                }}
-              >
-                ▼
-              </span>
-            </div>
-          </div>
-
-          {/* 小計 */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "0.8rem 0",
-              borderTop: `1px solid ${C.border}`,
-              borderBottom: `1px solid ${C.border}`,
-            }}
+          <span>✓ 発注を受け付けました。確認メールをお送りします。</span>
+          <button
+            onClick={() => setSubmitDone(false)}
+            style={{ background: "none", border: "none", color: C.green, cursor: "pointer", fontSize: "1.1rem" }}
           >
-            <span style={{ fontSize: "0.82rem", color: C.muted }}>小計（税別）</span>
-            <span style={{ fontSize: "1.3rem", fontWeight: 600 }}>
-              ¥{subtotal.toLocaleString()}
-            </span>
-          </div>
+            ×
+          </button>
+        </div>
+      )}
 
-          {/* 発注ボタン / 完了表示 */}
-          {isDone ? (
+      {submitError && <ErrorBanner message={submitError} onClose={() => setSubmitError("")} />}
+
+      {/* 商品カード一覧 */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "1px", backgroundColor: C.border, marginBottom: "2.5rem" }}>
+        {/* ヘッダー行 */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 110px 110px 120px",
+            gap: "1.5rem",
+            backgroundColor: C.surface,
+            padding: "0.7rem 1.5rem",
+          }}
+        >
+          {["商品", "卸価格", "数量", "小計"].map((h) => (
+            <p key={h} style={{ margin: 0, fontSize: "0.7rem", letterSpacing: "0.14em", textTransform: "uppercase", color: C.muted }}>
+              {h}
+            </p>
+          ))}
+        </div>
+
+        {products.map((product) => {
+          const qty = quantities[product.id];
+          const subtotal = qty * product.unitPrice;
+          const belowMin = qty > 0 && qty < product.minQty;
+
+          return (
             <div
+              key={product.id}
               style={{
-                height: "52px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                border: `1px solid ${C.green}`,
-                color: C.green,
-                fontSize: "0.92rem",
-                letterSpacing: "0.06em",
+                display: "grid",
+                gridTemplateColumns: "1fr 110px 120px 120px",
+                gap: "1.5rem",
+                backgroundColor: C.surface,
+                padding: "1.4rem 1.5rem",
+                alignItems: "start",
               }}
             >
-              ✓ 発注を受け付けました
+              {/* 商品情報 */}
+              <div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "0.6rem", marginBottom: "0.3rem", flexWrap: "wrap" }}>
+                  <p style={{ margin: 0, fontSize: "1rem", fontWeight: 500, color: C.text }}>
+                    {product.name}
+                  </p>
+                  <p style={{ margin: 0, fontSize: "0.78rem", color: C.muted }}>
+                    {product.size}
+                  </p>
+                  {product.wholesaleOnly && (
+                    <span style={{ fontSize: "0.68rem", color: C.amber, border: `1px solid ${C.amber}`, padding: "0.1rem 0.4rem", letterSpacing: "0.06em" }}>
+                      卸専用
+                    </span>
+                  )}
+                </div>
+                <p style={{ margin: "0 0 0.5rem", fontSize: "0.86rem", color: C.soft, lineHeight: 1.7 }}>
+                  {product.description}
+                </p>
+                <div style={{ display: "flex", gap: "1.2rem", flexWrap: "wrap" }}>
+                  {product.retailPrice && (
+                    <p style={{ margin: 0, fontSize: "0.75rem", color: C.muted }}>
+                      定価 ¥{product.retailPrice.toLocaleString()}
+                    </p>
+                  )}
+                  <p style={{ margin: 0, fontSize: "0.75rem", color: C.muted }}>
+                    最低{product.minQty}個〜、1個単位
+                    {product.maxQty && `、上限${product.maxQty}個`}
+                  </p>
+                  {product.orderNote && (
+                    <p style={{ margin: 0, fontSize: "0.75rem", color: C.amber }}>
+                      ※ {product.orderNote}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* 卸価格 */}
+              <div style={{ paddingTop: "0.2rem" }}>
+                <p style={{ margin: 0, fontSize: "1.05rem", fontWeight: 600, color: C.text }}>
+                  ¥{product.unitPrice.toLocaleString()}
+                </p>
+                {product.retailPrice && (
+                  <p style={{ margin: "0.2rem 0 0", fontSize: "0.72rem", color: C.muted }}>
+                    ({Math.round((1 - product.unitPrice / product.retailPrice) * 100)}%OFF)
+                  </p>
+                )}
+              </div>
+
+              {/* 数量入力 */}
+              <div style={{ paddingTop: "0.1rem" }}>
+                <input
+                  type="number"
+                  min={0}
+                  max={product.maxQty || undefined}
+                  step={1}
+                  value={qty === 0 ? "" : qty}
+                  placeholder={`0`}
+                  onChange={(e) => setQty(product.id, e.target.value)}
+                  style={{
+                    width: "100px",
+                    height: "44px",
+                    backgroundColor: C.bg,
+                    border: `1px solid ${belowMin ? C.red : C.borderMid}`,
+                    color: C.text,
+                    fontSize: "1rem",
+                    padding: "0 0.8rem",
+                    fontFamily: FONT,
+                    outline: "none",
+                    boxSizing: "border-box",
+                    textAlign: "center",
+                  }}
+                />
+                {belowMin && (
+                  <p style={{ margin: "0.3rem 0 0", fontSize: "0.72rem", color: C.red }}>
+                    最低{product.minQty}個
+                  </p>
+                )}
+              </div>
+
+              {/* 小計 */}
+              <div style={{ paddingTop: "0.2rem" }}>
+                <p style={{
+                  margin: 0,
+                  fontSize: qty > 0 ? "1.05rem" : "0.9rem",
+                  fontWeight: qty > 0 ? 600 : 400,
+                  color: qty > 0 ? C.text : C.muted,
+                }}>
+                  {qty > 0 ? `¥${subtotal.toLocaleString()}` : "—"}
+                </p>
+              </div>
             </div>
-          ) : (
-            <button
-              onClick={onOrder}
-              disabled={isOrdering}
-              style={{
-                height: "52px",
-                backgroundColor: "transparent",
-                border: `1px solid rgba(255,255,255,0.28)`,
-                color: C.text,
-                fontSize: "0.92rem",
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                cursor: isOrdering ? "not-allowed" : "pointer",
-                opacity: isOrdering ? 0.5 : 1,
-                fontFamily: FONT,
-                transition: "border-color 0.15s",
-              }}
-              onMouseEnter={(e) => {
-                if (!isOrdering)
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.6)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.28)";
-              }}
-            >
-              {isOrdering ? "処理中..." : "発注する"}
-            </button>
+          );
+        })}
+      </div>
+
+      {/* カート集計・発注 */}
+      <div
+        style={{
+          border: `1px solid ${C.border}`,
+          backgroundColor: C.surface,
+          padding: "2rem 2rem",
+          maxWidth: "540px",
+          marginLeft: "auto",
+        }}
+      >
+        <p style={{ margin: "0 0 1.2rem", fontSize: "0.72rem", letterSpacing: "0.16em", textTransform: "uppercase", color: C.muted }}>
+          発注内容
+        </p>
+
+        {cartItems.length === 0 ? (
+          <p style={{ margin: "0 0 1.5rem", fontSize: "0.9rem", color: C.muted }}>
+            数量を入力してください。
+          </p>
+        ) : (
+          <div style={{ marginBottom: "1.5rem" }}>
+            {cartItems.map((item) => (
+              <div key={item.id} style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.6rem" }}>
+                <p style={{ margin: 0, fontSize: "0.9rem", color: C.soft }}>
+                  {item.name}（{item.size}）× {item.qty}個
+                </p>
+                <p style={{ margin: 0, fontSize: "0.9rem", color: C.text, flexShrink: 0, marginLeft: "1rem" }}>
+                  ¥{item.subtotal.toLocaleString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 合計・送料 */}
+        <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: "1rem", marginBottom: "1.5rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+            <p style={{ margin: 0, fontSize: "0.88rem", color: C.soft }}>小計（税別）</p>
+            <p style={{ margin: 0, fontSize: "1.1rem", fontWeight: 600, color: C.text }}>
+              ¥{cartTotal.toLocaleString()}
+            </p>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <p style={{ margin: 0, fontSize: "0.85rem", color: C.soft }}>送料</p>
+            <p style={{
+              margin: 0,
+              fontSize: "0.9rem",
+              color: freeShipping ? C.green : C.amber,
+            }}>
+              {cartTotal === 0
+                ? "—"
+                : freeShipping
+                ? "無料"
+                : "実費（発注後に別途ご連絡）"}
+            </p>
+          </div>
+          {!freeShipping && cartTotal > 0 && (
+            <p style={{ margin: "0.5rem 0 0", fontSize: "0.75rem", color: C.muted, textAlign: "right" }}>
+              ¥{(FREE_SHIPPING_THRESHOLD - cartTotal).toLocaleString()}以上で送料無料
+            </p>
           )}
         </div>
+
+        {/* バリデーションエラー */}
+        {validationErrors.length > 0 && (
+          <div style={{ marginBottom: "1rem" }}>
+            {validationErrors.map((e, i) => (
+              <p key={i} style={{ margin: "0 0 0.3rem", fontSize: "0.82rem", color: C.red }}>
+                ⚠ {e}
+              </p>
+            ))}
+          </div>
+        )}
+
+        {/* 発注ボタン */}
+        <button
+          onClick={handleSubmit}
+          disabled={!canSubmit || submitting}
+          style={{
+            width: "100%",
+            height: "52px",
+            backgroundColor: "transparent",
+            border: `1px solid ${canSubmit ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.12)"}`,
+            color: canSubmit ? C.text : C.muted,
+            fontSize: "0.9rem",
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            cursor: canSubmit && !submitting ? "pointer" : "not-allowed",
+            fontFamily: FONT,
+            transition: "border-color 0.15s",
+          }}
+          onMouseEnter={(e) => {
+            if (canSubmit && !submitting)
+              e.currentTarget.style.borderColor = "rgba(255,255,255,0.65)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = canSubmit
+              ? "rgba(255,255,255,0.35)"
+              : "rgba(255,255,255,0.12)";
+          }}
+        >
+          {submitting ? "処理中..." : "発注する"}
+        </button>
+
+        <p style={{ margin: "0.8rem 0 0", fontSize: "0.75rem", color: C.muted, lineHeight: 1.7, textAlign: "center" }}>
+          発注後、担当者より確認のご連絡をいたします。
+        </p>
       </div>
     </div>
   );
@@ -512,114 +672,60 @@ function OrdersTab({ user }) {
       ) : error ? (
         <ErrorBanner message={error} />
       ) : orders.length === 0 ? (
-        <p style={{ color: C.muted, fontSize: "0.95rem" }}>
-          注文履歴はありません。
-        </p>
+        <p style={{ color: C.muted, fontSize: "0.95rem" }}>注文履歴はありません。</p>
       ) : (
-        <div
-          style={{
-            border: `1px solid ${C.border}`,
-            overflow: "hidden",
-          }}
-        >
-          {/* テーブルヘッダー */}
+        <div style={{ border: `1px solid ${C.border}`, overflow: "hidden" }}>
+          {/* ヘッダー */}
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "140px 1fr 80px 120px 100px",
+              gridTemplateColumns: "130px 1fr 80px 120px 110px 110px",
               gap: "1rem",
               backgroundColor: C.surface,
               padding: "0.8rem 1.5rem",
               borderBottom: `1px solid ${C.border}`,
             }}
           >
-            {["注文日", "商品", "数量", "合計", "ステータス"].map((h) => (
-              <p
-                key={h}
-                style={{
-                  margin: 0,
-                  fontSize: "0.72rem",
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: C.muted,
-                }}
-              >
+            {["注文日", "商品", "数量", "合計", "送料", "ステータス"].map((h) => (
+              <p key={h} style={{ margin: 0, fontSize: "0.7rem", letterSpacing: "0.14em", textTransform: "uppercase", color: C.muted }}>
                 {h}
               </p>
             ))}
           </div>
 
-          {/* 各注文 */}
           {orders.map((order) => {
             const date = order.createdAt?.toDate
-              ? order.createdAt
-                  .toDate()
-                  .toLocaleDateString("ja-JP", {
-                    year: "numeric",
-                    month: "2-digit",
-                    day: "2-digit",
-                  })
+              ? order.createdAt.toDate().toLocaleDateString("ja-JP", {
+                  year: "numeric", month: "2-digit", day: "2-digit",
+                })
               : "—";
             const itemLabel = (order.items || [])
-              .map((i) => `${i.name} ×${i.quantity}`)
+              .map((i) => `${i.name}（${i.size || ""}）×${i.quantity}`)
               .join(" / ");
-            const totalQty = (order.items || []).reduce(
-              (s, i) => s + i.quantity,
-              0
-            );
-            const st = STATUS[order.status] || {
-              label: order.status || "—",
-              color: C.muted,
-            };
+            const totalQty = (order.items || []).reduce((s, i) => s + i.quantity, 0);
+            const st = STATUS[order.status] || { label: order.status || "—", color: C.muted };
+            const shippingLabel =
+              order.shipping === "free" ? "無料" : order.shipping === "actual_cost" ? "実費" : "—";
+            const shippingColor = order.shipping === "free" ? C.green : C.soft;
 
             return (
               <div
                 key={order.id}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "140px 1fr 80px 120px 100px",
+                  gridTemplateColumns: "130px 1fr 80px 120px 110px 110px",
                   gap: "1rem",
                   padding: "1.1rem 1.5rem",
                   borderBottom: `1px solid ${C.border}`,
-                  alignItems: "center",
+                  alignItems: "start",
                 }}
               >
-                <p style={{ margin: 0, fontSize: "0.88rem", color: C.soft }}>
-                  {date}
-                </p>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: "0.92rem",
-                    color: C.text,
-                    lineHeight: 1.6,
-                  }}
-                >
-                  {itemLabel}
-                </p>
-                <p style={{ margin: 0, fontSize: "0.9rem", color: C.soft }}>
-                  {totalQty}個
-                </p>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: "1rem",
-                    fontWeight: 600,
-                    color: C.text,
-                  }}
-                >
-                  ¥{(order.total || 0).toLocaleString()}
-                </p>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: "0.82rem",
-                    color: st.color,
-                    letterSpacing: "0.04em",
-                  }}
-                >
-                  {st.label}
-                </p>
+                <p style={{ margin: 0, fontSize: "0.88rem", color: C.soft }}>{date}</p>
+                <p style={{ margin: 0, fontSize: "0.9rem", color: C.text, lineHeight: 1.7 }}>{itemLabel}</p>
+                <p style={{ margin: 0, fontSize: "0.9rem", color: C.soft }}>{totalQty}個</p>
+                <p style={{ margin: 0, fontSize: "1rem", fontWeight: 600 }}>¥{(order.total || 0).toLocaleString()}</p>
+                <p style={{ margin: 0, fontSize: "0.85rem", color: shippingColor }}>{shippingLabel}</p>
+                <p style={{ margin: 0, fontSize: "0.85rem", color: st.color }}>{st.label}</p>
               </div>
             );
           })}
@@ -633,14 +739,14 @@ function OrdersTab({ user }) {
    アカウントタブ
 ==================================================== */
 const ACCOUNT_FIELDS = [
-  { key: "companyName", label: "貴社名・店舗名", editable: true },
-  { key: "contactName", label: "担当者名", editable: true },
-  { key: "email",       label: "メールアドレス", editable: false },
-  { key: "businessType",label: "業種", editable: true },
-  { key: "postalCode",  label: "郵便番号", editable: true },
-  { key: "prefecture",  label: "都道府県", editable: true },
-  { key: "city",        label: "市区町村・番地", editable: true },
-  { key: "address",     label: "建物名・部屋番号", editable: true },
+  { key: "companyName",  label: "貴社名・店舗名",   editable: true },
+  { key: "contactName",  label: "担当者名",          editable: true },
+  { key: "email",        label: "メールアドレス",     editable: false },
+  { key: "businessType", label: "業種",               editable: true },
+  { key: "postalCode",   label: "郵便番号",           editable: true },
+  { key: "prefecture",   label: "都道府県",           editable: true },
+  { key: "city",         label: "市区町村・番地",     editable: true },
+  { key: "address",      label: "建物名・部屋番号",   editable: true },
 ];
 
 function AccountTab({ user }) {
@@ -680,12 +786,6 @@ function AccountTab({ user }) {
     }
   };
 
-  const handleCancel = () => {
-    setEditing(false);
-    setForm(data);
-    setSaveError("");
-  };
-
   return (
     <div>
       <SectionHeader label="Account" title="アカウント情報" />
@@ -695,40 +795,18 @@ function AccountTab({ user }) {
       ) : (
         <div style={{ maxWidth: "640px" }}>
           {saved && (
-            <div
-              style={{
-                marginBottom: "1.5rem",
-                padding: "0.9rem 1.2rem",
-                border: `1px solid ${C.green}`,
-                color: C.green,
-                fontSize: "0.9rem",
-              }}
-            >
+            <div style={{ marginBottom: "1.5rem", padding: "0.9rem 1.2rem", border: `1px solid ${C.green}`, color: C.green, fontSize: "0.9rem" }}>
               ✓ 保存しました。
             </div>
           )}
           {saveError && <ErrorBanner message={saveError} />}
 
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "1.4rem",
-              marginBottom: "2.5rem",
-            }}
-          >
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.4rem", marginBottom: "2.5rem" }}>
             {ACCOUNT_FIELDS.map(({ key, label, editable }) => {
               const value = key === "email" ? user.email : (data[key] || "");
               return (
                 <div key={key}>
-                  <p
-                    style={{
-                      margin: "0 0 0.4rem",
-                      fontSize: "0.75rem",
-                      color: C.muted,
-                      letterSpacing: "0.1em",
-                    }}
-                  >
+                  <p style={{ margin: "0 0 0.4rem", fontSize: "0.75rem", color: C.muted, letterSpacing: "0.1em" }}>
                     {label}
                     {!editable && (
                       <span style={{ marginLeft: "0.6rem", fontSize: "0.68rem", color: C.muted }}>
@@ -739,12 +817,9 @@ function AccountTab({ user }) {
                   {editing && editable ? (
                     <input
                       value={form[key] || ""}
-                      onChange={(e) =>
-                        setForm((prev) => ({ ...prev, [key]: e.target.value }))
-                      }
+                      onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
                       style={{
-                        width: "100%",
-                        height: "48px",
+                        width: "100%", height: "48px",
                         backgroundColor: C.surface,
                         border: `1px solid ${C.borderMid}`,
                         color: C.text,
@@ -756,14 +831,7 @@ function AccountTab({ user }) {
                       }}
                     />
                   ) : (
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: "0.97rem",
-                        color: value ? C.text : C.muted,
-                        lineHeight: 1.6,
-                      }}
-                    >
+                    <p style={{ margin: 0, fontSize: "0.97rem", color: value ? C.text : C.muted, lineHeight: 1.6 }}>
                       {value || "—"}
                     </p>
                   )}
@@ -775,14 +843,10 @@ function AccountTab({ user }) {
           <div style={{ display: "flex", gap: "1rem" }}>
             {editing ? (
               <>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  style={primaryBtnStyle}
-                >
+                <button onClick={handleSave} disabled={saving} style={primaryBtnStyle}>
                   {saving ? "保存中..." : "保存する"}
                 </button>
-                <button onClick={handleCancel} style={secondaryBtnStyle}>
+                <button onClick={() => { setEditing(false); setForm(data); setSaveError(""); }} style={secondaryBtnStyle}>
                   キャンセル
                 </button>
               </>
@@ -804,32 +868,17 @@ function AccountTab({ user }) {
 function SectionHeader({ label, title }) {
   return (
     <div style={{ marginBottom: "2.5rem" }}>
-      <p
-        style={{
-          margin: "0 0 0.5rem",
-          fontSize: "0.68rem",
-          letterSpacing: "0.24em",
-          textTransform: "uppercase",
-          color: C.muted,
-        }}
-      >
+      <p style={{ margin: "0 0 0.5rem", fontSize: "0.68rem", letterSpacing: "0.24em", textTransform: "uppercase", color: C.muted }}>
         {label}
       </p>
-      <h1
-        style={{
-          margin: 0,
-          fontSize: "1.6rem",
-          fontWeight: 500,
-          letterSpacing: "0.04em",
-        }}
-      >
+      <h1 style={{ margin: 0, fontSize: "1.6rem", fontWeight: 500, letterSpacing: "0.04em" }}>
         {title}
       </h1>
     </div>
   );
 }
 
-function ErrorBanner({ message }) {
+function ErrorBanner({ message, onClose }) {
   return (
     <div
       style={{
@@ -839,9 +888,15 @@ function ErrorBanner({ message }) {
         color: C.red,
         fontSize: "0.9rem",
         lineHeight: 1.7,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
       }}
     >
-      {message}
+      <span>{message}</span>
+      {onClose && (
+        <button onClick={onClose} style={{ background: "none", border: "none", color: C.red, cursor: "pointer", fontSize: "1.1rem", marginLeft: "1rem" }}>×</button>
+      )}
     </div>
   );
 }
