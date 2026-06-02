@@ -482,6 +482,55 @@ app.post("/wholesale-register", async (req, res) => {
   }
 });
 
+// ===== 卸発注 =====
+app.post("/wholesale-order", async (req, res) => {
+  try {
+    const {
+      cartItems = [],
+      companyName = "",
+      email = "",
+      total = 0,
+      shipping = 0,
+    } = req.body;
+
+    const adminAddresses = "ryugecoffee@gmail.com, ryuka2452533@icloud.com";
+    const subject = "【龍華珈琲】新規卸発注が届きました";
+
+    const itemLines = (Array.isArray(cartItems) ? cartItems : [])
+      .map((item) => {
+        const name = item.name || "商品";
+        const qty = Number(item.quantity || 0);
+        const lineTotal = Number(item.wholesalePrice || 0) * qty;
+        return `・${name} × ${qty}（¥${lineTotal.toLocaleString()}）`;
+      })
+      .join("\n");
+
+    const createdAt = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+
+    const text = `会社名: ${companyName}
+メール: ${email}
+注文内容:
+${itemLines}
+合計: ¥${Number(total).toLocaleString()}
+送料: ¥${Number(shipping).toLocaleString()}
+発注日時: ${createdAt}
+管理画面: https://ryuge.biz/wholesale-jp/admin`;
+
+    await transporter.sendMail({
+      from: `"Ryuge Coffee" <${process.env.EMAIL_USER}>`,
+      to: adminAddresses,
+      replyTo: email || undefined,
+      subject,
+      text,
+    });
+
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error("wholesale-order error:", err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // ===== 通常購入完了 =====
 app.post("/order-complete", async (req, res) => {
   try {
