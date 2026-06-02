@@ -1,6 +1,6 @@
 // src/pages/WholesaleJpRegisterPage.jsx
-import { useMemo, useState } from "react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { useMemo, useState, useEffect } from "react";
+import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth } from "../lib/firebase";
 import { Link } from "react-router-dom";
 
@@ -176,75 +176,9 @@ export default function WholesaleJpRegisterPage() {
     }
   };
 
-  /* 完了画面 */
+  /* 完了画面：マウント時に signOut して未承認状態でリダイレクトされないようにする */
   if (done) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          backgroundColor: C.bg,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: FONT,
-          padding: "2rem",
-        }}
-      >
-        <div style={{ width: "100%", maxWidth: "480px", textAlign: "center" }}>
-          <p
-            style={{
-              fontSize: "0.72rem",
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
-              color: C.muted,
-              marginBottom: "1.5rem",
-            }}
-          >
-            Registration Complete
-          </p>
-          <h1
-            style={{
-              fontSize: "1.6rem",
-              fontWeight: 500,
-              color: C.text,
-              letterSpacing: "0.04em",
-              margin: "0 0 1.5rem",
-            }}
-          >
-            ご登録ありがとうございます
-          </h1>
-          <p
-            style={{
-              fontSize: "0.95rem",
-              color: C.soft,
-              lineHeight: 2,
-              margin: "0 0 2.5rem",
-            }}
-          >
-            お申し込みを受け付けました。
-            <br />
-            内容を確認の上、承認が完了次第ご連絡いたします。
-            <br />
-            今しばらくお待ちください。
-          </p>
-          <Link
-            to="/wholesale-jp"
-            style={{
-              display: "inline-block",
-              fontSize: "0.82rem",
-              color: C.text,
-              border: "1px solid #555",
-              padding: "0.85rem 1.8rem",
-              textDecoration: "none",
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-            }}
-          >
-            卸ページへ戻る
-          </Link>
-        </div>
-      </div>
-    );
+    return <DoneScreen />;
   }
 
   /* 登録フォーム */
@@ -685,6 +619,84 @@ function PasswordField({
         >
           {visible ? "◉" : "◌"}
         </button>
+      </div>
+    </div>
+  );
+}
+
+/* ====================================================
+   登録完了画面（signOut してからログインページへ誘導）
+==================================================== */
+function DoneScreen() {
+  useEffect(() => {
+    // 登録直後はログイン済み状態のため signOut してセッションをクリア
+    signOut(auth).catch(() => {});
+  }, []);
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: C.bg,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: FONT,
+        padding: "2rem",
+      }}
+    >
+      <div style={{ width: "100%", maxWidth: "480px", textAlign: "center" }}>
+        <p
+          style={{
+            fontSize: "0.72rem",
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            color: C.muted,
+            marginBottom: "1.5rem",
+          }}
+        >
+          Registration Complete
+        </p>
+        <h1
+          style={{
+            fontSize: "1.6rem",
+            fontWeight: 500,
+            color: C.text,
+            letterSpacing: "0.04em",
+            margin: "0 0 1.5rem",
+          }}
+        >
+          ご登録ありがとうございます
+        </h1>
+        <p
+          style={{
+            fontSize: "0.95rem",
+            color: C.soft,
+            lineHeight: 2,
+            margin: "0 0 2.5rem",
+          }}
+        >
+          お申し込みを受け付けました。
+          <br />
+          内容を確認の上、承認が完了次第ご連絡いたします。
+          <br />
+          今しばらくお待ちください。
+        </p>
+        <Link
+          to="/wholesale-jp/login"
+          style={{
+            display: "inline-block",
+            fontSize: "0.82rem",
+            color: C.text,
+            border: "1px solid #555",
+            padding: "0.85rem 1.8rem",
+            textDecoration: "none",
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+          }}
+        >
+          ログインページへ
+        </Link>
       </div>
     </div>
   );

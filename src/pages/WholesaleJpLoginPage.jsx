@@ -3,6 +3,12 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
+const BACK_LABEL = {
+  ja: "← サイトへ戻る",
+  en: "← Back to Site",
+  es: "← Volver al sitio",
+};
+
 const COLORS = {
   bg: "#050505",
   panel: "#0b0b0b",
@@ -15,7 +21,7 @@ const COLORS = {
 };
 
 export default function WholesaleJpLoginPage() {
-  const { login, user, loading: authLoading } = useAuth();
+  const { login, user, approved, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -23,14 +29,13 @@ export default function WholesaleJpLoginPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [formLoading, setFormLoading] = useState(false);
 
-  // すでにログイン済み かつ authLoading 完了済み → ダッシュボードへ自動遷移
-  // （ページリロード時・既存セッション時のリダイレクト）
-  // ※ authLoading 中はリダイレクトしない（Firestore 取得完了前に判定しないため）
+  // ログイン済み かつ 承認済み or 管理者 → ダッシュボードへ
+  // 未承認（pending）はリダイレクトせず「承認待ち」メッセージを表示
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && user && (approved || isAdmin)) {
       navigate("/wholesale-jp/dashboard", { replace: true });
     }
-  }, [authLoading, user, navigate]);
+  }, [authLoading, user, approved, isAdmin, navigate]);
 
   // ログインフォーム送信
   // login() 完了 → onAuthStateChanged が発火 → AuthContext が loading=true にリセット
@@ -92,7 +97,7 @@ export default function WholesaleJpLoginPage() {
           </Link>
 
           <Link
-            to="/wholesale-jp"
+            to="/"
             style={{
               textDecoration: "none",
               color: COLORS.mutedText,
@@ -100,7 +105,7 @@ export default function WholesaleJpLoginPage() {
               letterSpacing: "0.1em",
             }}
           >
-            卸ページへ戻る
+            {BACK_LABEL.ja}
           </Link>
         </div>
       </header>
@@ -206,6 +211,26 @@ export default function WholesaleJpLoginPage() {
             </button>
           </form>
 
+          {/* 未承認ユーザーへの案内 */}
+          {!authLoading && user && !approved && !isAdmin && (
+            <div
+              style={{
+                marginTop: "1.4rem",
+                padding: "1rem 1.2rem",
+                border: "1px solid rgba(255,255,255,0.12)",
+                backgroundColor: "rgba(255,255,255,0.03)",
+                fontSize: "0.9rem",
+                color: COLORS.softText,
+                lineHeight: 1.8,
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+              }}
+            >
+              ご登録ありがとうございます。<br />
+              現在、ご申請内容を確認中です。承認が完了次第ご連絡いたします。<br />
+              しばらくお待ちください。
+            </div>
+          )}
+
           <div
             style={{
               marginTop: "1.6rem",
@@ -231,7 +256,7 @@ export default function WholesaleJpLoginPage() {
             </Link>
 
             <Link
-              to="/wholesale-jp"
+              to="/"
               style={{
                 color: COLORS.mutedText,
                 fontSize: "0.84rem",
@@ -240,7 +265,7 @@ export default function WholesaleJpLoginPage() {
                   '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
               }}
             >
-              ← 卸ページへ戻る
+              {BACK_LABEL.ja}
             </Link>
           </div>
         </div>
