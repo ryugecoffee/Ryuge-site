@@ -28,6 +28,10 @@ export function AuthProvider({ children }) {
           const docRef = doc(db, "wholesaleUsers", firebaseUser.uid);
           const docSnap = await getDoc(docRef);
 
+          console.log("firebaseUser.uid:", firebaseUser.uid);
+          console.log("docSnap.exists():", docSnap.exists());
+          console.log("docSnap.data():", docSnap.data());
+
           if (docSnap.exists()) {
             const data = docSnap.data();
             setApproved(data.approved === true);
