@@ -500,28 +500,73 @@ function ProductsTab({ user }) {
 
               {/* 数量入力 */}
               <div style={{ paddingTop: "0.1rem" }}>
-                <input
-                  type="number"
-                  min={0}
-                  max={product.maxQty || undefined}
-                  step={1}
-                  value={qty === 0 ? "" : qty}
-                  placeholder={`0`}
-                  onChange={(e) => setQty(product.id, e.target.value)}
-                  style={{
-                    width: "100px",
-                    height: "44px",
-                    backgroundColor: C.bg,
-                    border: `1px solid ${belowMin ? C.red : C.borderMid}`,
-                    color: C.text,
-                    fontSize: "1rem",
-                    padding: "0 0.8rem",
-                    fontFamily: FONT,
-                    outline: "none",
-                    boxSizing: "border-box",
-                    textAlign: "center",
-                  }}
-                />
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <button
+                    onClick={() => setQty(product.id, qty - 1)}
+                    disabled={qty <= 0}
+                    style={{
+                      width: "36px",
+                      height: "44px",
+                      backgroundColor: C.bg,
+                      border: `1px solid ${belowMin ? C.red : C.borderMid}`,
+                      borderRight: "none",
+                      color: qty <= 0 ? C.muted : C.text,
+                      fontSize: "1.1rem",
+                      cursor: qty <= 0 ? "not-allowed" : "pointer",
+                      fontFamily: FONT,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    min={0}
+                    max={product.maxQty || undefined}
+                    step={1}
+                    value={qty === 0 ? "" : qty}
+                    placeholder="0"
+                    onChange={(e) => setQty(product.id, e.target.value)}
+                    style={{
+                      width: "60px",
+                      height: "44px",
+                      backgroundColor: C.bg,
+                      border: `1px solid ${belowMin ? C.red : C.borderMid}`,
+                      color: C.text,
+                      fontSize: "1rem",
+                      padding: "0",
+                      fontFamily: FONT,
+                      outline: "none",
+                      boxSizing: "border-box",
+                      textAlign: "center",
+                      MozAppearance: "textfield",
+                    }}
+                  />
+                  <button
+                    onClick={() => setQty(product.id, qty + 1)}
+                    disabled={product.maxQty !== null && qty >= product.maxQty}
+                    style={{
+                      width: "36px",
+                      height: "44px",
+                      backgroundColor: C.bg,
+                      border: `1px solid ${belowMin ? C.red : C.borderMid}`,
+                      borderLeft: "none",
+                      color: (product.maxQty !== null && qty >= product.maxQty) ? C.muted : C.text,
+                      fontSize: "1.1rem",
+                      cursor: (product.maxQty !== null && qty >= product.maxQty) ? "not-allowed" : "pointer",
+                      fontFamily: FONT,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    ＋
+                  </button>
+                </div>
                 {belowMin && (
                   <p style={{ margin: "0.3rem 0 0", fontSize: "0.72rem", color: C.red }}>
                     最低{product.minQty}個
