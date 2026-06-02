@@ -23,6 +23,52 @@ import WholesaleJpOrderCompletePage from "./pages/WholesaleJpOrderCompletePage";
 import { AuthProvider } from "./contexts/AuthContext";
 import ScrollToTop from "./components/ScrollToTop";
 
+const BANNER_TEXT = {
+  ja: "全国どこでも：1個注文 送料¥200 / 2個以上 送料無料 / サブスクリプション 送料無料",
+  en: "Japan-wide shipping: ¥200 for 1 item / Free for 2+ items / Free for subscriptions",
+  es: "Envío en todo Japón: ¥200 por 1 artículo / Gratis con 2 o más / Gratis con suscripción",
+};
+
+const BANNER_KEY = "shipping-banner-closed-at";
+const BANNER_TTL = 24 * 60 * 60 * 1000;
+
+function ShippingBanner({ lang }) {
+  const [visible, setVisible] = useState(() => {
+    const ts = localStorage.getItem(BANNER_KEY);
+    if (!ts) return true;
+    return Date.now() - Number(ts) > BANNER_TTL;
+  });
+  const [fading, setFading] = useState(false);
+
+  useEffect(() => {
+    if (!visible) return;
+    const t = setTimeout(() => setFading(true), 5000);
+    return () => clearTimeout(t);
+  }, [visible]);
+
+  useEffect(() => {
+    if (!fading) return;
+    const t = setTimeout(() => {
+      setVisible(false);
+      localStorage.setItem(BANNER_KEY, String(Date.now()));
+    }, 600);
+    return () => clearTimeout(t);
+  }, [fading]);
+
+  const close = () => {
+    setFading(true);
+  };
+
+  if (!visible) return null;
+
+  return (
+    <div className={`shipping-banner${fading ? " shipping-banner--fading" : ""}`}>
+      <span className="shipping-banner-text">{BANNER_TEXT[lang] || BANNER_TEXT.ja}</span>
+      <button className="shipping-banner-close" onClick={close} aria-label="close">×</button>
+    </div>
+  );
+}
+
 export default function App() {
   const location = useLocation();
 
@@ -42,6 +88,7 @@ export default function App() {
     <AuthProvider>
       <>
         <ScrollToTop />
+        <ShippingBanner lang={lang} />
 
         <Routes>
           <Route path="/" element={<HomePage lang={lang} setLang={setLang} />} />

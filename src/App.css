@@ -3409,3 +3409,48 @@ html[lang="es"] .story-body {
   line-height: 1.75;
   color: rgba(245, 241, 232, 0.78);
 }
+
+.shipping-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 40px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+
+.shipping-banner--fading {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.shipping-banner-text {
+  font-size: 12px;
+  color: rgba(245, 241, 232, 0.72);
+  letter-spacing: 0.04em;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.shipping-banner-close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: rgba(245, 241, 232, 0.4);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.shipping-banner-close:hover {
+  color: rgba(245, 241, 232, 0.8);
+}

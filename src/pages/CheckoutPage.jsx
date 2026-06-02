@@ -54,6 +54,7 @@ const UI = {
     couponApplied: "クーポン適用済み",
     couponInvalid: "無効なクーポンコードです",
     couponApplying: "確認中...",
+    shippingNote: "昨今の価格高騰の中でも、より多くの方に自宅でコーヒーを楽しんでいただけるよう、全国一律の送料設定としております。その分、包装は簡易的なものとなっておりますが、ご理解いただけますと幸いです。",
   },
   en: {
     eyebrow: "Checkout",
@@ -84,6 +85,7 @@ const UI = {
     couponApplied: "Coupon applied",
     couponInvalid: "Invalid coupon code",
     couponApplying: "Checking...",
+    shippingNote: "To make specialty coffee accessible to as many people as possible despite rising costs, we keep our shipping rates low nationwide. Packaging is kept simple to reflect this.",
   },
   es: {
     eyebrow: "Checkout",
@@ -114,6 +116,7 @@ const UI = {
     couponApplied: "Cupón aplicado",
     couponInvalid: "Código de cupón inválido",
     couponApplying: "Verificando...",
+    shippingNote: "Para que el café de especialidad sea accesible a todos a pesar del aumento de costos, mantenemos tarifas de envío bajas en todo Japón. El embalaje es sencillo para reflejar esto.",
   },
 };
 
@@ -378,6 +381,10 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
             {displayShipping === 0 ? t.free : "¥" + displayShipping.toLocaleString()}
           </span>
         </div>
+
+        <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.42)", lineHeight: 1.8, marginTop: "8px", marginBottom: 0 }}>
+          {t.shippingNote}
+        </p>
 
         <div className="checkout-order-total">
           <span>{t.total}</span>

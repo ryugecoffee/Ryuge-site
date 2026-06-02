@@ -20,6 +20,7 @@ const TEXT = {
         body: "サブスクリプション商品は送料無料です。",
       },
     ],
+    shippingNote: "昨今の価格高騰の中でも、より多くの方に自宅でコーヒーを楽しんでいただけるよう、全国一律の送料設定としております。その分、包装は簡易的なものとなっておりますが、ご理解いただけますと幸いです。",
     note:
       "送料・配送に関するお問い合わせは ryugecoffee@gmail.com までご連絡ください。",
     back: "← トップへ戻る",
@@ -44,6 +45,7 @@ const TEXT = {
         body: "All subscription products include free shipping.",
       },
     ],
+    shippingNote: "To make specialty coffee accessible to as many people as possible despite rising costs, we keep our shipping rates low nationwide. Packaging is kept simple to reflect this.",
     note:
       "For shipping inquiries, please contact ryugecoffee@gmail.com",
     back: "← Back to top",
@@ -68,6 +70,7 @@ const TEXT = {
         body: "Todos los productos de suscripción incluyen envío gratuito.",
       },
     ],
+    shippingNote: "Para que el café de especialidad sea accesible a todos a pesar del aumento de costos, mantenemos tarifas de envío bajas en todo Japón. El embalaje es sencillo para reflejar esto.",
     note:
       "Para consultas sobre envíos: ryugecoffee@gmail.com",
     back: "← Volver al inicio",
@@ -94,7 +97,11 @@ export default function ShippingPage({ lang }) {
             ))}
           </div>
 
-          <p className="legal-lead" style={{ marginTop: "48px" }}>
+          <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.42)", lineHeight: 1.8, marginTop: "32px", marginBottom: 0 }}>
+            {t.shippingNote}
+          </p>
+
+          <p className="legal-lead" style={{ marginTop: "24px" }}>
             {t.note}
           </p>
 
