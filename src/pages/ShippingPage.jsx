@@ -109,7 +109,7 @@ export default function ShippingPage({ lang }) {
             ))}
           </div>
 
-          <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.42)", lineHeight: 1.8, marginTop: "32px", marginBottom: 0 }}>
+          <p className="legal-lead" style={{ marginTop: "32px" }}>
             {t.shippingNote}
           </p>
 
