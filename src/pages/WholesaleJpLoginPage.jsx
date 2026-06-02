@@ -23,33 +23,34 @@ export default function WholesaleJpLoginPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // すでにログイン済み（authLoading完了後にuserが存在）なら自動リダイレクト
+  // authLoading 完了 かつ user が存在 → ダッシュボードへ
+  // （ログイン直後 & 既存セッション両方をカバー）
+  // AuthContext は onAuthStateChanged 発火時に loading=true にリセットし、
+  // Firestore フェッチ完了後に loading=false にするため、
+  // このタイミングでは approved/isAdmin が正しくセットされている
   useEffect(() => {
     if (!authLoading && user) {
       navigate("/wholesale-jp/dashboard", { replace: true });
     }
   }, [authLoading, user, navigate]);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setErrorMessage("");
-  setLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMessage("");
+    setLoading(true);
 
-  try {
-    await login(email, password);
-    // login() 完了 → onAuthStateChanged が user をセット → 上の useEffect がリダイレクト
-  } catch (error) {
-    console.error("LOGIN ERROR:", error);
-    console.error("LOGIN ERROR CODE:", error?.code);
-    console.error("LOGIN ERROR MESSAGE:", error?.message);
-
-    setErrorMessage(
-      `ログイン失敗: ${error?.code || "unknown-error"}`
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      await login(email, password);
+      // navigate はここでは呼ばない
+      // login() 完了 → onAuthStateChanged が loading=true にリセット後 user をセット
+      // → Firestore フェッチ完了 → loading=false → 上の useEffect がリダイレクト
+    } catch (error) {
+      console.error("LOGIN ERROR:", error.code, error.message);
+      setErrorMessage(`ログイン失敗: ${error?.code || "unknown-error"}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div
