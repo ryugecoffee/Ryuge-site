@@ -21,3 +21,5 @@ export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true,
   useFetchStreams: false,
 });
+import { getStorage } from "firebase/storage";
+export const storage = getStorage(app);
