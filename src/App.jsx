@@ -20,6 +20,11 @@ import WholesaleJpDashboardPage from "./pages/WholesaleJpDashboardPage";
 import WholesaleJpAdminPage from "./pages/WholesaleJpAdminPage";
 import WholesaleJpOrderCompletePage from "./pages/WholesaleJpOrderCompletePage";
 
+import DiaryPage from "./pages/diary/DiaryPage";
+import DiaryDetailPage from "./pages/diary/DiaryDetailPage";
+import DiaryAdminPage from "./pages/diary/DiaryAdminPage";
+import InventoryPage from "./pages/InventoryPage";
+
 import { AuthProvider } from "./contexts/AuthContext";
 import ScrollToTop from "./components/ScrollToTop";
 
@@ -55,9 +60,7 @@ function ShippingBanner({ lang }) {
     return () => clearTimeout(t);
   }, [fading]);
 
-  const close = () => {
-    setFading(true);
-  };
+  const close = () => setFading(true);
 
   if (!visible) return null;
 
@@ -93,9 +96,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage lang={lang} setLang={setLang} />} />
 
-          <Route
-            element={<SiteLayout lang={lang} setLang={setLang} />}
-          >
+          <Route element={<SiteLayout lang={lang} setLang={setLang} />}>
             <Route path="/products" element={<ProductsPage lang={lang} />} />
             <Route path="/privacy" element={<PrivacyPolicy lang={lang} />} />
             <Route path="/terms" element={<Terms lang={lang} />} />
@@ -103,6 +104,11 @@ export default function App() {
             <Route path="/legal" element={<LegalNotice lang={lang} />} />
             <Route path="/refund" element={<RefundPolicy lang={lang} />} />
             <Route path="/access" element={<AccessSection lang={lang} />} />
+            <Route path="/diary" element={<DiaryPage />} />
+            <Route path="/diary/new" element={<DiaryAdminPage />} />
+            <Route path="/diary/:id/edit" element={<DiaryAdminPage />} />
+            <Route path="/diary/:id" element={<DiaryDetailPage />} />
+            <Route path="/inventory" element={<InventoryPage />} />
           </Route>
 
           <Route path="/checkout" element={<CheckoutPage lang={lang} />} />
