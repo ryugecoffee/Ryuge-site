@@ -314,7 +314,7 @@ export const PRODUCT_DATA = {
     },
     {
       id: "woodbox-tea-bag",
-      image: "/images/woodbox.jpg",
+      image: "/images/tea-bag.jpg",
       category: "tea-bag",
       size: "8個入り",
       title: {
