@@ -95,7 +95,6 @@ export const PRODUCT_DATA = {
       price: "¥1,700",
       priceNumber: 1700,
       flavor: "Tangerine, Bergamot, Darjeeling, Floral, Soft, Round, Sweet",
-      link: "https://square.link/u/xxxxx",
       isSoldOut: false,
     },
     {
@@ -122,7 +121,6 @@ export const PRODUCT_DATA = {
       price: "¥2,100",
       priceNumber: 2100,
       flavor: "Blackberry, Strawberry, Full Body",
-      link: "https://square.link/u/xxxxx",
       isSoldOut: true,
     },
     {
@@ -149,7 +147,6 @@ export const PRODUCT_DATA = {
       price: "¥1,900",
       priceNumber: 1900,
       flavor: "Orange, Plum, Apricot, Floral, Black Tea",
-      link: "https://square.link/u/xxxxx",
       isSoldOut: false,
     },
   ],
@@ -184,7 +181,6 @@ export const PRODUCT_DATA = {
       price: "¥3,200",
       priceNumber: 3200,
       flavor: "Orange, Apricot, Walnut, Honey, Bergamot, Smooth, Round",
-      link: "https://square.link/u/xxxxx",
       isSoldOut: true,
     },
     {
@@ -217,7 +213,6 @@ export const PRODUCT_DATA = {
       priceNumber: 2600,
       flavor:
         "Floral, Earl Grey, Stone Fruit, Pear, Honey, Bright Acidity, Round Mouthfeel, Elegant",
-      link: "https://square.link/u/xxxxx",
       isSoldOut: false,
     },
   ],
@@ -454,7 +449,6 @@ export const PRODUCT_DATA = {
         ],
       },
 
-      link: "https://square.link/u/xxxxx",
     },
     {
   id: "oriori-apps",
