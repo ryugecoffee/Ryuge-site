@@ -1410,7 +1410,7 @@ html[lang="es"] .products-hero-overlay h1 {
 
 .products-enma-static-card {
   position: relative;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
   background: #0b0b0b;
   border: none;
@@ -2713,10 +2713,6 @@ html[lang="es"] .products-hero-overlay h1 {
     grid-template-columns: 1fr;
   }
 
-  .products-enma-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
   .products-two-col {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -2732,6 +2728,17 @@ html[lang="es"] .products-hero-overlay h1 {
   .modal {
     width: min(760px, 100%);
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+
+/* ============================================================
+   MEDIA QUERIES — 1024px (enma grid tablet breakpoint)
+============================================================ */
+
+@media (max-width: 1024px) {
+  .products-enma-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
@@ -2930,7 +2937,11 @@ html[lang="es"] .products-hero-overlay h1 {
     gap: 8px;
   }
 
-  .products-enma-static-card,
+  .products-enma-static-card {
+    aspect-ratio: 1 / 1;
+    min-height: 0;
+  }
+
   .products-woodbox-card,
   .products-bag-card {
     aspect-ratio: 3 / 4;
