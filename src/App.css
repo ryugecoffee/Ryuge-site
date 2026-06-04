@@ -1404,7 +1404,7 @@ html[lang="es"] .products-hero-overlay h1 {
 
 .products-enma-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
 }
 
@@ -2738,7 +2738,7 @@ html[lang="es"] .products-hero-overlay h1 {
 
 @media (max-width: 1024px) {
   .products-enma-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 
@@ -2928,7 +2928,7 @@ html[lang="es"] .products-hero-overlay h1 {
   }
 
   .products-enma-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
   }
 
@@ -3218,6 +3218,18 @@ html[lang="es"] .products-hero-overlay h1 {
   .modal-close-safe {
     top: 14px;
     right: 10px;
+  }
+}
+
+
+/* ============================================================
+   MEDIA QUERIES — 480px (enma grid mobile 2col)
+============================================================ */
+
+@media (max-width: 480px) {
+  .products-enma-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
   }
 }
 
