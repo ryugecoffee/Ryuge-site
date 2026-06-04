@@ -1517,12 +1517,12 @@ html[lang="es"] .products-hero-overlay h1 {
 
 .products-two-col {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
 }
 
 .products-woodbox-card {
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 4 / 3;
 }
 
 .products-woodbox-card img {
@@ -1535,14 +1535,14 @@ html[lang="es"] .products-hero-overlay h1 {
 }
 
 .products-woodbox-card .products-enma-card-text {
-  left: 22px;
-  right: 22px;
-  bottom: 22px;
+  left: 28px;
+  right: 28px;
+  bottom: 28px;
 }
 
 .products-woodbox-card .products-enma-card-text h3 {
-  margin: 0 0 4px;
-  font-size: 13px;
+  margin: 0 0 6px;
+  font-size: 18px;
   font-weight: 400;
   letter-spacing: 0.04em;
   line-height: 1.2;
@@ -1551,8 +1551,8 @@ html[lang="es"] .products-hero-overlay h1 {
 
 .products-woodbox-card .products-enma-card-text p {
   margin: 0;
-  font-size: 10px;
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.6;
   color: rgba(245, 241, 232, 0.72);
 }
 
@@ -2713,10 +2713,6 @@ html[lang="es"] .products-hero-overlay h1 {
     grid-template-columns: 1fr;
   }
 
-  .products-two-col {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
   .oriori-services-grid {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -2933,8 +2929,8 @@ html[lang="es"] .products-hero-overlay h1 {
   }
 
   .products-two-col {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 
   .products-enma-static-card {
@@ -2942,7 +2938,11 @@ html[lang="es"] .products-hero-overlay h1 {
     min-height: 0;
   }
 
-  .products-woodbox-card,
+  .products-woodbox-card {
+    aspect-ratio: 4 / 3;
+    min-height: 0;
+  }
+
   .products-bag-card {
     aspect-ratio: 3 / 4;
     min-height: 0;
@@ -2959,19 +2959,30 @@ html[lang="es"] .products-hero-overlay h1 {
     min-width: 0;
   }
 
-  .products-enma-card-text,
-  .products-woodbox-card .products-enma-card-text {
+  .products-enma-card-text {
     left: 10px;
     right: 10px;
     bottom: 10px;
   }
 
-  .products-enma-card-text h3,
-  .products-woodbox-card .products-enma-card-text h3 {
+  .products-woodbox-card .products-enma-card-text {
+    left: 18px;
+    right: 18px;
+    bottom: 18px;
+  }
+
+  .products-enma-card-text h3 {
     margin: 0 0 4px;
     font-size: 13px;
     line-height: 1.12;
     color: rgba(245, 241, 232, 0.92);
+  }
+
+  .products-woodbox-card .products-enma-card-text h3 {
+    margin: 0 0 4px;
+    font-size: 16px;
+    line-height: 1.2;
+    color: #fff;
   }
 
   .products-enma-card-text p,
