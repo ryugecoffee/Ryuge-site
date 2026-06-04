@@ -272,7 +272,7 @@ export const PRODUCT_DATA = {
   bag: [
     {
       id: "enma-coffee-bag",
-      image: "/images/enma-coffee-bag.jpg",
+      image: "/images/coffee-bag.jpg",
       category: "bag",
       size: "8個入り",
       title: {
@@ -314,7 +314,7 @@ export const PRODUCT_DATA = {
     },
     {
       id: "woodbox-tea-bag",
-      image: "/images/woodbox-tea-bag.jpg",
+      image: "/images/woodbox.jpg",
       category: "tea-bag",
       size: "8個入り",
       title: {
