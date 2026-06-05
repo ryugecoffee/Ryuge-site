@@ -141,6 +141,12 @@ const WHOLESALE_CATALOG = [
   },
 ];
 
+// sizeフィールドからグラム数を取得（"8個入り"などはnull）
+function parseGrams(size) {
+  const m = size && size.match(/^(\d+)g$/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
 // isSoldOut 連動フィルター適用済みリスト（卸専用は常に表示）
 function getAvailableProducts() {
   return WHOLESALE_CATALOG.filter((p) => {
@@ -304,9 +310,18 @@ function ProductsTab({ user }) {
   useEffect(() => {
     const fetchInventory = async () => {
       try {
-        const snap = await getDocs(collection(db, "wholesaleInventory"));
+        const snap = await getDocs(collection(db, "inventory"));
         const inv = {};
-        snap.forEach((d) => { inv[d.id] = d.data().stock ?? null; });
+        snap.forEach((d) => {
+          const { rawGrams, roastYieldRate } = d.data();
+          const product = WHOLESALE_CATALOG.find((p) => p.id === d.id);
+          if (!product) return;
+          const productGrams = parseGrams(product.size);
+          if (productGrams === null) return;
+          if (rawGrams != null && roastYieldRate != null) {
+            inv[d.id] = Math.floor(rawGrams * roastYieldRate / productGrams);
+          }
+        });
         setInventory(inv);
       } catch (e) {
         // 取得失敗時は非表示にするだけ
@@ -318,6 +333,9 @@ function ProductsTab({ user }) {
   // 数量変更（バリデーション付き）
   const setQty = (id, raw) => {
     const product = products.find((p) => p.id === id);
+    const productGrams = parseGrams(product.size);
+    const stockCount = productGrams !== null ? inventory[id] : undefined;
+    if (stockCount === 0) return; // 在庫切れは変更不可
     let v = parseInt(raw, 10);
     if (isNaN(v) || v < 0) v = 0;
     if (product.maxQty !== null && v > product.maxQty) v = product.maxQty;
@@ -445,6 +463,8 @@ function ProductsTab({ user }) {
           const qty = quantities[product.id];
           const subtotal = qty * product.unitPrice;
           const belowMin = qty > 0 && qty < product.minQty;
+          const stockCount = parseGrams(product.size) !== null ? inventory[product.id] : undefined;
+          const isOutOfStock = stockCount === 0;
 
           return (
             <div
@@ -504,29 +524,33 @@ function ProductsTab({ user }) {
                     ({Math.round((1 - product.unitPrice / product.retailPrice) * 100)}%OFF)
                   </p>
                 )}
-                {inventory[product.id] != null && (
-                  <p style={{ margin: "0.3rem 0 0", fontSize: "0.72rem", color: C.muted }}>
-                    在庫 {inventory[product.id]}
-                  </p>
+                {stockCount != null && (
+                  isOutOfStock ? (
+                    <p style={{ margin: "0.3rem 0 0", fontSize: "0.72rem", color: C.red }}>在庫切れ</p>
+                  ) : stockCount <= 5 ? (
+                    <p style={{ margin: "0.3rem 0 0", fontSize: "0.72rem", color: C.amber }}>残りわずか（残り{stockCount}個）</p>
+                  ) : (
+                    <p style={{ margin: "0.3rem 0 0", fontSize: "0.72rem", color: C.muted }}>残り{stockCount}個</p>
+                  )
                 )}
               </div>
 
               {/* 数量入力 */}
               <div style={{ paddingTop: "0.1rem" }}>
-                <div style={{ display: "flex", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", opacity: isOutOfStock ? 0.35 : 1 }}>
                   <button
                     onClick={() => setQty(product.id, qty - 1)}
-                    disabled={qty <= 0}
+                    disabled={qty <= 0 || isOutOfStock}
                     style={{
                       width: "36px",
                       height: "44px",
                       backgroundColor: C.bg,
                       border: `1px solid ${belowMin ? C.red : C.borderMid}`,
                       borderRight: "none",
-                      color: qty <= 0 ? C.muted : C.text,
+                      color: (qty <= 0 || isOutOfStock) ? C.muted : C.text,
                       fontSize: "1.1rem",
-                      cursor: qty <= 0 ? "not-allowed" : "pointer",
-        
+                      cursor: (qty <= 0 || isOutOfStock) ? "not-allowed" : "pointer",
+
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -542,6 +566,7 @@ function ProductsTab({ user }) {
                     step={1}
                     value={qty === 0 ? "" : qty}
                     placeholder="0"
+                    disabled={isOutOfStock}
                     onChange={(e) => setQty(product.id, e.target.value)}
                     style={{
                       width: "60px",
@@ -551,26 +576,27 @@ function ProductsTab({ user }) {
                       color: C.text,
                       fontSize: "1rem",
                       padding: "0",
-        
+
                       outline: "none",
                       boxSizing: "border-box",
                       textAlign: "center",
                       MozAppearance: "textfield",
+                      cursor: isOutOfStock ? "not-allowed" : "auto",
                     }}
                   />
                   <button
                     onClick={() => setQty(product.id, qty + 1)}
-                    disabled={product.maxQty !== null && qty >= product.maxQty}
+                    disabled={isOutOfStock || (product.maxQty !== null && qty >= product.maxQty)}
                     style={{
                       width: "36px",
                       height: "44px",
                       backgroundColor: C.bg,
                       border: `1px solid ${belowMin ? C.red : C.borderMid}`,
                       borderLeft: "none",
-                      color: (product.maxQty !== null && qty >= product.maxQty) ? C.muted : C.text,
+                      color: (isOutOfStock || (product.maxQty !== null && qty >= product.maxQty)) ? C.muted : C.text,
                       fontSize: "1.1rem",
-                      cursor: (product.maxQty !== null && qty >= product.maxQty) ? "not-allowed" : "pointer",
-        
+                      cursor: (isOutOfStock || (product.maxQty !== null && qty >= product.maxQty)) ? "not-allowed" : "pointer",
+
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
