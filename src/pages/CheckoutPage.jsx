@@ -1,5 +1,5 @@
 import { trackBeginCheckout } from "../lib/analytics";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useCart } from "../CartContext";
 import { useNavigate } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
@@ -244,6 +244,101 @@ const inputStyle = {
 
 function isSubscriptionItem(item) {
   return item?.id?.startsWith("subscription-");
+}
+
+// ── サーチャブル国セレクト ────────────────────────────────────────────────────
+function CountrySelect({ value, onChange, lang, countryJapanLabel, placeholder }) {
+  const [query,   setQuery]   = useState("");
+  const [open,    setOpen]    = useState(false);
+  const containerRef          = useRef(null);
+
+  const countryList = useMemo(() =>
+    COUNTRY_CODES_FOR_SELECT.map((code) => ({
+      code,
+      name: code === "JP" ? countryJapanLabel : getCountryName(code, lang),
+    })),
+    [lang, countryJapanLabel]
+  );
+
+  const selectedName = useMemo(() =>
+    countryList.find((c) => c.code === value)?.name ?? "",
+    [value, countryList]
+  );
+
+  const filtered = useMemo(() => {
+    if (!query) return countryList;
+    const q = query.toLowerCase();
+    return countryList.filter(
+      (c) => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
+    );
+  }, [query, countryList]);
+
+  useEffect(() => {
+    function onClickOutside(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false);
+        setQuery("");
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  return (
+    <div ref={containerRef} style={{ position: "relative" }}>
+      <input
+        type="text"
+        autoComplete="off"
+        placeholder={placeholder}
+        value={open ? query : selectedName}
+        onFocus={() => { setOpen(true); setQuery(""); }}
+        onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+        style={inputStyle}
+      />
+      {open && (
+        <div style={{
+          position:    "absolute",
+          top:         "calc(100% + 4px)",
+          left:        0,
+          right:       0,
+          background:  "#161616",
+          border:      "1px solid rgba(255,255,255,0.14)",
+          borderRadius:"4px",
+          maxHeight:   "220px",
+          overflowY:   "auto",
+          zIndex:      200,
+        }}>
+          {filtered.length === 0 ? (
+            <div style={{ padding: "10px 12px", fontSize: "13px", color: "rgba(255,255,255,0.36)" }}>
+              該当なし
+            </div>
+          ) : filtered.map((c) => (
+            <div
+              key={c.code}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                onChange(c.code);
+                setOpen(false);
+                setQuery("");
+              }}
+              style={{
+                padding:    "9px 12px",
+                fontSize:   "13px",
+                cursor:     "pointer",
+                color:      c.code === value ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.68)",
+                background: c.code === value ? "rgba(255,255,255,0.07)" : "transparent",
+                transition: "background 0.1s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = c.code === value ? "rgba(255,255,255,0.07)" : "transparent"; }}
+            >
+              {c.name}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ── メイン Checkout フォーム ────────────────────────────────────────────────
@@ -652,20 +747,13 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
             <label style={{ display: "block", fontSize: "11px", color: "rgba(255,255,255,0.42)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "6px" }}>
               {t.countryLabel}
             </label>
-            <select
+            <CountrySelect
               value={country}
-              onChange={(e) => {
-                setCountry(e.target.value);
-                setError("");
-              }}
-              style={{ ...inputStyle, background: "#111", appearance: "none", cursor: "pointer" }}
-            >
-              {COUNTRY_CODES_FOR_SELECT.map((code) => (
-                <option key={code} value={code}>
-                  {code === "JP" ? t.countryJapan : getCountryName(code, lang)}
-                </option>
-              ))}
-            </select>
+              onChange={(code) => { setCountry(code); setError(""); }}
+              lang={lang}
+              countryJapanLabel={t.countryJapan}
+              placeholder={t.countryLabel}
+            />
           </div>
 
           {/* 国内フォーム */}
