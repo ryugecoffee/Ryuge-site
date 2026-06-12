@@ -5,7 +5,8 @@ import { PRODUCT_DATA, PRODUCT_SECTIONS } from "../productData";
 import { useCart } from "../CartContext";
 import { trackViewItem } from "../lib/analytics";
 
-const DEFAULT_SUBSCRIPTION_PLAN = "basic";
+// productData.js の plan.id に合わせる（mame = 一番人気 = デフォルト）
+const DEFAULT_SUBSCRIPTION_PLAN = "mame";
 
 const PAGE_TEXT = {
   ja: {
@@ -413,19 +414,11 @@ export default function ProductsPage({ lang }) {
                         style={{ marginTop: "16px" }}
                         onClick={() => {
                           if (!currentSubscriptionPlan) return;
-                          const priceMap = {
-  light: 2200,
-  basic: 3600,
-  premium: 4600,
-};
-                          const unitPrice =
-                            priceMap[currentSubscriptionPlan.id] ?? 0;
-
                           setItem(
                             {
                               id: `subscription-${currentSubscriptionPlan.id}`,
                               name: `${activeItem.title?.[lang] || "定期便"} — ${currentSubscriptionPlan.name}`,
-                              price: unitPrice,
+                              price: currentSubscriptionPlan.priceNumber ?? 0,
                               category: "subscription",
                               size: "100g",
                             },

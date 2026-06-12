@@ -2,6 +2,8 @@ require("dotenv").config({
   path: require("path").resolve(__dirname, "../.env"),
 });
 
+const { calcShipping } = require("./shipping");
+
 const express = require("express");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const cors = require("cors");
@@ -56,22 +58,7 @@ const COUPONS = {
   FREESHIP: { type: "shipping", value: 100, label: "送料補助" },
 };
 
-// ===== 送料計算（1個¥200、2個以上無料、サブスク無料） =====
-function calcShipping(items) {
-  const safeItems = Array.isArray(items) ? items : [];
-
-  const hasSubscription = safeItems.some(
-    (item) => item.category === "subscription"
-  );
-  if (hasSubscription) return 0;
-
-  const totalQuantity = safeItems.reduce(
-    (sum, item) => sum + Number(item.quantity || 0),
-    0
-  );
-
-  return totalQuantity <= 1 ? 200 : 0;
-}
+// calcShipping は server/shipping.js からインポート済み
 
 // ===== クーポン適用 =====
 function applyCoupon(subtotal, shipping, couponCode) {
@@ -115,7 +102,10 @@ async function sendUnifiedReceiptEmail(type, data) {
     shipping,
     address,
     planTitle,
+    countryCode = "JP",
   } = data;
+
+  const isInternational = countryCode && countryCode !== "JP";
 
   if (!email) return;
 
@@ -165,6 +155,20 @@ async function sendUnifiedReceiptEmail(type, data) {
     es: "Gestionar suscripción (cancelar / actualizar pago)",
   };
 
+  // 海外発送向け注記
+  const customsDutyNotes = {
+    ja: "輸入関税・税金が課される場合があり、受取人のご負担となります。",
+    en: "Import duties and taxes may apply and are the responsibility of the recipient.",
+    es: "Pueden aplicarse derechos de importación e impuestos, que son responsabilidad del destinatario.",
+  };
+  const emsNotes = {
+    ja: "配送方法：日本郵便 EMS（国際スピード郵便）。発送後、通常5〜10日程度でお届けします（地域・通関状況により異なります）。",
+    en: "Shipping method: Japan Post EMS. Usually delivered within 5–10 days after shipment (varies by region and customs clearance).",
+    es: "Método de envío: Japan Post EMS. Generalmente entregado en 5–10 días tras el envío (varía según región y aduanas).",
+  };
+  const customsDutyNote = customsDutyNotes[lang] || customsDutyNotes.ja;
+  const emsNote         = emsNotes[lang]         || emsNotes.ja;
+
   const subject = subjects[lang] || subjects.ja;
   const headline = headlines[lang] || headlines.ja;
   const bodyText = bodyTexts[lang] || bodyTexts.ja;
@@ -187,7 +191,7 @@ async function sendUnifiedReceiptEmail(type, data) {
       .map(
         (item) => `
       <tr>
-        <td style="padding:10px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ccc;">${item.title || ""}</td>
+        <td style="padding:10px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ccc;">${item.title || item.name || ""}</td>
         <td style="padding:10px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#888;text-align:center;">× ${item.quantity || 1}</td>
         <td style="padding:10px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#ccc;text-align:right;">¥${((item.price || 0) * (item.quantity || 1)).toLocaleString()}</td>
       </tr>`
@@ -259,6 +263,14 @@ async function sendUnifiedReceiptEmail(type, data) {
           </td>
         </tr>` : ""}
 
+        ${isInternational ? `
+        <tr>
+          <td style="padding:20px 48px 0;">
+            <p style="margin:0 0 6px;font-size:12px;color:#888;line-height:1.7;">${emsNote}</p>
+            <p style="margin:0;font-size:12px;color:#666;line-height:1.7;">⚠ ${customsDutyNote}</p>
+          </td>
+        </tr>` : ""}
+
         ${isSubscription ? `
         <tr>
           <td style="padding:28px 48px 0;">
@@ -307,7 +319,7 @@ async function sendAdminNotificationEmail(type, data) {
     : (Array.isArray(items) ? items : [])
         .map(
           (item) =>
-            `${item.title} × ${item.quantity}　¥${((item.price || 0) * (item.quantity || 0)).toLocaleString()}`
+            `${item.title || item.name || ""} × ${item.quantity}　¥${((item.price || 0) * (item.quantity || 0)).toLocaleString()}`
         )
         .join("\n");
 
@@ -379,7 +391,15 @@ app.get("/", (req, res) => {
 
 app.post("/create-payment-intent", async (req, res) => {
   try {
-    const { items, couponCode, email, name, address, prefecture, shipping: clientShipping } = req.body;
+    const {
+      items, couponCode, email, name, address, prefecture,
+      countryCode = "JP",
+    } = req.body;
+
+    // ── 米国フラグチェック ──────────────────────────────
+    if (countryCode === "US" && process.env.ENABLE_US_SHIPPING !== "true") {
+      return res.status(400).json({ error: "US_SHIPPING_DISABLED" });
+    }
 
     const safeItems = Array.isArray(items) ? items : [];
 
@@ -388,9 +408,12 @@ app.post("/create-payment-intent", async (req, res) => {
       0
     );
 
-    let shipping = (clientShipping !== undefined && clientShipping !== null)
-      ? Number(clientShipping)
-      : calcShipping(safeItems);
+    // ── 送料はサーバーで完全再計算（クライアント値を信用しない）──
+    const shippingResult = calcShipping(safeItems, countryCode);
+    if (typeof shippingResult === "object" && shippingResult.error) {
+      return res.status(400).json({ error: shippingResult.error });
+    }
+    let shipping = shippingResult;
 
     const afterCoupon = applyCoupon(subtotal, shipping, couponCode);
     subtotal = afterCoupon.subtotal;
@@ -402,11 +425,12 @@ app.post("/create-payment-intent", async (req, res) => {
       amount: total,
       currency: "jpy",
       metadata: {
-        email: email || "",
-        name: name || "",
-        address: address || "",
-        prefecture: prefecture || "",
-        couponCode: couponCode || "",
+        email:       email       || "",
+        name:        name        || "",
+        address:     address     || "",
+        prefecture:  prefecture  || "",
+        countryCode: countryCode,
+        couponCode:  couponCode  || "",
       },
     });
 
@@ -418,6 +442,25 @@ app.post("/create-payment-intent", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== 送料プレビュー（UI リアルタイム表示用）=====
+app.post("/calc-shipping", (req, res) => {
+  try {
+    const { items, countryCode = "JP" } = req.body;
+
+    if (countryCode === "US" && process.env.ENABLE_US_SHIPPING !== "true") {
+      return res.json({ error: "US_SHIPPING_DISABLED" });
+    }
+
+    const result = calcShipping(items || [], countryCode);
+    if (typeof result === "object" && result.error) {
+      return res.json({ error: result.error });
+    }
+    return res.json({ shipping: result });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -655,22 +698,27 @@ app.post("/order-complete", async (req, res) => {
   try {
     const {
       items, name, email, postalCode, address, prefecture,
-      countryType, countryCode, countryName,
-      shippingZone, shippingDiscountStep, couponCode,
+      countryCode = "JP", countryName,
+      city, stateProvince, phone,
+      couponCode,
       total, shipping, lang,
     } = req.body;
 
-    const fullAddress = [postalCode, prefecture, address].filter(Boolean).join(" ");
+    // 国内・海外でアドレスフォーマットを分ける
+    const fullAddress = countryCode && countryCode !== "JP"
+      ? [address, city, stateProvince, postalCode, countryName || countryCode].filter(Boolean).join(", ")
+      : [postalCode, prefecture, address].filter(Boolean).join(" ");
 
     try {
       await sendUnifiedReceiptEmail("order", {
         email,
         name,
-        lang: lang || "ja",
-        items: Array.isArray(items) ? items : [],
+        lang:        lang || "ja",
+        items:       Array.isArray(items) ? items : [],
         total,
         shipping,
-        address: fullAddress,
+        address:     fullAddress,
+        countryCode: countryCode || "JP",
       });
     } catch (mailErr) {
       console.error("order-complete customer mail error:", mailErr);

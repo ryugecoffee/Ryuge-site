@@ -110,39 +110,63 @@ export default function CheckoutCompletePage() {
   const items = source.items || [];
   const total = source.total;
   const shipping = source.shipping;
-  const name = source.name || "";
-  const postalCode = source.postalCode || "";
-  const prefecture = source.prefecture || "";
-  const address = source.address || "";
-  const planTitle = source.planTitle || "";
+  const name          = source.name          || "";
+  const postalCode    = source.postalCode    || "";
+  const prefecture    = source.prefecture    || "";
+  const address       = source.address       || "";
+  const planTitle     = source.planTitle     || "";
+  const city          = source.city          || "";
+  const stateProvince = source.stateProvince || "";
+  const countryCode   = source.countryCode   || "JP";
+  const countryName   = source.countryName   || "";
+  const isInternational = source.isInternational || (countryCode && countryCode !== "JP");
 
-  const fullAddress = [postalCode, prefecture, address].filter(Boolean).join(" ");
+  // 国内 / 海外で住所フォーマットを切り替え
+  const fullAddress = isInternational
+    ? [address, city, stateProvince, postalCode, countryName || countryCode].filter(Boolean).join(", ")
+    : [postalCode, prefecture, address].filter(Boolean).join(" ");
+
   const mapUrl = fullAddress
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`
     : "";
 
   useEffect(() => {
-    if (!source || !source.items || source.items.length === 0) return;
-
+    // transactionId の決定 (PaymentIntent ID → Stripe Session ID → タイムスタンプ)
     const transactionId =
+      source.paymentIntentId ||  // 通常購入: CheckoutPage から渡される Stripe PaymentIntent ID
       source.orderId ||
-      source.paymentIntentId ||
       source.sessionId ||
-      sessionId ||
-      `order-${Date.now()}`;
+      sessionId ||               // 定期便: URL の session_id
+      `order-${Date.now()}`;     // フォールバック（可能な限り使いたくない）
 
     const sentKey = `ga_purchase_${transactionId}`;
     if (sessionStorage.getItem(sentKey)) return;
 
+    // 通常購入: items 配列からイベントを組み立て
+    // 定期便: items が空なので planTitle から仮想 item を作成
+    let purchaseItems = source.items || [];
+    if (purchaseItems.length === 0 && (isSubscription || source.planTitle)) {
+      const planPrice = source.total || 0;
+      purchaseItems = [{
+        id: `subscription-${source.planTitle || "plan"}`,
+        name: source.planTitle || "Subscription",
+        category: "subscription",
+        price: planPrice,
+        quantity: 1,
+      }];
+    }
+
+    if (purchaseItems.length === 0) return; // トラッキング対象なし
+
     trackPurchase({
       transactionId,
-      cartItems: source.items,
+      cartItems: purchaseItems,
       shipping: source.shipping || 0,
       tax: 0,
     });
 
     sessionStorage.setItem(sentKey, "1");
-  }, [source, sessionId]);
+  }, [source, sessionId, isSubscription]);
 
   if (fetching) {
     return (
@@ -371,7 +395,8 @@ export default function CheckoutCompletePage() {
                         color: "rgba(255,255,255,0.82)",
                       }}
                     >
-                      {item.title}
+                      {/* CartContext は name で保存するため name を優先する */}
+                      {item.name || item.title}
                     </span>
                     <span
                       style={{
@@ -460,8 +485,11 @@ export default function CheckoutCompletePage() {
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {postalCode && <p style={{ margin: 0 }}>〒{postalCode}</p>}
-              <p style={{ margin: 0 }}>{prefecture}　{address}</p>
+              {!isInternational && postalCode && <p style={{ margin: 0 }}>〒{postalCode}</p>}
+              {!isInternational
+                ? <p style={{ margin: 0 }}>{prefecture}　{address}</p>
+                : <p style={{ margin: 0, whiteSpace: "pre-line" }}>{fullAddress}</p>
+              }
 
               {mapUrl && (
                 <a

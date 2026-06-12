@@ -76,6 +76,7 @@ export const PRODUCT_DATA = {
       image: "/images/enma-brazil.jpg",
       category: "beans",
       size: "180g",
+      weightG: 200, // 内容量180g + 袋・包装で約200g
       title: {
         ja: "閻魔　禅の深煎り",
         en: "ENMA Zen Dark Roast",
@@ -102,6 +103,7 @@ export const PRODUCT_DATA = {
       image: "/images/enma-2.jpg",
       category: "beans",
       size: "180g",
+      weightG: 200,
       title: {
         ja: "閻魔　エチオピア",
         en: "ENMA Ethiopia",
@@ -128,6 +130,7 @@ export const PRODUCT_DATA = {
       image: "/images/enma-3.jpg",
       category: "beans",
       size: "180g",
+      weightG: 200,
       title: {
         ja: "閻魔　ブルンジ",
         en: "ENMA Burundi",
@@ -154,6 +157,7 @@ export const PRODUCT_DATA = {
       image: "/images/enma-colombia.jpg",
       category: "beans",
       size: "180g",
+      weightG: 200,
       title: {
         ja: "閻魔　コロンビア",
         en: "ENMA Colombia",
@@ -180,6 +184,7 @@ export const PRODUCT_DATA = {
       image: "/images/enma-kenya.jpg",
       category: "beans",
       size: "180g",
+      weightG: 200,
       title: {
         ja: "閻魔　ケニア",
         en: "ENMA Kenya",
@@ -209,6 +214,7 @@ export const PRODUCT_DATA = {
       image: "/images/woodbox-2.jpg",
       category: "woodbox",
       size: "100g",
+      weightG: 170, // 内容量100g + 木函・包装で約170g
       title: {
         ja: "木函　ホンジュラス　ゲイシャ",
         en: "WOOD BOX Honduras Geisha",
@@ -241,6 +247,7 @@ export const PRODUCT_DATA = {
       image: "/images/woodbox-ecuador.jpg",
       category: "woodbox",
       size: "100g",
+      weightG: 170,
       title: {
         ja: "木函　エクアドル　シドラ",
         en: "WOOD BOX Ecuador Sidra",
@@ -275,6 +282,7 @@ export const PRODUCT_DATA = {
       image: "/images/enma-coffeebag.jpg",
       category: "bag",
       size: "8個入り",
+      weightG: 100, // ドリップバッグ8個入り
       title: {
         ja: "閻魔 珈琲袋",
         en: "ENMA Coffee Bag",
@@ -317,6 +325,7 @@ export const PRODUCT_DATA = {
       image: "/images/woodbox-hojicha.jpg",
       category: "tea-bag",
       size: "8個入り",
+      weightG: 120, // 木函ほうじ茶袋8個入り
       title: {
         ja: "木函 ほうじ茶袋",
         en: "WOOD BOX Hojicha Bag",

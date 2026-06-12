@@ -2,17 +2,18 @@ import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+// プランIDは productData.js の plan.id (coffee-bag / mame / zen) に統一
 const SUBSCRIPTION_PRICE_IDS = {
-  light:   process.env.STRIPE_PRICE_LIGHT,
-  basic:   process.env.STRIPE_PRICE_BASIC,
-  premium: process.env.STRIPE_PRICE_PREMIUM,
+  "coffee-bag": process.env.STRIPE_PRICE_COFFEE_BAG,
+  mame:         process.env.STRIPE_PRICE_MAME,
+  zen:          process.env.STRIPE_PRICE_ZEN,
 };
 
-// プランタイトル（lang 別）
+// プランタイトル（lang 別）- productData.js の plan.name と対応
 const PLAN_TITLES = {
-  light:   { ja: "Lightプラン",   en: "Light Plan",   es: "Plan Light"   },
-  basic:   { ja: "Basicプラン",   en: "Basic Plan",   es: "Plan Basic"   },
-  premium: { ja: "Premiumプラン", en: "Premium Plan", es: "Plan Premium" },
+  "coffee-bag": { ja: "珈琲袋定期便",  en: "Coffee Bag Subscription",   es: "Suscripción de Coffee Bags" },
+  mame:         { ja: "豆の定期便",    en: "Bean Subscription",         es: "Suscripción de Granos"      },
+  zen:          { ja: "禅の仕立て便",  en: "Zen Selection",              es: "Selección Zen"              },
 };
 
 export default async function handler(req, res) {
@@ -27,23 +28,33 @@ export default async function handler(req, res) {
     console.log("cartItems:", cartItems);
     console.log("customer:", customer);
     console.log("env check:", {
-      hasSecretKey: !!process.env.STRIPE_SECRET_KEY,
-      light:        process.env.STRIPE_PRICE_LIGHT,
-      basic:        process.env.STRIPE_PRICE_BASIC,
-      premium:      process.env.STRIPE_PRICE_PREMIUM,
-      siteUrl:      process.env.NEXT_PUBLIC_SITE_URL,
-      originHeader: req.headers.origin,
+      hasSecretKey:    !!process.env.STRIPE_SECRET_KEY,
+      coffee_bag:      !!process.env.STRIPE_PRICE_COFFEE_BAG,
+      mame:            !!process.env.STRIPE_PRICE_MAME,
+      zen:             !!process.env.STRIPE_PRICE_ZEN,
+      siteUrl:         process.env.NEXT_PUBLIC_SITE_URL,
+      originHeader:    req.headers.origin,
+      customerCountry: customer?.countryCode,
     });
 
     if (!cartItems || cartItems.length !== 1) {
       return res.status(400).json({ error: "Subscription checkout requires exactly one item." });
     }
 
+    // ── 国チェック: 定期便は国内（JP）のみ ──────────────────────────────
+    const customerCountryCode = customer?.countryCode || "JP";
+    if (customerCountryCode !== "JP") {
+      return res.status(400).json({
+        error: "SUBSCRIPTION_DOMESTIC_ONLY",
+        message: "Subscriptions are only available for delivery within Japan.",
+      });
+    }
+
     const item   = cartItems[0];
     const planId = item.id.replace("subscription-", "");
     console.log("planId:", planId);
 
-    if (!["light", "basic", "premium"].includes(planId)) {
+    if (!["coffee-bag", "mame", "zen"].includes(planId)) {
       return res.status(400).json({ error: "Invalid subscription plan." });
     }
 
