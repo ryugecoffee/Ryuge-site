@@ -123,7 +123,7 @@ export const PRODUCT_DATA = {
       price: "¥1,980",
       priceNumber: 1980,
       flavor: "Tangerine, Bergamot, Darjeeling, Floral, Soft, Round, Sweet",
-      isSoldOut: false,
+      isSoldOut: true,
     },
     {
       id: "enma-burundi-light",
