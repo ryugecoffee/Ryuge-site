@@ -3,6 +3,7 @@
  *
  * 削除対象:
  *   - Firestore コレクション: wholesaleUsers / wholesaleOrders / diary_entries
+ *                            / inventory / inventory_logs
  *   - Storage: diary/ 配下の全ファイル
  *
  * Firebase Admin SDK はセキュリティルールをバイパスするため、
@@ -51,7 +52,13 @@ const CONFIRM = args.includes("--confirm");
 const SKIP_STORAGE = args.includes("--skip-storage");
 const SKIP_FIRESTORE = args.includes("--skip-firestore");
 
-const COLLECTIONS = ["wholesaleUsers", "wholesaleOrders", "diary_entries"];
+const COLLECTIONS = [
+  "wholesaleUsers",
+  "wholesaleOrders",
+  "diary_entries",
+  "inventory",
+  "inventory_logs",
+];
 const STORAGE_PREFIX = "diary/";
 const BATCH_SIZE = 400; // Firestore のバッチ上限(500)より安全側
 

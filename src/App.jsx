@@ -14,8 +14,6 @@ import { Analytics } from "@vercel/analytics/react";
 import AccessSection from "./pages/AccessSection";
 import { pageview } from "./lib/analytics";
 
-import InventoryPage from "./pages/InventoryPage";
-
 import ScrollToTop from "./components/ScrollToTop";
 
 const BANNER_TEXT = {
@@ -93,7 +91,6 @@ export default function App() {
             <Route path="/legal" element={<LegalNotice lang={lang} />} />
             <Route path="/refund" element={<RefundPolicy lang={lang} />} />
             <Route path="/access" element={<AccessSection lang={lang} />} />
-            <Route path="/inventory" element={<InventoryPage />} />
           </Route>
 
           <Route path="/checkout" element={<CheckoutPage lang={lang} />} />
