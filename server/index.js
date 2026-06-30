@@ -429,8 +429,48 @@ app.post("/calc-shipping", (req, res) => {
   }
 });
 
+// ===== 簡易レート制限（/order-complete 専用・インメモリ）=====
+// 同一IPからの短時間の連続リクエストを制限し、メール送信の踏み台化を防ぐ。
+// 外部依存なし。Render などのプロキシ経由を考慮し X-Forwarded-For を優先。
+const ORDER_RATE_WINDOW_MS = 60 * 1000; // 1分
+const ORDER_RATE_MAX = 5;               // 1IPあたり1分間に5回まで
+const orderRateHits = new Map();        // ip -> number[]（リクエスト時刻）
+
+function getClientIp(req) {
+  const xff = req.headers["x-forwarded-for"];
+  if (xff) return String(xff).split(",")[0].trim();
+  return req.socket?.remoteAddress || req.ip || "unknown";
+}
+
+function orderRateLimit(req, res, next) {
+  const now = Date.now();
+  const ip = getClientIp(req);
+  const recent = (orderRateHits.get(ip) || []).filter(
+    (t) => now - t < ORDER_RATE_WINDOW_MS
+  );
+  if (recent.length >= ORDER_RATE_MAX) {
+    return res
+      .status(429)
+      .json({ error: "Too many requests. Please try again later." });
+  }
+  recent.push(now);
+  orderRateHits.set(ip, recent);
+  return next();
+}
+
+// 古いエントリの定期掃除（メモリ肥大防止）。プロセスは生かし続けない。
+const orderRateSweep = setInterval(() => {
+  const now = Date.now();
+  for (const [ip, hits] of orderRateHits) {
+    const fresh = hits.filter((t) => now - t < ORDER_RATE_WINDOW_MS);
+    if (fresh.length === 0) orderRateHits.delete(ip);
+    else orderRateHits.set(ip, fresh);
+  }
+}, ORDER_RATE_WINDOW_MS);
+orderRateSweep.unref?.();
+
 // ===== 通常購入完了 =====
-app.post("/order-complete", async (req, res) => {
+app.post("/order-complete", orderRateLimit, async (req, res) => {
   try {
     const {
       items, name, email, postalCode, address, prefecture,
