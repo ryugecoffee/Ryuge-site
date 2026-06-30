@@ -14,18 +14,8 @@ import { Analytics } from "@vercel/analytics/react";
 import AccessSection from "./pages/AccessSection";
 import { pageview } from "./lib/analytics";
 
-import WholesaleJpLoginPage from "./pages/WholesaleJpLoginPage";
-import WholesaleJpRegisterPage from "./pages/WholesaleJpRegisterPage";
-import WholesaleJpDashboardPage from "./pages/WholesaleJpDashboardPage";
-import WholesaleJpAdminPage from "./pages/WholesaleJpAdminPage";
-import WholesaleJpOrderCompletePage from "./pages/WholesaleJpOrderCompletePage";
-
-import DiaryPage from "./pages/diary/DiaryPage";
-import DiaryDetailPage from "./pages/diary/DiaryDetailPage";
-import DiaryAdminPage from "./pages/diary/DiaryAdminPage";
 import InventoryPage from "./pages/InventoryPage";
 
-import { AuthProvider } from "./contexts/AuthContext";
 import ScrollToTop from "./components/ScrollToTop";
 
 const BANNER_TEXT = {
@@ -88,9 +78,8 @@ export default function App() {
   }, [lang]);
 
   return (
-    <AuthProvider>
-      <>
-        <ScrollToTop />
+    <>
+      <ScrollToTop />
         <ShippingBanner lang={lang} />
 
         <Routes>
@@ -104,26 +93,14 @@ export default function App() {
             <Route path="/legal" element={<LegalNotice lang={lang} />} />
             <Route path="/refund" element={<RefundPolicy lang={lang} />} />
             <Route path="/access" element={<AccessSection lang={lang} />} />
-            <Route path="/diary" element={<DiaryPage />} />
-            <Route path="/diary/new" element={<DiaryAdminPage />} />
-            <Route path="/diary/:id/edit" element={<DiaryAdminPage />} />
-            <Route path="/diary/:id" element={<DiaryDetailPage />} />
             <Route path="/inventory" element={<InventoryPage />} />
           </Route>
 
           <Route path="/checkout" element={<CheckoutPage lang={lang} />} />
           <Route path="/checkout/complete" element={<CheckoutCompletePage />} />
-
-          <Route path="/wholesale-jp" element={<WholesaleJpLoginPage />} />
-          <Route path="/wholesale-jp/login" element={<WholesaleJpLoginPage />} />
-          <Route path="/wholesale-jp/register" element={<WholesaleJpRegisterPage />} />
-          <Route path="/wholesale-jp/dashboard" element={<WholesaleJpDashboardPage />} />
-          <Route path="/wholesale-jp/admin" element={<WholesaleJpAdminPage />} />
-          <Route path="/wholesale-jp/order-complete" element={<WholesaleJpOrderCompletePage />} />
         </Routes>
 
         <Analytics />
-      </>
-    </AuthProvider>
+    </>
   );
 }

@@ -10,7 +10,7 @@ export default function SiteFooter({ lang }) {
       company: "運営会社：株式会社龍華",
       description: "焙煎珈琲豆・珈琲／一煎袋の販売サイト",
       instagram: "Instagram",
-      contact: "お問合せ",
+      contact: "お問合せ・卸販売についてはこちら",
       email: "ryugecoffee@gmail.com",
       privacy: "プライバシーポリシー",
       terms: "利用規約",
@@ -19,7 +19,6 @@ export default function SiteFooter({ lang }) {
       manage: "定期購入の確認・解約はこちら",
       refund: "返品・返金ポリシー",
       access: "アクセス",
-      wholesale: "卸販売（国内）",
     },
     en: {
       brand: "Ryuge Coffee",
@@ -27,7 +26,7 @@ export default function SiteFooter({ lang }) {
       company: "Operating Company: Kabushikigaisha Ryuge",
       description: "Online store for roasted coffee beans and coffee/tea bags",
       instagram: "Instagram",
-      contact: "Contact",
+      contact: "Contact / Wholesale inquiries",
       email: "ryugecoffee@gmail.com",
       privacy: "Privacy Policy",
       terms: "Terms of Service",
@@ -36,7 +35,6 @@ export default function SiteFooter({ lang }) {
       manage: "Manage or cancel subscription",
       refund: "Refund Policy",
       access: "Access",
-      wholesale: "Wholesale (Japan)",
     },
     es: {
       brand: "Ryuge Coffee",
@@ -44,7 +42,7 @@ export default function SiteFooter({ lang }) {
       company: "Empresa operadora: Kabushikigaisha Ryuge",
       description: "Tienda online de café tostado y bolsas de café/té",
       instagram: "Instagram",
-      contact: "Contacto",
+      contact: "Contacto / Consultas mayoristas",
       email: "ryugecoffee@gmail.com",
       privacy: "Política de Privacidad",
       terms: "Términos de Servicio",
@@ -53,7 +51,6 @@ export default function SiteFooter({ lang }) {
       manage: "Gestionar o cancelar suscripción",
       refund: "Política de Reembolsos",
       access: "Acceso",
-      wholesale: "Venta al por mayor (Japón)",
     },
   };
 
@@ -77,8 +74,6 @@ export default function SiteFooter({ lang }) {
             <a href={instagramUrl} target="_blank" rel="noreferrer">{t.instagram}</a>
             <a href={"mailto:" + t.email}>{t.contact}</a>
             <Link to="/access">{t.access}</Link>
-            {/* 卸導線 */}
-            <Link to="/wholesale-jp">{t.wholesale}</Link>
           </div>
 
           <div className="footer-links-group">

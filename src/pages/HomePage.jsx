@@ -38,7 +38,6 @@ const UI = {
 
     instagram: "Instagram",
     email: "Email",
-    contact: "お問合せ / 卸販売について",
 shipping: "送料について",
 
     footerBrand: "Ryuge Coffee",
@@ -103,7 +102,6 @@ orioriDescription: "折々は、季節や日々の移ろいに合わせて、そ
 
   instagram: "Instagram",
   email: "Email",
-contact: "Contact / Wholesale",
 shipping: "Shipping Info",
 
   footerBrand: "Ryuge Coffee",
@@ -174,7 +172,6 @@ es: {
 
   instagram: "Instagram",
   email: "Email",
-  contact: "Contacto / Mayorista",
 shipping: "Información de Envío",
 
   footerBrand: "Ryuge Coffee",
