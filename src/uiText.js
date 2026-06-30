@@ -2,7 +2,6 @@ export const UI_TEXT = {
   ja: {
     products: "商品",
     about: "龍華について",
-    journal: "龍華日記",
     contact: "お問い合わせ",
 
     instagram: "Instagram",
@@ -40,7 +39,6 @@ productsHeroMain: "華やかさは、香りだけではない。\n余韻であ�
   en: {
     products: "Products",
     about: "About",
-    journal: "Journal",
     contact: "Contact",
 
     instagram: "Instagram",
@@ -78,7 +76,6 @@ productsHeroMain: "Brightness is not just aroma.\nIt lingers.",
   es: {
     products: "Productos",
     about: "Sobre Ryuge",
-    journal: "Diario",
     contact: "Contacto",
 
     instagram: "Instagram",

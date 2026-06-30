@@ -15,7 +15,6 @@ const UI = {
 
     products: "商品",
     about: "龍華について",
-    journal: "日記",
     contact: "お問い合わせ",
 
     privacyPolicy: "プライバシーポリシー",
@@ -76,7 +75,6 @@ orioriDescription: "折々は、季節や日々の移ろいに合わせて、そ
 
   products: "Products",
   about: "About",
-  journal: "Journal",
   contact: "Contact",
 
   privacyPolicy: "Privacy Policy",
@@ -146,7 +144,6 @@ es: {
 
   products: "Productos",
   about: "Sobre Ryuge",
-  journal: "Diario",
   contact: "Contacto",
 
   privacyPolicy: "Política de Privacidad",
@@ -464,7 +461,6 @@ export default function HomePage({ lang, setLang }) {
 
 <nav className="site-nav home-nav">
   <Link to="/products">{t.products}</Link>
-  <a href="#journal">{t.journal}</a>
 </nav>
 
   <div className="lang-switch home-lang-switch">
