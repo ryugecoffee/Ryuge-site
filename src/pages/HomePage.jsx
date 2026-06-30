@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { UI_TEXT } from "../uiText";
 import SiteFooter from "../components/SiteFooter";
 
 
