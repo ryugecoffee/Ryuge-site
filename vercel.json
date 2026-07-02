@@ -1,4 +1,16 @@
 {
+  "redirects": [
+    {
+      "source": "/qr",
+      "destination": "/products?utm_source=bean_bag&utm_medium=qr&utm_campaign=omiyage",
+      "permanent": false
+    },
+    {
+      "source": "/visit",
+      "destination": "/products?utm_source=store&utm_medium=qr&utm_campaign=instore",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",

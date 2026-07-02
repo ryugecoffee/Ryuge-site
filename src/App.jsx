@@ -76,7 +76,13 @@ export default function App() {
   const location = useLocation();
 
   const [lang, setLang] = useState(() => {
-    return localStorage.getItem("site-lang") || "ja";
+    const saved = localStorage.getItem("site-lang");
+    if (saved) return saved;
+    // 初回訪問時はブラウザ言語で自動判定(お土産で豆を受け取った海外の方向け)
+    const nav = (navigator.language || "").toLowerCase();
+    if (nav.startsWith("es")) return "es";
+    if (nav.startsWith("en")) return "en";
+    return "ja";
   });
 
   useEffect(() => {
