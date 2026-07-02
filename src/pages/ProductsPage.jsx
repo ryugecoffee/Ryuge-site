@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import SiteFooter from "../components/SiteFooter";
+import BeanConcierge from "../components/BeanConcierge";
 import { PRODUCT_DATA, PRODUCT_SECTIONS } from "../productData";
 import { useCart } from "../CartContext";
 import { trackViewItem } from "../lib/analytics";
@@ -635,6 +636,7 @@ export default function ProductsPage({ lang }) {
       )}
 
       <SiteFooter lang={lang} />
+      <BeanConcierge lang={lang} />
     </>
   );
 }

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /checkout
+Disallow: /checkout/complete
+Disallow: /inventory
+Disallow: /wholesale
+
+Sitemap: https://ryuge.biz/sitemap.xml

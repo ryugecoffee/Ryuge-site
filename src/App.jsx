@@ -13,6 +13,7 @@ import RefundPolicy from "./pages/RefundPolicy";
 import { Analytics } from "@vercel/analytics/react";
 import AccessSection from "./pages/AccessSection";
 import { pageview } from "./lib/analytics";
+import { updatePageMeta, injectProductJsonLd } from "./lib/seo";
 
 import ScrollToTop from "./components/ScrollToTop";
 
@@ -24,6 +25,17 @@ const BANNER_TEXT = {
 
 const BANNER_KEY = "shipping-banner-closed-at";
 const BANNER_TTL = 24 * 60 * 60 * 1000;
+
+// Render の無料プランはアイドル時にスリープするため、
+// 訪問直後にウォームアップ ping を送り、決済時のコールドスタート待ちを防ぐ
+const BACKEND_URL = "https://ryuge-site.onrender.com";
+let lastWarmupAt = 0;
+function warmupBackend() {
+  const now = Date.now();
+  if (now - lastWarmupAt < 5 * 60 * 1000) return; // 5分以内の再送はスキップ
+  lastWarmupAt = now;
+  fetch(BACKEND_URL + "/", { method: "GET" }).catch(() => {});
+}
 
 function ShippingBanner({ lang }) {
   const [visible, setVisible] = useState(() => {
@@ -69,7 +81,19 @@ export default function App() {
 
   useEffect(() => {
     pageview(location.pathname + location.search);
+    updatePageMeta(location.pathname);
+    if (location.pathname === "/products") injectProductJsonLd();
   }, [location]);
+
+  // サイト訪問時 + チェックアウト突入時にバックエンドを起こしておく
+  useEffect(() => {
+    warmupBackend();
+  }, []);
+  useEffect(() => {
+    if (location.pathname.startsWith("/checkout") || location.pathname === "/products") {
+      warmupBackend();
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     localStorage.setItem("site-lang", lang);

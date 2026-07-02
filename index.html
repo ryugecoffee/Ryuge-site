@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="ja">
   <head>
     <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-R1FTS64TB1"></script>
@@ -31,15 +31,21 @@
     />
     <meta name="author" content="Ryuge Coffee" />
 
+    <link rel="canonical" href="https://ryuge.biz/" />
+
     <!-- SNSシェア時の表示 -->
+    <meta property="og:site_name" content="Ryuge Coffee" />
     <meta property="og:title" content="Ryuge Coffee | Kamakura, Japan" />
     <meta
       property="og:description"
       content="Crafted in quiet rhythm. A coffee brand based in Kamakura, Japan."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="/images/stairs.jpg" />
-    <meta property="og:url" content="https://your-domain.com" />
+    <meta property="og:image" content="https://ryuge.biz/images/stairs.jpg" />
+    <meta property="og:url" content="https://ryuge.biz/" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:locale:alternate" content="es_ES" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Ryuge Coffee | Kamakura, Japan" />
@@ -47,12 +53,31 @@
       name="twitter:description"
       content="Crafted in quiet rhythm. A coffee brand based in Kamakura, Japan."
     />
-    <meta name="twitter:image" content="/images/stairs.jpg" />
+    <meta name="twitter:image" content="https://ryuge.biz/images/stairs.jpg" />
 
     <link
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
+
+    <!-- 構造化データ: 店舗情報 -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "OnlineStore",
+      "name": "Ryuge Coffee 龍華珈琲",
+      "url": "https://ryuge.biz/",
+      "logo": "https://ryuge.biz/favicon.svg",
+      "image": "https://ryuge.biz/images/stairs.jpg",
+      "description": "鎌倉の珈琲ブランド。自家焙煎のスペシャルティコーヒー豆・珈琲袋・定期便をオンラインでお届けします。",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Kamakura",
+        "addressRegion": "Kanagawa",
+        "addressCountry": "JP"
+      }
+    }
+    </script>
   </head>
 
   <body>
