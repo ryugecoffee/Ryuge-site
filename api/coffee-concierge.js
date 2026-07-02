@@ -9,6 +9,42 @@ const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
 const MAX_MESSAGES = 12; // 会話履歴の上限(コスト管理)
 const MAX_CHARS_PER_MESSAGE = 1000;
 
+// ── レート制限(悪用・連投対策) ─────────────────────────────
+// サーバーレスのウォームインスタンス単位のメモリ制限。完全ではないが
+// スクリプトによる連投をほぼ止められる。最終防壁は Anthropic 側の月額上限。
+const RATE_PER_MINUTE = 8;   // 同一IP: 1分あたり
+const RATE_PER_DAY = 40;     // 同一IP: 1日あたり
+const GLOBAL_PER_DAY = 500;  // サイト全体: 1日あたり
+const ipBuckets = new Map();
+let globalBucket = { day: "", count: 0 };
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const today = new Date().toISOString().slice(0, 10);
+
+  // グローバル上限
+  if (globalBucket.day !== today) globalBucket = { day: today, count: 0 };
+  if (globalBucket.count >= GLOBAL_PER_DAY) return false;
+
+  // IP別
+  if (ipBuckets.size > 5000) ipBuckets.clear(); // メモリ保護
+  let b = ipBuckets.get(ip);
+  if (!b || b.day !== today) {
+    b = { day: today, dayCount: 0, minuteStart: now, minuteCount: 0 };
+    ipBuckets.set(ip, b);
+  }
+  if (now - b.minuteStart > 60_000) {
+    b.minuteStart = now;
+    b.minuteCount = 0;
+  }
+  if (b.minuteCount >= RATE_PER_MINUTE || b.dayCount >= RATE_PER_DAY) return false;
+
+  b.minuteCount += 1;
+  b.dayCount += 1;
+  globalBucket.count += 1;
+  return true;
+}
+
 // 商品カタログをテキスト化(productData.js が唯一の情報源)
 function buildCatalog() {
   const lines = [];
@@ -53,6 +89,15 @@ export default async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: "Concierge is not configured." });
+  }
+
+  // レート制限チェック
+  const ip =
+    (req.headers["x-forwarded-for"] || "").split(",")[0].trim() ||
+    req.socket?.remoteAddress ||
+    "unknown";
+  if (!checkRateLimit(ip)) {
+    return res.status(429).json({ error: "Too many requests. Please try again later." });
   }
 
   try {
