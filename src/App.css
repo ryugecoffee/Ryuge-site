@@ -2938,7 +2938,7 @@ html[lang="es"] .products-hero-overlay h1 {
   }
 
   .products-two-col {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 4px;
   }
 
@@ -3019,8 +3019,8 @@ html[lang="es"] .products-hero-overlay h1 {
   }
 
   .oriori-services-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
   }
 
   .oriori-service-copy {
@@ -3248,8 +3248,8 @@ html[lang="es"] .products-hero-overlay h1 {
 
 @media (max-width: 480px) {
   .products-enma-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
   }
 }
 
