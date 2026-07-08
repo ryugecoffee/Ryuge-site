@@ -367,6 +367,28 @@ export const PRODUCT_DATA = {
 
   oriori: [
     {
+      id: "enma-cookie",
+      image: "/images/enma-cookie.jpg",
+      category: "cookie",
+      comingSoon: true,
+      weight: "1袋（2枚入り）",
+      title: {
+        ja: "閻魔クッキー",
+        en: "Enma Cookie",
+        es: "Enma Cookie",
+      },
+      modalTitle: {
+        ja: "閻魔クッキー",
+        en: "Enma Cookie",
+        es: "Enma Cookie",
+      },
+      summary: {
+        ja: "円応寺と歩む、静かな甘さのひととき",
+        en: "A quiet sweetness, shaped alongside Ennoji Temple",
+        es: "Un dulce silencioso, junto al templo Ennoji",
+      },
+    },
+    {
       id: "oriori-subscription",
       category: "subscription",
       size: "100g",

@@ -36,6 +36,12 @@ const SOLD_OUT_TEXT = {
   es: "Agotado",
 };
 
+const COMING_SOON_TEXT = {
+  ja: "近日公開",
+  en: "Coming Soon",
+  es: "Próximamente",
+};
+
 export default function ProductsPage({ lang }) {
   const location = useLocation();
   const { setItem } = useCart();
@@ -274,6 +280,11 @@ export default function ProductsPage({ lang }) {
                 onClick={() => { setActiveItemId(item.id); trackViewItem(item); }}
               >
                 <img src={item.image} alt="" />
+                {item.comingSoon && (
+                  <span className="product-soldout-badge">
+                    {COMING_SOON_TEXT[lang]}
+                  </span>
+                )}
                 <div className="oriori-service-copy">
                   <h3>{item.title?.[lang]}</h3>
                   <p>{item.summary?.[lang]}</p>
@@ -548,55 +559,61 @@ export default function ProductsPage({ lang }) {
                         </dl>
                       )}
 
-                      <div className="simple-quantity-block">
-                        <p className="simple-quantity-label">
-                          {lang === "ja"
-                            ? "数量"
-                            : lang === "es"
-                            ? "Cantidad"
-                            : "Quantity"}
-                        </p>
+                      {!activeItem.comingSoon && (
+                        <div className="simple-quantity-block">
+                          <p className="simple-quantity-label">
+                            {lang === "ja"
+                              ? "数量"
+                              : lang === "es"
+                              ? "Cantidad"
+                              : "Quantity"}
+                          </p>
 
-                        <div className="simple-quantity-control">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSimpleQuantity((prev) => Math.max(0, prev - 1))
-                            }
-                          >
-                            −
-                          </button>
-
-                          <input
-                            type="number"
-                            min="0"
-                            value={simpleQuantity}
-                            onChange={(e) => {
-                              const value = e.target.value;
-
-                              if (value === "") {
-                                setSimpleQuantity(0);
-                                return;
+                          <div className="simple-quantity-control">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSimpleQuantity((prev) => Math.max(0, prev - 1))
                               }
+                            >
+                              −
+                            </button>
 
-                              const next = Number(value);
+                            <input
+                              type="number"
+                              min="0"
+                              value={simpleQuantity}
+                              onChange={(e) => {
+                                const value = e.target.value;
 
-                              if (Number.isNaN(next)) return;
+                                if (value === "") {
+                                  setSimpleQuantity(0);
+                                  return;
+                                }
 
-                              setSimpleQuantity(Math.max(0, next));
-                            }}
-                          />
+                                const next = Number(value);
 
-                          <button
-                            type="button"
-                            onClick={() => setSimpleQuantity((prev) => prev + 1)}
-                          >
-                            ＋
-                          </button>
+                                if (Number.isNaN(next)) return;
+
+                                setSimpleQuantity(Math.max(0, next));
+                              }}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => setSimpleQuantity((prev) => prev + 1)}
+                            >
+                              ＋
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      )}
 
-                      {activeItem.isSoldOut ? (
+                      {activeItem.comingSoon ? (
+                        <button className="modal-cta-link is-disabled" disabled>
+                          {COMING_SOON_TEXT[lang]}
+                        </button>
+                      ) : activeItem.isSoldOut ? (
                         <button className="modal-cta-link is-disabled" disabled>
                           {SOLD_OUT_TEXT[lang]}
                         </button>
