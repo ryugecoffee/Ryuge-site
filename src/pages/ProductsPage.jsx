@@ -58,6 +58,20 @@ export default function ProductsPage({ lang }) {
   const [showEnmaHeading, setShowEnmaHeading] = useState(false);
   const [simpleQuantity, setSimpleQuantity] = useState(1);
   const [showWoodboxHeading, setShowWoodboxHeading] = useState(false);
+  const [inventoryAvailability, setInventoryAvailability] = useState(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    const ids = [...PRODUCT_DATA.enma, ...PRODUCT_DATA.woodbox.filter((item) => !item.archived)]
+      .map((item) => item.id).join(",");
+    fetch(`https://ryuge-site.onrender.com/inventory/availability?ids=${encodeURIComponent(ids)}`, { signal: controller.signal })
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (data?.enabled && data.quantities) setInventoryAvailability(data.quantities);
+      })
+      .catch(() => {}); // The payment server performs authoritative stock checks.
+    return () => controller.abort();
+  }, []);
+
 
   const enmaSectionRef = useRef(null);
   const woodboxSectionRef = useRef(null);
@@ -207,6 +221,9 @@ export default function ProductsPage({ lang }) {
                   )}
                   {item.comingSoon && (
                     <span className="enma-coming-soon-badge">{COMING_SOON_TEXT[lang]}</span>
+                  )}
+                  {!item.comingSoon && inventoryAvailability?.[item.id] === 0 && (
+                    <span className="enma-coming-soon-badge">{SOLD_OUT_TEXT[lang]}</span>
                   )}
                 </div>
 
@@ -624,13 +641,13 @@ export default function ProductsPage({ lang }) {
 
                                 if (Number.isNaN(next)) return;
 
-                                setSimpleQuantity(Math.max(0, next));
+                                setSimpleQuantity(Math.min(Math.max(0, next), inventoryAvailability?.[activeItem.id] ?? 50));
                               }}
                             />
 
                             <button
                               type="button"
-                              onClick={() => setSimpleQuantity((prev) => prev + 1)}
+                              onClick={() => setSimpleQuantity((prev) => Math.min(prev + 1, inventoryAvailability?.[activeItem.id] ?? 50))}
                             >
                               ＋
                             </button>
@@ -642,7 +659,7 @@ export default function ProductsPage({ lang }) {
                         <button className="modal-cta-link is-disabled" disabled>
                           {COMING_SOON_TEXT[lang]}
                         </button>
-                      ) : activeItem.isSoldOut ? (
+                      ) : activeItem.isSoldOut || inventoryAvailability?.[activeItem.id] === 0 ? (
                         <button className="modal-cta-link is-disabled" disabled>
                           {SOLD_OUT_TEXT[lang]}
                         </button>
@@ -651,6 +668,7 @@ export default function ProductsPage({ lang }) {
                           type="button"
                           className="modal-cta-link modal-fade-up"
                           onClick={() => {
+                            if (inventoryAvailability && (inventoryAvailability[activeItem.id] ?? 0) < simpleQuantity) return;
                             setItem(
                               {
                                 id: activeItem.id,
