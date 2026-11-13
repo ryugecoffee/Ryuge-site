@@ -19,24 +19,7 @@ function storeWithTransactions(initial) {
     collection(name) {
       return {
         doc: (id) => doc(name + "/" + id),
-        where(field, op, value) {
-          assert.equal(name, "inventoryReservations");
-          return {
-            where() { throw new Error("UNSUPPORTED"); },
-            limit(n) {
-              return {
-                async get() {
-                  const docs = [...dbStore.entries()]
-                    .filter(([key, value]) => key.startsWith("inventoryReservations/") &&
-                      value.status === "reserved" && value.createdAt < value)
-                    .slice(0, n)
-                    .map(([key, v]) => ({ id: key.split("/").at(-1), data: () => v }));
-                  return { docs };
-                },
-              };
-            },
-          };
-        },
+
       };
     },
     async runTransaction(callback) {
