@@ -75,8 +75,8 @@ export const PRODUCT_DATA = {
       id: "enma-zen-dark",
       image: "/images/enma-brazil.jpg",
       category: "beans",
-      size: "180g",
-      weightG: 200, // 内容量180g + 袋・包装で約200g
+      size: "100g",
+      weightG: 120, // 内容量100g + 袋・包装の概算
       title: {
         ja: "閻魔　禅の深煎り",
         en: "ENMA Zen Dark Roast",
@@ -92,9 +92,13 @@ export const PRODUCT_DATA = {
       process: "Natural",
       variety: "Mundo Novo, Catuai, Acaia, Caturra, Icatu, Topazio",
       altitude: "900〜1,350m",
-      weight: "180g",
-      price: "¥1,700",
-      priceNumber: 1700,
+      weight: "100g",
+      price: "¥1,000",
+      priceNumber: 1000,
+      regularPriceNumber: 1300,
+      promotion: { active: true, label: { ja: "特別価格", en: "Special Price", es: "Precio especial" } },
+      roast: { ja: "深煎り", en: "Dark Roast", es: "Tueste oscuro" },
+      flavorNotes: { ja: ["チェリー", "チョコレート", "ハチミツ"], en: ["Cherry", "Chocolate", "Honey"], es: ["Cereza", "Chocolate", "Miel"] },
       flavor: "Cherry, Papaya, Chocolate, Honey, Wine",
       isSoldOut: false,
     },
@@ -122,6 +126,8 @@ export const PRODUCT_DATA = {
       weight: "180g",
       price: "¥1,980",
       priceNumber: 1980,
+      roast: { ja: "浅煎り", en: "Light Roast", es: "Tueste claro" },
+      flavorNotes: { ja: ["タンジェリン", "ベルガモット", "フローラル"], en: ["Tangerine", "Bergamot", "Floral"], es: ["Mandarina", "Bergamota", "Floral"] },
       flavor: "Tangerine, Bergamot, Darjeeling, Floral, Soft, Round, Sweet",
       isSoldOut: true,
     },
@@ -149,6 +155,8 @@ export const PRODUCT_DATA = {
       weight: "180g",
       price: "¥1,800",
       priceNumber: 1800,
+      roast: { ja: "浅煎り", en: "Light Roast", es: "Tueste claro" },
+      flavorNotes: { ja: ["オレンジ", "プラム", "アプリコット"], en: ["Orange", "Plum", "Apricot"], es: ["Naranja", "Ciruela", "Albaricoque"] },
       flavor: "Orange, Plum, Apricot, Floral, Black Tea",
       isSoldOut: false,
     },
@@ -176,6 +184,7 @@ export const PRODUCT_DATA = {
       weight: "180g",
       price: "¥2,200",
       priceNumber: 2200,
+      flavorNotes: { ja: ["シトラス", "ナッツ", "ハーブ"], en: ["Citrus", "Nuts", "Herbs"], es: ["Cítricos", "Frutos secos", "Hierbas"] },
       flavor: "Citrus, Nuts, Herb, Brown Sugar",
       isSoldOut: false,
     },
@@ -203,6 +212,7 @@ export const PRODUCT_DATA = {
       weight: "180g",
       price: "¥1,900",
       priceNumber: 1900,
+      flavorNotes: { ja: ["シトラス", "ライム", "グリーンティー"], en: ["Citrus", "Lime", "Green Tea"], es: ["Cítricos", "Lima", "Té verde"] },
       flavor: "Citrus, Lime, Lemon Peel, Green Tea",
       isSoldOut: false,
     },
@@ -211,6 +221,7 @@ export const PRODUCT_DATA = {
   woodbox: [
     {
       id: "woodbox-geisha",
+      archived: true, // 茶の木函へ切り替えるまで販売・AI案内から除外
       image: "/images/woodbox-2.jpg",
       category: "woodbox",
       size: "100g",
@@ -244,6 +255,7 @@ export const PRODUCT_DATA = {
     },
     {
       id: "woodbox-ecuador",
+      archived: true, // 木函の珈琲販売を一時停止
       image: "/images/woodbox-ecuador.jpg",
       category: "woodbox",
       size: "100g",
