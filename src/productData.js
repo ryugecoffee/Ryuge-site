@@ -180,9 +180,9 @@ export const PRODUCT_DATA = {
       weightG: 120, // 焙煎豆100g + 袋・梱包の概算値
       title: { ja: "閻魔　エチオピア カラモ", en: "ENMA Ethiopia Karamo", es: "ENMA Etiopía Karamo" },
       summary: {
-        ja: "焙煎後の味わいを確認しながらご案内します",
-        en: "Tasting notes will be confirmed after roasting.",
-        es: "Notas de cata pendientes de confirmar tras el tueste."
+        ja: "レッドグレープやホワイトピーチが印象的なナチュラル。仕入れ先のカッピング情報を参考にしています。",
+        en: "A natural-process lot with red grape and white peach notes, based on supplier cupping.",
+        es: "Lote natural con notas de uva roja y melocotón blanco, según la cata del proveedor."
       },
       origin: "Karamo, Bura, Sidama, Ethiopia",
       producer: "Nigusse Gemeda and local smallholder producers",
@@ -211,9 +211,9 @@ export const PRODUCT_DATA = {
       weightG: 120, // 焙煎豆100g + 袋・梱包の概算値
       title: { ja: "閻魔　コロンビア キンディオ", en: "ENMA Colombia Kindiio", es: "ENMA Colombia Kindiio" },
       summary: {
-        ja: "焙煎後の味わいを確認しながらご案内します",
-        en: "Tasting notes will be confirmed after roasting.",
-        es: "Notas de cata pendientes de confirmar tras el tueste."
+        ja: "ピーチの果実感とココナッツの心地よい甘さが特徴のインフューズドハニー。仕入れ先の紹介に基づきます。",
+        en: "Infused Honey coffee described by the supplier as peach-forward with coconut sweetness.",
+        es: "Café Infused Honey descrito por el proveedor con notas de melocotón y dulzor de coco."
       },
       origin: "Quindío, Colombia",
       process: "Infused Honey",
