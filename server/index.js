@@ -427,15 +427,15 @@ app.post("/create-payment-intent", async (req, res) => {
 
     // The legacy checkout remains untouched unless explicitly enabled and seeded.
     // Prices must be verified on the server; never trust browser cart prices.
-    const CANONICAL_PRICES = {
-      "enma-amarelo-bourbon": 1000,
-      "enma-jimma": 1300,
-      "enma-quequesques": 1300,
-      "enma-andes-blue": 1300,
-      "enma-karamo": 1800,
-      "enma-kindiio": 2050,
-      "mokkan-oku-yame-hojicha": 2800,
-      "mokkan-oku-yame-genmaicha": 2800,
+    const CANONICAL_PRODUCTS = {
+      "enma-amarelo-bourbon": { price: 1000, weightG: 120, availableForSale: false },
+      "enma-jimma": { price: 1300, weightG: 120, availableForSale: false },
+      "enma-quequesques": { price: 1300, weightG: 120, availableForSale: false },
+      "enma-andes-blue": { price: 1300, weightG: 120, availableForSale: false },
+      "enma-karamo": { price: 1800, weightG: 120, availableForSale: true },
+      "enma-kindiio": { price: 2050, weightG: 120, availableForSale: true },
+      "mokkan-oku-yame-hojicha": { price: 2800, weightG: 100, availableForSale: false },
+      "mokkan-oku-yame-genmaicha": { price: 2800, weightG: 100, availableForSale: false },
     };
     let safeItems = Array.isArray(items) ? items : [];
     let reservationId = null;
@@ -445,9 +445,10 @@ app.post("/create-payment-intent", async (req, res) => {
       }
       try {
         safeItems = inventory.validItems(safeItems).map((item) => {
-          const price = CANONICAL_PRICES[item.id];
-          if (price === undefined) throw new Error("UNKNOWN_PRODUCT");
-          return { ...item, price };
+          const product = CANONICAL_PRODUCTS[item.id];
+          if (!product) throw new Error("UNKNOWN_PRODUCT");
+          if (!product.availableForSale) throw new Error("PRODUCT_NOT_AVAILABLE");
+          return { ...item, price: product.price, weightG: product.weightG };
         });
       } catch (error) {
         return res.status(400).json({ error: error.message });
