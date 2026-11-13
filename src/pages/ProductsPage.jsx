@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-const PAYMENT_API_BASE = import.meta.env.VITE_CHECKOUT_API_BASE || "https://ryuge-site.onrender.com";
+// Draft inventory PR preview must never call the production payment API.
+const PAYMENT_API_BASE = "https://ryuge-inventory-sandbox.onrender.com";
 import { useLocation } from "react-router-dom";
 import SiteFooter from "../components/SiteFooter";
 import BeanConcierge from "../components/BeanConcierge";
