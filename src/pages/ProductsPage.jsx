@@ -205,6 +205,9 @@ export default function ProductsPage({ lang }) {
                   {item.promotion?.active && (
                     <span className="enma-promotion-ribbon">{item.promotion.label?.[lang] || item.promotion.label?.ja}</span>
                   )}
+                  {item.comingSoon && (
+                    <span className="enma-coming-soon-badge">{COMING_SOON_TEXT[lang]}</span>
+                  )}
                 </div>
 
                 {item.isSoldOut && (
@@ -222,6 +225,7 @@ export default function ProductsPage({ lang }) {
                   <p className="enma-card-origin">{item.origin?.split(",").pop()?.trim()} · {item.process}</p>
                   {item.roast?.[lang] && <p className="enma-card-roast">{item.roast[lang]}</p>}
                   {item.flavorNotes?.[lang] && <p className="enma-card-flavors">{item.flavorNotes[lang].join(" · ")}</p>}
+                  {item.tastingNotesProvisional && <p className="enma-card-note">{lang === "ja" ? "参考ノート・焙煎後確認" : lang === "es" ? "Notas orientativas; pendiente de cata" : "Reference notes; tasting pending"}</p>}
                 </div>
               </article>
             ))}
