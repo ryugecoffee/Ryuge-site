@@ -103,4 +103,44 @@ async function availability(db, ids) {
   ]));
 }
 
-module.exports = { validItems, reserve, attachPaymentIntent, finish, availability };
+
+async function reconcileExpired(db, stripe, limit = 30) {
+  const cutoff = new Date(Date.now() - 20 * 60 * 1000);
+  const snapshot = await db.collection("inventoryReservations")
+    .where("status", "==", "reserved")
+    .where("createdAt", "<", cutoff)
+    .limit(Math.min(Math.max(limit, 1), 50))
+    .get();
+  const results = [];
+  for (const doc of snapshot.docs) {
+    const reservation = doc.data();
+    if (!reservation.paymentIntentId) {
+      results.push({ id: doc.id, action: "manual-review-missing-intent" });
+      continue;
+    }
+    try {
+      let intent = await stripe.paymentIntents.retrieve(reservation.paymentIntentId);
+      if (intent.status === "succeeded") {
+        await finish(db, doc.id, intent.id, "paid");
+        results.push({ id: doc.id, action: "paid" });
+      } else if (intent.status === "canceled") {
+        await finish(db, doc.id, intent.id, "released");
+        results.push({ id: doc.id, action: "released" });
+      } else if (["requires_payment_method", "requires_confirmation", "requires_action"].includes(intent.status)) {
+        // Cancel at Stripe *before* releasing. A customer must not be able to pay afterward.
+        intent = await stripe.paymentIntents.cancel(intent.id);
+        if (intent.status !== "canceled") throw new Error("CANCEL_NOT_CONFIRMED");
+        await finish(db, doc.id, intent.id, "released");
+        results.push({ id: doc.id, action: "canceled-and-released" });
+      } else {
+        // processing or requires_capture: never free stock before verified final status.
+        results.push({ id: doc.id, action: "pending-reconciliation" });
+      }
+    } catch (error) {
+      results.push({ id: doc.id, action: "error", reason: error.message });
+    }
+  }
+  return results;
+}
+
+module.exports = { validItems, reserve, attachPaymentIntent, finish, availability, reconcileExpired };
