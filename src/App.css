@@ -3612,12 +3612,10 @@ html[lang="es"] .story-body {
   content: "";
   position: absolute;
   z-index: -1;
-  inset: 2px -6px;
-  background:
-    repeating-linear-gradient(176deg, transparent 0 2px, rgba(62,12,8,.13) 2px 3px, transparent 3px 9px),
-    linear-gradient(99deg, rgba(153,46,31,.14) 0%, #a33623 10%, #af3b28 45%, #973120 82%, rgba(153,46,31,.08) 100%);
-  clip-path: polygon(0 44%, 3% 28%, 7% 31%, 12% 18%, 22% 25%, 31% 14%, 42% 22%, 56% 12%, 69% 20%, 82% 14%, 93% 30%, 100% 20%, 97% 49%, 100% 65%, 92% 79%, 80% 75%, 72% 91%, 55% 82%, 43% 94%, 32% 83%, 18% 88%, 7% 72%, 1% 78%, 4% 58%);
-  box-shadow: 0 2px 8px rgba(0,0,0,.1);
+  inset: -10px -12px;
+  background: url("/images/vermilion-dry-brush.svg") center / 100% 100% no-repeat;
+  opacity: .97;
+  pointer-events: none;
 }
 
 .enma-coming-soon-badge {
