@@ -59,7 +59,7 @@ function buildCatalog() {
     );
   };
   (PRODUCT_DATA.enma || []).forEach((p) => push(p, "閻魔"));
-  (PRODUCT_DATA.woodbox || []).forEach((p) => push(p, "木函"));
+  (PRODUCT_DATA.woodbox || []).filter((p) => !p.archived).forEach((p) => push(p, "木函"));
   (PRODUCT_DATA.bag || []).forEach((p) => push(p, "袋シリーズ"));
   lines.push("- [定期便 折々] 珈琲袋定期便 ¥2,000/月(珈琲袋×8) / 豆の定期便 ¥1,700/月(閻魔180gランダム) / 禅の仕立て便 ¥3,300/月(珈琲袋×8+ほうじ茶袋×8)");
 
