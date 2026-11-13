@@ -91,6 +91,8 @@ export const PRODUCT_WEIGHT_G = {
   "enma-kenya":       200,
   "woodbox-geisha":   170,
   "woodbox-ecuador":  170,
+  "mokkan-oku-yame-hojicha": 100, // 仮値・木函包装後に実測する
+  "mokkan-oku-yame-genmaicha": 100, // 仮値・木函包装後に実測する
   "enma-coffee-bag":  100,
   "woodbox-tea-bag":  120,
 };
