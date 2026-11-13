@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+const PAYMENT_API_BASE = import.meta.env.VITE_CHECKOUT_API_BASE || "${PAYMENT_API_BASE}";
 import { useLocation } from "react-router-dom";
 import SiteFooter from "../components/SiteFooter";
 import BeanConcierge from "../components/BeanConcierge";
@@ -63,7 +64,7 @@ export default function ProductsPage({ lang }) {
     const controller = new AbortController();
     const ids = [...PRODUCT_DATA.enma, ...PRODUCT_DATA.woodbox.filter((item) => !item.archived)]
       .map((item) => item.id).join(",");
-    fetch(`https://ryuge-site.onrender.com/inventory/availability?ids=${encodeURIComponent(ids)}`, { signal: controller.signal })
+    fetch(`${PAYMENT_API_BASE}/inventory/availability?ids=${encodeURIComponent(ids)}`, { signal: controller.signal })
       .then((response) => response.ok ? response.json() : null)
       .then((data) => {
         if (data?.enabled && data.quantities) setInventoryAvailability(data.quantities);
