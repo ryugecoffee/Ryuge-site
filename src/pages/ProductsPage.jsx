@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-const PAYMENT_API_BASE = import.meta.env.VITE_CHECKOUT_API_BASE || "${PAYMENT_API_BASE}";
+const PAYMENT_API_BASE = import.meta.env.VITE_CHECKOUT_API_BASE || "https://ryuge-site.onrender.com";
 import { useLocation } from "react-router-dom";
 import SiteFooter from "../components/SiteFooter";
 import BeanConcierge from "../components/BeanConcierge";
