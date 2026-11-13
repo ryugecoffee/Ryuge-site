@@ -12,7 +12,7 @@ const UI = {
       "静けさ、余白、質感。ただ、そこにある一杯",
     heroButton: "商品を見る",
 
-    products: "商品",
+    products: "オンラインストア",
     about: "龍華について",
     contact: "お問い合わせ",
 
@@ -28,7 +28,7 @@ const UI = {
     presenceTitle: "静けさが、\n存在感になる",
     presenceText:
       "派手な演出ではなく、静かに視線を止める存在、\n商品だけでなくその周辺に漂う空気まで",
-    productsLabel: "商品",
+    productsLabel: "オンラインストア",
     productsText:
       "3つの商品は、それぞれ異なる輪郭を持ちながら、同じ静けさへとつながっています。",
     detail: "詳細を見る",
@@ -72,7 +72,7 @@ orioriDescription: "折々は、季節や日々の移ろいに合わせて、そ
   heroText: "Stillness, space, texture. A cup that simply exists.",
   heroButton: "Products",
 
-  products: "Products",
+  products: "Online Store",
   about: "About",
   contact: "Contact",
 
@@ -90,7 +90,7 @@ orioriDescription: "折々は、季節や日々の移ろいに合わせて、そ
   presenceText:
     "Not a striking performance, but a presence that quietly draws the gaze. Not only the product itself, but even the air surrounding it.",
 
-  productsLabel: "Products",
+  productsLabel: "Online Store",
   productsText:
     "Three products, each with a different contour, yet all connected to the same stillness.",
 
@@ -141,7 +141,7 @@ es: {
   heroText: "Quietud, espacio, textura. Una taza que simplemente existe.",
   heroButton: "Productos",
 
-  products: "Productos",
+  products: "Tienda en línea",
   about: "Sobre Ryuge",
   contact: "Contacto",
 
@@ -159,7 +159,7 @@ es: {
   presenceText:
     "No una actuación llamativa, sino una presencia que atrae la mirada en silencio. No solo el producto, sino incluso el aire que lo rodea.",
 
-  productsLabel: "Productos",
+  productsLabel: "Tienda en línea",
   productsText:
     "Tres productos con contornos distintos, unidos por una misma quietud.",
 
