@@ -102,7 +102,6 @@ export const PRODUCT_DATA = {
       priceNumber: 1000,
       roast: { ja: "中深煎り", en: "Medium-Dark Roast", es: "Tueste medio-oscuro" },
       flavorNotes: { ja: ["ナッツ","ハチミツ","チョコレート"], en: ["Nuts","Honey","Chocolate"], es: ["Frutos secos","Miel","Chocolate"] },
-      promotion: { active: true, label: { ja: "特別価格", en: "Special Price", es: "Precio especial" } },
       comingSoon: true,
       isSoldOut: false,
     },
