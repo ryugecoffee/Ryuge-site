@@ -572,9 +572,11 @@ export default function ProductsPage({ lang }) {
                           {renderSpecRow(labels.process, activeItem.process)}
                           {renderSpecRow(labels.variety, activeItem.variety)}
                           {renderSpecRow(labels.altitude, activeItem.altitude)}
+                          {renderSpecRow(labels.harvest, activeItem.harvest)}
+                          {renderSpecRow(labels.arrival, activeItem.arrival)}
                           {renderSpecRow(labels.weight, activeItem.weight)}
                           {renderSpecRow(labels.price, activeItem.price)}
-                          {renderSpecRow(labels.flavor, activeItem.flavor)}
+                          {renderSpecRow(labels.flavor, activeItem.flavorNotes?.[lang]?.join(" · ") || activeItem.flavor)}
                         </dl>
                       )}
 
