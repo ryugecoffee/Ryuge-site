@@ -3437,3 +3437,114 @@ html[lang="es"] .story-body {
 .shipping-banner-close:hover {
   color: rgba(245, 241, 232, 0.8);
 }
+
+
+/* Enma catalogue: readable cards below the imagery, without altering gift/service cards */
+.products-enma-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  padding: 0 28px 32px;
+}
+
+.products-enma-grid .enma-product-card {
+  aspect-ratio: auto;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(245,241,232,.1);
+  border-radius: 5px;
+  background: #101010;
+}
+
+.enma-card-photo {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+}
+
+.products-enma-grid .enma-card-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(.9) saturate(.9);
+}
+
+.enma-promotion-ribbon {
+  position: absolute;
+  top: 14px;
+  left: 0;
+  right: 0;
+  padding: 9px 12px;
+  background: #a83a29;
+  color: #fff;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: .14em;
+  font-weight: 600;
+}
+
+.products-enma-grid .products-enma-card-text {
+  position: static;
+  padding: 18px 16px 20px;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.products-enma-grid .products-enma-card-text h3 {
+  color: #f0ece6;
+  font-size: clamp(15px, 1.3vw, 19px);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.products-enma-grid .products-enma-card-text p {
+  color: #c4bfb8;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.enma-price-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.enma-original-price {
+  color: #a9a19b;
+  text-decoration: line-through;
+  font-size: 12px;
+}
+
+.enma-current-price {
+  color: #eee9e3;
+  font-size: 19px;
+  letter-spacing: .03em;
+}
+
+.enma-current-price small {
+  font-size: 11px;
+  font-weight: 400;
+  color: #b1aaa3;
+}
+
+.products-enma-grid .products-enma-card-text .enma-card-flavors {
+  margin-top: auto;
+  color: #e0d9d0;
+}
+
+@media (max-width: 768px) {
+  .products-enma-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 0 12px 20px;
+  }
+  .products-enma-grid .enma-product-card { min-height: 0; aspect-ratio: auto; }
+  .products-enma-grid .products-enma-card-text { padding: 12px 10px 14px; min-height: 174px; gap: 6px; }
+  .products-enma-grid .products-enma-card-text h3 { font-size: 13px; }
+  .products-enma-grid .products-enma-card-text p { font-size: 10px; overflow-wrap: anywhere; }
+  .enma-current-price { font-size: 16px; }
+  .enma-promotion-ribbon { font-size: 10px; padding: 7px 8px; }
+}
