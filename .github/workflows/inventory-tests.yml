@@ -7,6 +7,7 @@ on:
     paths:
       - 'server/inventory.js'
       - 'server/inventory.test.js'
+      - 'server/inventory-scenarios.test.js'
       - 'server/index.js'
       - '.github/workflows/inventory-tests.yml'
 permissions:
@@ -28,4 +29,4 @@ jobs:
           node --check server/inventory.js
           node --check server/index.js
       - name: Unit tests
-        run: node --test server/inventory.test.js
+        run: node --test server/inventory.test.js server/inventory-scenarios.test.js
