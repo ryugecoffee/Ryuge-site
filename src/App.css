@@ -534,6 +534,69 @@ html[lang="en"] .product-copy h3 {
 }
 
 
+/* Shared, understated navigation across the homepage and store */
+.site-header .site-logo {
+  justify-self: start;
+  color: #d8d3cc;
+  font-size: 20px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.25s ease;
+}
+
+.site-header .site-logo:hover,
+.site-header .site-logo:focus-visible {
+  color: #fff;
+}
+
+.site-header .site-nav {
+  justify-self: center;
+}
+
+.site-header .site-nav a,
+.site-header .store-nav .cart-indicator {
+  color: #d8d3cc !important;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.site-header .store-nav .cart-indicator {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 10px 12px;
+}
+
+.site-header .site-nav a:hover,
+.site-header .store-nav .cart-indicator:hover {
+  color: #fff !important;
+}
+
+.site-header .lang-switch {
+  justify-self: end;
+}
+
+.site-header .lang-switch button {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+@media (max-width: 768px) {
+  .site-header .site-logo {
+    font-size: 17px;
+  }
+
+  .site-header .site-nav a,
+  .site-header .store-nav .cart-indicator {
+    font-size: 11px;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .site-header .lang-switch button {
+    padding: 7px 5px;
+  }
+}
+
 /* ============================================================
    HERO
 ============================================================ */
