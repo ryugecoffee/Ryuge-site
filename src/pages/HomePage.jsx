@@ -12,7 +12,7 @@ const UI = {
       "静けさ、余白、質感。ただ、そこにある一杯",
     heroButton: "商品を見る",
 
-    products: "商品",
+    products: "オンラインストア",
     about: "龍華について",
     contact: "お問い合わせ",
 
@@ -28,7 +28,7 @@ const UI = {
     presenceTitle: "静けさが、\n存在感になる",
     presenceText:
       "派手な演出ではなく、静かに視線を止める存在、\n商品だけでなくその周辺に漂う空気まで",
-    productsLabel: "商品",
+    productsLabel: "オンラインストア",
     productsText:
       "3つの商品は、それぞれ異なる輪郭を持ちながら、同じ静けさへとつながっています。",
     detail: "詳細を見る",
@@ -72,7 +72,7 @@ orioriDescription: "折々は、季節や日々の移ろいに合わせて、そ
   heroText: "Stillness, space, texture. A cup that simply exists.",
   heroButton: "Products",
 
-  products: "Products",
+  products: "Online Store",
   about: "About",
   contact: "Contact",
 
@@ -90,7 +90,7 @@ orioriDescription: "折々は、季節や日々の移ろいに合わせて、そ
   presenceText:
     "Not a striking performance, but a presence that quietly draws the gaze. Not only the product itself, but even the air surrounding it.",
 
-  productsLabel: "Products",
+  productsLabel: "Online Store",
   productsText:
     "Three products, each with a different contour, yet all connected to the same stillness.",
 
@@ -141,7 +141,7 @@ es: {
   heroText: "Quietud, espacio, textura. Una taza que simplemente existe.",
   heroButton: "Productos",
 
-  products: "Productos",
+  products: "Tienda en línea",
   about: "Sobre Ryuge",
   contact: "Contacto",
 
@@ -159,7 +159,7 @@ es: {
   presenceText:
     "No una actuación llamativa, sino una presencia que atrae la mirada en silencio. No solo el producto, sino incluso el aire que lo rodea.",
 
-  productsLabel: "Productos",
+  productsLabel: "Tienda en línea",
   productsText:
     "Tres productos con contornos distintos, unidos por una misma quietud.",
 
@@ -241,9 +241,9 @@ subtitle: "Enma",
 name: "木函",
 subtitle: "Wooden Edition",
       description:
-        "木という素材の温度を活かした、より深く印象に残る最高位な珈琲。",
+        "木函は、茶を贈るための仕立てへ。新しい品揃えを準備中。",
       detail:
-        "木函は、品質の高い選び抜かれたものだけを収める器。触れた瞬間から違いが立ち上がり、開ける所作とともに静けさが整う。寺から届く、最上位の味わい。",
+        "木函は、お茶を包む贈り物として準備を進めています。新しい仕立てのご案内まで、もうしばらくお待ちください。",
       image: "/images/atmosphere-2.jpg",
       className: "product-side-top",
       squareUrl: COMMON_SQUARE_URL,
@@ -267,9 +267,9 @@ subtitle: "Enma",
 name: "木函",
 subtitle: "Wooden Edition",
       description:
-        "A deeper expression shaped through the warmth and tactility of wood.",
+        "A wooden presentation for Japanese tea gifts. A new collection is coming soon.",
       detail:
-        "Wood Box is made to refine the act of giving. The opening gesture, surface feel, and breathing room of the design are part of the experience.",
+        "We are preparing Mokkan as a gift collection for Japanese tea. Details will follow.",
       image: "/images/atmosphere-2.jpg",
       className: "product-side-top",
       squareUrl: COMMON_SQUARE_URL,
@@ -293,9 +293,9 @@ subtitle: "Enma",
 name: "木函",
 subtitle: "Wooden Edition",
       description:
-        "Una expresión más profunda creada con la calidez y la textura de la madera.",
+        "Una presentación en madera para regalar té japonés. Próximamente.",
       detail:
-        "Wood Box busca ordenar con calma el acto de regalar. El gesto de abrir, la textura y el espacio visual forman parte de la experiencia.",
+        "Estamos preparando Mokkan como colección de regalos de té japonés. Pronto habrá novedades.",
       image: "/images/atmosphere-2.jpg",
       className: "product-side-top",
       squareUrl: COMMON_SQUARE_URL,
@@ -708,7 +708,7 @@ export default function HomePage({ lang, setLang }) {
   onClick={() => {
     const id = selectedProduct.id;
     setSelectedProduct(null);
-    navigate(`/products#${id}`);
+    navigate(`/products#${id === "woodbox" ? "oriori" : id}`);
   }}
   role="button"
   tabIndex={0}
@@ -716,7 +716,7 @@ export default function HomePage({ lang, setLang }) {
     if (e.key === "Enter" || e.key === " ") {
       const id = selectedProduct.id;
       setSelectedProduct(null);
-      navigate(`/products#${id}`);
+      navigate(`/products#${id === "woodbox" ? "oriori" : id}`);
     }
   }}
 >

@@ -534,6 +534,69 @@ html[lang="en"] .product-copy h3 {
 }
 
 
+/* Shared, understated navigation across the homepage and store */
+.site-header .site-logo {
+  justify-self: start;
+  color: #d8d3cc;
+  font-size: 20px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.25s ease;
+}
+
+.site-header .site-logo:hover,
+.site-header .site-logo:focus-visible {
+  color: #fff;
+}
+
+.site-header .site-nav {
+  justify-self: center;
+}
+
+.site-header .site-nav a,
+.site-header .store-nav .cart-indicator {
+  color: #d8d3cc !important;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.site-header .store-nav .cart-indicator {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 10px 12px;
+}
+
+.site-header .site-nav a:hover,
+.site-header .store-nav .cart-indicator:hover {
+  color: #fff !important;
+}
+
+.site-header .lang-switch {
+  justify-self: end;
+}
+
+.site-header .lang-switch button {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+@media (max-width: 768px) {
+  .site-header .site-logo {
+    font-size: 17px;
+  }
+
+  .site-header .site-nav a,
+  .site-header .store-nav .cart-indicator {
+    font-size: 11px;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .site-header .lang-switch button {
+    padding: 7px 5px;
+  }
+}
+
 /* ============================================================
    HERO
 ============================================================ */
@@ -3373,4 +3436,251 @@ html[lang="es"] .story-body {
 
 .shipping-banner-close:hover {
   color: rgba(245, 241, 232, 0.8);
+}
+
+
+/* Enma catalogue: readable cards below the imagery, without altering gift/service cards */
+.products-enma-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  padding: 0 28px 32px;
+}
+
+.products-enma-grid .enma-product-card {
+  aspect-ratio: auto;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(245,241,232,.1);
+  border-radius: 5px;
+  background: #101010;
+}
+
+.enma-card-photo {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+}
+
+.products-enma-grid .enma-card-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(.9) saturate(.9);
+}
+
+.enma-promotion-ribbon {
+  position: absolute;
+  top: 14px;
+  left: 0;
+  right: 0;
+  padding: 9px 12px;
+  background: #a83a29;
+  color: #fff;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: .14em;
+  font-weight: 600;
+}
+
+.products-enma-grid .products-enma-card-text {
+  position: static;
+  padding: 18px 16px 20px;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.products-enma-grid .products-enma-card-text h3 {
+  color: #f0ece6;
+  font-size: clamp(15px, 1.3vw, 19px);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.products-enma-grid .products-enma-card-text p {
+  color: #c4bfb8;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.enma-price-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.enma-original-price {
+  color: #a9a19b;
+  text-decoration: line-through;
+  font-size: 12px;
+}
+
+.enma-current-price {
+  color: #eee9e3;
+  font-size: 19px;
+  letter-spacing: .03em;
+}
+
+.enma-current-price small {
+  font-size: 11px;
+  font-weight: 400;
+  color: #b1aaa3;
+}
+
+.products-enma-grid .products-enma-card-text .enma-card-flavors {
+  margin-top: auto;
+  color: #e0d9d0;
+}
+
+@media (max-width: 768px) {
+  .products-enma-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 0 12px 20px;
+  }
+  .products-enma-grid .enma-product-card { min-height: 0; aspect-ratio: auto; }
+  .products-enma-grid .products-enma-card-text { padding: 12px 10px 14px; min-height: 174px; gap: 6px; }
+  .products-enma-grid .products-enma-card-text h3 { font-size: 13px; }
+  .products-enma-grid .products-enma-card-text p { font-size: 10px; overflow-wrap: anywhere; }
+  .enma-current-price { font-size: 16px; }
+  .enma-promotion-ribbon { font-size: 10px; padding: 7px 8px; }
+}
+
+/* Arrival status on the refreshed Enma catalogue */
+.enma-coming-soon-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  padding: 6px 9px;
+  border: 1px solid rgba(255,255,255,.42);
+  border-radius: 3px;
+  background: rgba(0,0,0,.7);
+  color: #f0ece6;
+  font-size: 11px;
+  letter-spacing: .04em;
+}
+.enma-card-note { opacity: .7; font-size: 10px !important; }
+.enma-card-photo:has(.enma-promotion-ribbon) .enma-coming-soon-badge { top: 54px; }
+@media (max-width: 768px) { .enma-coming-soon-badge { top: 8px; right: 8px; font-size: 9px; padding: 5px 6px; } }
+
+
+/* Preview refinement: a hand-painted vermilion mark instead of a sale strip */
+.products-enma-grid .enma-card-photo {
+  isolation: isolate;
+  background: #101010;
+}
+
+.products-enma-grid .enma-card-photo img {
+  filter: brightness(.83) contrast(1.08) saturate(.68);
+  transition: filter .3s ease, transform .5s ease;
+}
+
+.products-enma-grid .enma-product-card:hover .enma-card-photo img {
+  filter: brightness(.9) contrast(1.08) saturate(.72);
+}
+
+.enma-promotion-ribbon {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  right: auto;
+  transform: translate(-50%, -50%) rotate(-2deg);
+  width: 82%;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #fff8ef;
+  text-shadow: 0 1px 3px rgba(46,10,7,.65);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: .22em;
+  white-space: nowrap;
+}
+
+.enma-promotion-ribbon::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -10px -12px;
+  background: url("/images/vermilion-dry-brush.svg") center / 100% 100% no-repeat;
+  opacity: .97;
+  pointer-events: none;
+}
+
+.enma-coming-soon-badge {
+  top: 12px;
+  right: 12px;
+  border-color: rgba(255,255,255,.24);
+  border-radius: 2px;
+  background: rgba(9,9,9,.45);
+  color: rgba(255,255,255,.76);
+  padding: 5px 8px;
+  font-size: 10px;
+  letter-spacing: .08em;
+}
+
+.enma-card-photo:has(.enma-promotion-ribbon) .enma-coming-soon-badge {
+  top: 12px;
+}
+
+.enma-title-series::after { content: "　"; }
+
+.products-enma-grid .products-enma-card-text .enma-card-flavors {
+  margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+  .products-enma-grid .products-enma-card-text {
+    min-height: 0;
+    padding: 12px 10px 13px;
+    gap: 5px;
+  }
+
+  .products-enma-grid .products-enma-card-text h3.enma-card-title {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    min-height: 0;
+    line-height: 1.35;
+    font-size: 13px;
+  }
+
+  .enma-title-series::after { content: none; }
+
+  .enma-title-origin {
+    font-size: 12px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  .products-enma-grid .products-enma-card-text .enma-card-flavors {
+    margin-top: 2px;
+  }
+
+  .enma-promotion-ribbon {
+    width: 90%;
+    min-height: 34px;
+    padding: 8px 6px;
+    font-size: 11px;
+    letter-spacing: .12em;
+  }
+
+  .enma-coming-soon-badge {
+    top: 7px;
+    right: 7px;
+    padding: 4px 5px;
+    font-size: 9px;
+  }
 }

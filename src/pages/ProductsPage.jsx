@@ -49,6 +49,7 @@ export default function ProductsPage({ lang }) {
   const sectionText = PRODUCT_SECTIONS[lang] || PRODUCT_SECTIONS.ja;
   const labels = sectionText.specLabels;
   const products = PRODUCT_DATA;
+  const activeWoodbox = products.woodbox.filter((item) => !item.archived);
 
   const [activeItemId, setActiveItemId] = useState(null);
   const [selectedSubscriptionPlan, setSelectedSubscriptionPlan] = useState(
@@ -62,7 +63,7 @@ export default function ProductsPage({ lang }) {
   const woodboxSectionRef = useRef(null);
 
   const activeItem =
-    [...products.enma, ...products.woodbox, ...(products.bag || []), ...products.oriori].find(
+    [...products.enma, ...activeWoodbox, ...(products.bag || []), ...products.oriori].find(
       (item) => item.id === activeItemId
     ) || null;
 
@@ -122,7 +123,7 @@ export default function ProductsPage({ lang }) {
     const enmaNode = enmaSectionRef.current;
     const woodboxNode = woodboxSectionRef.current;
 
-    if (!enmaNode || !woodboxNode) return;
+    if (!enmaNode) return;
 
     let enmaTriggered = false;
     let woodboxTriggered = false;
@@ -141,6 +142,7 @@ export default function ProductsPage({ lang }) {
       }
 
       if (!woodboxTriggered) {
+        if (!woodboxNode) return;
         const woodboxTop = woodboxNode.getBoundingClientRect().top;
         if (woodboxTop <= triggerLine) {
           woodboxTriggered = true;
@@ -195,10 +197,18 @@ export default function ProductsPage({ lang }) {
             {products.enma.map((item) => (
               <article
                 key={item.id}
-                className="products-enma-static-card"
+                className="products-enma-static-card enma-product-card"
                 onClick={() => { setActiveItemId(item.id); trackViewItem(item); }}
               >
-                <img src={item.image} alt="" />
+                <div className="enma-card-photo">
+                  <img src={item.image} alt="" />
+                  {item.promotion?.active && (
+                    <span className="enma-promotion-ribbon">{item.promotion.label?.[lang] || item.promotion.label?.ja}</span>
+                  )}
+                  {item.comingSoon && (
+                    <span className="enma-coming-soon-badge">{COMING_SOON_TEXT[lang]}</span>
+                  )}
+                </div>
 
                 {item.isSoldOut && (
                   <span className="product-soldout-badge">
@@ -207,9 +217,21 @@ export default function ProductsPage({ lang }) {
                 )}
 
                 <div className="products-enma-card-text">
-                  <h3>{item.title?.[lang]}</h3>
-                  <p>{item.summary?.[lang]}</p>
-                  {item.price && <p className="product-card-price">{item.price}</p>}
+                  <h3 className="enma-card-title">
+                    {lang === "ja" && item.title?.ja?.startsWith("閻魔") ? (
+                      <>
+                        <span className="enma-title-series">閻魔</span>
+                        <span className="enma-title-origin">{item.title.ja.replace(/^閻魔[　 ]*/, "")}</span>
+                      </>
+                    ) : item.title?.[lang]}
+                  </h3>
+                  <div className="enma-price-row">
+                    {item.regularPriceNumber && item.promotion?.active && <span className="enma-original-price">¥{item.regularPriceNumber.toLocaleString()}</span>}
+                    <span className="enma-current-price">{item.price} <small>/ {item.weight}</small></span>
+                  </div>
+                  <p className="enma-card-origin">{({ Natural: { ja: "ナチュラル", en: "Natural", es: "Natural" }, Washed: { ja: "ウォッシュド", en: "Washed", es: "Lavado" }, "Infused Honey": { ja: "インフューズドハニー", en: "Infused Honey", es: "Honey infusionado" } })[item.process]?.[lang] || item.process}</p>
+                  {item.roast?.[lang] && <p className="enma-card-roast">{item.roast[lang]}</p>}
+                  {item.flavorNotes?.[lang] && <p className="enma-card-flavors">{item.flavorNotes[lang].join(" · ")}</p>}
                 </div>
               </article>
             ))}
@@ -230,6 +252,7 @@ export default function ProductsPage({ lang }) {
           </div>
         </section>
 
+        {activeWoodbox.length > 0 && (
         <section className="products-showcase-section products-woodbox-section" id="woodbox">
           <div
             ref={woodboxSectionRef}
@@ -242,7 +265,7 @@ export default function ProductsPage({ lang }) {
           </div>
 
           <div className="products-two-col">
-            {products.woodbox.map((item) => (
+            {activeWoodbox.map((item) => (
               <article
                 key={item.id}
                 className="products-enma-static-card products-woodbox-card"
@@ -265,6 +288,8 @@ export default function ProductsPage({ lang }) {
             ))}
           </div>
         </section>
+
+        )}
 
         <section className="oriori-services-section" id="oriori">
           <div className="oriori-heading">
@@ -548,14 +573,18 @@ export default function ProductsPage({ lang }) {
                         </div>
                       ) : (
                         <dl className="product-specs product-specs-classic modal-fade-up">
-                          {renderSpecRow(labels.origin, activeItem.origin)}
-                          {renderSpecRow(labels.producer, activeItem.producer)}
-                          {renderSpecRow(labels.process, activeItem.process)}
-                          {renderSpecRow(labels.variety, activeItem.variety)}
-                          {renderSpecRow(labels.altitude, activeItem.altitude)}
-                          {renderSpecRow(labels.weight, activeItem.weight)}
-                          {renderSpecRow(labels.price, activeItem.price)}
-                          {renderSpecRow(labels.flavor, activeItem.flavor)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Origin" : labels.origin, activeItem.origin)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Producer" : labels.producer, activeItem.producer)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Process" : labels.process, activeItem.process)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Variety" : labels.variety, activeItem.variety)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Grade" : "Grade", activeItem.grade)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Altitude" : labels.altitude, activeItem.altitude)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Drying" : "Drying", activeItem.drying)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Harvest" : labels.harvest, activeItem.harvest)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Arrival" : labels.arrival, activeItem.arrival)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Weight" : labels.weight, activeItem.weight)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Price" : labels.price, activeItem.price)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Flavor Notes" : labels.flavor, activeItem.category === "beans" ? (activeItem.flavorNotes?.en?.join(" · ") || activeItem.flavor) : (activeItem.flavorNotes?.[lang]?.join(" · ") || activeItem.flavor))}
                         </dl>
                       )}
 

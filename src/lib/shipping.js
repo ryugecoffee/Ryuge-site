@@ -84,13 +84,16 @@ export const COUNTRY_ZONES = {
  * productData.js の weightG と一致させること。
  */
 export const PRODUCT_WEIGHT_G = {
-  "enma-zen-dark":    200,
-  "enma-ethiopia":    200,
-  "enma-burundi-light": 200,
-  "enma-colombia":    200,
-  "enma-kenya":       200,
+  "enma-amarelo-bourbon": 120,
+  "enma-jimma":          120,
+  "enma-quequesques":    120,
+  "enma-andes-blue":     120,
+  "enma-karamo":         120,
+  "enma-kindiio":        120,
   "woodbox-geisha":   170,
   "woodbox-ecuador":  170,
+  "mokkan-oku-yame-hojicha": 100, // 仮値・木函包装後に実測する
+  "mokkan-oku-yame-genmaicha": 100, // 仮値・木函包装後に実測する
   "enma-coffee-bag":  100,
   "woodbox-tea-bag":  120,
 };
