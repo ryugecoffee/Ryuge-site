@@ -95,7 +95,7 @@ export const PRODUCT_DATA = {
       weight: "100g",
       price: "¥1,000",
       priceNumber: 1000,
-      regularPriceNumber: 1300,
+      regularPriceNumber: null, // 通常100g価格は未確定（根拠のない二重価格表示を避ける）
       promotion: { active: true, label: { ja: "特別価格", en: "Special Price", es: "Precio especial" } },
       roast: { ja: "深煎り", en: "Dark Roast", es: "Tueste oscuro" },
       flavorNotes: { ja: ["チェリー", "チョコレート", "ハチミツ"], en: ["Cherry", "Chocolate", "Honey"], es: ["Cereza", "Chocolate", "Miel"] },
