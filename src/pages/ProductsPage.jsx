@@ -566,16 +566,18 @@ export default function ProductsPage({ lang }) {
                         </div>
                       ) : (
                         <dl className="product-specs product-specs-classic modal-fade-up">
-                          {renderSpecRow(labels.origin, activeItem.origin)}
-                          {renderSpecRow(labels.producer, activeItem.producer)}
-                          {renderSpecRow(labels.process, activeItem.process)}
-                          {renderSpecRow(labels.variety, activeItem.variety)}
-                          {renderSpecRow(labels.altitude, activeItem.altitude)}
-                          {renderSpecRow(labels.harvest, activeItem.harvest)}
-                          {renderSpecRow(labels.arrival, activeItem.arrival)}
-                          {renderSpecRow(labels.weight, activeItem.weight)}
-                          {renderSpecRow(labels.price, activeItem.price)}
-                          {renderSpecRow(labels.flavor, activeItem.flavorNotes?.[lang]?.join(" · ") || activeItem.flavor)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Origin" : labels.origin, activeItem.origin)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Producer" : labels.producer, activeItem.producer)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Process" : labels.process, activeItem.process)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Variety" : labels.variety, activeItem.variety)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Grade" : "Grade", activeItem.grade)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Altitude" : labels.altitude, activeItem.altitude)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Drying" : "Drying", activeItem.drying)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Harvest" : labels.harvest, activeItem.harvest)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Arrival" : labels.arrival, activeItem.arrival)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Weight" : labels.weight, activeItem.weight)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Price" : labels.price, activeItem.price)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Flavor Notes" : labels.flavor, activeItem.category === "beans" ? (activeItem.flavorNotes?.en?.join(" · ") || activeItem.flavor) : (activeItem.flavorNotes?.[lang]?.join(" · ") || activeItem.flavor))}
                         </dl>
                       )}
 
