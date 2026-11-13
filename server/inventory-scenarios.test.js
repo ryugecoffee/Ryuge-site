@@ -74,3 +74,15 @@ test("failed card attempt releases inventory without a sale", async () => {
   assert.equal(await finish(db, reservationId, "pi_sandbox_mock_2", "released"), true);
   assert.deepEqual(dbStore.get("inventory/enma-karamo"), { ready: 15, held: 0, sold: 0 });
 });
+
+test("successful sandbox payment event moves 15 available bags to 14 without double-selling", async () => {
+  const { db, dbStore } = storeWithTransactions({
+    "inventory/enma-karamo": { ready: 15, held: 0, sold: 0 },
+  });
+  const id = await reserve(db, [{ id: "enma-karamo", quantity: 1 }]);
+  await attachPaymentIntent(db, id, "pi_sandbox_mock_3");
+  assert.deepEqual(await availability(db, ["enma-karamo"]), { "enma-karamo": 14 });
+  assert.equal(await finish(db, id, "pi_sandbox_mock_3", "paid"), true);
+  assert.equal(await finish(db, id, "pi_sandbox_mock_3", "paid"), false);
+  assert.deepEqual(dbStore.get("inventory/enma-karamo"), { ready: 14, held: 0, sold: 1 });
+});
