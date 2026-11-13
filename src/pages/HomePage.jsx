@@ -241,9 +241,9 @@ subtitle: "Enma",
 name: "木函",
 subtitle: "Wooden Edition",
       description:
-        "木という素材の温度を活かした、より深く印象に残る最高位な珈琲。",
+        "木函は、茶を贈るための仕立てへ。新しい品揃えを準備中。",
       detail:
-        "木函は、品質の高い選び抜かれたものだけを収める器。触れた瞬間から違いが立ち上がり、開ける所作とともに静けさが整う。寺から届く、最上位の味わい。",
+        "木函は、お茶を包む贈り物として準備を進めています。新しい仕立てのご案内まで、もうしばらくお待ちください。",
       image: "/images/atmosphere-2.jpg",
       className: "product-side-top",
       squareUrl: COMMON_SQUARE_URL,
@@ -267,9 +267,9 @@ subtitle: "Enma",
 name: "木函",
 subtitle: "Wooden Edition",
       description:
-        "A deeper expression shaped through the warmth and tactility of wood.",
+        "A wooden presentation for Japanese tea gifts. A new collection is coming soon.",
       detail:
-        "Wood Box is made to refine the act of giving. The opening gesture, surface feel, and breathing room of the design are part of the experience.",
+        "We are preparing Mokkan as a gift collection for Japanese tea. Details will follow.",
       image: "/images/atmosphere-2.jpg",
       className: "product-side-top",
       squareUrl: COMMON_SQUARE_URL,
@@ -293,9 +293,9 @@ subtitle: "Enma",
 name: "木函",
 subtitle: "Wooden Edition",
       description:
-        "Una expresión más profunda creada con la calidez y la textura de la madera.",
+        "Una presentación en madera para regalar té japonés. Próximamente.",
       detail:
-        "Wood Box busca ordenar con calma el acto de regalar. El gesto de abrir, la textura y el espacio visual forman parte de la experiencia.",
+        "Estamos preparando Mokkan como colección de regalos de té japonés. Pronto habrá novedades.",
       image: "/images/atmosphere-2.jpg",
       className: "product-side-top",
       squareUrl: COMMON_SQUARE_URL,
@@ -708,7 +708,7 @@ export default function HomePage({ lang, setLang }) {
   onClick={() => {
     const id = selectedProduct.id;
     setSelectedProduct(null);
-    navigate(`/products#${id}`);
+    navigate(`/products#${id === "woodbox" ? "oriori" : id}`);
   }}
   role="button"
   tabIndex={0}
@@ -716,7 +716,7 @@ export default function HomePage({ lang, setLang }) {
     if (e.key === "Enter" || e.key === " ") {
       const id = selectedProduct.id;
       setSelectedProduct(null);
-      navigate(`/products#${id}`);
+      navigate(`/products#${id === "woodbox" ? "oriori" : id}`);
     }
   }}
 >
