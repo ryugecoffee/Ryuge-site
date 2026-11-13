@@ -1,5 +1,5 @@
 import { trackBeginCheckout } from "../lib/analytics";
-const PAYMENT_API_BASE = import.meta.env.VITE_CHECKOUT_API_BASE || "${PAYMENT_API_BASE}";
+const PAYMENT_API_BASE = import.meta.env.VITE_CHECKOUT_API_BASE || "https://ryuge-site.onrender.com";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useCart } from "../CartContext";
 import { useNavigate } from "react-router-dom";
@@ -434,7 +434,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
       try {
         setError("");
         const response = await fetch(
-          `${PAYMENT_API_BASE}/create-payment-intent",
+          `${PAYMENT_API_BASE}/create-payment-intent`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -476,7 +476,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
     if (!couponCode.trim()) return;
     setCouponStatus("applying");
     try {
-      const res = await fetch(`${PAYMENT_API_BASE}/validate-coupon", {
+      const res = await fetch(`${PAYMENT_API_BASE}/validate-coupon`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ couponCode: couponCode.trim() }),
@@ -583,7 +583,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
       const paymentIntentId = result.paymentIntent?.id;
 
       // 注文完了通知（メール送信）
-      await fetch(`${PAYMENT_API_BASE}/order-complete", {
+      await fetch(`${PAYMENT_API_BASE}/order-complete`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
