@@ -9,8 +9,38 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const cors = require("cors");
 const nodemailer = require("nodemailer");
 const admin = require("firebase-admin");
+const inventory = require("./inventory");
 
 const app = express();
+const INVENTORY_ENABLED = process.env.INVENTORY_ENABLED === "true";
+const INVENTORY_STRIPE_WEBHOOK_SECRET = process.env.STRIPE_INVENTORY_WEBHOOK_SECRET;
+
+// Stripe requires the exact raw signed request body, before express.json().
+app.post("/stripe-inventory-webhook", express.raw({ type: "application/json" }), async (req, res) => {
+  if (!INVENTORY_ENABLED) return res.status(404).end();
+  if (!INVENTORY_STRIPE_WEBHOOK_SECRET) return res.status(503).json({ error: "WEBHOOK_NOT_CONFIGURED" });
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, req.headers["stripe-signature"], INVENTORY_STRIPE_WEBHOOK_SECRET);
+  } catch {
+    return res.status(400).send("Invalid Stripe signature");
+  }
+  const intent = event.data.object;
+  const reservationId = intent?.metadata?.inventoryReservationId;
+  if (!reservationId) return res.json({ received: true });
+  try {
+    if (event.type === "payment_intent.succeeded") {
+      await inventory.finish(db, reservationId, intent.id, "paid");
+    } else if (event.type === "payment_intent.canceled") {
+      await inventory.finish(db, reservationId, intent.id, "released");
+    }
+    return res.json({ received: true });
+  } catch (error) {
+    console.error("Inventory webhook failed:", error.message);
+    // Non-2xx makes Stripe retry rather than silently losing the stock update.
+    return res.status(500).json({ error: "INVENTORY_WEBHOOK_FAILED" });
+  }
+});
 
 app.use(express.json());
 app.use(cors());
@@ -354,6 +384,17 @@ app.get("/", (req, res) => {
   res.send("Ryuge server is running");
 });
 
+app.get("/inventory/availability", async (req, res) => {
+  if (!INVENTORY_ENABLED) return res.json({ enabled: false });
+  try {
+    const ids = String(req.query.ids || "").split(",").filter(Boolean);
+    const quantities = await inventory.availability(db, ids);
+    return res.json({ enabled: true, quantities });
+  } catch {
+    return res.status(500).json({ error: "INVENTORY_UNAVAILABLE" });
+  }
+});
+
 app.post("/create-payment-intent", async (req, res) => {
   try {
     const {
@@ -366,14 +407,40 @@ app.post("/create-payment-intent", async (req, res) => {
       return res.status(400).json({ error: "US_SHIPPING_DISABLED" });
     }
 
-    const safeItems = Array.isArray(items) ? items : [];
+    // The legacy checkout remains untouched unless explicitly enabled and seeded.
+    // Prices must be verified on the server; never trust browser cart prices.
+    const CANONICAL_PRICES = {
+      "enma-amarelo-bourbon": 1000,
+      "enma-jimma": 1300,
+      "enma-quequesques": 1300,
+      "enma-andes-blue": 1300,
+      "enma-karamo": 1800,
+      "enma-kindiio": 2050,
+      "mokkan-oku-yame-hojicha": 2800,
+      "mokkan-oku-yame-genmaicha": 2800,
+    };
+    let safeItems = Array.isArray(items) ? items : [];
+    let reservationId = null;
+    if (INVENTORY_ENABLED) {
+      if (!INVENTORY_STRIPE_WEBHOOK_SECRET) {
+        return res.status(503).json({ error: "WEBHOOK_NOT_CONFIGURED" });
+      }
+      try {
+        safeItems = inventory.validItems(safeItems).map((item) => {
+          const price = CANONICAL_PRICES[item.id];
+          if (price === undefined) throw new Error("UNKNOWN_PRODUCT");
+          return { ...item, price };
+        });
+      } catch (error) {
+        return res.status(400).json({ error: error.message });
+      }
+    }
 
     let subtotal = safeItems.reduce(
       (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0),
       0
     );
 
-    // ── 送料はサーバーで完全再計算（クライアント値を信用しない）──
     const shippingResult = calcShipping(safeItems, countryCode);
     if (typeof shippingResult === "object" && shippingResult.error) {
       return res.status(400).json({ error: shippingResult.error });
@@ -383,27 +450,39 @@ app.post("/create-payment-intent", async (req, res) => {
     const afterCoupon = applyCoupon(subtotal, shipping, couponCode);
     subtotal = afterCoupon.subtotal;
     shipping = afterCoupon.shipping;
-
     const total = subtotal + shipping;
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: total,
-      currency: "jpy",
-      metadata: {
-        email:       email       || "",
-        name:        name        || "",
-        address:     address     || "",
-        prefecture:  prefecture  || "",
-        countryCode: countryCode,
-        couponCode:  couponCode  || "",
-      },
-    });
-
-    res.json({
-      clientSecret: paymentIntent.client_secret,
-      shipping,
-      total,
-    });
+    if (INVENTORY_ENABLED) {
+      try {
+        reservationId = await inventory.reserve(db, safeItems);
+      } catch (error) {
+        return res.status(error.message === "OUT_OF_STOCK" ? 409 : 400).json({ error: error.message });
+      }
+    }
+    try {
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: total,
+        currency: "jpy",
+        metadata: {
+          email: email || "",
+          name: name || "",
+          address: address || "",
+          prefecture: prefecture || "",
+          countryCode,
+          couponCode: couponCode || "",
+          ...(reservationId ? { inventoryReservationId: reservationId } : {}),
+        },
+      });
+      if (reservationId) await inventory.attachPaymentIntent(db, reservationId, paymentIntent.id);
+      res.json({ clientSecret: paymentIntent.client_secret, shipping, total });
+    } catch (error) {
+      if (reservationId) {
+        // Fail closed: no successful checkout is handed to a customer.
+        // Reconcile the reservation before enabling in production.
+        console.error("Inventory reservation needs reconciliation:", reservationId, error.message);
+      }
+      throw error;
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
