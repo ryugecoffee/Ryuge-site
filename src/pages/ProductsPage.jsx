@@ -217,7 +217,14 @@ export default function ProductsPage({ lang }) {
                 )}
 
                 <div className="products-enma-card-text">
-                  <h3>{item.title?.[lang]}</h3>
+                  <h3 className="enma-card-title">
+                    {lang === "ja" && item.title?.ja?.startsWith("閻魔") ? (
+                      <>
+                        <span className="enma-title-series">閻魔</span>
+                        <span className="enma-title-origin">{item.title.ja.replace(/^閻魔[　 ]*/, "")}</span>
+                      </>
+                    ) : item.title?.[lang]}
+                  </h3>
                   <div className="enma-price-row">
                     {item.regularPriceNumber && item.promotion?.active && <span className="enma-original-price">¥{item.regularPriceNumber.toLocaleString()}</span>}
                     <span className="enma-current-price">{item.price} <small>/ {item.weight}</small></span>
