@@ -225,7 +225,6 @@ export default function ProductsPage({ lang }) {
                   <p className="enma-card-origin">{item.origin?.split(",").pop()?.trim()} · {item.process}</p>
                   {item.roast?.[lang] && <p className="enma-card-roast">{item.roast[lang]}</p>}
                   {item.flavorNotes?.[lang] && <p className="enma-card-flavors">{item.flavorNotes[lang].join(" · ")}</p>}
-                  {item.tastingNotesProvisional && <p className="enma-card-note">{lang === "ja" ? "参考ノート・焙煎後確認" : lang === "es" ? "Notas orientativas; pendiente de cata" : "Reference notes; tasting pending"}</p>}
                 </div>
               </article>
             ))}
