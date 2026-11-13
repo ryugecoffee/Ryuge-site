@@ -184,6 +184,7 @@ export const PRODUCT_DATA = {
       weight: "180g",
       price: "¥2,200",
       priceNumber: 2200,
+      roast: { ja: "浅煎り", en: "Light Roast", es: "Tueste claro" },
       flavorNotes: { ja: ["シトラス", "ナッツ", "ハーブ"], en: ["Citrus", "Nuts", "Herbs"], es: ["Cítricos", "Frutos secos", "Hierbas"] },
       flavor: "Citrus, Nuts, Herb, Brown Sugar",
       isSoldOut: false,
@@ -212,6 +213,7 @@ export const PRODUCT_DATA = {
       weight: "180g",
       price: "¥1,900",
       priceNumber: 1900,
+      roast: { ja: "浅煎り", en: "Light Roast", es: "Tueste claro" },
       flavorNotes: { ja: ["シトラス", "ライム", "グリーンティー"], en: ["Citrus", "Lime", "Green Tea"], es: ["Cítricos", "Lima", "Té verde"] },
       flavor: "Citrus, Lime, Lemon Peel, Green Tea",
       isSoldOut: false,
@@ -284,6 +286,50 @@ export const PRODUCT_DATA = {
       price: "¥3,000",
       priceNumber: 3000,
       flavor: "Raisin, Red Wine, Grape, Cacao",
+      isSoldOut: false,
+    },
+    {
+      id: "mokkan-oku-yame-hojicha",
+      image: "/images/woodbox-hojicha.jpg", // 既存の茶ギフト画像。実商品写真が揃ったら差替える
+      category: "woodbox",
+      size: "30g",
+      weight: "30g",
+      weightG: 100, // 木函・梱包込みの配送重量は要実測
+      title: {
+        ja: "木函　奥八女ほうじ茶",
+        en: "Mokkan Oku-Yame Hojicha",
+        es: "Mokkan Hojicha de Oku-Yame",
+      },
+      summary: {
+        ja: "奥八女のほうじ茶を、木函に収めた贈り物。",
+        en: "Roasted Japanese tea from Oku-Yame, presented in a wooden gift box.",
+        es: "Té japonés tostado de Oku-Yame, presentado en una caja de madera.",
+      },
+      origin: "Oku-Yame, Fukuoka, Japan",
+      price: "¥2,800",
+      priceNumber: 2800,
+      isSoldOut: false,
+    },
+    {
+      id: "mokkan-oku-yame-genmaicha",
+      image: "/images/woodbox.jpg", // 仮の木函イメージ。玄米茶の実商品写真に要差替え
+      category: "woodbox",
+      size: "30g",
+      weight: "30g",
+      weightG: 100, // 木函・梱包込みの配送重量は要実測
+      title: {
+        ja: "木函　奥八女玄米茶",
+        en: "Mokkan Oku-Yame Genmaicha",
+        es: "Mokkan Genmaicha de Oku-Yame",
+      },
+      summary: {
+        ja: "奥八女の玄米茶を、木函に収めた贈り物。",
+        en: "Japanese green tea with roasted rice from Oku-Yame, presented in a wooden gift box.",
+        es: "Té verde japonés con arroz tostado de Oku-Yame, presentado en una caja de madera.",
+      },
+      origin: "Oku-Yame, Fukuoka, Japan",
+      price: "¥2,800",
+      priceNumber: 2800,
       isSoldOut: false,
     },
   ],
