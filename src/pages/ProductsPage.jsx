@@ -49,6 +49,7 @@ export default function ProductsPage({ lang }) {
   const sectionText = PRODUCT_SECTIONS[lang] || PRODUCT_SECTIONS.ja;
   const labels = sectionText.specLabels;
   const products = PRODUCT_DATA;
+  const activeWoodbox = products.woodbox.filter((item) => !item.archived);
 
   const [activeItemId, setActiveItemId] = useState(null);
   const [selectedSubscriptionPlan, setSelectedSubscriptionPlan] = useState(
@@ -62,7 +63,7 @@ export default function ProductsPage({ lang }) {
   const woodboxSectionRef = useRef(null);
 
   const activeItem =
-    [...products.enma, ...products.woodbox, ...(products.bag || []), ...products.oriori].find(
+    [...products.enma, ...activeWoodbox, ...(products.bag || []), ...products.oriori].find(
       (item) => item.id === activeItemId
     ) || null;
 
@@ -122,7 +123,7 @@ export default function ProductsPage({ lang }) {
     const enmaNode = enmaSectionRef.current;
     const woodboxNode = woodboxSectionRef.current;
 
-    if (!enmaNode || !woodboxNode) return;
+    if (!enmaNode) return;
 
     let enmaTriggered = false;
     let woodboxTriggered = false;
@@ -141,6 +142,7 @@ export default function ProductsPage({ lang }) {
       }
 
       if (!woodboxTriggered) {
+        if (!woodboxNode) return;
         const woodboxTop = woodboxNode.getBoundingClientRect().top;
         if (woodboxTop <= triggerLine) {
           woodboxTriggered = true;
@@ -195,10 +197,15 @@ export default function ProductsPage({ lang }) {
             {products.enma.map((item) => (
               <article
                 key={item.id}
-                className="products-enma-static-card"
+                className="products-enma-static-card enma-product-card"
                 onClick={() => { setActiveItemId(item.id); trackViewItem(item); }}
               >
-                <img src={item.image} alt="" />
+                <div className="enma-card-photo">
+                  <img src={item.image} alt="" />
+                  {item.promotion?.active && (
+                    <span className="enma-promotion-ribbon">{item.promotion.label?.[lang] || item.promotion.label?.ja}</span>
+                  )}
+                </div>
 
                 {item.isSoldOut && (
                   <span className="product-soldout-badge">
@@ -208,8 +215,13 @@ export default function ProductsPage({ lang }) {
 
                 <div className="products-enma-card-text">
                   <h3>{item.title?.[lang]}</h3>
-                  <p>{item.summary?.[lang]}</p>
-                  {item.price && <p className="product-card-price">{item.price}</p>}
+                  <div className="enma-price-row">
+                    {item.regularPriceNumber && item.promotion?.active && <span className="enma-original-price">¥{item.regularPriceNumber.toLocaleString()}</span>}
+                    <span className="enma-current-price">{item.price} <small>/ {item.weight}</small></span>
+                  </div>
+                  <p className="enma-card-origin">{item.origin?.split(",").pop()?.trim()} · {item.process}</p>
+                  {item.roast?.[lang] && <p className="enma-card-roast">{item.roast[lang]}</p>}
+                  {item.flavorNotes?.[lang] && <p className="enma-card-flavors">{item.flavorNotes[lang].join(" · ")}</p>}
                 </div>
               </article>
             ))}
@@ -230,6 +242,7 @@ export default function ProductsPage({ lang }) {
           </div>
         </section>
 
+        {activeWoodbox.length > 0 && (
         <section className="products-showcase-section products-woodbox-section" id="woodbox">
           <div
             ref={woodboxSectionRef}
@@ -242,7 +255,7 @@ export default function ProductsPage({ lang }) {
           </div>
 
           <div className="products-two-col">
-            {products.woodbox.map((item) => (
+            {activeWoodbox.map((item) => (
               <article
                 key={item.id}
                 className="products-enma-static-card products-woodbox-card"
@@ -265,6 +278,8 @@ export default function ProductsPage({ lang }) {
             ))}
           </div>
         </section>
+
+        )}
 
         <section className="oriori-services-section" id="oriori">
           <div className="oriori-heading">
