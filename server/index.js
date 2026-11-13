@@ -384,6 +384,24 @@ app.get("/", (req, res) => {
   res.send("Ryuge server is running");
 });
 
+app.post("/inventory/reconcile", async (req, res) => {
+  if (!INVENTORY_ENABLED) return res.status(404).end();
+  const token = process.env.INVENTORY_RECONCILE_TOKEN;
+  const supplied = req.headers["x-inventory-reconcile-token"];
+  if (!token || typeof supplied !== "string" ||
+      !require("node:crypto").timingSafeEqual(
+        Buffer.from(require("node:crypto").createHash("sha256").update(token).digest()),
+        Buffer.from(require("node:crypto").createHash("sha256").update(supplied).digest())
+      )) return res.status(403).json({ error: "FORBIDDEN" });
+  try {
+    const results = await inventory.reconcileExpired(db, stripe, 30);
+    return res.json({ reviewed: results.length, results });
+  } catch (error) {
+    console.error("Inventory reconciliation failed:", error.message);
+    return res.status(500).json({ error: "RECONCILIATION_FAILED" });
+  }
+});
+
 app.get("/inventory/availability", async (req, res) => {
   if (!INVENTORY_ENABLED) return res.json({ enabled: false });
   try {
