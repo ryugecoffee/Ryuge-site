@@ -1,5 +1,6 @@
 import { trackBeginCheckout } from "../lib/analytics";
-const PAYMENT_API_BASE = import.meta.env.VITE_CHECKOUT_API_BASE || "https://ryuge-site.onrender.com";
+// Draft inventory PR preview must never call the production payment API.
+const PAYMENT_API_BASE = "https://ryuge-inventory-sandbox.onrender.com";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useCart } from "../CartContext";
 import { useNavigate } from "react-router-dom";
@@ -16,7 +17,11 @@ import {
   COUNTRY_ZONES,
 } from "../lib/shipping";
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+// This preview only accepts a sandbox publishable key; never fall back to live keys.
+const SANDBOX_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_SANDBOX_PUBLIC_KEY;
+const stripePromise = SANDBOX_PUBLISHABLE_KEY?.startsWith("pk_test_")
+  ? loadStripe(SANDBOX_PUBLISHABLE_KEY)
+  : Promise.resolve(null);
 
 // ── 米国配送フラグ（環境変数 VITE_ENABLE_US_SHIPPING=true で有効化）──
 const ENABLE_US_SHIPPING = import.meta.env.VITE_ENABLE_US_SHIPPING === "true";
