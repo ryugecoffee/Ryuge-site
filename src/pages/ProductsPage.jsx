@@ -222,7 +222,7 @@ export default function ProductsPage({ lang }) {
                     {item.regularPriceNumber && item.promotion?.active && <span className="enma-original-price">¥{item.regularPriceNumber.toLocaleString()}</span>}
                     <span className="enma-current-price">{item.price} <small>/ {item.weight}</small></span>
                   </div>
-                  <p className="enma-card-origin">{item.origin?.split(",").pop()?.trim()} · {item.process}</p>
+                  <p className="enma-card-origin">{({ Natural: { ja: "ナチュラル", en: "Natural", es: "Natural" }, Washed: { ja: "ウォッシュド", en: "Washed", es: "Lavado" }, "Infused Honey": { ja: "インフューズドハニー", en: "Infused Honey", es: "Honey infusionado" } })[item.process]?.[lang] || item.process}</p>
                   {item.roast?.[lang] && <p className="enma-card-roast">{item.roast[lang]}</p>}
                   {item.flavorNotes?.[lang] && <p className="enma-card-flavors">{item.flavorNotes[lang].join(" · ")}</p>}
                 </div>
