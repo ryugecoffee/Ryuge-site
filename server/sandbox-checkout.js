@@ -28,6 +28,11 @@ if redis.call('EXISTS', KEYS[1]) == 0 then
 end
 return 0`;
 const reserveScript = `
+-- A checkout key makes repeated browser initialization idempotent.
+if KEYS[3] and KEYS[3] ~= '' then
+ local existing = redis.call('GET', KEYS[3])
+ if existing then return 'EXISTING:' .. existing end
+end
 local itemList = cjson.decode(ARGV[2])
 for _,item in ipairs(itemList) do
  local key = 'sandbox:inventory:' .. item.id
@@ -41,6 +46,7 @@ for _,item in ipairs(itemList) do
 end
 redis.call('HSET', KEYS[1], 'status', 'reserved', 'items', ARGV[2], 'createdAt', ARGV[3])
 redis.call('ZADD', KEYS[2], ARGV[3], ARGV[1])
+if KEYS[3] and KEYS[3] ~= '' then redis.call('SET', KEYS[3], ARGV[1], 'EX', 86400) end
 return 'RESERVED'`;
 const finishScript = `
 if redis.call('EXISTS', KEYS[1]) == 0 then return 'UNKNOWN_RESERVATION' end
@@ -120,7 +126,10 @@ app.get("/inventory/availability", async (req, res) => {
 });
 
 app.post("/create-payment-intent", async (req, res) => {
-  const { items, countryCode = "JP", couponCode = "" } = req.body || {};
+  const { items, countryCode = "JP", couponCode = "", checkoutKey } = req.body || {};
+  if (typeof checkoutKey !== "string" || !/^[a-f0-9-]{36}$/.test(checkoutKey)) {
+    return res.status(400).json({ error: "CHECKOUT_KEY_REQUIRED" });
+  }
   if (!Array.isArray(items) || !items.length || items.length > 10 || countryCode !== "JP" || couponCode) {
     return res.status(400).json({ error: "SANDBOX_TEST_ONLY" });
   }
@@ -140,7 +149,34 @@ app.post("/create-payment-intent", async (req, res) => {
   const reservationId = crypto.randomUUID();
   const now = Date.now();
   try {
-    const outcome = await redis("EVAL", reserveScript, 2, RESERVATION_KEY(reservationId), PENDING_KEY, reservationId, JSON.stringify(safe.map(({id,quantity})=>({id,quantity}))), now);
+    const selectedItems = JSON.stringify(safe.map(({id,quantity})=>({id,quantity})));
+    const outcome = await redis("EVAL", reserveScript, 3,
+      RESERVATION_KEY(reservationId), PENDING_KEY, "sandbox:checkout:" + checkoutKey,
+      reservationId, selectedItems, now);
+    if (String(outcome).startsWith("EXISTING:")) {
+      const existingId = String(outcome).slice("EXISTING:".length);
+      const key = RESERVATION_KEY(existingId);
+      const existingItems = await redis("HGET", key, "items");
+      const status = await redis("HGET", key, "status");
+      if (existingItems !== selectedItems || status !== "reserved") {
+        return res.status(409).json({ error: "CHECKOUT_KEY_CONFLICT" });
+      }
+      // Concurrent retries may arrive while Stripe is still creating the intent.
+      let existingPaymentId = await redis("HGET", key, "paymentIntentId");
+      for (let i = 0; i < 20 && !existingPaymentId; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        existingPaymentId = await redis("HGET", key, "paymentIntentId");
+      }
+      if (!existingPaymentId) return res.status(503).json({ error: "CHECKOUT_INITIALIZING" });
+      const existingIntent = await stripe.paymentIntents.retrieve(existingPaymentId);
+      if (existingIntent.status === "canceled" || existingIntent.status === "succeeded") {
+        return res.status(409).json({ error: "CHECKOUT_ALREADY_FINALIZED" });
+      }
+      const existingShipping = calcShipping(safe, "JP");
+      return res.json({ clientSecret: existingIntent.client_secret,
+        shipping: existingShipping,
+        total: existingIntent.amount });
+    }
     if (outcome !== "RESERVED") return res.status(outcome === "OUT_OF_STOCK" ? 409 : 400).json({ error: outcome });
     const shipping = calcShipping(safe, "JP");
     const total = safe.reduce((s, x) => s + x.price * x.quantity, 0) + shipping;
