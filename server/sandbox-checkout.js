@@ -296,6 +296,89 @@ async function checkFirestoreReadOnly() {
   }
 }
 
+async function checkFirestoreWriteTransactions() {
+  // Explicitly enabled, one-shot, isolated Firestore transactional smoke test.
+  // Never touch inventory/enma-karamo or any production SKU.
+  const runId = process.env.FIRESTORE_WRITE_SMOKE_RUN_ID || "";
+  if (!/^ryuge-firestore-smoke-[a-z0-9-]{8,60}$/.test(runId)) return;
+  if (process.env.INVENTORY_STAGING_ONLY !== "true" ||
+      process.env.FIREBASE_PROJECT_ID !== "ryuge-inventory" ||
+      process.env.FIREBASE_CLIENT_EMAIL !==
+        "ryuge-inventory-render@ryuge-inventory.iam.gserviceaccount.com") {
+    console.error("Firestore transaction smoke BLOCK: sandbox/project/service-account mismatch");
+    return;
+  }
+  const admin = require("firebase-admin");
+  const { reserve, finish, availability } = require("./inventory");
+  const firebaseApp = admin.apps.find((item) => item.name === "ryuge-inventory-sandbox-readonly");
+  if (!firebaseApp) {
+    console.error("Firestore transaction smoke BLOCK: verified Firebase app missing");
+    return;
+  }
+  const db = admin.firestore(firebaseApp);
+  const sku = "sandbox-smoke-" + runId.slice("ryuge-firestore-smoke-".length);
+  const stockRef = db.collection("inventory").doc(sku);
+  const markerRef = db.collection("inventorySmokeRuns").doc(runId);
+  const markerCreated = await db.runTransaction(async (tx) => {
+    const existing = await tx.get(markerRef);
+    if (existing.exists) return false;
+    tx.create(markerRef, { state: "started", sku, createdAt: new Date() });
+    tx.create(stockRef, { ready: 2, held: 0, sold: 0, smokeTest: true });
+    return true;
+  });
+  if (!markerCreated) {
+    console.log("Firestore transaction smoke: run already claimed; no repeat writes");
+    return;
+  }
+  let firstId, secondId;
+  try {
+    firstId = await reserve(db, [{ id: sku, quantity: 1 }], "pi_firestore_test_paid");
+    let a = await availability(db, [sku]);
+    if (a[sku] !== 1) throw new Error("RESERVE_NOT_HELD");
+    if (await finish(db, firstId, "pi_firestore_test_paid", "paid") !== true) {
+      throw new Error("PAID_NOT_APPLIED");
+    }
+    if (await finish(db, firstId, "pi_firestore_test_paid", "paid") !== false) {
+      throw new Error("DUPLICATE_PAID_NOT_IGNORED");
+    }
+    let stock = (await stockRef.get()).data();
+    if (stock.ready !== 1 || stock.held !== 0 || stock.sold !== 1) {
+      throw new Error("PAID_INVENTORY_INCORRECT");
+    }
+    secondId = await reserve(db, [{ id: sku, quantity: 1 }], "pi_firestore_test_canceled");
+    a = await availability(db, [sku]);
+    if (a[sku] !== 0) throw new Error("RESERVED_LAST_BAG_NOT_ZERO");
+    try {
+      await reserve(db, [{ id: sku, quantity: 1 }]);
+      throw new Error("SOLD_OUT_RESERVATION_ALLOWED");
+    } catch (err) {
+      if (err.message !== "OUT_OF_STOCK") throw err;
+    }
+    if (await finish(db, secondId, "pi_firestore_test_canceled", "released") !== true) {
+      throw new Error("CANCEL_NOT_RELEASED");
+    }
+    if (await finish(db, secondId, "pi_firestore_test_canceled", "released") !== false) {
+      throw new Error("DUPLICATE_CANCEL_NOT_IGNORED");
+    }
+    stock = (await stockRef.get()).data();
+    if (stock.ready !== 1 || stock.held !== 0 || stock.sold !== 1) {
+      throw new Error("CANCEL_INVENTORY_INCORRECT");
+    }
+    await markerRef.update({ state: "passed", finishedAt: new Date() });
+    console.log("Firestore transaction smoke PASS: reserve, pay, duplicate ignored, sold-out blocked, cancel restored; isolated test SKU; no Stripe charge");
+  } catch (err) {
+    await markerRef.update({ state: "failed", reason: String(err.message).slice(0, 120) });
+    console.error("Firestore transaction smoke FAILED:", String(err.message).slice(0, 120));
+  } finally {
+    // Remove temporary stock/reservations, retain a non-secret audit marker.
+    await Promise.allSettled([
+      stockRef.delete(),
+      firstId ? db.collection("inventoryReservations").doc(firstId).delete() : Promise.resolve(),
+      secondId ? db.collection("inventoryReservations").doc(secondId).delete() : Promise.resolve(),
+    ]);
+  }
+}
+
 async function sandboxCheckoutDedupSmoke() {
   // Disposable SKU used only to verify repeated checkout initialization.
   const sku = "sandbox-dedup-only";
@@ -394,6 +477,7 @@ async function start() {
   console.log("sandbox zero-stock checkout blocked with OUT_OF_STOCK");
   await sandboxCheckoutDedupSmoke();
   await checkFirestoreReadOnly();
+  await checkFirestoreWriteTransactions();
 
   // Test deliberately runs after the HTTP server starts so Stripe can reach the webhook.
 
