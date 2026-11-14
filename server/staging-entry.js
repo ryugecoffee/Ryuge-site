@@ -11,6 +11,11 @@ const testKeyOnly = /^(sk|rk)_test_/.test(process.env.STRIPE_SECRET_KEY || "");
 const enabled = process.env.INVENTORY_ENABLED === "true";
 const staging = process.env.INVENTORY_STAGING_ONLY === "true";
 
+// Log only boolean readiness flags; never print credentials.
+console.log("Sandbox bootstrap:", JSON.stringify({
+  staging, enabled, credentialsPresent: hasAllCredentials, stripeKeyIsTestMode: testKeyOnly
+}));
+
 if (staging && enabled && hasAllCredentials && testKeyOnly) {
   require("./sandbox-checkout");
 } else {
