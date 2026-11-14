@@ -12,6 +12,7 @@ on:
       - 'server/resp-client.js'
       - 'server/sandbox-checkout.js'
       - 'server/staging-entry.js'
+      - 'src/pages/ProductsPage.jsx'
       - '.github/workflows/inventory-tests.yml'
 permissions:
   contents: read
@@ -34,5 +35,9 @@ jobs:
           node --check server/resp-client.js
           node --check server/sandbox-checkout.js
           node --check server/staging-entry.js
+      - name: Install site dependencies
+        run: npm ci
+      - name: Build site preview
+        run: npm run build
       - name: Unit tests
         run: node --test server/inventory.test.js server/inventory-scenarios.test.js
