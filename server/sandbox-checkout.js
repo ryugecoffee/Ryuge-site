@@ -259,6 +259,43 @@ async function sandboxOneTimePaymentSmoke() {
   // Webhook is the authority: do NOT settle inventory directly here.
 }
 
+async function checkFirestoreReadOnly() {
+  // Connection check only. Redis remains the sandbox payment source of truth.
+  // Never write test transactions into Firestore or expose service credentials.
+  const id = process.env.FIREBASE_PROJECT_ID;
+  const email = process.env.FIREBASE_CLIENT_EMAIL;
+  const rawKey = process.env.FIREBASE_PRIVATE_KEY;
+  if (!id || !email || !rawKey) {
+    console.log("Firestore connection check: credentials incomplete; Redis unchanged");
+    return;
+  }
+  if (id !== "ryuge-inventory" || !email.endsWith("@ryuge-inventory.iam.gserviceaccount.com")) {
+    console.error("Firestore connection check: project identity mismatch; Redis unchanged");
+    return;
+  }
+  const admin = require("firebase-admin");
+  const appName = "ryuge-inventory-sandbox-readonly";
+  const firebaseApp = admin.apps.find((app) => app.name === appName) ||
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: id,
+        clientEmail: email,
+        privateKey: rawKey.replace(/\\n/g, "\n"),
+      }),
+    }, appName);
+  try {
+    const doc = await admin.firestore(firebaseApp).collection("inventory").doc("enma-karamo").get();
+    const stock = doc.data();
+    if (!doc.exists || !["ready", "held", "sold"].every((key) =>
+      Number.isSafeInteger(stock?.[key]) && stock[key] >= 0
+    )) throw new Error("missing_or_invalid_stock");
+    console.log("Firestore read-only PASS: project=ryuge-inventory; sku=enma-karamo; ready=" +
+      stock.ready + "; held=" + stock.held + "; sold=" + stock.sold + "; no writes; Redis unchanged");
+  } catch (err) {
+    console.error("Firestore read-only FAILED (Redis unchanged):", err.code || err.message);
+  }
+}
+
 async function sandboxCheckoutDedupSmoke() {
   // Disposable SKU used only to verify repeated checkout initialization.
   const sku = "sandbox-dedup-only";
@@ -356,6 +393,7 @@ async function start() {
   }
   console.log("sandbox zero-stock checkout blocked with OUT_OF_STOCK");
   await sandboxCheckoutDedupSmoke();
+  await checkFirestoreReadOnly();
 
   // Test deliberately runs after the HTTP server starts so Stripe can reach the webhook.
 
