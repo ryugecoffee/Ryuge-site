@@ -223,6 +223,61 @@ async function sandboxOneTimePaymentSmoke() {
   // Webhook is the authority: do NOT settle inventory directly here.
 }
 
+async function sandboxCancellationSmoke() {
+  const runId = process.env.SANDBOX_CANCEL_TEST_RUN_ID;
+  if (!/^ryuge-cancel-test-[a-z0-9-]{6,60}$/.test(runId || "")) return;
+  const locked = await redis("SET", "sandbox:cancel-once:" + runId, "started", "NX");
+  if (locked !== "OK") {
+    console.log("sandbox cancellation: already attempted; no duplicate test intent");
+    return;
+  }
+  const before = await redis("HMGET", STOCK_KEY("enma-karamo"), "ready", "held");
+  const ready = Number(before[0] || 0);
+  const held = Number(before[1] || 0);
+  if (ready - held < 1 || held !== 0) {
+    console.log("sandbox cancellation skipped: stock cannot be safely isolated");
+    return;
+  }
+  const reservationId = crypto.randomUUID();
+  const outcome = await redis("EVAL", reserveScript, 2,
+    RESERVATION_KEY(reservationId), PENDING_KEY, reservationId,
+    JSON.stringify([{ id: "enma-karamo", quantity: 1 }]), Date.now());
+  if (outcome !== "RESERVED") throw new Error("CANCEL_RESERVE_FAILED:" + outcome);
+  // Never supply a payment method or confirm: this test cannot charge a card.
+  const intent = await stripe.paymentIntents.create({
+    amount: 2000,
+    currency: "jpy",
+    automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+    metadata: { inventoryReservationId: reservationId, inventoryEnvironment: "sandbox", cancellationTest: runId },
+  }, { idempotencyKey: "ryuge-cancel-create-" + runId });
+  await redis("HSET", RESERVATION_KEY(reservationId), "paymentIntentId", intent.id);
+  if (intent.livemode !== false || intent.status !== "requires_payment_method") {
+    throw new Error("CANCEL_TEST_UNEXPECTED_PAYMENT_STATUS");
+  }
+  const during = await redis("HMGET", STOCK_KEY("enma-karamo"), "ready", "held");
+  if (Number(during[0]) - Number(during[1]) !== ready - 1) {
+    throw new Error("CANCEL_TEST_HOLD_MISMATCH");
+  }
+  const canceled = await stripe.paymentIntents.cancel(intent.id, {}, {
+    idempotencyKey: "ryuge-cancel-finish-" + runId,
+  });
+  if (canceled.status !== "canceled") throw new Error("CANCEL_TEST_NOT_CANCELED");
+  console.log("sandbox cancellation: Stripe intent canceled; webhook must release hold; intent=" + intent.id);
+  // Do not settle locally; signed payment_intent.canceled webhook must do it.
+  let verified = false;
+  for (let attempt = 0; attempt < 15; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const state = await redis("HMGET", STOCK_KEY("enma-karamo"), "ready", "held", "sold");
+    const status = await redis("HGET", RESERVATION_KEY(reservationId), "status");
+    if (status === "released" && Number(state[0]) === ready && Number(state[1]) === held) {
+      console.log("sandbox cancellation PASS: held 1 then released; available restored to " + ready + "; sold unchanged; intent=" + intent.id);
+      verified = true;
+      break;
+    }
+  }
+  if (!verified) console.error("sandbox cancellation PENDING: signed webhook did not restore inventory within 30 seconds");
+}
+
 async function start() {
   await redis("PING");
   // Inventory seed occurs only once per live Redis instance, and only in test mode.
@@ -247,6 +302,9 @@ async function start() {
   setTimeout(() => sandboxOneTimePaymentSmoke().catch((err) => {
     console.error("sandbox smoke error (no automatic retries):", err.message);
   }), 12000).unref();
+  setTimeout(() => sandboxCancellationSmoke().catch((err) => {
+    console.error("sandbox cancellation test error (no automatic retries):", err.message);
+  }), 16000).unref();
 
 }
 
