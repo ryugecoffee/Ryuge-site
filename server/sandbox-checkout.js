@@ -162,7 +162,15 @@ app.use(cors({
   },
 }));
 app.use(express.json({ limit: "32kb" }));
-app.get("/health", (_req, res) => res.json({ environment: "sandbox", paymentReady: true, inventoryEnabled: true, persistence: "ephemeral" }));
+app.get("/health", (_req, res) => {
+  const previewReady = firestoreCheckoutRequested && firestorePreview.previewAllowed(process.env);
+  res.json({
+    environment: "sandbox",
+    paymentReady: !firestoreCheckoutRequested || previewReady,
+    inventoryEnabled: !firestoreCheckoutRequested || previewReady,
+    persistence: previewReady ? "firestore" : "ephemeral",
+  });
+});
 app.get("/inventory/availability", async (req, res) => {
   const ids = String(req.query.ids || "").split(",").filter((sku) => /^[a-z0-9-]{1,90}$/.test(sku)).slice(0, 40);
   try {
@@ -634,7 +642,25 @@ async function start() {
 
   const port = Number(process.env.PORT || 10000);
   app.listen(port, "0.0.0.0");
-  const timer = setInterval(() => { reconcile().catch((e) => console.error("reconcile:", e.message)); }, 60000);
+  const timer = setInterval(() => {
+    if (firestoreCheckoutRequested) {
+      try {
+        const db = firestorePreviewDb();
+        const { reconcileExpired } = require("./inventory");
+        reconcileExpired(db, stripe, 30).then((results) => {
+          const unresolved = results.filter((x) =>
+            x.action === "error" || x.action === "manual-review-missing-intent");
+          if (unresolved.length) console.error("Firestore checkout reconciliation needs review:", unresolved.length);
+        }).catch((error) => {
+          console.error("Firestore preview reconcile failed:", String(error.message).slice(0, 120));
+        });
+      } catch (error) {
+        console.error("Firestore preview reconciliation disabled:", String(error.message).slice(0, 120));
+      }
+    } else {
+      reconcile().catch((error) => console.error("Redis reconcile:", error.message));
+    }
+  }, 60000);
   timer.unref();
   setTimeout(() => sandboxOneTimePaymentSmoke().catch((err) => {
     console.error("sandbox smoke error (no automatic retries):", err.message);
