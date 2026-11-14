@@ -435,6 +435,29 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
       return;
     }
 
+    // A stable key per tab + cart contents prevents duplicate reservations when
+    // React effects re-run, the network retries or the shopper revisits checkout.
+    const checkoutFingerprint = JSON.stringify({
+      items: cartItems.map(({ id, quantity }) => ({ id, quantity })),
+      country,
+      couponCode: couponStatus === "valid" ? couponCode : "",
+    });
+    const storageKey = "ryuge-sandbox-checkout-key";
+    let checkoutInfo;
+    try {
+      checkoutInfo = JSON.parse(sessionStorage.getItem(storageKey) || "null");
+    } catch { checkoutInfo = null; }
+    if (!checkoutInfo || checkoutInfo.fingerprint !== checkoutFingerprint) {
+      checkoutInfo = {
+        fingerprint: checkoutFingerprint,
+        key: crypto.randomUUID(),
+      };
+      sessionStorage.setItem(storageKey, JSON.stringify(checkoutInfo));
+    }
+    let cancelled = false;
+    const controller = new AbortController();
+    // A prior intent is not valid for a different cart configuration.
+    setClientSecret("");
     const initCheckout = async () => {
       try {
         setError("");
@@ -443,7 +466,9 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
             body: JSON.stringify({
+              checkoutKey: checkoutInfo.key,
               items:       cartItems,
               countryCode: country,
               couponCode:  couponStatus === "valid" ? couponCode : "",
@@ -457,10 +482,12 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         if (!response.ok) throw new Error(data.error || t.checkoutInitError);
 
         // サーバーが送料を権威的に計算して返す
+        if (cancelled) return;
         setShipping(data.shipping);
         setTotal(data.total);
         setClientSecret(data.clientSecret);
       } catch (err) {
+        if (cancelled || controller.signal.aborted) return;
         // サーバー到達不可時はクライアント計算値でフォールバック
         setShipping(computedShipping);
         setTotal(
@@ -474,6 +501,10 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
     };
 
     initCheckout();
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, [cartItems, country, hasSubscription, cartSubtotal, couponStatus, couponCode, isBlocked]);
 
   // ── クーポン検証 ─────────────────────────────────────────────────────────
@@ -610,6 +641,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         }),
       });
 
+      sessionStorage.removeItem("ryuge-sandbox-checkout-key");
       onSuccess();
       navigate("/checkout/complete", {
         state: {
