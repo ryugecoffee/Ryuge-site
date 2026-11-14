@@ -5,6 +5,16 @@ const cors = require("cors");
 const Stripe = require("stripe");
 const { createStore } = require("./resp-client");
 const { calcShipping } = require("./shipping");
+const firestorePreview = require("./firestore-preview-checkout");
+const firestoreCheckoutRequested = process.env.FIRESTORE_CHECKOUT_ENABLED === "true";
+function firestorePreviewDb() {
+  if (!firestorePreview.previewAllowed(process.env)) throw new Error("FIRESTORE_PREVIEW_DISABLED");
+  const admin = require("firebase-admin");
+  const app = admin.apps.find((item) => item.name === "ryuge-inventory-sandbox-readonly");
+  if (!app) throw new Error("FIRESTORE_NOT_CONNECTED");
+  return admin.firestore(app);
+}
+
 
 // Disposable test-mode payment server. Never deploy this entrypoint as production.
 // The free Render Key Value instance is nonpersistent: restarts erase test state.
@@ -86,6 +96,18 @@ app.post("/stripe-inventory-webhook", express.raw({ type: "application/json" }),
   }
   const intent = event.data?.object;
   const reservationId = intent?.metadata?.inventoryReservationId;
+  // Signed events for the optional Firestore-backed preview never touch Redis.
+  if (intent?.metadata?.inventoryEnvironment === "firestore-preview") {
+    try {
+      const db = firestorePreviewDb();
+      const applied = await firestorePreview.settlePreviewEvent(db, intent, event.type);
+      if (applied) console.log("Firestore checkout signed webhook: " + event.type);
+      return res.json({ received: true });
+    } catch (error) {
+      console.error("Firestore preview webhook failed:", String(error.message).slice(0, 110));
+      return res.status(500).json({ error: "FIRESTORE_PREVIEW_SETTLEMENT_FAILED" });
+    }
+  }
   // Independently route only the explicitly-marked ephemeral Firestore smoke run.
   // Real customer checkout remains in Redis. Signature has already been validated.
   if (intent?.metadata?.inventoryEnvironment === "firestore-smoke") {
@@ -144,6 +166,11 @@ app.get("/health", (_req, res) => res.json({ environment: "sandbox", paymentRead
 app.get("/inventory/availability", async (req, res) => {
   const ids = String(req.query.ids || "").split(",").filter((sku) => /^[a-z0-9-]{1,90}$/.test(sku)).slice(0, 40);
   try {
+    if (firestoreCheckoutRequested) {
+      const db = firestorePreviewDb();
+      const quantities = await firestorePreview.previewAvailability(db, ids);
+      return res.json({ enabled: true, quantities, store: "firestore-preview" });
+    }
     const quantities = {};
     for (const id of ids) {
       const data = await redis("HMGET", STOCK_KEY(id), "ready", "held");
@@ -176,6 +203,25 @@ app.post("/create-payment-intent", async (req, res) => {
     });
   } catch {
     return res.status(400).json({ error: "INVALID_ITEM" });
+  }
+  if (firestoreCheckoutRequested) {
+    try {
+      const db = firestorePreviewDb();
+      const payment = await firestorePreview.createCheckout(
+        db, stripe, safe, checkoutKey, PRICE_BY_SKU, calcShipping
+      );
+      return res.json(payment);
+    } catch (error) {
+      console.error("Firestore preview checkout:", String(error.message).slice(0, 110));
+      const code = error.message;
+      if (["OUT_OF_STOCK", "CHECKOUT_KEY_CONFLICT", "CHECKOUT_ALREADY_FINALIZED"].includes(code)) {
+        return res.status(409).json({ error: code });
+      }
+      if (["INVALID_ITEM", "INVALID_ITEMS", "INVALID_TOTAL"].includes(code)) {
+        return res.status(400).json({ error: code });
+      }
+      return res.status(503).json({ error: "FIRESTORE_PREVIEW_UNAVAILABLE" });
+    }
   }
   const reservationId = crypto.randomUUID();
   const now = Date.now();
