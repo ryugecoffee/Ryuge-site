@@ -6,6 +6,9 @@ on:
   pull_request:
     paths:
       - 'server/inventory.js'
+      - 'server/inventory-adjustments.js'
+      - 'server/inventory-adjustments.test.js'
+      - 'src/App.css'
       - 'server/inventory.test.js'
       - 'server/inventory-scenarios.test.js'
       - 'server/index.js'
@@ -31,6 +34,7 @@ jobs:
       - name: Syntax checks
         run: |
           node --check server/inventory.js
+          node --check server/inventory-adjustments.js
           node --check server/index.js
           node --check server/resp-client.js
           node --check server/sandbox-checkout.js
@@ -40,4 +44,4 @@ jobs:
       - name: Build site preview
         run: npm run build
       - name: Unit tests
-        run: node --test server/inventory.test.js server/inventory-scenarios.test.js
+        run: node --test server/inventory.test.js server/inventory-scenarios.test.js server/inventory-adjustments.test.js
