@@ -448,6 +448,7 @@ async function sandboxStripeFirestoreSmoke() {
       amount: 100,
       currency: "jpy",
       payment_method: "pm_card_visa",
+      payment_method_types: ["card"],
       metadata: {
         inventoryEnvironment: "firestore-smoke",
         inventoryReservationId: reservationId,
