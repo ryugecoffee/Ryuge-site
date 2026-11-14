@@ -6,6 +6,8 @@ on:
   pull_request:
     paths:
       - 'server/inventory.js'
+      - 'server/firestore-preview-checkout.js'
+      - 'server/firestore-preview-checkout.test.js'
       - 'server/inventory-adjustments.js'
       - 'server/inventory-adjustments.test.js'
       - 'src/App.css'
@@ -34,6 +36,8 @@ jobs:
       - name: Syntax checks
         run: |
           node --check server/inventory.js
+          node --check server/firestore-preview-checkout.js
+          node --check server/firestore-preview-checkout.test.js
           node --check server/inventory-adjustments.js
           node --check server/index.js
           node --check server/resp-client.js
@@ -44,4 +48,4 @@ jobs:
       - name: Build site preview
         run: npm run build
       - name: Unit tests
-        run: node --test server/inventory.test.js server/inventory-scenarios.test.js server/inventory-adjustments.test.js
+        run: node --test server/inventory.test.js server/inventory-scenarios.test.js server/inventory-adjustments.test.js server/firestore-preview-checkout.test.js
