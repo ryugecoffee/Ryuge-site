@@ -88,6 +88,7 @@ app.post("/stripe-inventory-webhook", express.raw({ type: "application/json" }),
     if (event.type === "payment_intent.succeeded") result = await settle(reservationId, intent.id, "paid");
     else if (event.type === "payment_intent.canceled") result = await settle(reservationId, intent.id, "released");
     if (!["OK", "ALREADY_FINALIZED", "IGNORED"].includes(result)) throw new Error(result);
+    if (result === "OK") console.log("sandbox Stripe signed webhook inventory settled; action=" + event.type + "; intent=" + intent.id);
     return res.json({ received: true });
   } catch (err) {
     console.error("sandbox webhook failure:", err.message);
@@ -183,14 +184,59 @@ async function reconcile() {
   }
 }
 
+async function sandboxOneTimePaymentSmoke() {
+  const runId = process.env.SANDBOX_SMOKE_RUN_ID;
+  if (!/^ryuge-sandbox-e2e-[a-z0-9-]{4,70}$/.test(runId || "")) return;
+  // Only one test attempt per marker, even if Render restarts or redeploys.
+  const locked = await redis("SET", "sandbox:smoke:" + runId, "started", "NX");
+  if (locked !== "OK") {
+    console.log("sandbox smoke: already attempted; not charging again");
+    return;
+  }
+  const before = await redis("HMGET", STOCK_KEY("enma-karamo"), "ready", "held");
+  if (Number(before[0]) !== 15 || Number(before[1]) !== 0) {
+    console.log("sandbox smoke: skipped because stock is not initial 15");
+    return;
+  }
+  const reservationId = crypto.randomUUID();
+  const now = Date.now();
+  const result = await redis("EVAL", reserveScript, 2,
+    RESERVATION_KEY(reservationId), PENDING_KEY, reservationId,
+    JSON.stringify([{ id: "enma-karamo", quantity: 1 }]), now);
+  if (result !== "RESERVED") throw new Error("SANDBOX_SMOKE_RESERVATION_FAILED:" + result);
+  // A Stripe-provided *test* PaymentMethod, not any customer's card information.
+  // This performs a real sandbox PaymentIntent, with zero live charges.
+  const intent = await stripe.paymentIntents.create({
+    amount: 2000,
+    currency: "jpy",
+    payment_method: "pm_card_visa",
+    automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+    confirm: true,
+    metadata: {
+      inventoryReservationId: reservationId,
+      inventoryEnvironment: "sandbox",
+      smokeRunId: runId,
+    },
+  }, { idempotencyKey: "ryuge-" + runId });
+  await redis("HSET", RESERVATION_KEY(reservationId), "paymentIntentId", intent.id);
+  console.log("sandbox smoke test payment created; status=" + intent.status + "; id=" + intent.id);
+  // Webhook is the authority: do NOT settle inventory directly here.
+}
+
 async function start() {
   await redis("PING");
   // Inventory seed occurs only once per live Redis instance, and only in test mode.
   await redis("EVAL", seedScript, 1, STOCK_KEY("enma-karamo"), 15);
+  // Test deliberately runs after the HTTP server starts so Stripe can reach the webhook.
+
   const port = Number(process.env.PORT || 10000);
   app.listen(port, "0.0.0.0");
   const timer = setInterval(() => { reconcile().catch((e) => console.error("reconcile:", e.message)); }, 60000);
   timer.unref();
+  setTimeout(() => sandboxOneTimePaymentSmoke().catch((err) => {
+    console.error("sandbox smoke error (no automatic retries):", err.message);
+  }), 12000).unref();
+
 }
 
 start().catch((err) => { console.error("sandbox startup failed:", err.message); process.exit(1); });
