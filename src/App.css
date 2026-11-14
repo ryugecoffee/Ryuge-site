@@ -1833,6 +1833,25 @@ html[lang="es"] .products-hero-overlay h1 {
   justify-content: flex-start;
 }
 
+/* Product details are a scrollable vertical document, not a stack of
+   flex-shrinkable blocks. On narrow screens Safari can shrink a paragraph's
+   box while its lines still paint at full height, overlapping the specs. */
+.modal-copy-inner.modal-copy-classic > .modal-product-title,
+.modal-copy-inner.modal-copy-classic > .modal-product-summary,
+.modal-copy-inner.modal-copy-classic > .product-specs-classic,
+.modal-copy-inner.modal-copy-classic > .modal-brew-block,
+.modal-copy-inner.modal-copy-classic > .simple-quantity-block {
+  flex: 0 0 auto;
+}
+.modal-copy-inner.modal-copy-classic > .modal-product-summary {
+  height: auto;
+  overflow-wrap: anywhere;
+}
+.product-specs-classic {
+  align-content: start;
+  min-height: min-content;
+}
+
 .modal-copy-inner .product-subtitle {
   margin-bottom: 8px;
 }
@@ -3138,6 +3157,20 @@ html[lang="es"] .products-hero-overlay h1 {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding: 22px 16px 18px;
+  }
+
+  /* Keep long bean descriptions and the specifications in normal flow.
+     The copy column scrolls within the modal instead of overlapping rows. */
+  .modal-copy-inner.modal-copy-classic {
+    flex: 0 0 auto;
+    min-height: min-content;
+    gap: 0;
+  }
+  .modal-copy-inner.modal-copy-classic > .modal-product-summary {
+    margin-bottom: 20px;
+  }
+  .modal-copy-inner.modal-copy-classic > .product-specs-classic {
+    flex-shrink: 0;
   }
 
   .modal-close {
