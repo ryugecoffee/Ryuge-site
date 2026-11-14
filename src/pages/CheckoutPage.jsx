@@ -1,4 +1,6 @@
 import { trackBeginCheckout } from "../lib/analytics";
+// Draft inventory PR preview must never call the production payment API.
+const PAYMENT_API_BASE = "https://ryuge-inventory-sandbox.onrender.com";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useCart } from "../CartContext";
 import { useNavigate } from "react-router-dom";
@@ -15,7 +17,11 @@ import {
   COUNTRY_ZONES,
 } from "../lib/shipping";
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+// This preview only accepts a sandbox publishable key; never fall back to live keys.
+const SANDBOX_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_SANDBOX_PUBLIC_KEY;
+const stripePromise = SANDBOX_PUBLISHABLE_KEY?.startsWith("pk_test_")
+  ? loadStripe(SANDBOX_PUBLISHABLE_KEY)
+  : Promise.resolve(null);
 
 // ── 米国配送フラグ（環境変数 VITE_ENABLE_US_SHIPPING=true で有効化）──
 const ENABLE_US_SHIPPING = import.meta.env.VITE_ENABLE_US_SHIPPING === "true";
@@ -429,15 +435,40 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
       return;
     }
 
+    // A stable key per tab + cart contents prevents duplicate reservations when
+    // React effects re-run, the network retries or the shopper revisits checkout.
+    const checkoutFingerprint = JSON.stringify({
+      items: cartItems.map(({ id, quantity }) => ({ id, quantity })),
+      country,
+      couponCode: couponStatus === "valid" ? couponCode : "",
+    });
+    const storageKey = "ryuge-sandbox-checkout-key";
+    let checkoutInfo;
+    try {
+      checkoutInfo = JSON.parse(sessionStorage.getItem(storageKey) || "null");
+    } catch { checkoutInfo = null; }
+    if (!checkoutInfo || checkoutInfo.fingerprint !== checkoutFingerprint) {
+      checkoutInfo = {
+        fingerprint: checkoutFingerprint,
+        key: crypto.randomUUID(),
+      };
+      sessionStorage.setItem(storageKey, JSON.stringify(checkoutInfo));
+    }
+    let cancelled = false;
+    const controller = new AbortController();
+    // A prior intent is not valid for a different cart configuration.
+    setClientSecret("");
     const initCheckout = async () => {
       try {
         setError("");
         const response = await fetch(
-          "https://ryuge-site.onrender.com/create-payment-intent",
+          `${PAYMENT_API_BASE}/create-payment-intent`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
             body: JSON.stringify({
+              checkoutKey: checkoutInfo.key,
               items:       cartItems,
               countryCode: country,
               couponCode:  couponStatus === "valid" ? couponCode : "",
@@ -451,10 +482,12 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         if (!response.ok) throw new Error(data.error || t.checkoutInitError);
 
         // サーバーが送料を権威的に計算して返す
+        if (cancelled) return;
         setShipping(data.shipping);
         setTotal(data.total);
         setClientSecret(data.clientSecret);
       } catch (err) {
+        if (cancelled || controller.signal.aborted) return;
         // サーバー到達不可時はクライアント計算値でフォールバック
         setShipping(computedShipping);
         setTotal(
@@ -468,6 +501,10 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
     };
 
     initCheckout();
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, [cartItems, country, hasSubscription, cartSubtotal, couponStatus, couponCode, isBlocked]);
 
   // ── クーポン検証 ─────────────────────────────────────────────────────────
@@ -475,7 +512,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
     if (!couponCode.trim()) return;
     setCouponStatus("applying");
     try {
-      const res = await fetch("https://ryuge-site.onrender.com/validate-coupon", {
+      const res = await fetch(`${PAYMENT_API_BASE}/validate-coupon`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ couponCode: couponCode.trim() }),
@@ -582,7 +619,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
       const paymentIntentId = result.paymentIntent?.id;
 
       // 注文完了通知（メール送信）
-      await fetch("https://ryuge-site.onrender.com/order-complete", {
+      await fetch(`${PAYMENT_API_BASE}/order-complete`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -604,6 +641,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         }),
       });
 
+      sessionStorage.removeItem("ryuge-sandbox-checkout-key");
       onSuccess();
       navigate("/checkout/complete", {
         state: {

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+// Draft inventory PR preview must never call the production payment API.
+const PAYMENT_API_BASE = "https://ryuge-inventory-sandbox.onrender.com";
 import { useLocation } from "react-router-dom";
 import SiteFooter from "../components/SiteFooter";
 import BeanConcierge from "../components/BeanConcierge";
@@ -30,6 +32,16 @@ const PAGE_TEXT = {
   },
 };
 
+// Temporary checkout preview handles only these two stocked coffee SKUs.
+// Do not infer "sold out" for untracked products from a missing API quantity.
+const INVENTORY_MANAGED_SKUS = new Set(["enma-karamo", "enma-kindiio"]);
+
+const STOCK_CHECK_TEXT = {
+  ja: "在庫確認中",
+  en: "Checking Stock",
+  es: "Comprobando stock",
+};
+
 const SOLD_OUT_TEXT = {
   ja: "売り切れ",
   en: "Sold Out",
@@ -58,6 +70,51 @@ export default function ProductsPage({ lang }) {
   const [showEnmaHeading, setShowEnmaHeading] = useState(false);
   const [simpleQuantity, setSimpleQuantity] = useState(1);
   const [showWoodboxHeading, setShowWoodboxHeading] = useState(false);
+  const [inventoryAvailability, setInventoryAvailability] = useState(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+    const refreshInventory = async () => {
+      try {
+        const ids = [...INVENTORY_MANAGED_SKUS].join(",");
+        const response = await fetch(
+          `${PAYMENT_API_BASE}/inventory/availability?ids=${encodeURIComponent(ids)}`,
+          { signal: controller.signal, cache: "no-store" }
+        );
+        if (!response.ok) throw new Error("Inventory unavailable");
+        const data = await response.json();
+        if (!data?.enabled || !data.quantities) throw new Error("Inventory disabled");
+        // A response missing a managed SKU is not proof that it is in stock.
+        if (![...INVENTORY_MANAGED_SKUS].every((id) =>
+          Number.isSafeInteger(data.quantities[id]) && data.quantities[id] >= 0
+        )) throw new Error("Incomplete inventory");
+        if (active) setInventoryAvailability(data.quantities);
+      } catch {
+        // Fail closed for managed SKUs instead of accidentally selling past zero.
+        if (active) setInventoryAvailability(null);
+      }
+    };
+    refreshInventory();
+    const onFocus = () => refreshInventory();
+    const intervalId = window.setInterval(refreshInventory, 30000);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      active = false;
+      controller.abort();
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
+
+  const stockStatus = (item) => {
+    if (item.comingSoon) return "comingSoon";
+    if (item.isSoldOut) return "soldOut";
+    if (!INVENTORY_MANAGED_SKUS.has(item.id)) return "unmanaged";
+    if (!inventoryAvailability) return "checking";
+    return inventoryAvailability[item.id] === 0 ? "soldOut" : "available";
+  };
+
+
 
   const enmaSectionRef = useRef(null);
   const woodboxSectionRef = useRef(null);
@@ -207,6 +264,12 @@ export default function ProductsPage({ lang }) {
                   )}
                   {item.comingSoon && (
                     <span className="enma-coming-soon-badge">{COMING_SOON_TEXT[lang]}</span>
+                  )}
+                  {stockStatus(item) === "soldOut" && !item.isSoldOut && (
+                    <span className="enma-coming-soon-badge">{SOLD_OUT_TEXT[lang]}</span>
+                  )}
+                  {stockStatus(item) === "checking" && (
+                    <span className="enma-coming-soon-badge">{STOCK_CHECK_TEXT[lang]}</span>
                   )}
                 </div>
 
@@ -624,13 +687,13 @@ export default function ProductsPage({ lang }) {
 
                                 if (Number.isNaN(next)) return;
 
-                                setSimpleQuantity(Math.max(0, next));
+                                setSimpleQuantity(Math.min(Math.max(0, next), inventoryAvailability?.[activeItem.id] ?? 50));
                               }}
                             />
 
                             <button
                               type="button"
-                              onClick={() => setSimpleQuantity((prev) => prev + 1)}
+                              onClick={() => setSimpleQuantity((prev) => Math.min(prev + 1, inventoryAvailability?.[activeItem.id] ?? 50))}
                             >
                               ＋
                             </button>
@@ -642,15 +705,22 @@ export default function ProductsPage({ lang }) {
                         <button className="modal-cta-link is-disabled" disabled>
                           {COMING_SOON_TEXT[lang]}
                         </button>
-                      ) : activeItem.isSoldOut ? (
+                      ) : stockStatus(activeItem) === "soldOut" ? (
                         <button className="modal-cta-link is-disabled" disabled>
                           {SOLD_OUT_TEXT[lang]}
+                        </button>
+                      ) : stockStatus(activeItem) === "checking" ? (
+                        <button className="modal-cta-link is-disabled" disabled>
+                          {STOCK_CHECK_TEXT[lang]}
                         </button>
                       ) : (
                         <button
                           type="button"
                           className="modal-cta-link modal-fade-up"
                           onClick={() => {
+                            if (stockStatus(activeItem) === "soldOut" || stockStatus(activeItem) === "checking") return;
+                            if (INVENTORY_MANAGED_SKUS.has(activeItem.id) && (inventoryAvailability?.[activeItem.id] ?? 0) < simpleQuantity) return;
+                            if (!Number.isInteger(simpleQuantity) || simpleQuantity < 1) return;
                             setItem(
                               {
                                 id: activeItem.id,

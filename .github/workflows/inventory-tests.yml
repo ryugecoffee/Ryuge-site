@@ -1,0 +1,51 @@
+name: Inventory tests (no payment credentials)
+on:
+  push:
+    branches:
+      - feature/stripe-inventory-preview-20261113
+  pull_request:
+    paths:
+      - 'server/inventory.js'
+      - 'server/firestore-preview-checkout.js'
+      - 'server/firestore-preview-checkout.test.js'
+      - 'server/inventory-adjustments.js'
+      - 'server/inventory-adjustments.test.js'
+      - 'src/App.css'
+      - 'server/inventory.test.js'
+      - 'server/inventory-scenarios.test.js'
+      - 'server/index.js'
+      - 'server/resp-client.js'
+      - 'server/sandbox-checkout.js'
+      - 'server/staging-entry.js'
+      - 'src/pages/ProductsPage.jsx'
+      - '.github/workflows/inventory-tests.yml'
+permissions:
+  contents: read
+jobs:
+  test-inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          node --check server/inventory.js
+          node --check server/firestore-preview-checkout.js
+          node --check server/firestore-preview-checkout.test.js
+          node --check server/inventory-adjustments.js
+          node --check server/index.js
+          node --check server/resp-client.js
+          node --check server/sandbox-checkout.js
+          node --check server/staging-entry.js
+      - name: Install site dependencies
+        run: npm ci
+      - name: Build site preview
+        run: npm run build
+      - name: Unit tests
+        run: node --test server/inventory.test.js server/inventory-scenarios.test.js server/inventory-adjustments.test.js server/firestore-preview-checkout.test.js
