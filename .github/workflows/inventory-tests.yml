@@ -9,6 +9,9 @@ on:
       - 'server/inventory.test.js'
       - 'server/inventory-scenarios.test.js'
       - 'server/index.js'
+      - 'server/resp-client.js'
+      - 'server/sandbox-checkout.js'
+      - 'server/staging-entry.js'
       - '.github/workflows/inventory-tests.yml'
 permissions:
   contents: read
@@ -28,5 +31,8 @@ jobs:
         run: |
           node --check server/inventory.js
           node --check server/index.js
+          node --check server/resp-client.js
+          node --check server/sandbox-checkout.js
+          node --check server/staging-entry.js
       - name: Unit tests
         run: node --test server/inventory.test.js server/inventory-scenarios.test.js
