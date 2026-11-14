@@ -259,6 +259,33 @@ async function sandboxOneTimePaymentSmoke() {
   // Webhook is the authority: do NOT settle inventory directly here.
 }
 
+async function sandboxCheckoutDedupSmoke() {
+  // Disposable SKU used only to verify repeated checkout initialization.
+  const sku = "sandbox-dedup-only";
+  const reservationId = crypto.randomUUID();
+  const checkoutKey = crypto.randomUUID();
+  const items = JSON.stringify([{ id: sku, quantity: 1 }]);
+  const reservationKey = RESERVATION_KEY(reservationId);
+  const mapKey = "sandbox:checkout:" + checkoutKey;
+  // Don't reuse a previous run's key.
+  await redis("SET", "sandbox:inventory:" + sku + ":seed-once", "yes", "NX");
+  await redis("HSET", STOCK_KEY(sku), "ready", 1, "held", 0, "sold", 0);
+  const first = await redis("EVAL", reserveScript, 3,
+    reservationKey, PENDING_KEY, mapKey, reservationId, items, Date.now());
+  const second = await redis("EVAL", reserveScript, 3,
+    RESERVATION_KEY(crypto.randomUUID()), PENDING_KEY, mapKey, crypto.randomUUID(), items, Date.now());
+  const held = Number(await redis("HGET", STOCK_KEY(sku), "held"));
+  if (first !== "RESERVED" || second !== "EXISTING:" + reservationId || held !== 1) {
+    throw new Error("CHECKOUT_DEDUP_FAILED");
+  }
+  const released = await settle(reservationId, "", "released");
+  const after = await redis("HMGET", STOCK_KEY(sku), "ready", "held", "sold");
+  if (released !== "OK" || after.join(",") !== "1,0,0") {
+    throw new Error("CHECKOUT_DEDUP_RELEASE_FAILED");
+  }
+  console.log("sandbox checkout idempotency PASS: repeat reserved once, stock restored, no Stripe PaymentIntent");
+}
+
 async function sandboxCancellationSmoke() {
   const runId = process.env.SANDBOX_CANCEL_TEST_RUN_ID;
   if (!/^ryuge-cancel-test-[a-z0-9-]{6,60}$/.test(runId || "")) return;
@@ -328,6 +355,7 @@ async function start() {
     throw new Error("ZERO_STOCK_TEST_FAILED:" + zeroCheck);
   }
   console.log("sandbox zero-stock checkout blocked with OUT_OF_STOCK");
+  await sandboxCheckoutDedupSmoke();
 
   // Test deliberately runs after the HTTP server starts so Stripe can reach the webhook.
 
