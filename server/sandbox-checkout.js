@@ -227,6 +227,17 @@ async function start() {
   await redis("PING");
   // Inventory seed occurs only once per live Redis instance, and only in test mode.
   await redis("EVAL", seedScript, 1, STOCK_KEY("enma-karamo"), 15);
+  // Zero-stock scenario is never a purchasable unit. Test it without charging Stripe.
+  await redis("EVAL", seedScript, 1, STOCK_KEY("enma-kindiio"), 0);
+  const zeroStockReservation = crypto.randomUUID();
+  const zeroCheck = await redis("EVAL", reserveScript, 2,
+    RESERVATION_KEY(zeroStockReservation), PENDING_KEY, zeroStockReservation,
+    JSON.stringify([{ id: "enma-kindiio", quantity: 1 }]), Date.now());
+  if (zeroCheck !== "OUT_OF_STOCK") {
+    throw new Error("ZERO_STOCK_TEST_FAILED:" + zeroCheck);
+  }
+  console.log("sandbox zero-stock checkout blocked with OUT_OF_STOCK");
+
   // Test deliberately runs after the HTTP server starts so Stripe can reach the webhook.
 
   const port = Number(process.env.PORT || 10000);
