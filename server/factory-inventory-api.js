@@ -10,7 +10,7 @@
 // The audit actor is derived from Render configuration, never from free-form input.
 const crypto = require("node:crypto");
 const { adjustInventory } = require("./inventory-adjustments");
-const { createRateLimiter } = require("./rate-limit");
+const { createRateLimiter, clientKey } = require("./rate-limit");
 
 const PATH = "/internal/factory/inventory-adjust";
 const DATE_WINDOW_MS = 5 * 60 * 1000;
@@ -105,7 +105,7 @@ function createHandler({ getDb, env = process.env, limiter = createRateLimiter()
   return async function factoryInventoryAdjust(req, res) {
     res.setHeader("Cache-Control", "no-store");
     if (!enabled(env)) return res.status(404).end();
-    if (!limiter(req.ip || "unknown")) return res.status(429).json({ error: "RATE_LIMITED" });
+    if (!limiter(clientKey(req).key)) return res.status(429).json({ error: "RATE_LIMITED" });
     try {
       const result = await processSignedAdjustment({
         db: getDb(), env, rawBody: req.body, now: clock(),

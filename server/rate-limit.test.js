@@ -3,7 +3,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const http = require("node:http");
 const express = require("express");
-const { createRateLimiter, rateLimitMiddleware } = require("./rate-limit");
+const { createRateLimiter, rateLimitMiddleware, clientKey } = require("./rate-limit");
 
 test("limiter resets after the window and keys are independent", () => {
   let now = 0;
@@ -33,4 +33,40 @@ test("checkout limiter behind one trusted proxy hop: per client, spoofed prefixe
     assert.equal(await post("203.0.113.2"), 200);
   } finally { server.close(); }
   assert.equal(handled, 3);
+});
+
+async function serve(middleware, fn) {
+  const app = express();
+  app.set("trust proxy", 1);
+  app.post("/x", middleware, (_req, res) => res.json({ ok: true }));
+  const server = http.createServer(app);
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  try { return await fn("http://127.0.0.1:" + server.address().port + "/x"); }
+  finally { server.close(); }
+}
+
+test("Cloudflare client IP keeps one bucket even when proxy hops rotate", async () => {
+  await serve(rateLimitMiddleware(createRateLimiter({ limit: 2 })), async (url) => {
+    const post = (cf, hop) => fetch(url, { method: "POST",
+      headers: { "cf-connecting-ip": cf, "x-forwarded-for": hop } });
+    const first = await post("198.51.100.20", "10.0.0.1");
+    assert.equal(first.headers.get("x-ratelimit-key-source"), "cf-connecting-ip");
+    assert.equal((await post("198.51.100.20", "10.0.0.2")).status, 200);
+    assert.equal((await post("198.51.100.20", "10.0.0.3")).status, 429);
+    assert.equal((await post("198.51.100.21", "10.0.0.3")).status, 200);
+  });
+});
+
+test("invalid CF header falls back to proxy address; global ceiling always applies", async () => {
+  assert.equal(clientKey({ get: () => "not-an-ip", ip: "10.1.1.1" }).source, "proxy-address");
+  assert.equal(clientKey({ get: () => "2001:db8::1", ip: "10.1.1.1" }).key, "cf:2001:db8::1");
+  await serve(rateLimitMiddleware(createRateLimiter({ limit: 100 }), createRateLimiter({ limit: 3 })),
+    async (url) => {
+      const statuses = [];
+      for (let i = 0; i < 4; i++) {
+        statuses.push((await fetch(url, { method: "POST",
+          headers: { "cf-connecting-ip": "198.51.100." + i } })).status);
+      }
+      assert.deepEqual(statuses, [200, 200, 200, 429]);
+    });
 });

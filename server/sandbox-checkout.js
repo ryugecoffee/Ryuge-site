@@ -29,7 +29,10 @@ app.disable("x-powered-by");
 // address (spoofed X-Forwarded-For prefixes are ignored).
 app.set("trust proxy", 1);
 // Each checkout places a 20-minute stock hold; bound how fast one client can create them.
-const limitCheckout = rateLimitMiddleware(createRateLimiter({ limit: 10, windowMs: 60 * 1000 }));
+const limitCheckout = rateLimitMiddleware(
+  createRateLimiter({ limit: 10, windowMs: 60 * 1000 }),
+  createRateLimiter({ limit: 120, windowMs: 60 * 1000 }),
+);
 
 const PRICE_BY_SKU = Object.freeze({
   "enma-karamo": { price: 1800, weightG: 120 },
