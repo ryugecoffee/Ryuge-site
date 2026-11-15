@@ -32,7 +32,16 @@ function unmetConditions(env) {
     FACTORY_INVENTORY_HMAC_SECRET: typeof env.FACTORY_INVENTORY_HMAC_SECRET === "string" &&
       Buffer.byteLength(env.FACTORY_INVENTORY_HMAC_SECRET, "utf8") >= 32,
   };
-  return Object.keys(checks).filter((name) => !checks[name]);
+  // Flags get a value-free hint so a whitespace/quote/case typo can be told apart from a
+  // missing variable without revealing anything that was configured.
+  const flagHint = (name) => {
+    const value = env[name];
+    if (value === undefined || value === "") return name + ":missing";
+    return name + ":not_exactly_true";
+  };
+  const flags = new Set(["INVENTORY_STAGING_ONLY", "FIRESTORE_CHECKOUT_ENABLED", "FIRESTORE_FACTORY_API_ENABLED"]);
+  return Object.keys(checks).filter((name) => !checks[name])
+    .map((name) => (flags.has(name) ? flagHint(name) : name));
 }
 
 function enabled(env) {

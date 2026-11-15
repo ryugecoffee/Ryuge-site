@@ -100,6 +100,10 @@ test("Factory API defaults to disabled; refuses live key, other project, weak se
   const unmet = unmetConditions({ ...goodEnv, FACTORY_CEO_USER_ID: " " + CEO,
     FACTORY_INVENTORY_HMAC_SECRET: "short" });
   assert.deepEqual(unmet, ["FACTORY_CEO_USER_ID", "FACTORY_INVENTORY_HMAC_SECRET"]);
+  assert.deepEqual(unmetConditions({ ...goodEnv, FIRESTORE_FACTORY_API_ENABLED: " true" }),
+    ["FIRESTORE_FACTORY_API_ENABLED:not_exactly_true"]);
+  assert.deepEqual(unmetConditions({ ...goodEnv, FIRESTORE_FACTORY_API_ENABLED: undefined }),
+    ["FIRESTORE_FACTORY_API_ENABLED:missing"]);
   // Diagnostics list condition names only, never configured values.
   assert.equal(JSON.stringify(unmet).includes(secret), false);
 });
