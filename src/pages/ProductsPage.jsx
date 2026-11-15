@@ -344,6 +344,11 @@ export default function ProductsPage({ lang }) {
                     {SOLD_OUT_TEXT[lang]}
                   </span>
                 )}
+                {item.comingSoon && !item.isSoldOut && (
+                  <span className="product-soldout-badge">
+                    {COMING_SOON_TEXT[lang]}
+                  </span>
+                )}
 
                 <div className="products-enma-card-text">
                   <h3>{item.title?.[lang]}</h3>

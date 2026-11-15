@@ -341,6 +341,7 @@ export const PRODUCT_DATA = {
       origin: "Oku-Yame, Fukuoka, Japan",
       price: "¥2,800",
       priceNumber: 2800,
+      comingSoon: true, // CEO 2026-11-15: 配送重量の実測と販売開始の判断まで準備中
       isSoldOut: false,
     },
     {
@@ -363,6 +364,7 @@ export const PRODUCT_DATA = {
       origin: "Oku-Yame, Fukuoka, Japan",
       price: "¥2,800",
       priceNumber: 2800,
+      comingSoon: true, // CEO 2026-11-15: 配送重量の実測と販売開始の判断まで準備中
       isSoldOut: false,
     },
   ],
