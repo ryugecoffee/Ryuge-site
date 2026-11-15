@@ -1,7 +1,7 @@
 "use strict";
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { reserve, attachPaymentIntent, finish, availability, reconcileExpired } = require("./inventory");
+const { reserve, attachPaymentIntent, finish, availability } = require("./inventory");
 
 // Serialized fake transactions provide a deterministic simulation of Firestore's
 // atomic commit behavior; these tests do not substitute for live Stripe E2E.
