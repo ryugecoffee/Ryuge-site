@@ -6,6 +6,7 @@ const Stripe = require("stripe");
 const { createStore } = require("./resp-client");
 const { calcShipping } = require("./shipping");
 const firestorePreview = require("./firestore-preview-checkout");
+const factoryInventoryApi = require("./factory-inventory-api");
 const firestoreCheckoutRequested = process.env.FIRESTORE_CHECKOUT_ENABLED === "true";
 function firestorePreviewDb() {
   if (!firestorePreview.previewAllowed(process.env)) throw new Error("FIRESTORE_PREVIEW_DISABLED");
@@ -18,6 +19,7 @@ function firestorePreviewDb() {
     inventory: "inventoryPreview",
     inventoryReservations: "inventoryPreviewReservations",
     inventoryCheckoutKeys: "inventoryPreviewCheckoutKeys",
+    inventoryAdjustments: "inventoryPreviewAdjustments",
   });
   return {
     collection(name) {
@@ -169,6 +171,34 @@ app.post("/stripe-inventory-webhook", express.raw({ type: "application/json" }),
     return res.status(500).json({ error: "WEBHOOK_SETTLEMENT_FAILED" });
   }
 });
+
+// No browser access: signed internal API, disabled until a separate shared secret
+// and explicit test-only flag are configured. No credentials are sent to clients.
+app.post(factoryInventoryApi.PATH, express.raw({ type: "application/json", limit: "4kb" }),
+  async (req, res) => {
+    if (!factoryInventoryApi.enabled(process.env)) return res.status(404).end();
+    try {
+      const db = firestorePreviewDb();
+      const result = await factoryInventoryApi.processSignedAdjustment({
+        db,
+        env: process.env,
+        rawBody: req.body,
+        timestamp: req.get("x-factory-timestamp"),
+        signature: req.get("x-factory-signature"),
+      });
+      res.setHeader("Cache-Control", "no-store");
+      return res.json({ ok: true, ...result });
+    } catch (error) {
+      const message = String(error.message);
+      if (["INVALID_FACTORY_SIGNATURE"].includes(message)) return res.status(401).json({ error: message });
+      if (["OUT_OF_STOCK", "INVENTORY_REQUEST_ID_CONFLICT"].includes(message))
+        return res.status(409).json({ error: message });
+      if (["INVALID_INVENTORY_ADJUSTMENT", "INVALID_FIELDS", "INVALID_JSON", "BODY_TOO_LARGE", "UNKNOWN_INVENTORY_SKU"].includes(message))
+        return res.status(400).json({ error: message });
+      console.error("Factory preview inventory rejected:", message.slice(0, 100));
+      return res.status(503).json({ error: "FACTORY_PREVIEW_UNAVAILABLE" });
+    }
+  });
 
 app.use(cors({
   origin(origin, callback) {
