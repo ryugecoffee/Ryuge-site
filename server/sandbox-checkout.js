@@ -479,6 +479,77 @@ async function checkFirestoreWriteTransactions() {
   }
 }
 
+async function sandboxFirestorePreviewPurchaseE2E() {
+  // One-shot UI-backend-equivalent checkout request against the actual HTTP endpoint.
+  // Uses a test card only; this never charges money or writes to live inventory.
+  const runId = process.env.FIRESTORE_PREVIEW_E2E_RUN_ID || "";
+  if (!/^ryuge-preview-e2e-[a-z0-9-]{8,45}$/.test(runId)) return;
+  if (!firestoreCheckoutRequested || !firestorePreview.previewAllowed(process.env)) {
+    console.error("Firestore preview E2E BLOCK: staging-only checkout not enabled");
+    return;
+  }
+  const admin = require("firebase-admin");
+  const app = admin.apps.find((x) => x.name === "ryuge-inventory-sandbox-readonly");
+  if (!app) throw new Error("E2E_FIREBASE_MISSING");
+  const firestore = admin.firestore(app);
+  const markerRef = firestore.collection("inventoryPreviewSmokeRuns").doc(runId);
+  const claimed = await firestore.runTransaction(async (tx) => {
+    const current = await tx.get(markerRef);
+    if (current.exists) return false;
+    tx.create(markerRef, { status: "started", createdAt: new Date() });
+    return true;
+  });
+  if (!claimed) {
+    console.log("Firestore preview HTTP E2E: run already claimed, no extra payment");
+    return;
+  }
+  try {
+    const checkoutKey = crypto.randomUUID();
+    const response = await fetch("http://127.0.0.1:" + Number(process.env.PORT || 10000) +
+      "/create-payment-intent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ checkoutKey, countryCode: "JP",
+        items: [{ id: "enma-karamo", quantity: 1 }] }),
+    });
+    const payload = await response.json();
+    if (response.status !== 200 || typeof payload.clientSecret !== "string" ||
+        !payload.clientSecret.startsWith("pi_")) {
+      throw new Error("HTTP_CHECKOUT_FAILED_" + response.status + "_" + String(payload.error || ""));
+    }
+    // Extract only the test PaymentIntent ID; never log or persist client_secret.
+    const intentId = payload.clientSecret.split("_secret_")[0];
+    if (!/^pi_[A-Za-z0-9]+$/.test(intentId)) throw new Error("BAD_TEST_INTENT_ID");
+    const intent = await stripe.paymentIntents.confirm(intentId,
+      { payment_method: "pm_card_visa" },
+      { idempotencyKey: "preview-e2e-confirm-" + runId });
+    if (intent.livemode !== false || intent.status !== "succeeded") {
+      throw new Error("STRIPE_TEST_PAYMENT_NOT_SUCCEEDED");
+    }
+    console.log("Firestore preview HTTP E2E: test card succeeded; verifying signed webhook; run=" + runId);
+    let verified = false;
+    for (let i = 0; i < 25; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const [preview, canonical] = await Promise.all([
+        firestore.collection("inventoryPreview").doc("enma-karamo").get(),
+        firestore.collection("inventory").doc("enma-karamo").get(),
+      ]);
+      const a = preview.data(), b = canonical.data();
+      if (a?.ready === 1 && a?.held === 0 && a?.sold === 1 &&
+          b?.ready === 15 && b?.held === 0 && b?.sold === 0) {
+        verified = true;
+        break;
+      }
+    }
+    if (!verified) throw new Error("WEBHOOK_OR_CANONICAL_STOCK_VERIFICATION_PENDING");
+    await markerRef.update({ status: "passed", finishedAt: new Date() });
+    console.log("Firestore preview HTTP E2E PASS: payment succeeded, preview stock 2 to 1; canonical karamo still 15");
+  } catch (error) {
+    await markerRef.update({ status: "needs-review", reason: String(error.message).slice(0, 115) });
+    console.error("Firestore preview HTTP E2E NOT COMPLETE:", String(error.message).slice(0, 115));
+  }
+}
+
 async function sandboxStripeFirestoreSmoke() {
   // Unique one-shot test card charge in Stripe test mode, on a temporary SKU only.
   // Real stock /inven​tory/enma-karamo is NEVER modified.
@@ -696,6 +767,9 @@ async function start() {
   setTimeout(() => sandboxOneTimePaymentSmoke().catch((err) => {
     console.error("sandbox smoke error (no automatic retries):", err.message);
   }), 12000).unref();
+  setTimeout(() => sandboxFirestorePreviewPurchaseE2E().catch((err) => {
+    console.error("Firestore preview E2E runner error:", String(err.message).slice(0, 110));
+  }), 24000).unref();
   setTimeout(() => sandboxStripeFirestoreSmoke().catch((err) => {
     console.error("Firestore Stripe smoke startup failed:", String(err.message).slice(0, 110));
   }), 20000).unref();
