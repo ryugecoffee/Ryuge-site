@@ -7,6 +7,7 @@ const { createStore } = require("./resp-client");
 const { calcShipping } = require("./shipping");
 const firestorePreview = require("./firestore-preview-checkout");
 const factoryInventoryApi = require("./factory-inventory-api");
+const { createRateLimiter, rateLimitMiddleware } = require("./rate-limit");
 const firestoreCheckoutRequested = process.env.FIRESTORE_CHECKOUT_ENABLED === "true";
 function firestorePreviewDb() {
   if (!firestorePreview.previewAllowed(process.env)) throw new Error("FIRESTORE_PREVIEW_DISABLED");
@@ -24,6 +25,11 @@ const redis = createStore(process.env.SANDBOX_REDIS_URL);
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const app = express();
 app.disable("x-powered-by");
+// Render terminates TLS at one proxy hop: trust exactly that hop so req.ip is the client
+// address (spoofed X-Forwarded-For prefixes are ignored).
+app.set("trust proxy", 1);
+// Each checkout places a 20-minute stock hold; bound how fast one client can create them.
+const limitCheckout = rateLimitMiddleware(createRateLimiter({ limit: 10, windowMs: 60 * 1000 }));
 
 const PRICE_BY_SKU = Object.freeze({
   "enma-karamo": { price: 1800, weightG: 120 },
@@ -198,7 +204,7 @@ app.get("/inventory/availability", async (req, res) => {
   }
 });
 
-app.post("/create-payment-intent", async (req, res) => {
+app.post("/create-payment-intent", limitCheckout, async (req, res) => {
   const { items, countryCode = "JP", couponCode = "", checkoutKey } = req.body || {};
   if (typeof checkoutKey !== "string" || !/^[a-f0-9-]{36}$/.test(checkoutKey)) {
     return res.status(400).json({ error: "CHECKOUT_KEY_REQUIRED" });

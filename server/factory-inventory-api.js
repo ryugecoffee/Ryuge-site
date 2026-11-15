@@ -10,6 +10,7 @@
 // The audit actor is derived from Render configuration, never from free-form input.
 const crypto = require("node:crypto");
 const { adjustInventory } = require("./inventory-adjustments");
+const { createRateLimiter } = require("./rate-limit");
 
 const PATH = "/internal/factory/inventory-adjust";
 const DATE_WINDOW_MS = 5 * 60 * 1000;
@@ -98,23 +99,6 @@ const STATUS = Object.freeze({
   UNKNOWN_INVENTORY_SKU: 400,
   BODY_TOO_LARGE: 413,
 });
-
-// Fixed-window limiter per client address. In-memory is acceptable for a single
-// sandbox instance; it bounds signature guessing and accidental request storms.
-function createRateLimiter({ limit = 20, windowMs = 60 * 1000, clock = Date.now } = {}) {
-  const hits = new Map();
-  return function allow(key) {
-    const now = clock();
-    const entry = hits.get(key);
-    if (!entry || now - entry.start >= windowMs) {
-      if (hits.size > 5000) hits.clear();
-      hits.set(key, { start: now, count: 1 });
-      return true;
-    }
-    entry.count += 1;
-    return entry.count <= limit;
-  };
-}
 
 function createHandler({ getDb, env = process.env, limiter = createRateLimiter(),
   clock = Date.now, log = console } = {}) {
