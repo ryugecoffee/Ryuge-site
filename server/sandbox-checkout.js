@@ -12,7 +12,22 @@ function firestorePreviewDb() {
   const admin = require("firebase-admin");
   const app = admin.apps.find((item) => item.name === "ryuge-inventory-sandbox-readonly");
   if (!app) throw new Error("FIRESTORE_NOT_CONNECTED");
-  return admin.firestore(app);
+  // Separate staging namespace: never mutate inventory/enma-karamo or live reservations.
+  const firestore = admin.firestore(app);
+  const collections = Object.freeze({
+    inventory: "inventoryPreview",
+    inventoryReservations: "inventoryPreviewReservations",
+    inventoryCheckoutKeys: "inventoryPreviewCheckoutKeys",
+  });
+  return {
+    collection(name) {
+      if (!Object.hasOwn(collections, name)) throw new Error("PREVIEW_COLLECTION_NOT_ALLOWED");
+      return firestore.collection(collections[name]);
+    },
+    runTransaction(callback) {
+      return firestore.runTransaction(callback);
+    },
+  };
 }
 
 
@@ -637,6 +652,22 @@ async function start() {
   await sandboxCheckoutDedupSmoke();
   await checkFirestoreReadOnly();
   await checkFirestoreWriteTransactions();
+  if (firestoreCheckoutRequested) {
+    // Only physical sample stock in dedicated preview namespace. No live SKU touched.
+    const db = firestorePreviewDb();
+    for (const [sku, initialReady] of [["enma-karamo", 2], ["enma-kindiio", 0]]) {
+      const ref = db.collection("inventory").doc(sku);
+      await db.runTransaction(async (tx) => {
+        const snapshot = await tx.get(ref);
+        if (!snapshot.exists) {
+          tx.create(ref, { ready: initialReady, held: 0, sold: 0, previewOnly: true });
+        } else if (snapshot.data()?.previewOnly !== true) {
+          throw new Error("PREVIEW_INVENTORY_NOT_OWNED");
+        }
+      });
+    }
+    console.log("Firestore preview namespace ready: separate sample stock, original inventory untouched");
+  }
 
   // Test deliberately runs after the HTTP server starts so Stripe can reach the webhook.
 
