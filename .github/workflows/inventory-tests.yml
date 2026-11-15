@@ -6,8 +6,10 @@ on:
   pull_request:
     paths:
       - 'server/inventory.js'
+      - 'server/factory-inventory-api.js'
+      - 'server/factory-inventory-api.test.js'
       - 'server/firestore-preview-checkout.js'
-      - 'server/firestore-preview-checkout.test.js'
+      - 'server/firestore-preview-checkout.test.js server/factory-inventory-api.test.js'
       - 'server/inventory-adjustments.js'
       - 'server/inventory-adjustments.test.js'
       - 'src/App.css'
@@ -36,6 +38,8 @@ jobs:
       - name: Syntax checks
         run: |
           node --check server/inventory.js
+          node --check server/factory-inventory-api.js
+          node --check server/factory-inventory-api.test.js
           node --check server/firestore-preview-checkout.js
           node --check server/firestore-preview-checkout.test.js
           node --check server/inventory-adjustments.js
