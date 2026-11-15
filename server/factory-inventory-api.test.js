@@ -4,7 +4,7 @@ const assert = require("node:assert/strict");
 const http = require("node:http");
 const express = require("express");
 const {
-  PATH, enabled, signatureFor, verifyRequest, processSignedAdjustment,
+  PATH, enabled, unmetConditions, signatureFor, verifyRequest, processSignedAdjustment,
   createRateLimiter, createHandler,
 } = require("./factory-inventory-api");
 
@@ -96,6 +96,12 @@ test("Factory API defaults to disabled; refuses live key, other project, weak se
   assert.equal(enabled({ ...goodEnv, FACTORY_INVENTORY_HMAC_SECRET: "short" }), false);
   assert.equal(enabled({ ...goodEnv, FACTORY_CEO_USER_ID: undefined }), false);
   assert.equal(enabled({ ...goodEnv, FACTORY_CEO_USER_ID: "ryugecoffee" }), false);
+  assert.deepEqual(unmetConditions(goodEnv), []);
+  const unmet = unmetConditions({ ...goodEnv, FACTORY_CEO_USER_ID: " " + CEO,
+    FACTORY_INVENTORY_HMAC_SECRET: "short" });
+  assert.deepEqual(unmet, ["FACTORY_CEO_USER_ID", "FACTORY_INVENTORY_HMAC_SECRET"]);
+  // Diagnostics list condition names only, never configured values.
+  assert.equal(JSON.stringify(unmet).includes(secret), false);
 });
 
 test("HMAC binds method, endpoint, exact bytes and timestamp with five-minute window", () => {

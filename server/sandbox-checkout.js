@@ -185,6 +185,12 @@ app.get("/health", (_req, res) => {
     paymentReady: !firestoreCheckoutRequested || previewReady,
     inventoryEnabled: !firestoreCheckoutRequested || previewReady,
     persistence: previewReady ? "firestore" : "ephemeral",
+    // Deployed commit (public repo) and names only of unmet Factory API conditions.
+    commit: String(process.env.RENDER_GIT_COMMIT || "").slice(0, 7) || null,
+    factoryApi: {
+      enabled: factoryInventoryApi.enabled(process.env),
+      unmet: factoryInventoryApi.unmetConditions(process.env),
+    },
   });
 });
 app.get("/inventory/availability", async (req, res) => {

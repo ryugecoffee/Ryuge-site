@@ -18,17 +18,25 @@ const APPROVAL_MAX_AGE_MS = 15 * 60 * 1000;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const FIELDS = ["action", "approvedAt", "approvedBy", "quantity", "requestId", "sku"];
 
+// Names (never values) of unmet enablement conditions, for safe diagnostics.
+function unmetConditions(env) {
+  const checks = {
+    INVENTORY_STAGING_ONLY: env.INVENTORY_STAGING_ONLY === "true",
+    FIRESTORE_CHECKOUT_ENABLED: env.FIRESTORE_CHECKOUT_ENABLED === "true",
+    FIRESTORE_FACTORY_API_ENABLED: env.FIRESTORE_FACTORY_API_ENABLED === "true",
+    FIREBASE_PROJECT_ID: env.FIREBASE_PROJECT_ID === "ryuge-inventory",
+    FIREBASE_CLIENT_EMAIL: env.FIREBASE_CLIENT_EMAIL ===
+      "ryuge-inventory-render@ryuge-inventory.iam.gserviceaccount.com",
+    STRIPE_TEST_KEY: /^(sk|rk)_test_/.test(env.STRIPE_SECRET_KEY || ""),
+    FACTORY_CEO_USER_ID: UUID_RE.test(env.FACTORY_CEO_USER_ID || ""),
+    FACTORY_INVENTORY_HMAC_SECRET: typeof env.FACTORY_INVENTORY_HMAC_SECRET === "string" &&
+      Buffer.byteLength(env.FACTORY_INVENTORY_HMAC_SECRET, "utf8") >= 32,
+  };
+  return Object.keys(checks).filter((name) => !checks[name]);
+}
+
 function enabled(env) {
-  return env.INVENTORY_STAGING_ONLY === "true" &&
-    env.FIRESTORE_CHECKOUT_ENABLED === "true" &&
-    env.FIRESTORE_FACTORY_API_ENABLED === "true" &&
-    env.FIREBASE_PROJECT_ID === "ryuge-inventory" &&
-    env.FIREBASE_CLIENT_EMAIL ===
-      "ryuge-inventory-render@ryuge-inventory.iam.gserviceaccount.com" &&
-    /^(sk|rk)_test_/.test(env.STRIPE_SECRET_KEY || "") &&
-    UUID_RE.test(env.FACTORY_CEO_USER_ID || "") &&
-    typeof env.FACTORY_INVENTORY_HMAC_SECRET === "string" &&
-    Buffer.byteLength(env.FACTORY_INVENTORY_HMAC_SECRET, "utf8") >= 32;
+  return unmetConditions(env).length === 0;
 }
 
 function signatureFor(secret, timestamp, rawBody) {
@@ -127,6 +135,6 @@ function createHandler({ getDb, env = process.env, limiter = createRateLimiter()
 }
 
 module.exports = {
-  PATH, enabled, signatureFor, verifyRequest, verifyCeoApproval,
+  PATH, enabled, unmetConditions, signatureFor, verifyRequest, verifyCeoApproval,
   processSignedAdjustment, createRateLimiter, createHandler,
 };
