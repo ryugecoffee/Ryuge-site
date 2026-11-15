@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 // Draft inventory PR preview must never call the production payment API.
-const PAYMENT_API_BASE = "https://ryuge-inventory-sandbox.onrender.com";
+import { PAYMENT_API_BASE, classifyAvailability } from "../lib/paymentEnv";
 import { useLocation } from "react-router-dom";
 import SiteFooter from "../components/SiteFooter";
 import BeanConcierge from "../components/BeanConcierge";
@@ -71,28 +71,31 @@ export default function ProductsPage({ lang }) {
   const [simpleQuantity, setSimpleQuantity] = useState(1);
   const [showWoodboxHeading, setShowWoodboxHeading] = useState(false);
   const [inventoryAvailability, setInventoryAvailability] = useState(null);
+  // "checking" until the first answer; "disabled" = no inventory gating (legacy behaviour);
+  // "enabled" = server-reported counts; "unknown" = fail closed for managed items.
+  const [inventoryMode, setInventoryMode] = useState("checking");
   useEffect(() => {
     const controller = new AbortController();
     let active = true;
     const refreshInventory = async () => {
+      let status = 0;
+      let body = null;
       try {
         const ids = [...INVENTORY_MANAGED_SKUS].join(",");
         const response = await fetch(
           `${PAYMENT_API_BASE}/inventory/availability?ids=${encodeURIComponent(ids)}`,
           { signal: controller.signal, cache: "no-store" }
         );
-        if (!response.ok) throw new Error("Inventory unavailable");
-        const data = await response.json();
-        if (!data?.enabled || !data.quantities) throw new Error("Inventory disabled");
-        // A response missing a managed SKU is not proof that it is in stock.
-        if (![...INVENTORY_MANAGED_SKUS].every((id) =>
-          Number.isSafeInteger(data.quantities[id]) && data.quantities[id] >= 0
-        )) throw new Error("Incomplete inventory");
-        if (active) setInventoryAvailability(data.quantities);
+        status = response.status;
+        body = await response.json().catch(() => null);
       } catch {
-        // Fail closed for managed SKUs instead of accidentally selling past zero.
-        if (active) setInventoryAvailability(null);
+        status = 0;
       }
+      if (!active) return;
+      const result = classifyAvailability(status, body, [...INVENTORY_MANAGED_SKUS]);
+      // Never sell past zero: anything but a complete, enabled answer keeps managed items closed.
+      setInventoryMode(result.kind);
+      setInventoryAvailability(result.kind === "enabled" ? result.quantities : null);
     };
     refreshInventory();
     const onFocus = () => refreshInventory();
@@ -109,8 +112,8 @@ export default function ProductsPage({ lang }) {
   const stockStatus = (item) => {
     if (item.comingSoon) return "comingSoon";
     if (item.isSoldOut) return "soldOut";
-    if (!INVENTORY_MANAGED_SKUS.has(item.id)) return "unmanaged";
-    if (!inventoryAvailability) return "checking";
+    if (!INVENTORY_MANAGED_SKUS.has(item.id) || inventoryMode === "disabled") return "unmanaged";
+    if (inventoryMode !== "enabled" || !inventoryAvailability) return "checking";
     return inventoryAvailability[item.id] === 0 ? "soldOut" : "available";
   };
 
@@ -719,7 +722,7 @@ export default function ProductsPage({ lang }) {
                           className="modal-cta-link modal-fade-up"
                           onClick={() => {
                             if (stockStatus(activeItem) === "soldOut" || stockStatus(activeItem) === "checking") return;
-                            if (INVENTORY_MANAGED_SKUS.has(activeItem.id) && (inventoryAvailability?.[activeItem.id] ?? 0) < simpleQuantity) return;
+                            if (INVENTORY_MANAGED_SKUS.has(activeItem.id) && inventoryMode === "enabled" && (inventoryAvailability?.[activeItem.id] ?? 0) < simpleQuantity) return;
                             if (!Number.isInteger(simpleQuantity) || simpleQuantity < 1) return;
                             setItem(
                               {

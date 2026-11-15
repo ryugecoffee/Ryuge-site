@@ -1,6 +1,5 @@
 import { trackBeginCheckout } from "../lib/analytics";
-// Draft inventory PR preview must never call the production payment API.
-const PAYMENT_API_BASE = "https://ryuge-inventory-sandbox.onrender.com";
+import { PAYMENT_API_BASE, stripePublishableKey } from "../lib/paymentEnv";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useCart } from "../CartContext";
 import { useNavigate } from "react-router-dom";
@@ -17,11 +16,9 @@ import {
   COUNTRY_ZONES,
 } from "../lib/shipping";
 
-// This preview only accepts a sandbox publishable key; never fall back to live keys.
-const SANDBOX_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_SANDBOX_PUBLIC_KEY;
-const stripePromise = SANDBOX_PUBLISHABLE_KEY?.startsWith("pk_test_")
-  ? loadStripe(SANDBOX_PUBLISHABLE_KEY)
-  : Promise.resolve(null);
+// Production builds use the live key; any other build only a Stripe test key (see paymentEnv).
+const PUBLISHABLE_KEY = stripePublishableKey();
+const stripePromise = PUBLISHABLE_KEY ? loadStripe(PUBLISHABLE_KEY) : Promise.resolve(null);
 
 // ── 米国配送フラグ（環境変数 VITE_ENABLE_US_SHIPPING=true で有効化）──
 const ENABLE_US_SHIPPING = import.meta.env.VITE_ENABLE_US_SHIPPING === "true";
@@ -442,7 +439,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
       country,
       couponCode: couponStatus === "valid" ? couponCode : "",
     });
-    const storageKey = "ryuge-sandbox-checkout-key";
+    const storageKey = "ryuge-checkout-key";
     let checkoutInfo;
     try {
       checkoutInfo = JSON.parse(sessionStorage.getItem(storageKey) || "null");
@@ -641,7 +638,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         }),
       });
 
-      sessionStorage.removeItem("ryuge-sandbox-checkout-key");
+      sessionStorage.removeItem("ryuge-checkout-key");
       onSuccess();
       navigate("/checkout/complete", {
         state: {

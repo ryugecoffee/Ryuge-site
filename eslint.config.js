@@ -32,7 +32,7 @@ export default defineConfig([
     languageOptions: { sourceType: 'commonjs', globals: globals.node },
   },
   {
-    files: ['api/**/*.js', 'scripts/**/*.js'],
+    files: ['api/**/*.js', 'scripts/**/*.js', 'vite.config.js', 'eslint.config.js'],
     languageOptions: { globals: globals.node },
   },
 ])
