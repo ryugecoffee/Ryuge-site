@@ -6,12 +6,24 @@
 const SKU_RE = /^[a-z0-9-]{1,90}$/;
 const REQUEST_RE = /^[a-zA-Z0-9_-]{12,100}$/;
 
-async function adjustInventory(db, { sku, action, quantity, requestId, trustedActor }) {
+async function adjustInventory(db, { sku, action, quantity, requestId, trustedActor, audit }) {
   if (!SKU_RE.test(sku || "") || !["stock_in", "retail_sale"].includes(action) ||
       !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 1000 ||
       !REQUEST_RE.test(requestId || "") || typeof trustedActor !== "string" ||
       !/^factory-ceo:[a-zA-Z0-9_-]{3,90}$/.test(trustedActor)) {
     throw new Error("INVALID_INVENTORY_ADJUSTMENT");
+  }
+  // Optional server-built approval evidence (dates and a fixed channel label only).
+  const evidence = {};
+  if (audit !== undefined) {
+    if (!audit || typeof audit !== "object" ||
+        !(audit.approvedAt instanceof Date) || !(audit.signedAt instanceof Date) ||
+        !/^[a-z0-9-]{3,40}$/.test(audit.channel || "")) {
+      throw new Error("INVALID_INVENTORY_ADJUSTMENT");
+    }
+    Object.assign(evidence, {
+      approvedAt: audit.approvedAt, signedAt: audit.signedAt, channel: audit.channel,
+    });
   }
   const stockRef = db.collection("inventory").doc(sku);
   const recordRef = db.collection("inventoryAdjustments").doc(requestId);
@@ -46,6 +58,7 @@ async function adjustInventory(db, { sku, action, quantity, requestId, trustedAc
       before: { ready, held, sold },
       after: updated,
       remaining: updated.ready - updated.held,
+      ...evidence,
       createdAt: new Date(),
     });
     return { applied: true, remaining: updated.ready - updated.held };

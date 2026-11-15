@@ -16,6 +16,27 @@ function previewAllowed(env) {
     /^(sk|rk)_test_/.test(env.STRIPE_SECRET_KEY || "");
 }
 
+// Separate staging namespace: logical names used by shared inventory code are mapped
+// to preview-only collections, so official inventory/{sku} documents are never touched.
+const PREVIEW_COLLECTIONS = Object.freeze({
+  inventory: "inventoryPreview",
+  inventoryReservations: "inventoryPreviewReservations",
+  inventoryCheckoutKeys: "inventoryPreviewCheckoutKeys",
+  inventoryAdjustments: "inventoryPreviewAdjustments",
+});
+
+function previewNamespace(firestore) {
+  return Object.freeze({
+    collection(name) {
+      if (!Object.hasOwn(PREVIEW_COLLECTIONS, name)) throw new Error("PREVIEW_COLLECTION_NOT_ALLOWED");
+      return firestore.collection(PREVIEW_COLLECTIONS[name]);
+    },
+    runTransaction(callback) {
+      return firestore.runTransaction(callback);
+    },
+  });
+}
+
 function fingerprint(items) {
   return JSON.stringify([...items].sort((a, b) => a.id.localeCompare(b.id)));
 }
@@ -135,5 +156,5 @@ async function previewAvailability(db, ids) {
 }
 
 module.exports = {
-  previewAllowed, claimCheckout, createCheckout, settlePreviewEvent, previewAvailability,
+  PREVIEW_COLLECTIONS, previewNamespace, previewAllowed, claimCheckout, createCheckout, settlePreviewEvent, previewAvailability,
 };

@@ -14,22 +14,7 @@ function firestorePreviewDb() {
   const app = admin.apps.find((item) => item.name === "ryuge-inventory-sandbox-readonly");
   if (!app) throw new Error("FIRESTORE_NOT_CONNECTED");
   // Separate staging namespace: never mutate inventory/enma-karamo or live reservations.
-  const firestore = admin.firestore(app);
-  const collections = Object.freeze({
-    inventory: "inventoryPreview",
-    inventoryReservations: "inventoryPreviewReservations",
-    inventoryCheckoutKeys: "inventoryPreviewCheckoutKeys",
-    inventoryAdjustments: "inventoryPreviewAdjustments",
-  });
-  return {
-    collection(name) {
-      if (!Object.hasOwn(collections, name)) throw new Error("PREVIEW_COLLECTION_NOT_ALLOWED");
-      return firestore.collection(collections[name]);
-    },
-    runTransaction(callback) {
-      return firestore.runTransaction(callback);
-    },
-  };
+  return firestorePreview.previewNamespace(admin.firestore(app));
 }
 
 
@@ -175,30 +160,7 @@ app.post("/stripe-inventory-webhook", express.raw({ type: "application/json" }),
 // No browser access: signed internal API, disabled until a separate shared secret
 // and explicit test-only flag are configured. No credentials are sent to clients.
 app.post(factoryInventoryApi.PATH, express.raw({ type: "application/json", limit: "4kb" }),
-  async (req, res) => {
-    if (!factoryInventoryApi.enabled(process.env)) return res.status(404).end();
-    try {
-      const db = firestorePreviewDb();
-      const result = await factoryInventoryApi.processSignedAdjustment({
-        db,
-        env: process.env,
-        rawBody: req.body,
-        timestamp: req.get("x-factory-timestamp"),
-        signature: req.get("x-factory-signature"),
-      });
-      res.setHeader("Cache-Control", "no-store");
-      return res.json({ ok: true, ...result });
-    } catch (error) {
-      const message = String(error.message);
-      if (["INVALID_FACTORY_SIGNATURE"].includes(message)) return res.status(401).json({ error: message });
-      if (["OUT_OF_STOCK", "INVENTORY_REQUEST_ID_CONFLICT"].includes(message))
-        return res.status(409).json({ error: message });
-      if (["INVALID_INVENTORY_ADJUSTMENT", "INVALID_FIELDS", "INVALID_JSON", "BODY_TOO_LARGE", "UNKNOWN_INVENTORY_SKU"].includes(message))
-        return res.status(400).json({ error: message });
-      console.error("Factory preview inventory rejected:", message.slice(0, 100));
-      return res.status(503).json({ error: "FACTORY_PREVIEW_UNAVAILABLE" });
-    }
-  });
+  factoryInventoryApi.createHandler({ getDb: firestorePreviewDb }));
 
 app.use(cors({
   origin(origin, callback) {
@@ -582,7 +544,7 @@ async function sandboxFirestorePreviewPurchaseE2E() {
 
 async function sandboxStripeFirestoreSmoke() {
   // Unique one-shot test card charge in Stripe test mode, on a temporary SKU only.
-  // Real stock /inven​tory/enma-karamo is NEVER modified.
+  // Real stock /inventory/enma-karamo is NEVER modified.
   const runId = process.env.FIRESTORE_STRIPE_SMOKE_RUN_ID || "";
   if (!/^ryuge-stripe-firestore-[a-z0-9-]{8,50}$/.test(runId)) return;
   if (process.env.INVENTORY_STAGING_ONLY !== "true" ||
