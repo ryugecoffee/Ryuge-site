@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PAYMENT_API_BASE } from "./lib/paymentEnv";
 import { Routes, Route, useLocation } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import SiteLayout from "./components/SiteLayout";
@@ -28,7 +29,7 @@ const BANNER_TTL = 24 * 60 * 60 * 1000;
 
 // Render の無料プランはアイドル時にスリープするため、
 // 訪問直後にウォームアップ ping を送り、決済時のコールドスタート待ちを防ぐ
-const BACKEND_URL = "https://ryuge-site.onrender.com";
+const BACKEND_URL = PAYMENT_API_BASE; // live server only in production builds (see lib/paymentEnv)
 let lastWarmupAt = 0;
 function warmupBackend() {
   const now = Date.now();

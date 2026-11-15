@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+// Draft inventory PR preview must never call the production payment API.
+import { PAYMENT_API_BASE, classifyAvailability } from "../lib/paymentEnv";
 import { useLocation } from "react-router-dom";
 import SiteFooter from "../components/SiteFooter";
 import BeanConcierge from "../components/BeanConcierge";
@@ -30,6 +32,16 @@ const PAGE_TEXT = {
   },
 };
 
+// Temporary checkout preview handles only these two stocked coffee SKUs.
+// Do not infer "sold out" for untracked products from a missing API quantity.
+const INVENTORY_MANAGED_SKUS = new Set(["enma-karamo", "enma-kindiio"]);
+
+const STOCK_CHECK_TEXT = {
+  ja: "在庫確認中",
+  en: "Checking Stock",
+  es: "Comprobando stock",
+};
+
 const SOLD_OUT_TEXT = {
   ja: "売り切れ",
   en: "Sold Out",
@@ -49,6 +61,7 @@ export default function ProductsPage({ lang }) {
   const sectionText = PRODUCT_SECTIONS[lang] || PRODUCT_SECTIONS.ja;
   const labels = sectionText.specLabels;
   const products = PRODUCT_DATA;
+  const activeWoodbox = products.woodbox.filter((item) => !item.archived);
 
   const [activeItemId, setActiveItemId] = useState(null);
   const [selectedSubscriptionPlan, setSelectedSubscriptionPlan] = useState(
@@ -57,12 +70,60 @@ export default function ProductsPage({ lang }) {
   const [showEnmaHeading, setShowEnmaHeading] = useState(false);
   const [simpleQuantity, setSimpleQuantity] = useState(1);
   const [showWoodboxHeading, setShowWoodboxHeading] = useState(false);
+  const [inventoryAvailability, setInventoryAvailability] = useState(null);
+  // "checking" until the first answer; "disabled" = no inventory gating (legacy behaviour);
+  // "enabled" = server-reported counts; "unknown" = fail closed for managed items.
+  const [inventoryMode, setInventoryMode] = useState("checking");
+  useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+    const refreshInventory = async () => {
+      let status = 0;
+      let body = null;
+      try {
+        const ids = [...INVENTORY_MANAGED_SKUS].join(",");
+        const response = await fetch(
+          `${PAYMENT_API_BASE}/inventory/availability?ids=${encodeURIComponent(ids)}`,
+          { signal: controller.signal, cache: "no-store" }
+        );
+        status = response.status;
+        body = await response.json().catch(() => null);
+      } catch {
+        status = 0;
+      }
+      if (!active) return;
+      const result = classifyAvailability(status, body, [...INVENTORY_MANAGED_SKUS]);
+      // Never sell past zero: anything but a complete, enabled answer keeps managed items closed.
+      setInventoryMode(result.kind);
+      setInventoryAvailability(result.kind === "enabled" ? result.quantities : null);
+    };
+    refreshInventory();
+    const onFocus = () => refreshInventory();
+    const intervalId = window.setInterval(refreshInventory, 30000);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      active = false;
+      controller.abort();
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
+
+  const stockStatus = (item) => {
+    if (item.comingSoon) return "comingSoon";
+    if (item.isSoldOut) return "soldOut";
+    if (!INVENTORY_MANAGED_SKUS.has(item.id) || inventoryMode === "disabled") return "unmanaged";
+    if (inventoryMode !== "enabled" || !inventoryAvailability) return "checking";
+    return inventoryAvailability[item.id] === 0 ? "soldOut" : "available";
+  };
+
+
 
   const enmaSectionRef = useRef(null);
   const woodboxSectionRef = useRef(null);
 
   const activeItem =
-    [...products.enma, ...products.woodbox, ...(products.bag || []), ...products.oriori].find(
+    [...products.enma, ...activeWoodbox, ...(products.bag || []), ...products.oriori].find(
       (item) => item.id === activeItemId
     ) || null;
 
@@ -122,7 +183,7 @@ export default function ProductsPage({ lang }) {
     const enmaNode = enmaSectionRef.current;
     const woodboxNode = woodboxSectionRef.current;
 
-    if (!enmaNode || !woodboxNode) return;
+    if (!enmaNode) return;
 
     let enmaTriggered = false;
     let woodboxTriggered = false;
@@ -141,6 +202,7 @@ export default function ProductsPage({ lang }) {
       }
 
       if (!woodboxTriggered) {
+        if (!woodboxNode) return;
         const woodboxTop = woodboxNode.getBoundingClientRect().top;
         if (woodboxTop <= triggerLine) {
           woodboxTriggered = true;
@@ -195,10 +257,24 @@ export default function ProductsPage({ lang }) {
             {products.enma.map((item) => (
               <article
                 key={item.id}
-                className="products-enma-static-card"
+                className="products-enma-static-card enma-product-card"
                 onClick={() => { setActiveItemId(item.id); trackViewItem(item); }}
               >
-                <img src={item.image} alt="" />
+                <div className="enma-card-photo">
+                  <img src={item.image} alt="" />
+                  {item.promotion?.active && (
+                    <span className="enma-promotion-ribbon">{item.promotion.label?.[lang] || item.promotion.label?.ja}</span>
+                  )}
+                  {item.comingSoon && (
+                    <span className="enma-coming-soon-badge">{COMING_SOON_TEXT[lang]}</span>
+                  )}
+                  {stockStatus(item) === "soldOut" && !item.isSoldOut && (
+                    <span className="enma-coming-soon-badge">{SOLD_OUT_TEXT[lang]}</span>
+                  )}
+                  {stockStatus(item) === "checking" && (
+                    <span className="enma-coming-soon-badge">{STOCK_CHECK_TEXT[lang]}</span>
+                  )}
+                </div>
 
                 {item.isSoldOut && (
                   <span className="product-soldout-badge">
@@ -207,9 +283,21 @@ export default function ProductsPage({ lang }) {
                 )}
 
                 <div className="products-enma-card-text">
-                  <h3>{item.title?.[lang]}</h3>
-                  <p>{item.summary?.[lang]}</p>
-                  {item.price && <p className="product-card-price">{item.price}</p>}
+                  <h3 className="enma-card-title">
+                    {lang === "ja" && item.title?.ja?.startsWith("閻魔") ? (
+                      <>
+                        <span className="enma-title-series">閻魔</span>
+                        <span className="enma-title-origin">{item.title.ja.replace(/^閻魔[　 ]*/, "")}</span>
+                      </>
+                    ) : item.title?.[lang]}
+                  </h3>
+                  <div className="enma-price-row">
+                    {item.regularPriceNumber && item.promotion?.active && <span className="enma-original-price">¥{item.regularPriceNumber.toLocaleString()}</span>}
+                    <span className="enma-current-price">{item.price} <small>/ {item.weight}</small></span>
+                  </div>
+                  <p className="enma-card-origin">{({ Natural: { ja: "ナチュラル", en: "Natural", es: "Natural" }, Washed: { ja: "ウォッシュド", en: "Washed", es: "Lavado" }, "Infused Honey": { ja: "インフューズドハニー", en: "Infused Honey", es: "Honey infusionado" } })[item.process]?.[lang] || item.process}</p>
+                  {item.roast?.[lang] && <p className="enma-card-roast">{item.roast[lang]}</p>}
+                  {item.flavorNotes?.[lang] && <p className="enma-card-flavors">{item.flavorNotes[lang].join(" · ")}</p>}
                 </div>
               </article>
             ))}
@@ -230,6 +318,7 @@ export default function ProductsPage({ lang }) {
           </div>
         </section>
 
+        {activeWoodbox.length > 0 && (
         <section className="products-showcase-section products-woodbox-section" id="woodbox">
           <div
             ref={woodboxSectionRef}
@@ -242,7 +331,7 @@ export default function ProductsPage({ lang }) {
           </div>
 
           <div className="products-two-col">
-            {products.woodbox.map((item) => (
+            {activeWoodbox.map((item) => (
               <article
                 key={item.id}
                 className="products-enma-static-card products-woodbox-card"
@@ -255,6 +344,11 @@ export default function ProductsPage({ lang }) {
                     {SOLD_OUT_TEXT[lang]}
                   </span>
                 )}
+                {item.comingSoon && !item.isSoldOut && (
+                  <span className="product-soldout-badge">
+                    {COMING_SOON_TEXT[lang]}
+                  </span>
+                )}
 
                 <div className="products-enma-card-text">
                   <h3>{item.title?.[lang]}</h3>
@@ -265,6 +359,8 @@ export default function ProductsPage({ lang }) {
             ))}
           </div>
         </section>
+
+        )}
 
         <section className="oriori-services-section" id="oriori">
           <div className="oriori-heading">
@@ -548,14 +644,18 @@ export default function ProductsPage({ lang }) {
                         </div>
                       ) : (
                         <dl className="product-specs product-specs-classic modal-fade-up">
-                          {renderSpecRow(labels.origin, activeItem.origin)}
-                          {renderSpecRow(labels.producer, activeItem.producer)}
-                          {renderSpecRow(labels.process, activeItem.process)}
-                          {renderSpecRow(labels.variety, activeItem.variety)}
-                          {renderSpecRow(labels.altitude, activeItem.altitude)}
-                          {renderSpecRow(labels.weight, activeItem.weight)}
-                          {renderSpecRow(labels.price, activeItem.price)}
-                          {renderSpecRow(labels.flavor, activeItem.flavor)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Origin" : labels.origin, activeItem.origin)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Producer" : labels.producer, activeItem.producer)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Process" : labels.process, activeItem.process)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Variety" : labels.variety, activeItem.variety)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Grade" : "Grade", activeItem.grade)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Altitude" : labels.altitude, activeItem.altitude)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Drying" : "Drying", activeItem.drying)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Harvest" : labels.harvest, activeItem.harvest)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Arrival" : labels.arrival, activeItem.arrival)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Weight" : labels.weight, activeItem.weight)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Price" : labels.price, activeItem.price)}
+                          {renderSpecRow(activeItem.category === "beans" ? "Flavor Notes" : labels.flavor, activeItem.category === "beans" ? (activeItem.flavorNotes?.en?.join(" · ") || activeItem.flavor) : (activeItem.flavorNotes?.[lang]?.join(" · ") || activeItem.flavor))}
                         </dl>
                       )}
 
@@ -595,13 +695,13 @@ export default function ProductsPage({ lang }) {
 
                                 if (Number.isNaN(next)) return;
 
-                                setSimpleQuantity(Math.max(0, next));
+                                setSimpleQuantity(Math.min(Math.max(0, next), inventoryAvailability?.[activeItem.id] ?? 50));
                               }}
                             />
 
                             <button
                               type="button"
-                              onClick={() => setSimpleQuantity((prev) => prev + 1)}
+                              onClick={() => setSimpleQuantity((prev) => Math.min(prev + 1, inventoryAvailability?.[activeItem.id] ?? 50))}
                             >
                               ＋
                             </button>
@@ -613,15 +713,22 @@ export default function ProductsPage({ lang }) {
                         <button className="modal-cta-link is-disabled" disabled>
                           {COMING_SOON_TEXT[lang]}
                         </button>
-                      ) : activeItem.isSoldOut ? (
+                      ) : stockStatus(activeItem) === "soldOut" ? (
                         <button className="modal-cta-link is-disabled" disabled>
                           {SOLD_OUT_TEXT[lang]}
+                        </button>
+                      ) : stockStatus(activeItem) === "checking" ? (
+                        <button className="modal-cta-link is-disabled" disabled>
+                          {STOCK_CHECK_TEXT[lang]}
                         </button>
                       ) : (
                         <button
                           type="button"
                           className="modal-cta-link modal-fade-up"
                           onClick={() => {
+                            if (stockStatus(activeItem) === "soldOut" || stockStatus(activeItem) === "checking") return;
+                            if (INVENTORY_MANAGED_SKUS.has(activeItem.id) && inventoryMode === "enabled" && (inventoryAvailability?.[activeItem.id] ?? 0) < simpleQuantity) return;
+                            if (!Number.isInteger(simpleQuantity) || simpleQuantity < 1) return;
                             setItem(
                               {
                                 id: activeItem.id,

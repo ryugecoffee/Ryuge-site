@@ -46,13 +46,14 @@ export default function SiteLayout({ lang, setLang }) {
   return (
     <div className="site-shell">
       <header className="site-header minimal-header">
-        <div className="site-header-side left" />
-        <Link to="/" className="site-logo centered-logo">Ryuge Coffee</Link>
-        <div className="lang-switch header-lang-switch">
+        <Link to="/" className="site-logo">Ryuge Coffee</Link>
+        <nav className="site-nav store-nav" aria-label={lang === "ja" ? "ストアのメニュー" : "Store navigation"}>
           <button type="button" className="cart-indicator" onClick={() => { setIsCartOpen(true); trackViewCart(cartItems, cartTotal); }}>
             {lang === "ja" ? "カート" : lang === "es" ? "Carrito" : "Cart"}
             {cartCount > 0 && ` (${cartCount})`}
           </button>
+        </nav>
+        <div className="lang-switch header-lang-switch">
           <button className={lang === "ja" ? "active" : ""} onClick={() => setLang("ja")}>JP</button>
           <button className={lang === "en" ? "active" : ""} onClick={() => setLang("en")}>EN</button>
           <button className={lang === "es" ? "active" : ""} onClick={() => setLang("es")}>ES</button>

@@ -21,12 +21,17 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  // Only the production deployment may use a live Stripe key; previews and local builds
+  // must run with a test key so they can never create real subscriptions.
+  if (process.env.VERCEL_ENV !== "production" && !/^(sk|rk)_test_/.test(process.env.STRIPE_SECRET_KEY || "")) {
+    return res.status(503).json({ error: "Live payments are disabled outside production" });
+  }
+
   try {
     const { cartItems, customer } = req.body;
 
     console.log("=== create-subscription-checkout start ===");
-    console.log("cartItems:", cartItems);
-    console.log("customer:", customer);
+    // Customer details are not logged (personal data).
     console.log("env check:", {
       hasSecretKey:    !!process.env.STRIPE_SECRET_KEY,
       coffee_bag:      !!process.env.STRIPE_PRICE_COFFEE_BAG,
