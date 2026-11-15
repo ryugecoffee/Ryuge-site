@@ -9,7 +9,7 @@ on:
       - 'server/factory-inventory-api.js'
       - 'server/factory-inventory-api.test.js'
       - 'server/firestore-preview-checkout.js'
-      - 'server/firestore-preview-checkout.test.js server/factory-inventory-api.test.js'
+      - 'server/firestore-preview-checkout.test.js'
       - 'server/inventory-adjustments.js'
       - 'server/inventory-adjustments.test.js'
       - 'src/App.css'
@@ -52,4 +52,4 @@ jobs:
       - name: Build site preview
         run: npm run build
       - name: Unit tests
-        run: node --test server/inventory.test.js server/inventory-scenarios.test.js server/inventory-adjustments.test.js server/firestore-preview-checkout.test.js
+        run: node --test server/inventory.test.js server/inventory-scenarios.test.js server/inventory-adjustments.test.js server/firestore-preview-checkout.test.js server/factory-inventory-api.test.js
