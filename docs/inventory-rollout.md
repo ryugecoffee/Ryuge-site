@@ -36,3 +36,41 @@ If only 5 bags are packed, initialize `ready:5, held:0, sold:0` for that SKU.
 - There is no user-facing admin stock-adjustment UI. Do not expose an unauthenticated write endpoint.
 - Full payment fulfillment idempotency / email delivery move to webhook is not finished.
 - The checkout service has its own Render deployment. GitHub/Vercel preview success is not proof of server rollout.
+
+## Factory → Render signed inventory API (preview only)
+`POST /internal/factory/inventory-adjust` on the **sandbox** Render service only. It writes only to the
+`inventoryPreview*` collections; official `inventory/{sku}` (incl. the provisional 15 bags) is never touched.
+
+Two independent checks must both pass before any write:
+1. **Service signature** — `X-Factory-Timestamp` (13-digit ms, ±5 min) and `X-Factory-Signature` =
+   hex HMAC-SHA256(secret, `"POST\n/internal/factory/inventory-adjust\n" + timestamp + "\n" + rawBody`).
+2. **CEO operation approval** — the signed JSON body has exactly
+   `{sku, action: "stock_in"|"retail_sale", quantity 1..1000, requestId, approvedBy, approvedAt}`:
+   `requestId` is the Factory approval record UUID (one approval = one operation, idempotent),
+   `approvedBy` must equal Render's `FACTORY_CEO_USER_ID`, `approvedAt` (ms) must be ≤ 15 min old.
+
+Responses: 200 `{ok, applied, remaining}` (`applied:false` = duplicate delivery), 401 bad/expired
+signature, 403 `CEO_APPROVAL_REQUIRED|CEO_APPROVAL_EXPIRED`, 409 `OUT_OF_STOCK|INVENTORY_REQUEST_ID_CONFLICT`,
+400 invalid, 413 body > 4 KB, 429 rate limited (20/min, in-memory), 404 when disabled.
+Each applied request writes an audit record `inventoryPreviewAdjustments/{requestId}` (actor, before/after,
+approvedAt, signedAt, channel).
+
+Render sandbox env (server-side only; never in GitHub, Vercel client vars or logs):
+`FIRESTORE_FACTORY_API_ENABLED=true`, `FACTORY_INVENTORY_HMAC_SECRET` (≥32 random bytes, same value as the
+Factory server), `FACTORY_CEO_USER_ID` (CEO's Factory/Supabase user UUID).
+
+## Emulator integration tests
+Real Firestore transactions (concurrency, duplicate webhooks, cancellation, reconciliation after restart,
+official stock untouched) run against the local emulator only:
+```
+npm ci --prefix server
+npx firebase-tools@13.35.1 emulators:exec --only firestore --project demo-ryuge-inventory \
+  "node --test server/inventory-firestore-emulator.test.js"
+```
+
+## Production blockers (as of 2026-11-15)
+- `src/pages/ProductsPage.jsx` and `src/pages/CheckoutPage.jsx` call the **sandbox** Render URL. Switch to the
+  production payment server before any production release.
+- Real stock counts must be entered from physically packed bags; `inventory/enma-karamo` = 15 is provisional.
+- `server/` still has `nodemailer` (<=10.1.3, `raw` option advisory; not used by our code) and
+  `firebase-admin` 13 transitive advisories that require major upgrades; schedule and regression-test.

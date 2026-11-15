@@ -12,6 +12,10 @@ on:
       - 'server/firestore-preview-checkout.test.js'
       - 'server/inventory-adjustments.js'
       - 'server/inventory-adjustments.test.js'
+      - 'server/inventory-firestore-emulator.test.js'
+      - 'server/package.json'
+      - 'server/package-lock.json'
+      - 'eslint.config.js'
       - 'src/App.css'
       - 'server/inventory.test.js'
       - 'server/inventory-scenarios.test.js'
@@ -47,9 +51,28 @@ jobs:
           node --check server/resp-client.js
           node --check server/sandbox-checkout.js
           node --check server/staging-entry.js
+          node --check server/inventory-firestore-emulator.test.js
       - name: Install site dependencies
         run: npm ci
+      - name: Install payment server dependencies
+        run: npm ci --prefix server
+      - name: Lint inventory and sandbox payment code
+        run: >
+          npx eslint server/inventory.js server/inventory-adjustments.js
+          server/factory-inventory-api.js server/firestore-preview-checkout.js
+          server/sandbox-checkout.js server/staging-entry.js server/resp-client.js
+          server/*.test.js
       - name: Build site preview
         run: npm run build
       - name: Unit tests
         run: node --test server/inventory.test.js server/inventory-scenarios.test.js server/inventory-adjustments.test.js server/firestore-preview-checkout.test.js server/factory-inventory-api.test.js
+      - name: Set up Java for Firestore emulator
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Firestore emulator integration tests (local emulator only, no credentials)
+        run: >
+          npx --yes firebase-tools@13.35.1 emulators:exec --only firestore
+          --project demo-ryuge-inventory
+          "node --test server/inventory-firestore-emulator.test.js"
