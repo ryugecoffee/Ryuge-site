@@ -119,37 +119,9 @@ app.post("/stripe-inventory-webhook", express.raw({ type: "application/json" }),
       return res.status(500).json({ error: "FIRESTORE_PREVIEW_SETTLEMENT_FAILED" });
     }
   }
-  // Independently route only the explicitly-marked ephemeral Firestore smoke run.
-  // Real customer checkout remains in Redis. Signature has already been validated.
-  if (intent?.metadata?.inventoryEnvironment === "firestore-smoke") {
-    const runId = intent.metadata.firestoreSmokeRunId || "";
-    if (process.env.INVENTORY_STAGING_ONLY !== "true" ||
-        process.env.FIREBASE_PROJECT_ID !== "ryuge-inventory" ||
-        process.env.FIREBASE_CLIENT_EMAIL !== "ryuge-inventory-render@ryuge-inventory.iam.gserviceaccount.com" ||
-        !/^ryuge-stripe-firestore-[a-z0-9-]{8,50}$/.test(runId) ||
-        !/^[a-f0-9-]{36}$/.test(reservationId || "") ||
-        intent.livemode !== false) return res.status(400).send("INVALID_FIRESTORE_TEST");
-    try {
-      const admin = require("firebase-admin");
-      const { finish } = require("./inventory");
-      const app = admin.apps.find((a) => a.name === "ryuge-inventory-sandbox-readonly");
-      if (!app) throw new Error("FIRESTORE_NOT_CONNECTED");
-      const db = admin.firestore(app);
-      const marker = await db.collection("inventorySmokePayments").doc(runId).get();
-      if (!marker.exists || marker.data().reservationId !== reservationId ||
-          marker.data().paymentIntentId !== intent.id) throw new Error("FIRESTORE_SMOKE_MISMATCH");
-      const action = event.type === "payment_intent.succeeded" ? "paid" :
-        event.type === "payment_intent.canceled" ? "released" : null;
-      if (!action) return res.json({ received: true });
-      const applied = await finish(db, reservationId, intent.id, action);
-      console.log("Firestore signed Stripe webhook PASS: action=" + action +
-        "; applied=" + applied + "; run=" + runId);
-      return res.json({ received: true });
-    } catch (error) {
-      console.error("Firestore signed webhook FAILED:", String(error.message).slice(0, 110));
-      return res.status(500).json({ error: "FIRESTORE_SMOKE_WEBHOOK_FAILED" });
-    }
-  }
+  // Retired one-shot Firestore smoke runs wrote to the official collections; their late
+  // webhook deliveries are acknowledged and ignored (preview E2E + emulator tests replace them).
+  if (intent?.metadata?.inventoryEnvironment === "firestore-smoke") return res.json({ received: true, ignored: true });
   if (!reservationId) return res.json({ received: true });
   if (!/^[a-f0-9-]{36}$/.test(reservationId)) return res.status(400).send("Invalid reservation");
   if (intent.livemode !== false) return res.status(400).send("Not a test payment");
@@ -306,6 +278,7 @@ app.post("/create-payment-intent", limitCheckout, async (req, res) => {
 // This endpoint is disabled in sandbox: never use browser-provided order data
 // to issue receipts or trigger shipping fulfillment.
 app.post("/order-complete", (_req, res) => res.status(200).json({ ok: true, sandbox: true, emailSent: false }));
+app.post("/subscription-complete", (_req, res) => res.status(200).json({ ok: true, sandbox: true, emailSent: false, order: null }));
 app.post("/validate-coupon", (_req, res) => res.json({ valid: false }));
 
 async function reconcile() {
@@ -403,88 +376,6 @@ async function checkFirestoreReadOnly() {
   }
 }
 
-async function checkFirestoreWriteTransactions() {
-  // Explicitly enabled, one-shot, isolated Firestore transactional smoke test.
-  // Never touch inventory/enma-karamo or any production SKU.
-  const runId = process.env.FIRESTORE_WRITE_SMOKE_RUN_ID || "";
-  if (!/^ryuge-firestore-smoke-[a-z0-9-]{8,60}$/.test(runId)) return;
-  if (process.env.INVENTORY_STAGING_ONLY !== "true" ||
-      process.env.FIREBASE_PROJECT_ID !== "ryuge-inventory" ||
-      process.env.FIREBASE_CLIENT_EMAIL !==
-        "ryuge-inventory-render@ryuge-inventory.iam.gserviceaccount.com") {
-    console.error("Firestore transaction smoke BLOCK: sandbox/project/service-account mismatch");
-    return;
-  }
-  const admin = require("firebase-admin");
-  const { reserve, finish, availability } = require("./inventory");
-  const firebaseApp = admin.apps.find((item) => item.name === "ryuge-inventory-sandbox-readonly");
-  if (!firebaseApp) {
-    console.error("Firestore transaction smoke BLOCK: verified Firebase app missing");
-    return;
-  }
-  const db = admin.firestore(firebaseApp);
-  const sku = "sandbox-smoke-" + runId.slice("ryuge-firestore-smoke-".length);
-  const stockRef = db.collection("inventory").doc(sku);
-  const markerRef = db.collection("inventorySmokeRuns").doc(runId);
-  const markerCreated = await db.runTransaction(async (tx) => {
-    const existing = await tx.get(markerRef);
-    if (existing.exists) return false;
-    tx.create(markerRef, { state: "started", sku, createdAt: new Date() });
-    tx.create(stockRef, { ready: 2, held: 0, sold: 0, smokeTest: true });
-    return true;
-  });
-  if (!markerCreated) {
-    console.log("Firestore transaction smoke: run already claimed; no repeat writes");
-    return;
-  }
-  let firstId, secondId;
-  try {
-    firstId = await reserve(db, [{ id: sku, quantity: 1 }], "pi_firestore_test_paid");
-    let a = await availability(db, [sku]);
-    if (a[sku] !== 1) throw new Error("RESERVE_NOT_HELD");
-    if (await finish(db, firstId, "pi_firestore_test_paid", "paid") !== true) {
-      throw new Error("PAID_NOT_APPLIED");
-    }
-    if (await finish(db, firstId, "pi_firestore_test_paid", "paid") !== false) {
-      throw new Error("DUPLICATE_PAID_NOT_IGNORED");
-    }
-    let stock = (await stockRef.get()).data();
-    if (stock.ready !== 1 || stock.held !== 0 || stock.sold !== 1) {
-      throw new Error("PAID_INVENTORY_INCORRECT");
-    }
-    secondId = await reserve(db, [{ id: sku, quantity: 1 }], "pi_firestore_test_canceled");
-    a = await availability(db, [sku]);
-    if (a[sku] !== 0) throw new Error("RESERVED_LAST_BAG_NOT_ZERO");
-    try {
-      await reserve(db, [{ id: sku, quantity: 1 }]);
-      throw new Error("SOLD_OUT_RESERVATION_ALLOWED");
-    } catch (err) {
-      if (err.message !== "OUT_OF_STOCK") throw err;
-    }
-    if (await finish(db, secondId, "pi_firestore_test_canceled", "released") !== true) {
-      throw new Error("CANCEL_NOT_RELEASED");
-    }
-    if (await finish(db, secondId, "pi_firestore_test_canceled", "released") !== false) {
-      throw new Error("DUPLICATE_CANCEL_NOT_IGNORED");
-    }
-    stock = (await stockRef.get()).data();
-    if (stock.ready !== 1 || stock.held !== 0 || stock.sold !== 1) {
-      throw new Error("CANCEL_INVENTORY_INCORRECT");
-    }
-    await markerRef.update({ state: "passed", finishedAt: new Date() });
-    console.log("Firestore transaction smoke PASS: reserve, pay, duplicate ignored, sold-out blocked, cancel restored; isolated test SKU; no Stripe charge");
-  } catch (err) {
-    await markerRef.update({ state: "failed", reason: String(err.message).slice(0, 120) });
-    console.error("Firestore transaction smoke FAILED:", String(err.message).slice(0, 120));
-  } finally {
-    // Remove temporary stock/reservations, retain a non-secret audit marker.
-    await Promise.allSettled([
-      stockRef.delete(),
-      firstId ? db.collection("inventoryReservations").doc(firstId).delete() : Promise.resolve(),
-      secondId ? db.collection("inventoryReservations").doc(secondId).delete() : Promise.resolve(),
-    ]);
-  }
-}
 
 async function sandboxFirestorePreviewPurchaseE2E() {
   // One-shot UI-backend-equivalent checkout request against the actual HTTP endpoint.
@@ -557,79 +448,6 @@ async function sandboxFirestorePreviewPurchaseE2E() {
   }
 }
 
-async function sandboxStripeFirestoreSmoke() {
-  // Unique one-shot test card charge in Stripe test mode, on a temporary SKU only.
-  // Real stock /inventory/enma-karamo is NEVER modified.
-  const runId = process.env.FIRESTORE_STRIPE_SMOKE_RUN_ID || "";
-  if (!/^ryuge-stripe-firestore-[a-z0-9-]{8,50}$/.test(runId)) return;
-  if (process.env.INVENTORY_STAGING_ONLY !== "true" ||
-      process.env.FIREBASE_PROJECT_ID !== "ryuge-inventory" ||
-      process.env.FIREBASE_CLIENT_EMAIL !== "ryuge-inventory-render@ryuge-inventory.iam.gserviceaccount.com" ||
-      !/^sk_test_/.test(process.env.STRIPE_SECRET_KEY || "")) {
-    console.error("Firestore Stripe smoke BLOCK: test-only identity mismatch");
-    return;
-  }
-  const admin = require("firebase-admin");
-  const { reserve, attachPaymentIntent } = require("./inventory");
-  const firebaseApp = admin.apps.find((a) => a.name === "ryuge-inventory-sandbox-readonly");
-  if (!firebaseApp) { console.error("Firestore Stripe smoke BLOCK: Firebase not connected"); return; }
-  const db = admin.firestore(firebaseApp);
-  const sku = "sandbox-stripe-" + runId.slice("ryuge-stripe-firestore-".length);
-  const stockRef = db.collection("inventory").doc(sku);
-  const markerRef = db.collection("inventorySmokePayments").doc(runId);
-  const claimed = await db.runTransaction(async (tx) => {
-    const marker = await tx.get(markerRef);
-    if (marker.exists) return false;
-    tx.create(markerRef, { status: "started", sku, createdAt: new Date(), testOnly: true });
-    tx.create(stockRef, { ready: 1, held: 0, sold: 0, smokeTest: true });
-    return true;
-  });
-  if (!claimed) {
-    console.log("Firestore Stripe smoke: run previously claimed; no repeat charge");
-    return;
-  }
-  try {
-    const reservationId = await reserve(db, [{ id: sku, quantity: 1 }]);
-    await markerRef.update({ reservationId });
-    const intent = await stripe.paymentIntents.create({
-      amount: 100,
-      currency: "jpy",
-      payment_method: "pm_card_visa",
-      payment_method_types: ["card"],
-      metadata: {
-        inventoryEnvironment: "firestore-smoke",
-        inventoryReservationId: reservationId,
-        firestoreSmokeRunId: runId,
-      },
-    }, { idempotencyKey: "firestore-smoke-create-" + runId });
-    await attachPaymentIntent(db, reservationId, intent.id);
-    await markerRef.update({ paymentIntentId: intent.id, status: "awaiting-webhook" });
-    // Confirm AFTER the Firestore payment binding and marker are persisted.
-    const confirmed = await stripe.paymentIntents.confirm(intent.id, {},
-      { idempotencyKey: "firestore-smoke-confirm-" + runId });
-    if (confirmed.status !== "succeeded") throw new Error("PAYMENT_NOT_SUCCEEDED");
-    console.log("Firestore Stripe smoke test payment succeeded; awaiting signed webhook; run=" + runId);
-    let success = false;
-    for (let attempt = 0; attempt < 18; attempt++) {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      const [stockDoc, reservationDoc] = await Promise.all([
-        stockRef.get(), db.collection("inventoryReservations").doc(reservationId).get(),
-      ]);
-      const stock = stockDoc.data() || {};
-      if (reservationDoc.data()?.status === "paid" &&
-          stock.ready === 0 && stock.held === 0 && stock.sold === 1) {
-        success = true;
-        break;
-      }
-    }
-    if (!success) throw new Error("WEBHOOK_SETTLEMENT_PENDING");
-    await markerRef.update({ status: "passed", completedAt: new Date() });
-    console.log("Firestore Stripe E2E PASS: Stripe signed webhook -> Firestore ready 1 to 0, held 0, sold 1; isolated SKU; run=" + runId);
-  } catch (error) {
-    await markerRef.update({ status: "needs-review", reason: String(error.message).slice(0, 110) });
-    console.error("Firestore Stripe E2E NOT COMPLETE:", String(error.message).slice(0, 110));
-  }
-}
 
 async function sandboxCheckoutDedupSmoke() {
   // Disposable SKU used only to verify repeated checkout initialization.
@@ -729,7 +547,6 @@ async function start() {
   console.log("sandbox zero-stock checkout blocked with OUT_OF_STOCK");
   await sandboxCheckoutDedupSmoke();
   await checkFirestoreReadOnly();
-  await checkFirestoreWriteTransactions();
   if (firestoreCheckoutRequested) {
     // Only physical sample stock in dedicated preview namespace. No live SKU touched.
     const db = firestorePreviewDb();
@@ -777,9 +594,6 @@ async function start() {
   setTimeout(() => sandboxFirestorePreviewPurchaseE2E().catch((err) => {
     console.error("Firestore preview E2E runner error:", String(err.message).slice(0, 110));
   }), 24000).unref();
-  setTimeout(() => sandboxStripeFirestoreSmoke().catch((err) => {
-    console.error("Firestore Stripe smoke startup failed:", String(err.message).slice(0, 110));
-  }), 20000).unref();
   setTimeout(() => sandboxCancellationSmoke().catch((err) => {
     console.error("sandbox cancellation test error (no automatic retries):", err.message);
   }), 16000).unref();

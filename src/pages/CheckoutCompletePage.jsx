@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { PAYMENT_API_BASE } from "../lib/paymentEnv";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { trackPurchase } from "../lib/analytics";
 
@@ -85,7 +86,7 @@ export default function CheckoutCompletePage() {
     }
 
     setFetching(true);
-    fetch("https://ryuge-site.onrender.com/subscription-complete", {
+    fetch(`${PAYMENT_API_BASE}/subscription-complete`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessionId }),
