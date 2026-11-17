@@ -257,8 +257,14 @@ async function markFailed(db, refundId, detail) {
 // Settles our refund from Stripe's answer, once: ledger, stock and the refund record in one transaction.
 async function settleRefund(db, refundId, stripeRefund, { lotOf = catalogLotOf } = {}) {
   if (!stripeRefund || stripeRefund.metadata?.orderRefundId !== refundId) fail("STRIPE_REFUND_MISMATCH");
-  if (["failed", "canceled"].includes(stripeRefund.status)) return markFailed(db, refundId, { code: `stripe_${stripeRefund.status}` });
   const refundRef = db.collection(REFUNDS).doc(refundId);
+  if (["failed", "canceled"].includes(stripeRefund.status)) {
+    const current = (await refundRef.get()).data();
+    // Stripe can report a refund as succeeded and fail it later (it sends charge.refund.updated). Stock already given
+    // back is not taken again automatically (it may have been sold since): the refund and the order are flagged.
+    if (current?.status === "refunded") return flagFailedAfterSettle(db, refundId, stripeRefund);
+    return markFailed(db, refundId, { code: `stripe_${stripeRefund.status}` });
+  }
   return db.runTransaction(async (tx) => {
     const snap = await tx.get(refundRef);
     if (!snap.exists) fail("UNKNOWN_REFUND");
@@ -322,6 +328,22 @@ async function settleRefund(db, refundId, stripeRefund, { lotOf = catalogLotOf }
       transitions: transition(doc, "refunded", { stripeRefundId: stripeRefund.id }),
     });
     return { refundId, status: "refunded", stripeRefundId: stripeRefund.id, restocked, review };
+  });
+}
+
+async function flagFailedAfterSettle(db, refundId, stripeRefund) {
+  const refundRef = db.collection(REFUNDS).doc(refundId);
+  return db.runTransaction(async (tx) => {
+    const doc = (await tx.get(refundRef)).data();
+    if (doc.stripeFailedAfterSettle) return { refundId, status: doc.status, stripeStatus: stripeRefund.status, duplicate: true };
+    const orderRef = db.collection(ORDERS).doc(doc.orderId);
+    await tx.get(orderRef);
+    tx.update(orderRef, { needsReview: true });
+    tx.update(refundRef, {
+      stripeFailedAfterSettle: stripeRefund.status, review: [...(doc.review || []), { reason: "STRIPE_REFUND_FAILED_AFTER_SETTLE" }],
+      transitions: transition(doc, "stripe_failed_after_settle", { stripeStatus: stripeRefund.status }),
+    });
+    return { refundId, status: doc.status, stripeStatus: stripeRefund.status, review: ["STRIPE_REFUND_FAILED_AFTER_SETTLE"] };
   });
 }
 

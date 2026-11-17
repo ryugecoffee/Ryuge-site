@@ -14,6 +14,7 @@ const { quoteOrder, QuoteError, COUPONS, CONTACT_EMAIL, PROMO_MAX_BAGS } = requi
 const { promoKeys } = require("./promo");
 const orders = require("./orders");
 const initialStock = require("./initial-stock");
+const refunds = require("./refunds");
 const { createRateLimiter, clientKey } = require("./rate-limit");
 
 const app = express();
@@ -23,7 +24,8 @@ const INVENTORY_STRIPE_WEBHOOK_SECRET = process.env.STRIPE_INVENTORY_WEBHOOK_SEC
 // Stripe requires the exact raw signed request body, before express.json().
 // Active whenever its signing secret is set: paid orders are recorded (orders/{paymentIntentId}, server/orders.js);
 // stock is settled only with inventory on. Every step is idempotent, so a Stripe resend never writes twice.
-// Stripe events to subscribe: payment_intent.succeeded, payment_intent.canceled, charge.refunded.
+// Stripe events to subscribe: payment_intent.succeeded, payment_intent.canceled, charge.refunded
+// (and, to settle refunds that Stripe finishes later, charge.refund.updated).
 app.post("/stripe-inventory-webhook", express.raw({ type: "application/json" }), async (req, res) => {
   if (!INVENTORY_STRIPE_WEBHOOK_SECRET) {
     return INVENTORY_ENABLED ? res.status(503).json({ error: "WEBHOOK_NOT_CONFIGURED" }) : res.status(404).end();
@@ -43,8 +45,11 @@ app.post("/stripe-inventory-webhook", express.raw({ type: "application/json" }),
       if (INVENTORY_ENABLED && reservationId) await inventory.finish(db, reservationId, object.id, "paid");
     } else if (event.type === "payment_intent.canceled") {
       if (INVENTORY_ENABLED && reservationId) await inventory.finish(db, reservationId, object.id, "released");
-    } else if (event.type === "charge.refunded") {
-      await orders.recordRefund(db, object);
+    } else if (event.type === "charge.refunded" || event.type === "charge.refund.updated") {
+      // server/refunds.js: our approved refunds are settled (stock back only as approved); refunds made elsewhere
+      // (e.g. the Stripe dashboard) are recorded for review and never give stock back.
+      const paymentIntentId = typeof object?.payment_intent === "string" ? object.payment_intent : object?.payment_intent?.id;
+      await refunds.syncRefunds(db, stripe, paymentIntentId);
     }
     return res.json({ received: true });
   } catch (error) {
@@ -434,6 +439,42 @@ app.post("/internal/inventory/initial-stock", async (req, res) => {
     }
     console.error("Initial stock failed:", error.message);
     return res.status(500).json({ error: "INITIAL_STOCK_FAILED" });
+  }
+});
+
+// Refunds and partial cancellations (server/refunds.js, docs/refunds.md): preview -> CEO approval -> apply / resume.
+// Off (404) unless ORDER_ADMIN_TOKEN is set on Render; the caller sends it in X-Order-Admin-Token. Later the
+// Factory/Jennifer signed CEO approval calls the same functions.
+const refundLimit = createRateLimiter({ limit: 10, windowMs: 60 * 1000 });
+app.post("/internal/orders/refund", async (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  const token = process.env.ORDER_ADMIN_TOKEN;
+  if (!token || token.length < 32) return res.status(404).end();
+  if (!refundLimit(clientKey(req).key)) return res.status(429).json({ error: "RATE_LIMITED" });
+  const supplied = req.headers["x-order-admin-token"];
+  const digest = (value) => require("node:crypto").createHash("sha256").update(String(value)).digest();
+  if (typeof supplied !== "string" || !require("node:crypto").timingSafeEqual(digest(token), digest(supplied))) {
+    return res.status(403).json({ error: "FORBIDDEN" });
+  }
+  const { mode, orderId, lines, refundShipping, acknowledgeExternalRefunds, planHash, approval, refundId } = req.body || {};
+  const request = { orderId, lines, refundShipping, acknowledgeExternalRefunds };
+  try {
+    if (mode === "preview") return res.json(await refunds.previewRefund(db, stripe, request));
+    if (mode === "apply") {
+      const result = await refunds.applyRefund(db, stripe, request, { planHash, approval, actor: "ceo:order-admin-token", ...(refundId ? { refundId } : {}) });
+      console.log("Order refund:", JSON.stringify({ refundId: result.refundId, status: result.status }));
+      return res.json(result);
+    }
+    if (mode === "resume") return res.json(await refunds.resumeRefund(db, stripe, refundId));
+    return res.status(400).json({ error: "INVALID_MODE" });
+  } catch (error) {
+    if (error instanceof refunds.RefundError) {
+      const conflict = ["PLAN_CHANGED", "EXCEEDS_REMAINING_QUANTITY", "SHIPPING_ALREADY_REFUNDED", "ALREADY_FULLY_REFUNDED",
+        "EXTERNAL_REFUNDS_PRESENT", "EXCEEDS_STRIPE_REFUNDABLE", "EXCEEDS_ORDER_TOTAL", "REFUND_ID_CONFLICT"].includes(error.code);
+      return res.status(conflict ? 409 : 400).json({ error: error.code, detail: error.detail ?? null });
+    }
+    console.error("Order refund failed:", error.message);
+    return res.status(500).json({ error: "REFUND_FAILED" });
   }
 });
 
