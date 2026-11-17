@@ -52,7 +52,7 @@ test("the CEO's example translations, and roasts on the 4-step scale", async () 
   assert.equal(loc(byId["enma-karamo"].process, "ja"), "ナチュラル");
   assert.equal(loc(byId["enma-jimma"].process, "ja"), "ウォッシュド");
   assert.equal(loc(byId["enma-jimma"].process, "es"), "Lavado");
-  for (const product of PRODUCT_DATA.enma) assert.ok(product.roast.en in ROAST_LEVEL, `${product.id} roast ${product.roast.en}`);
+  for (const product of PRODUCT_DATA.enma.filter((p) => p.category === "beans")) assert.ok(product.roast.en in ROAST_LEVEL, `${product.id} roast ${product.roast.en}`);
   // Made-to-order beans say so; they are never presented as shipping at once.
   for (const product of PRODUCT_DATA.enma.filter((p) => p.requiresInventory)) {
     assert.match(loc(product.notice, "ja"), /ご注文後に焙煎/, product.id);
@@ -65,4 +65,37 @@ test("the product panel takes labels from the language, never hard-coded English
     assert.ok(!page.includes(english), `ProductsPage.jsx still has ${english}`);
   }
   assert.doesNotMatch(page, /flavorNotes\?\.en\?\.join/, "flavour notes follow the page language");
+});
+
+test("the coffee bag is listed with the Enma beans; the hojicha bag is hidden but kept", async () => {
+  const { PRODUCT_DATA } = await load();
+  const enmaIds = PRODUCT_DATA.enma.map((p) => p.id);
+  assert.ok(enmaIds.includes("enma-coffee-bag"));
+  assert.ok(!PRODUCT_DATA.bag.some((p) => p.id === "enma-coffee-bag"), "listed once");
+  const teaBag = PRODUCT_DATA.bag.find((p) => p.id === "woodbox-tea-bag");
+  assert.ok(teaBag, "the hojicha bag data is kept");
+  assert.equal(teaBag.hidden, true);
+  assert.equal(teaBag.priceNumber, 2800);
+  assert.equal(PRODUCT_DATA.bag.filter((p) => !p.hidden).length, 0, "no bag series left to show");
+  const page = fs.readFileSync(path.join(__dirname, "..", "src", "pages", "ProductsPage.jsx"), "utf8");
+  assert.match(page, /const listedBags = \(products\.bag \|\| \[\]\)\.filter\(\(item\) => !item\.hidden\);/);
+  assert.match(page, /\[\.\.\.listedBags, \.\.\.products\.oriori\]\.map/);
+  const concierge = fs.readFileSync(path.join(__dirname, "..", "api", "coffee-concierge.js"), "utf8");
+  assert.match(concierge, /\(PRODUCT_DATA\.bag \|\| \[\]\)\.filter\(\(p\) => !p\.hidden\)/, "the concierge does not offer it");
+});
+
+test("Zen dark roast: notes shown as the roasting direction, not as a cupping result; teas stay coming soon", async () => {
+  const { PRODUCT_DATA, DETAIL_TEXT, loc } = await load();
+  const zen = PRODUCT_DATA.enma.find((p) => p.id === "enma-zen-dark-roast");
+  assert.deepEqual(zen.flavorNotes.ja, ["ナッツ", "ハチミツ", "チョコレート"]);
+  assert.equal(zen.flavorBasis, "direction");
+  assert.match(loc(zen.summary, "ja"), /目指して/);
+  for (const lang of LANGS) assert.ok(DETAIL_TEXT[lang].flavorDirection);
+  for (const id of ["mokkan-oku-yame-hojicha", "mokkan-oku-yame-genmaicha"]) {
+    const tea = PRODUCT_DATA.woodbox.find((p) => p.id === id);
+    assert.equal(tea.comingSoon, true, `${id} stays coming soon`);
+    for (const lang of LANGS) assert.ok(loc(tea.tea, lang) && loc(tea.producer, lang), `${id} ${lang}`);
+  }
+  assert.match(loc(PRODUCT_DATA.woodbox.find((p) => p.id === "mokkan-oku-yame-hojicha").summary, "ja"), /一番茶.*浅く焙じた/);
+  assert.match(loc(PRODUCT_DATA.woodbox.find((p) => p.id === "mokkan-oku-yame-genmaicha").summary, "ja"), /煎茶に抹茶と炒り玄米/);
 });

@@ -50,7 +50,7 @@ function buildProductJsonLd() {
     ...(PRODUCT_DATA.enma || []),
     ...(PRODUCT_DATA.woodbox || []),
     ...(PRODUCT_DATA.bag || []),
-  ];
+  ].filter((p) => !p.archived && !p.hidden);
 
   return {
     "@context": "https://schema.org",
