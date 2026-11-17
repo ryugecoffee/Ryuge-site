@@ -52,7 +52,21 @@ in-flight; external refunds), `amountRefunded` and `status` (`partially_refunded
   - resume: `{ mode, refundId }`
 - Webhook: `charge.refunded` (already subscribed) and, if added in Stripe, `charge.refund.updated` call
   `syncRefunds`. Without `charge.refund.updated`, a refund Stripe finishes later is settled by `resume`.
-- Later, the Factory (Jennifer) signed CEO approval calls the same functions (like `server/factory-inventory-api.js`).
+- Factory (Jennifer): `POST /internal/factory/order-refund` (`server/factory-refund-api.js`), below.
+
+## Factory (Jennifer) API
+Off (404) unless Render has `FACTORY_REFUND_API_ENABLED=true`, `FACTORY_REFUND_HMAC_SECRET` (32+ random bytes, the
+same value on the Factory server only; separate from every other secret) and `FACTORY_CEO_USER_ID` (the CEO's Factory
+user UUID).
+- Every request: `X-Factory-Timestamp` (ms, within ±5 min) and `X-Factory-Signature` = hex HMAC-SHA256(secret,
+  `"POST\n/internal/factory/order-refund\n" + timestamp + "\n" + rawBody`), and a one-time `nonce` (UUID) in the body:
+  a captured request is refused the second time (`REPLAYED_REQUEST`). Only the listed fields per operation are accepted.
+- Operations: `orders.search` (`query: { orderId | email | limit }`), `orders.get` (order + its refunds and audit),
+  `refund.preview`, `refund.apply`, `refund.resume`, `refund.status`.
+- `refund.apply` also needs `approval: { requestId, approvedBy, approvedAt }` from the CEO's approval in Factory:
+  `approvedBy` must be `FACTORY_CEO_USER_ID`, `approvedAt` at most 15 minutes old, and `requestId` (UUID) becomes the
+  refund id, so one approval can never refund twice. The `planHash` must match the plan computed at that moment.
+  The recorded actor is `factory-ceo:<CEO id>`, set by the server.
 
 ## Next
 - Shipping records per line, so `shipped` can come from data instead of being stated.

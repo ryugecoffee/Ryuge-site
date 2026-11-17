@@ -15,6 +15,7 @@ const { promoKeys } = require("./promo");
 const orders = require("./orders");
 const initialStock = require("./initial-stock");
 const refunds = require("./refunds");
+const factoryRefundApi = require("./factory-refund-api");
 const { createRateLimiter, clientKey } = require("./rate-limit");
 
 const app = express();
@@ -58,6 +59,12 @@ app.post("/stripe-inventory-webhook", express.raw({ type: "application/json" }),
     return res.status(500).json({ error: "INVENTORY_WEBHOOK_FAILED" });
   }
 });
+
+// Factory (Jennifer) orders and refunds, HMAC-signed with CEO approval (server/factory-refund-api.js). Needs the raw
+// body for the signature, so it is mounted before express.json(). Off (404) unless FACTORY_REFUND_API_ENABLED=true,
+// FACTORY_REFUND_HMAC_SECRET and FACTORY_CEO_USER_ID are set on Render.
+app.post(factoryRefundApi.PATH, express.raw({ type: "application/json", limit: "8kb" }),
+  factoryRefundApi.createHandler({ getDb: () => db, getStripe: () => stripe }));
 
 app.use(express.json());
 app.use(cors());

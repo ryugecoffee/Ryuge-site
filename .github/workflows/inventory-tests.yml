@@ -16,6 +16,8 @@ on:
       - 'server/brazil-lot.test.js'
       - 'server/initial-stock.js'
       - 'server/refunds.js'
+      - 'server/factory-refund-api.js'
+      - 'server/factory-refund-api.test.js'
       - 'server/refunds.test.js'
       - 'docs/refunds.md'
       - 'server/initial-stock.test.js'
@@ -76,6 +78,7 @@ jobs:
           node --check server/catalog.js
           node --check server/initial-stock.js
           node --check server/refunds.js
+          node --check server/factory-refund-api.js
           node --check server/orders.js
           node --check server/quote.js
           node --check server/promo.js
@@ -97,14 +100,14 @@ jobs:
         run: npm ci --prefix server
       - name: Lint inventory and sandbox payment code
         run: >
-          npx eslint server/inventory.js server/catalog.js server/initial-stock.js server/refunds.js server/orders.js server/quote.js server/promo.js server/international-rates.js src/lib/shippingPolicy.js src/pages/CheckoutPage.jsx server/inventory-adjustments.js
+          npx eslint server/inventory.js server/catalog.js server/initial-stock.js server/refunds.js server/factory-refund-api.js server/orders.js server/quote.js server/promo.js server/international-rates.js src/lib/shippingPolicy.js src/pages/CheckoutPage.jsx server/inventory-adjustments.js
           server/factory-inventory-api.js server/firestore-preview-checkout.js
           server/sandbox-checkout.js server/staging-entry.js server/resp-client.js server/rate-limit.js
           server/*.test.js
       - name: Build site preview
         run: npm run build
       - name: Unit tests
-        run: node --test server/catalog.test.js server/orders.test.js server/inventory-launch.test.js server/quote.test.js server/checkout-policy.test.js server/promo.test.js server/brazil-lot.test.js server/initial-stock.test.js server/refunds.test.js server/subscriptions-paused.test.js server/product-detail.test.js server/inventory.test.js server/inventory-scenarios.test.js server/inventory-adjustments.test.js server/firestore-preview-checkout.test.js server/factory-inventory-api.test.js server/rate-limit.test.js
+        run: node --test server/catalog.test.js server/orders.test.js server/inventory-launch.test.js server/quote.test.js server/checkout-policy.test.js server/promo.test.js server/brazil-lot.test.js server/initial-stock.test.js server/refunds.test.js server/factory-refund-api.test.js server/subscriptions-paused.test.js server/product-detail.test.js server/inventory.test.js server/inventory-scenarios.test.js server/inventory-adjustments.test.js server/firestore-preview-checkout.test.js server/factory-inventory-api.test.js server/rate-limit.test.js
       - name: Set up Java for Firestore emulator
         uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
