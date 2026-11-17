@@ -248,3 +248,21 @@ test("lost webhooks / server restart: reconciliation settles from Stripe state",
   assert.equal(await preview.settlePreviewEvent(db, paid, "payment_intent.succeeded"), false);
   assert.deepEqual(await stock("enma-karamo"), { ready: 2, held: 1, sold: 1, previewOnly: true });
 });
+
+test("paid order records: a Stripe resend, even concurrent, writes one order on real Firestore", { skip }, async () => {
+  const orders = require("./orders");
+  const charge = { id: "ch_emulator", created: 1795000000, billing_details: { name: "Emulator", email: "e@example.com", address: {} } };
+  const stripe = { charges: { retrieve: async () => charge } };
+  const intent = {
+    object: "payment_intent", id: "pi_emulator_order", status: "succeeded", amount: 2000, currency: "jpy",
+    livemode: false, created: 1795000000, latest_charge: "ch_emulator",
+    metadata: { items: "enma-karamo:1@1800", subtotal: "1800", shipping: "200", countryCode: "JP" },
+  };
+  // Uses its own collection root so it can never meet real order data.
+  const ordersDb = { collection: (name) => firestore.collection("emulatorOrdersTest_" + name), runTransaction: (fn) => firestore.runTransaction(fn) };
+  const results = await Promise.all([1, 2, 3].map(() => orders.recordPaidOrder(ordersDb, stripe, intent)));
+  assert.equal(results.filter((r) => r.recorded).length, 1);
+  const snapshot = await firestore.collection("emulatorOrdersTest_orders").get();
+  assert.equal(snapshot.size, 1);
+  assert.deepEqual(snapshot.docs[0].data().items, [{ id: "enma-karamo", quantity: 1, unitPrice: 1800 }]);
+});
