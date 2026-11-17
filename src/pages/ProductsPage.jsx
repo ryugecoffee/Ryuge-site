@@ -67,7 +67,9 @@ export default function ProductsPage({ lang }) {
   const labels = sectionText.specLabels;
   const detailText = DETAIL_TEXT[lang] || DETAIL_TEXT.ja;
   const products = PRODUCT_DATA;
-  const activeWoodbox = products.woodbox.filter((item) => !item.archived);
+  const activeWoodbox = products.woodbox.filter((item) => !item.archived && !item.hidden);
+  // Bag series items still listed on their own (the coffee bag moved to Enma; the tea bag is hidden for now).
+  const listedBags = (products.bag || []).filter((item) => !item.hidden);
 
   const [activeItemId, setActiveItemId] = useState(null);
   const [selectedSubscriptionPlan, setSelectedSubscriptionPlan] = useState(
@@ -133,7 +135,7 @@ export default function ProductsPage({ lang }) {
   const woodboxSectionRef = useRef(null);
 
   const activeItem =
-    [...products.enma, ...activeWoodbox, ...(products.bag || []), ...products.oriori].find(
+    [...products.enma, ...activeWoodbox, ...listedBags, ...products.oriori].find(
       (item) => item.id === activeItemId
     ) || null;
 
@@ -239,7 +241,7 @@ export default function ProductsPage({ lang }) {
   };
 
   // Detail rows, grouped: where it comes from, then how it was grown and processed. Only facts in productData.js.
-  const DETAIL_FIELDS = ["origin", "producer", "altitude", "variety", "process", "drying", "grade", "harvest", "arrival"];
+  const DETAIL_FIELDS = ["origin", "producer", "tea", "altitude", "variety", "process", "drying", "grade", "harvest", "arrival"];
 
   return (
     <>
@@ -383,7 +385,7 @@ export default function ProductsPage({ lang }) {
           </div>
 
           <div className="oriori-services-grid">
-            {[...(products.bag || []), ...products.oriori].map((item) => (
+            {[...listedBags, ...products.oriori].map((item) => (
               <article
                 key={item.id}
                 className="oriori-service-card"
@@ -754,7 +756,7 @@ export default function ProductsPage({ lang }) {
                       </div>
 
                       {/* 3. The details, for those who want them. */}
-                      {activeItem.roast && ROAST_LEVEL[activeItem.roast.en] !== undefined && (
+                      {activeItem.category === "beans" && activeItem.roast && ROAST_LEVEL[activeItem.roast.en] !== undefined && (
                         <section className="product-detail-section">
                           <h4>{labels.roast}</h4>
                           <ol className="product-roast-scale" aria-label={labels.roast}>
@@ -767,11 +769,15 @@ export default function ProductsPage({ lang }) {
                       )}
                       {DETAIL_FIELDS.some((field) => loc(activeItem[field], lang)) && (
                         <section className="product-detail-section">
-                          <h4>{activeItem.category === "beans" ? detailText.beanDetails : detailText.productDetails}</h4>
+                          <h4>{activeItem.category === "beans" ? detailText.beanDetails : activeItem.tea ? detailText.teaDetails : detailText.productDetails}</h4>
                           <dl className="product-specs product-specs-classic">
                             {DETAIL_FIELDS.map((field) => renderSpecRow(labels[field], activeItem[field]))}
                           </dl>
-                          {activeItem.flavorNotes && <p className="product-detail-small">{detailText.flavorSource}</p>}
+                          {activeItem.flavorNotes && (
+                            <p className="product-detail-small">
+                              {activeItem.flavorBasis === "direction" ? detailText.flavorDirection : detailText.flavorSource}
+                            </p>
+                          )}
                         </section>
                       )}
                     </div>

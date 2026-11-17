@@ -11,6 +11,8 @@ export const DETAIL_TEXT = {
     flavorSource: "風味は仕入れ先の情報をもとにしています。焙煎や淹れ方によって感じ方は変わります。",
     roastScale: ["浅煎り", "中煎り", "中深煎り", "深煎り"],
     roastGuide: "浅煎りほど果実のような酸味や香りが、深煎りほど苦みやコクが感じられやすくなります。",
+    flavorDirection: "風味は焙煎の方向性です。カッピングでの確認前のため、実際の味わいとは異なる場合があります。",
+    teaDetails: "産地・茶葉",
     howToBrew: "淹れ方", quantity: "数量", addToCart: "カートに入れる", back: "戻る", close: "閉じる",
     promoNote: "プロモーション豆：お一人様2袋まで",
   },
@@ -19,6 +21,8 @@ export const DETAIL_TEXT = {
     flavorSource: "Flavor notes are based on the supplier's information. Roast and brewing change how they come through.",
     roastScale: ["Light", "Medium", "Medium-Dark", "Dark"],
     roastGuide: "Lighter roasts tend to bring fruity acidity and aroma; darker roasts, bitterness and body.",
+    flavorDirection: "These notes are the direction we roast toward; they have not been confirmed by cupping yet, so the cup may differ.",
+    teaDetails: "Origin and tea",
     howToBrew: "How to Brew", quantity: "Quantity", addToCart: "Add to cart", back: "Back", close: "Close",
     promoNote: "Promotional beans: up to 2 bags per customer",
   },
@@ -27,6 +31,8 @@ export const DETAIL_TEXT = {
     flavorSource: "Las notas de sabor se basan en la información del proveedor. El tueste y la preparación cambian cómo se perciben.",
     roastScale: ["Claro", "Medio", "Medio-oscuro", "Oscuro"],
     roastGuide: "Los tuestes claros suelen dar acidez frutal y aroma; los oscuros, amargor y cuerpo.",
+    flavorDirection: "Estas notas son la dirección del tueste; aún no se han confirmado en cata, así que la taza puede variar.",
+    teaDetails: "Origen y té",
     howToBrew: "Preparación", quantity: "Cantidad", addToCart: "Añadir al carrito", back: "Volver", close: "Cerrar",
     promoNote: "Granos promocionales: máx. 2 bolsas por cliente",
   },
@@ -61,6 +67,7 @@ export const PRODUCT_SECTIONS = {
       price: "価格",
       flavor: "風味",
       roast: "焙煎度",
+      tea: "茶葉",
     },
   },
 
@@ -89,6 +96,7 @@ export const PRODUCT_SECTIONS = {
       price: "Price",
       flavor: "Flavor Notes",
       roast: "Roast",
+      tea: "Tea",
     },
   },
 
@@ -117,6 +125,7 @@ export const PRODUCT_SECTIONS = {
       price: "Precio",
       flavor: "Notas de sabor",
       roast: "Tueste",
+      tea: "Té",
     },
   },
 };
@@ -136,7 +145,11 @@ export const PRODUCT_DATA = {
       weight: "100g",
       weightG: 120, // 焙煎豆100g + 袋・梱包の概算値
       title: { ja: "閻魔　禅の深煎り（ブラジル）", en: "ENMA Zen Dark Roast (Brazil)", es: "ENMA Tueste oscuro Zen (Brasil)" },
-      summary: { ja: "通常版と同じブラジル アマレロブルボンを、深煎りに仕上げたプロモーション豆です。", en: "Our regular Brazil Amarelo Bourbon, roasted dark, at a promotional price.", es: "El mismo Brasil Amarelo Bourbon que el regular, con tueste oscuro y a precio promocional." },
+      summary: {
+        ja: "通常版と同じブラジル アマレロブルボンを深煎りに。ナッツやチョコレートを思わせる香ばしさと、ハチミツのような甘みを方向性に、深煎りらしいコクと甘みを目指して焙煎します。",
+        en: "Our Brazil Amarelo Bourbon, roasted dark. We roast toward body and sweetness, in the direction of nuts, chocolate and honey.",
+        es: "Nuestro Brasil Amarelo Bourbon, con tueste oscuro. Lo tostamos buscando cuerpo y dulzor, en la línea de frutos secos, chocolate y miel.",
+      },
       origin: { ja: "ブラジル サンパウロ州 ヴァレ・ダ・グラマ／ミナスジェライス州 カンポス・アルトス", en: "Vale da Grama (São Paulo) / Campos Altos (Minas Gerais), Brazil", es: "Vale da Grama (São Paulo) / Campos Altos (Minas Gerais), Brasil" },
       producer: { ja: "ヴァレ・ダ・グラマとカンポス・アルトスの小規模生産者", en: "Smallholder farmers in Vale da Grama and Campos Altos", es: "Pequeños productores de Vale da Grama y Campos Altos" },
       process: { ja: "ナチュラル", en: "Natural", es: "Natural" },
@@ -148,7 +161,9 @@ export const PRODUCT_DATA = {
       price: "¥1,000",
       priceNumber: 1000,
       roast: { ja: "深煎り", en: "Dark Roast", es: "Tueste oscuro" },
-      // No tasting notes yet for the dark roast: the supplier notes below the regular one are for its own roast.
+      // The roasting direction (CEO 2026-11-17), not yet confirmed by cupping: shown as such (flavorBasis).
+      flavorNotes: { ja: ["ナッツ", "ハチミツ", "チョコレート"], en: ["Nuts", "Honey", "Chocolate"], es: ["Frutos secos", "Miel", "Chocolate"] },
+      flavorBasis: "direction",
       comingSoon: false, // on sale with inventory on (sales cap per product + the shared Brazil lot)
       requiresInventory: true, // = server/catalog.js requiresInventory: "近日公開" until inventory is on
       notice: MADE_TO_ORDER,
@@ -304,6 +319,50 @@ export const PRODUCT_DATA = {
       priceNumber: 2050,
       comingSoon: false,
       isSoldOut: false,
+    },
+    {
+      // Listed with the Enma beans (CEO 2026-11-17).
+      id: "enma-coffee-bag",
+      image: "/images/enma-coffeebag.jpg",
+      category: "bag",
+      size: "8個入り",
+      weightG: 100, // ドリップバッグ8個入り
+      title: {
+        ja: "閻魔 珈琲袋",
+        en: "ENMA Coffee Bag",
+        es: "ENMA Coffee Bag",
+      },
+      modalTitle: {
+        ja: "閻魔 珈琲袋",
+        en: "ENMA Coffee Bag",
+        es: "ENMA Coffee Bag",
+      },
+      summary: {
+        ja: "急須も、ミルも、必要ない。お湯を注ぐだけで、閻魔が整う。",
+        en: "No grinder. No fuss. Just hot water, and Enma is ready.",
+        es: "Sin molinillo. Sin complicaciones. Solo agua caliente, y Enma está listo.",
+      },
+      weight: { ja: "8個入り", en: "8 bags", es: "8 bolsitas" },
+      price: "¥2,400",
+      priceNumber: 2400,
+      brew: {
+        ja: [
+          "160mlのお湯をゆっくりと注ぎ、約2分。",
+          "香りが立ち上がるのを、静かに待つ。",
+          "味が薄い場合は、スプーンで数回押すと深みが増します。",
+        ],
+        en: [
+          "Slowly pour 160ml of hot water. Wait about 2 minutes.",
+          "Let the aroma rise in silence.",
+          "If the flavor is light, press gently with a spoon a few times.",
+        ],
+        es: [
+          "Vierte despacio 160ml de agua caliente. Espera unos 2 minutos.",
+          "Deja que el aroma se eleve en silencio.",
+          "Si el sabor es suave, presiona suavemente con una cuchara.",
+        ],
+      },
+      isSoldOut: false,
     }
   ],
 
@@ -378,10 +437,13 @@ export const PRODUCT_DATA = {
         es: "Mokkan Hojicha de Oku-Yame",
       },
       summary: {
-        ja: "奥八女のほうじ茶を、木函に収めた贈り物。",
-        en: "Roasted Japanese tea from Oku-Yame, presented in a wooden gift box.",
-        es: "Té japonés tostado de Oku-Yame, presentado en una caja de madera.",
+        ja: "八女産の一番茶を浅く焙じたほうじ茶。浅焙煎ならではの芳ばしさと、果実を思わせる甘み。木函に収めた贈り物です。",
+        en: "Hojicha of first-flush Yame tea, lightly roasted: a gentle roasted aroma and a sweetness reminiscent of fruit. Presented in a wooden box.",
+        es: "Hojicha de primera cosecha de Yame, con tostado ligero: aroma tostado suave y un dulzor que recuerda a la fruta. En caja de madera.",
       },
+      roast: { ja: "浅焙煎", en: "Light roast", es: "Tostado ligero" },
+      tea: { ja: "八女産 一番茶", en: "First-flush tea from Yame", es: "Té de primera cosecha de Yame" },
+      producer: { ja: "原島農園", en: "Harashima Farm", es: "Granja Harashima" },
       origin: { ja: "福岡県 奥八女", en: "Oku-Yame, Fukuoka, Japan", es: "Oku-Yame, Fukuoka, Japón" },
       price: "¥2,800",
       priceNumber: 2800,
@@ -401,10 +463,12 @@ export const PRODUCT_DATA = {
         es: "Mokkan Genmaicha de Oku-Yame",
       },
       summary: {
-        ja: "奥八女の玄米茶を、木函に収めた贈り物。",
-        en: "Japanese green tea with roasted rice from Oku-Yame, presented in a wooden gift box.",
-        es: "Té verde japonés con arroz tostado de Oku-Yame, presentado en una caja de madera.",
+        ja: "煎茶に抹茶と炒り玄米を合わせた玄米茶。炒り玄米の香ばしい香りと、煎茶・抹茶の旨味。木函に収めた贈り物です。",
+        en: "Genmaicha of sencha with matcha and roasted brown rice: the toasty aroma of the rice and the umami of sencha and matcha. Presented in a wooden box.",
+        es: "Genmaicha de sencha con matcha y arroz integral tostado: el aroma tostado del arroz y el umami del sencha y el matcha. En caja de madera.",
       },
+      tea: { ja: "煎茶・抹茶・炒り玄米", en: "Sencha, matcha, roasted brown rice", es: "Sencha, matcha, arroz integral tostado" },
+      producer: { ja: "原島農園", en: "Harashima Farm", es: "Granja Harashima" },
       origin: { ja: "福岡県 奥八女", en: "Oku-Yame, Fukuoka, Japan", es: "Oku-Yame, Fukuoka, Japón" },
       price: "¥2,800",
       priceNumber: 2800,
@@ -413,52 +477,11 @@ export const PRODUCT_DATA = {
     },
   ],
 
+  // Hidden from the product list for now (CEO 2026-11-17); the data stays.
   bag: [
     {
-      id: "enma-coffee-bag",
-      image: "/images/enma-coffeebag.jpg",
-      category: "bag",
-      size: "8個入り",
-      weightG: 100, // ドリップバッグ8個入り
-      title: {
-        ja: "閻魔 珈琲袋",
-        en: "ENMA Coffee Bag",
-        es: "ENMA Coffee Bag",
-      },
-      modalTitle: {
-        ja: "閻魔 珈琲袋",
-        en: "ENMA Coffee Bag",
-        es: "ENMA Coffee Bag",
-      },
-      summary: {
-        ja: "急須も、ミルも、必要ない。お湯を注ぐだけで、閻魔が整う。",
-        en: "No grinder. No fuss. Just hot water, and Enma is ready.",
-        es: "Sin molinillo. Sin complicaciones. Solo agua caliente, y Enma está listo.",
-      },
-      weight: { ja: "8個入り", en: "8 bags", es: "8 bolsitas" },
-      price: "¥2,400",
-      priceNumber: 2400,
-      brew: {
-        ja: [
-          "160mlのお湯をゆっくりと注ぎ、約2分。",
-          "香りが立ち上がるのを、静かに待つ。",
-          "味が薄い場合は、スプーンで数回押すと深みが増します。",
-        ],
-        en: [
-          "Slowly pour 160ml of hot water. Wait about 2 minutes.",
-          "Let the aroma rise in silence.",
-          "If the flavor is light, press gently with a spoon a few times.",
-        ],
-        es: [
-          "Vierte despacio 160ml de agua caliente. Espera unos 2 minutos.",
-          "Deja que el aroma se eleve en silencio.",
-          "Si el sabor es suave, presiona suavemente con una cuchara.",
-        ],
-      },
-      isSoldOut: false,
-    },
-    {
       id: "woodbox-tea-bag",
+      hidden: true,
       image: "/images/woodbox-hojicha.jpg",
       category: "tea-bag",
       size: "8個入り",

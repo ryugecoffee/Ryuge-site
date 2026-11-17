@@ -54,7 +54,8 @@ function buildCatalog() {
         (p.roast ? ` / 焙煎度: ${loc(p.roast, "ja")}` : "") +
         (p.origin ? ` / 産地: ${loc(p.origin, "ja")}` : "") +
         (p.process ? ` / 精製方法: ${loc(p.process, "ja")}` : "") +
-        (p.flavorNotes?.ja ? ` / 風味（仕入れ先情報）: ${p.flavorNotes.ja.join("・")}` : "") +
+        (p.tea ? ` / 茶葉: ${loc(p.tea, "ja")}` : "") +
+        (p.flavorNotes?.ja ? ` / 風味（${p.flavorBasis === "direction" ? "焙煎の方向性・カッピング未確認" : "仕入れ先情報"}）: ${p.flavorNotes.ja.join("・")}` : "") +
         (p.summary?.ja ? ` / ${p.summary.ja}` : "") +
         (p.isSoldOut ? " / ※売り切れ" : "") +
         (p.comingSoon ? " / ※準備中・注文不可" : "") +
@@ -63,8 +64,9 @@ function buildCatalog() {
     );
   };
   (PRODUCT_DATA.enma || []).forEach((p) => push(p, "閻魔"));
-  (PRODUCT_DATA.woodbox || []).filter((p) => !p.archived).forEach((p) => push(p, "木函"));
-  (PRODUCT_DATA.bag || []).forEach((p) => push(p, "袋シリーズ"));
+  (PRODUCT_DATA.woodbox || []).filter((p) => !p.archived && !p.hidden).forEach((p) => push(p, "木函"));
+  // Hidden products (e.g. the hojicha bag, CEO 2026-11-17) are not offered.
+  (PRODUCT_DATA.bag || []).filter((p) => !p.hidden).forEach((p) => push(p, "袋シリーズ"));
   lines.push("- [定期便 折々] 定期便の詳細・販売条件はストア内の商品詳細をご案内してください。");
 
   // まだ購入不可(comingSoon)の商品は「近日公開」であることを明示した上で別枠で伝える
