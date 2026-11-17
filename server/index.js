@@ -10,7 +10,8 @@ const nodemailer = require("nodemailer");
 const admin = require("firebase-admin");
 const inventory = require("./inventory");
 const { itemsMetadata, managedItems } = require("./catalog");
-const { quoteOrder, QuoteError, COUPONS, CONTACT_EMAIL } = require("./quote");
+const { quoteOrder, QuoteError, COUPONS, CONTACT_EMAIL, PROMO_MAX_BAGS } = require("./quote");
+const { promoKeys } = require("./promo");
 const orders = require("./orders");
 
 const app = express();
@@ -449,7 +450,7 @@ app.post("/quote", (req, res) => {
 
 app.post("/create-payment-intent", async (req, res) => {
   try {
-    const { email, name, address } = req.body || {};
+    const { email, name, address, postalCode } = req.body || {};
     let quote;
     try {
       quote = quoteRequest(req.body);
@@ -461,14 +462,28 @@ app.post("/create-payment-intent", async (req, res) => {
       return res.status(503).json({ error: "WEBHOOK_NOT_CONFIGURED" });
     }
 
+    // Products with a sales cap (new beans, promotional beans) are sold only with inventory on.
+    if (!INVENTORY_ENABLED && quote.items.some((item) => item.requiresInventory)) {
+      return res.status(400).json({ error: "PRODUCT_NOT_AVAILABLE" });
+    }
+    // Promotional beans: at most PROMO_MAX_BAGS per customer across orders (server/promo.js), checked and held with the stock.
+    const promoQuantity = quote.items.filter((item) => item.promo).reduce((sum, item) => sum + item.quantity, 0);
+    let promo = null;
+    if (promoQuantity) {
+      const keys = promoKeys({ email, countryCode: quote.countryCode, postalCode, address });
+      if (!keys.length) return res.status(400).json({ error: "EMAIL_REQUIRED" });
+      promo = { keys, quantity: promoQuantity, limit: PROMO_MAX_BAGS };
+    }
+
     let reservationId = null;
     const stockItems = managedItems(quote.items);
     if (INVENTORY_ENABLED && stockItems.length) {
       reconcileSoon();
       try {
-        reservationId = await inventory.reserve(db, stockItems);
+        reservationId = await inventory.reserve(db, stockItems, null, promo);
       } catch (error) {
-        return res.status(error.message === "OUT_OF_STOCK" ? 409 : 400).json({ error: error.message });
+        const conflict = ["OUT_OF_STOCK", "PROMO_CUSTOMER_LIMIT"].includes(error.message);
+        return res.status(conflict ? 409 : 400).json({ error: error.message });
       }
     }
     const detail = quote.shippingDetail;
@@ -497,8 +512,9 @@ app.post("/create-payment-intent", async (req, res) => {
       res.json({ clientSecret: paymentIntent.client_secret, ...publicQuote(quote) });
     } catch (error) {
       if (reservationId) {
-        // The hold is released by reconciliation (no PaymentIntent -> manual review entry; never sold).
-        console.error("Inventory reservation needs reconciliation:", reservationId, error.message);
+        // No PaymentIntent reached the customer, so nobody can pay this hold: give the stock (and promo bags) back now.
+        await inventory.releaseWithoutPayment(db, reservationId)
+          .catch((releaseError) => console.error("Inventory reservation needs reconciliation:", reservationId, releaseError.message));
       }
       throw error;
     }

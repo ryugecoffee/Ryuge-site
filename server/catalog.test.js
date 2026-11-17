@@ -27,7 +27,7 @@ test("the browser's price, weight and category are ignored; only id and quantity
 });
 
 test("products not on sale, unknown ids and malformed carts are refused before anything is charged", () => {
-  assert.throws(() => priceItems([{ id: "enma-jimma", quantity: 1, price: 1300 }]), /PRODUCT_NOT_AVAILABLE/);
+  assert.throws(() => priceItems([{ id: "mokkan-oku-yame-hojicha", quantity: 1, price: 2800 }]), /PRODUCT_NOT_AVAILABLE/);
   assert.throws(() => priceItems([{ id: "woodbox-geisha", quantity: 1 }]), /PRODUCT_NOT_AVAILABLE/);
   assert.throws(() => priceItems([{ id: "no-such-bean", quantity: 1 }]), /UNKNOWN_PRODUCT/);
   assert.throws(() => priceItems([{ id: "constructor", quantity: 1 }]), /UNKNOWN_PRODUCT/);

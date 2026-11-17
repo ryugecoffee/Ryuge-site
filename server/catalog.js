@@ -8,15 +8,17 @@
 // kind: "beans" (100 g roasted coffee; international orders allow beans only), "bag" (drip bags), "tea".
 // contentG: coffee/tea weight in grams (the international 600 g limit); weightG: packed item weight for shipping.
 // promo: a promotional bean (at most 2 bags per order and per customer); change it here and in src/productData.js.
+// requiresInventory: sold only while inventory is on (a sales cap must hold; with inventory off it is not purchasable).
 // managedStock: true = sold from counted, packed bags (inventory/{sku}); with inventory on, checkout reserves them and
 // refuses past zero. Others are not stock-gated. Must equal INVENTORY_MANAGED_SKUS in src/pages/ProductsPage.jsx.
 const { validItems } = require("./inventory");
 
 const CATALOG = Object.freeze({
-  "enma-amarelo-bourbon": { price: 1000, weightG: 120, kind: "beans", contentG: 100, availableForSale: false },
-  "enma-jimma": { price: 1300, weightG: 120, kind: "beans", contentG: 100, availableForSale: false },
-  "enma-quequesques": { price: 1300, weightG: 120, kind: "beans", contentG: 100, availableForSale: false },
-  "enma-andes-blue": { price: 1300, weightG: 120, kind: "beans", contentG: 100, availableForSale: false },
+  // CEO 2026-11-17: on sale, 15 bags each as the sales cap; Amarelo is the promotional bean (¥1,000, 2 per customer).
+  "enma-amarelo-bourbon": { price: 1000, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true, requiresInventory: true, promo: true },
+  "enma-jimma": { price: 1300, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true, requiresInventory: true },
+  "enma-quequesques": { price: 1300, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true, requiresInventory: true },
+  "enma-andes-blue": { price: 1300, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true, requiresInventory: true },
   "enma-karamo": { price: 1800, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true },
   "enma-kindiio": { price: 2050, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true },
   "enma-coffee-bag": { price: 2400, weightG: 100, kind: "bag", contentG: 100, availableForSale: true },
@@ -34,7 +36,8 @@ function priceItems(items, catalog = CATALOG) {
     const product = Object.prototype.hasOwnProperty.call(catalog, id) ? catalog[id] : null;
     if (!product) throw new Error("UNKNOWN_PRODUCT");
     if (!product.availableForSale) throw new Error("PRODUCT_NOT_AVAILABLE");
-    return { id, quantity, price: product.price, weightG: product.weightG, kind: product.kind, contentG: product.contentG, promo: product.promo === true };
+    return { id, quantity, price: product.price, weightG: product.weightG, kind: product.kind, contentG: product.contentG, promo: product.promo === true,
+      requiresInventory: product.requiresInventory === true };
   });
 }
 

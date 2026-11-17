@@ -16,6 +16,10 @@ test("only counted, packed products are stock-gated; the storefront and the serv
   const listed = /const INVENTORY_MANAGED_SKUS = new Set\(\[([^\]]*)\]\);/.exec(page)[1].match(/"([a-z0-9-]+)"/g).map((s) => s.slice(1, -1));
   const managed = Object.keys(CATALOG).filter((id) => CATALOG[id].managedStock === true);
   assert.deepEqual([...listed].sort(), [...managed].sort());
+  const requiredOnPage = /const REQUIRES_INVENTORY_SKUS = new Set\(\[([^\]]*)\]\);/.exec(page)[1].match(/"([a-z0-9-]+)"/g).map((s) => s.slice(1, -1));
+  const required = Object.keys(CATALOG).filter((id) => CATALOG[id].requiresInventory === true);
+  assert.deepEqual([...requiredOnPage].sort(), [...required].sort());
+  for (const id of required) assert.equal(CATALOG[id].managedStock, true, `${id} needs a stock record`);
   for (const id of managed) assert.equal(CATALOG[id].availableForSale, true, `${id} is managed but not on sale`);
 });
 
@@ -23,7 +27,7 @@ test("checkout reserves only the managed part of the cart, and abandoned holds a
   const source = fs.readFileSync(path.join(__dirname, "index.js"), "utf8");
   const route = source.slice(source.indexOf('app.post("/create-payment-intent"'), source.indexOf('app.post("/calc-shipping"'));
   assert.match(route, /const stockItems = managedItems\(quote\.items\);\n\s+if \(INVENTORY_ENABLED && stockItems\.length\) \{\n\s+reconcileSoon\(\);/);
-  assert.match(route, /reservationId = await inventory\.reserve\(db, stockItems\);/);
+  assert.match(route, /reservationId = await inventory\.reserve\(db, stockItems, null, promo\);/);
   const availability = source.slice(source.indexOf('app.get("/inventory/availability"'), source.indexOf('app.post("/create-payment-intent"'));
   assert.match(availability, /reconcileSoon\(\);/);
   assert.match(source, /if \(INVENTORY_ENABLED\) setInterval\(reconcileSoon, 5 \* 60 \* 1000\)/);

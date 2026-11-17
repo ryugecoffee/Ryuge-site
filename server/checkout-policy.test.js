@@ -18,7 +18,7 @@ test("the checkout shows the server's quote only and creates the payment when th
   assert.ok(effects.every((body) => !body.includes("create-payment-intent")), "no payment is created when the page opens");
   const submit = checkout.slice(checkout.indexOf("const handleSubmit = async"));
   assert.match(submit, /create-payment-intent`/);
-  assert.match(submit, /body: JSON\.stringify\(\{ \.\.\.quoteRequest, email, name, address: finalAddress \}\)/);
+  assert.match(submit, /body: JSON\.stringify\(\{ \.\.\.quoteRequest, email, name, address: finalAddress, postalCode: isInternational \? intlPostalCode : postalCode \}\)/);
   assert.match(submit, /if \(data\.total !== quote\.total \|\| data\.shipping !== quote\.shipping\) \{/, "a changed amount is shown, never charged silently");
   assert.match(submit, /pendingIntent && pendingIntent\.key === quoteKey \? pendingIntent : null/, "a declined card retries the same payment");
   assert.match(checkout, /items: \(cartItems \|\| \[\]\)\.filter\(\(i\) => !isSubscriptionItem\(i\)\)\.map\(\(\{ id, quantity \}\) => \(\{ id, quantity \}\)\)/,

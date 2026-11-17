@@ -16,6 +16,10 @@ function saveCart(items) {
   localStorage.setItem("cart-items", JSON.stringify(items));
 }
 
+// Promotional beans: at most 2 bags per customer (the payment server enforces it across orders as well).
+const PROMO_MAX_BAGS = 2;
+const capped = (item, quantity) => (item?.promo ? Math.min(quantity, PROMO_MAX_BAGS) : quantity);
+
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState(loadCart);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -27,7 +31,7 @@ export function CartProvider({ children }) {
       if (existing) {
         next = prev.map((item) =>
           item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: capped(item, item.quantity + quantity) }
             : item
         );
       } else {
@@ -40,7 +44,8 @@ export function CartProvider({ children }) {
             image: product.image || "",
             category: product.category,
             size: product.size,
-            quantity,
+            promo: product.promo === true,
+            quantity: capped(product, quantity),
           },
         ];
       }
@@ -63,7 +68,8 @@ export function CartProvider({ children }) {
                 image: product.image || "",
                 category: product.category,
                 size: product.size,
-                quantity,
+                promo: product.promo === true,
+                quantity: capped(product, quantity),
               },
             ]
           : []),
@@ -80,7 +86,7 @@ export function CartProvider({ children }) {
     }
     setCartItems((prev) => {
       const next = prev.map((item) =>
-        item.id === id ? { ...item, quantity } : item
+        item.id === id ? { ...item, quantity: capped(item, quantity) } : item
       );
       saveCart(next);
       return next;

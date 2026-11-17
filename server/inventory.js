@@ -25,27 +25,51 @@ function integer(value) {
   return Number.isSafeInteger(value) && value >= 0 ? value : 0;
 }
 
-async function reserve(db, items, paymentIntentId = null) {
+// promo (optional): { keys: [sha256 hex], quantity, limit } from server/promo.js. The promotional bags are counted per
+// customer key (promoLedger/{key} = { held, bought }) in the same transaction as the stock.
+function validPromo(promo) {
+  if (!promo) return null;
+  const keys = Array.isArray(promo.keys) ? [...new Set(promo.keys)] : [];
+  if (!keys.length || keys.length > 4 || !keys.every((key) => /^[a-f0-9]{64}$/.test(key))) throw new Error("INVALID_PROMO");
+  if (!Number.isSafeInteger(promo.quantity) || promo.quantity < 1 || !Number.isSafeInteger(promo.limit) || promo.limit < 1) {
+    throw new Error("INVALID_PROMO");
+  }
+  return { keys, quantity: promo.quantity, limit: promo.limit };
+}
+
+async function reserve(db, items, paymentIntentId = null, promo = null) {
   const sanitized = validItems(items);
+  const promoClaim = validPromo(promo);
   const id = crypto.randomUUID();
   const reservation = db.collection("inventoryReservations").doc(id);
   const refs = sanitized.map(({ id: sku }) => db.collection("inventory").doc(sku));
+  const promoRefs = promoClaim ? promoClaim.keys.map((key) => db.collection("promoLedger").doc(key)) : [];
 
   await db.runTransaction(async (tx) => {
     // Firestore transactions require all reads before any writes.
     const snaps = await Promise.all(refs.map((ref) => tx.get(ref)));
+    const promoSnaps = await Promise.all(promoRefs.map((ref) => tx.get(ref)));
     for (let i = 0; i < sanitized.length; i++) {
       if (!snaps[i].exists) throw new Error("OUT_OF_STOCK");
       const stock = snaps[i].data() || {};
       if (integer(stock.ready) - integer(stock.held) < sanitized[i].quantity) throw new Error("OUT_OF_STOCK");
     }
+    for (const snap of promoSnaps) {
+      const used = snap.exists ? integer(snap.data().held) + integer(snap.data().bought) : 0;
+      if (used + promoClaim.quantity > promoClaim.limit) throw new Error("PROMO_CUSTOMER_LIMIT");
+    }
     sanitized.forEach(({ quantity }, i) => {
       tx.update(refs[i], { held: integer(snaps[i].data().held) + quantity });
+    });
+    promoSnaps.forEach((snap, i) => {
+      if (snap.exists) tx.update(promoRefs[i], { held: integer(snap.data().held) + promoClaim.quantity, updatedAt: new Date() });
+      else tx.create(promoRefs[i], { held: promoClaim.quantity, bought: 0, updatedAt: new Date() });
     });
     tx.create(reservation, {
       status: "reserved",
       items: sanitized,
       paymentIntentId,
+      ...(promoClaim ? { promo: { keys: promoClaim.keys, quantity: promoClaim.quantity } } : {}),
       createdAt: new Date(),
     });
   });
@@ -76,8 +100,21 @@ async function finish(db, reservationId, paymentIntentId, action) {
     const items = validItems(res.items);
     const refs = items.map(({ id }) => db.collection("inventory").doc(id));
     const docs = await Promise.all(refs.map((r) => tx.get(r)));
+    const promoKeys = Array.isArray(res.promo?.keys) ? res.promo.keys : [];
+    const promoQuantity = integer(res.promo?.quantity);
+    const promoRefs = promoKeys.map((key) => db.collection("promoLedger").doc(key));
+    const promoDocs = await Promise.all(promoRefs.map((r) => tx.get(r)));
     docs.forEach((doc, i) => {
       if (!doc.exists || integer(doc.data().held) < items[i].quantity) throw new Error("INVENTORY_INCONSISTENCY");
+    });
+    // Promotional bags: settled with the payment (bought) or given back (released).
+    promoDocs.forEach((doc, i) => {
+      if (!doc.exists) return;
+      const ledger = doc.data();
+      const held = Math.max(0, integer(ledger.held) - promoQuantity);
+      tx.update(promoRefs[i], action === "paid"
+        ? { held, bought: integer(ledger.bought) + promoQuantity, updatedAt: new Date() }
+        : { held, updatedAt: new Date() });
     });
     items.forEach(({ quantity }, i) => {
       const stock = docs[i].data();
@@ -92,6 +129,19 @@ async function finish(db, reservationId, paymentIntentId, action) {
     tx.update(ref, { status: action, finishedAt: new Date() });
     return true;
   });
+}
+
+// The PaymentIntent could not be created (or its id never reached us): no customer can pay this reservation, so its
+// stock and promotional bags are given back at once instead of waiting for manual review.
+async function releaseWithoutPayment(db, reservationId) {
+  if (!/^[a-f0-9-]{36}$/.test(String(reservationId))) throw new Error("INVALID_RESERVATION");
+  const ref = db.collection("inventoryReservations").doc(reservationId);
+  const snapshot = await ref.get();
+  if (!snapshot.exists) return false;
+  const res = snapshot.data();
+  if (res.status !== "reserved" || res.paymentIntentId) return false;
+  // finish() releases only when the stored PaymentIntent id matches; with none stored, any placeholder id is accepted.
+  return finish(db, reservationId, "none", "released");
 }
 
 async function availability(db, ids) {
@@ -149,4 +199,4 @@ async function reconcileExpired(db, stripe, limit = 30) {
   return results;
 }
 
-module.exports = { validItems, reserve, attachPaymentIntent, finish, availability, reconcileExpired };
+module.exports = { validItems, reserve, attachPaymentIntent, finish, releaseWithoutPayment, availability, reconcileExpired };

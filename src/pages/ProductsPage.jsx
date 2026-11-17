@@ -35,7 +35,11 @@ const PAGE_TEXT = {
 // Temporary checkout preview handles only these two stocked coffee SKUs.
 // Do not infer "sold out" for untracked products from a missing API quantity.
 // Must equal the products with managedStock: true in server/catalog.js (a server test checks it).
-const INVENTORY_MANAGED_SKUS = new Set(["enma-karamo", "enma-kindiio"]);
+const INVENTORY_MANAGED_SKUS = new Set(["enma-karamo", "enma-kindiio", "enma-amarelo-bourbon", "enma-jimma", "enma-quequesques", "enma-andes-blue"]);
+// Sold only while the payment server has inventory on (a sales cap must hold): requiresInventory in server/catalog.js.
+const REQUIRES_INVENTORY_SKUS = new Set(["enma-amarelo-bourbon", "enma-jimma", "enma-quequesques", "enma-andes-blue"]);
+// Promotional beans: at most 2 bags per customer (the payment server enforces it across orders).
+const PROMO_MAX_BAGS = 2;
 
 const STOCK_CHECK_TEXT = {
   ja: "在庫確認中",
@@ -113,12 +117,16 @@ export default function ProductsPage({ lang }) {
   const stockStatus = (item) => {
     if (item.comingSoon) return "comingSoon";
     if (item.isSoldOut) return "soldOut";
-    if (!INVENTORY_MANAGED_SKUS.has(item.id) || inventoryMode === "disabled") return "unmanaged";
+    if (!INVENTORY_MANAGED_SKUS.has(item.id)) return "unmanaged";
+    if (inventoryMode === "disabled") return REQUIRES_INVENTORY_SKUS.has(item.id) ? "comingSoon" : "unmanaged";
     if (inventoryMode !== "enabled" || !inventoryAvailability) return "checking";
     return inventoryAvailability[item.id] === 0 ? "soldOut" : "available";
   };
 
 
+
+  // Most a customer can put in the cart: the stock left, and 2 for promotional beans.
+  const maxQuantity = (item) => Math.min(item?.promo ? PROMO_MAX_BAGS : 50, inventoryAvailability?.[item?.id] ?? 50);
 
   const enmaSectionRef = useRef(null);
   const woodboxSectionRef = useRef(null);
@@ -266,7 +274,7 @@ export default function ProductsPage({ lang }) {
                   {item.promotion?.active && (
                     <span className="enma-promotion-ribbon">{item.promotion.label?.[lang] || item.promotion.label?.ja}</span>
                   )}
-                  {item.comingSoon && (
+                  {stockStatus(item) === "comingSoon" && (
                     <span className="enma-coming-soon-badge">{COMING_SOON_TEXT[lang]}</span>
                   )}
                   {stockStatus(item) === "soldOut" && !item.isSoldOut && (
@@ -660,7 +668,7 @@ export default function ProductsPage({ lang }) {
                         </dl>
                       )}
 
-                      {!activeItem.comingSoon && (
+                      {stockStatus(activeItem) !== "comingSoon" && (
                         <div className="simple-quantity-block">
                           <p className="simple-quantity-label">
                             {lang === "ja"
@@ -696,13 +704,13 @@ export default function ProductsPage({ lang }) {
 
                                 if (Number.isNaN(next)) return;
 
-                                setSimpleQuantity(Math.min(Math.max(0, next), inventoryAvailability?.[activeItem.id] ?? 50));
+                                setSimpleQuantity(Math.min(Math.max(0, next), maxQuantity(activeItem)));
                               }}
                             />
 
                             <button
                               type="button"
-                              onClick={() => setSimpleQuantity((prev) => Math.min(prev + 1, inventoryAvailability?.[activeItem.id] ?? 50))}
+                              onClick={() => setSimpleQuantity((prev) => Math.min(prev + 1, maxQuantity(activeItem)))}
                             >
                               ＋
                             </button>
@@ -710,7 +718,12 @@ export default function ProductsPage({ lang }) {
                         </div>
                       )}
 
-                      {activeItem.comingSoon ? (
+                      {activeItem.promo && stockStatus(activeItem) !== "comingSoon" && (
+                        <p className="simple-quantity-label">
+                          {lang === "ja" ? "プロモーション豆：お一人様2袋まで" : lang === "es" ? "Granos promocionales: máx. 2 bolsas por cliente" : "Promotional beans: up to 2 bags per customer"}
+                        </p>
+                      )}
+                      {stockStatus(activeItem) === "comingSoon" ? (
                         <button className="modal-cta-link is-disabled" disabled>
                           {COMING_SOON_TEXT[lang]}
                         </button>
@@ -737,8 +750,9 @@ export default function ProductsPage({ lang }) {
                                 price: activeItem.priceNumber ?? 0,
                                 category: activeItem.category,
                                 size: activeItem.size,
+                                promo: activeItem.promo === true,
                               },
-                              simpleQuantity
+                              Math.min(simpleQuantity, maxQuantity(activeItem))
                             );
 
                             setActiveItemId(null);

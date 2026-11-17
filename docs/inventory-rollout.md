@@ -99,3 +99,16 @@ Settings (CEO, production; secrets only in Stripe and Render, never in GitHub or
    real count.
 4. Render (production): `INVENTORY_ENABLED=true` (stock gating on). Check `/inventory/availability?ids=…` shows the
    counted numbers, then a real purchase of one bag.
+
+## New beans and promotional beans (2026-11-17, PR #9)
+- On sale with inventory on (`requiresInventory`): Brazil Amarelo Bourbon Natural (promo, ¥1,000), Ethiopia Jimma
+  Washed G1 (¥1,300), Guatemala Quequesques Washed SHB (¥1,300), Peru Andes Blue Washed G1 (¥1,300). With inventory
+  off they show "coming soon" and the server refuses them, so the sales cap always holds.
+- Sales cap: `inventory/{sku}` = `{ ready: 15, held: 0, sold: 0 }` for each of the four (CEO: 15 bags each). `ready`
+  is the number of 100 g bags that may be sold, not green-bean weight. The product pages say the beans are roasted and
+  packed after the order and that the shipping date comes with the order confirmation; update this once real packed
+  stock and shipping dates are confirmed.
+- Promotional beans (`promo: true` in `server/catalog.js` and `src/productData.js`): at most 2 bags per order and per
+  customer across orders, by e-mail and by delivery address (`promoLedger/{sha256}` = `{ held, bought }`, held with
+  the stock in one transaction; released on cancel/abandon, counted as bought on payment). To change the promotional
+  bean, move `promo: true` (and its ribbon) to another product in both files.
