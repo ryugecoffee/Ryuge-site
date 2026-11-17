@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { SUBSCRIPTIONS_PAUSED } from "../src/productData.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -19,6 +20,11 @@ const PLAN_TITLES = {
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  // New subscriptions are paused (src/productData.js): refused before Stripe is called, however this URL is reached.
+  if (SUBSCRIPTIONS_PAUSED) {
+    return res.status(403).json({ error: "SUBSCRIPTIONS_PAUSED" });
   }
 
   // Only the production deployment may use a live Stripe key; previews and local builds

@@ -3,7 +3,7 @@
 //   ANTHROPIC_API_KEY  … Anthropic の API キー
 //   ANTHROPIC_MODEL    … 省略可。デフォルトは claude-sonnet-5
 
-import { PRODUCT_DATA, loc } from "../src/productData.js";
+import { PRODUCT_DATA, SUBSCRIPTIONS_PAUSED, loc } from "../src/productData.js";
 
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
 const MAX_MESSAGES = 12; // 会話履歴の上限(コスト管理)
@@ -67,7 +67,9 @@ function buildCatalog() {
   (PRODUCT_DATA.woodbox || []).filter((p) => !p.archived && !p.hidden).forEach((p) => push(p, "木函"));
   // Hidden products (e.g. the hojicha bag, CEO 2026-11-17) are not offered.
   (PRODUCT_DATA.bag || []).filter((p) => !p.hidden).forEach((p) => push(p, "袋シリーズ"));
-  lines.push("- [定期便 折々] 定期便の詳細・販売条件はストア内の商品詳細をご案内してください。");
+  lines.push(SUBSCRIPTIONS_PAUSED
+    ? "- [定期便 折々] 現在、新規受付を休止中（珈琲袋定期便・豆の定期便・禅の仕立て便）。申込みは案内しない。"
+    : "- [定期便 折々] 定期便の詳細・販売条件はストア内の商品詳細をご案内してください。");
 
   // まだ購入不可(comingSoon)の商品は「近日公開」であることを明示した上で別枠で伝える
   (PRODUCT_DATA.oriori || [])
@@ -91,7 +93,6 @@ ${buildCatalog()}
 ルール:
 - 回答は簡潔に。3文以内+必要なら質問1つ。長文禁止
 - 提案時は商品名と価格を明記し、なぜその人に合うかを一言添える
-- 毎日飲む方には定期便もさりげなく案内する
 - 売り切れ商品は提案しない
 - 準備中の商品は購入可能と案内しない。入荷前の商品は予約も受けない
 - 味の特徴が未確認の場合は断定しない。仕入先の参考ノートは焙煎後の確定情報ではない

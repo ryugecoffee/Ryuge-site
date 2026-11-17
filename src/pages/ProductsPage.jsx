@@ -4,7 +4,7 @@ import { PAYMENT_API_BASE, classifyAvailability } from "../lib/paymentEnv";
 import { useLocation } from "react-router-dom";
 import SiteFooter from "../components/SiteFooter";
 import BeanConcierge from "../components/BeanConcierge";
-import { PRODUCT_DATA, PRODUCT_SECTIONS, DETAIL_TEXT, ROAST_LEVEL, loc } from "../productData";
+import { PRODUCT_DATA, PRODUCT_SECTIONS, DETAIL_TEXT, ROAST_LEVEL, SUBSCRIPTIONS_PAUSED, SUBSCRIPTIONS_PAUSED_TEXT, loc } from "../productData";
 import { useCart } from "../CartContext";
 import { trackViewItem } from "../lib/analytics";
 
@@ -397,6 +397,9 @@ export default function ProductsPage({ lang }) {
                     {COMING_SOON_TEXT[lang]}
                   </span>
                 )}
+                {item.category === "subscription" && SUBSCRIPTIONS_PAUSED && (
+                  <span className="product-soldout-badge">{loc(SUBSCRIPTIONS_PAUSED_TEXT, lang)}</span>
+                )}
                 <div className="oriori-service-copy">
                   <h3>{item.title?.[lang]}</h3>
                   <p>{item.summary?.[lang]}</p>
@@ -526,28 +529,37 @@ export default function ProductsPage({ lang }) {
                         {currentSubscriptionPlan.note}
                       </p>
 
-                      <button
-                        type="button"
-                        className="modal-cta-link"
-                        style={{ marginTop: "16px" }}
-                        onClick={() => {
-                          if (!currentSubscriptionPlan) return;
-                          setItem(
-                            {
-                              id: `subscription-${currentSubscriptionPlan.id}`,
-                              name: `${activeItem.title?.[lang] || "定期便"} — ${currentSubscriptionPlan.name}`,
-                              price: currentSubscriptionPlan.priceNumber ?? 0,
-                              category: "subscription",
-                              size: "100g",
-                            },
-                            1
-                          );
+                      {SUBSCRIPTIONS_PAUSED ? (
+                        <>
+                          <p className="product-detail-notice" style={{ marginTop: "16px" }}>{loc(SUBSCRIPTIONS_PAUSED_TEXT, lang)}</p>
+                          <button type="button" className="modal-cta-link is-disabled" disabled style={{ marginTop: "12px" }}>
+                            {loc(SUBSCRIPTIONS_PAUSED_TEXT, lang)}
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          className="modal-cta-link"
+                          style={{ marginTop: "16px" }}
+                          onClick={() => {
+                            if (!currentSubscriptionPlan) return;
+                            setItem(
+                              {
+                                id: `subscription-${currentSubscriptionPlan.id}`,
+                                name: `${activeItem.title?.[lang] || "定期便"} — ${currentSubscriptionPlan.name}`,
+                                price: currentSubscriptionPlan.priceNumber ?? 0,
+                                category: "subscription",
+                                size: "100g",
+                              },
+                              1
+                            );
 
-                          setActiveItemId(null);
-                        }}
-                      >
-                        {detailText.addToCart}
-                      </button>
+                            setActiveItemId(null);
+                          }}
+                        >
+                          {detailText.addToCart}
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

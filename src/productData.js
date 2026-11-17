@@ -62,6 +62,16 @@ export const DETAIL_TEXT = {
 // Position on the 4-step roast scale, from the product's English roast name.
 export const ROAST_LEVEL = { "Light Roast": 0, "Medium Roast": 1, "Medium-Dark Roast": 2, "Dark Roast": 3 };
 
+// Subscriptions (珈琲袋定期便・豆の定期便・禅の仕立て便): new sign-ups paused (CEO, 2026-11-17). The store shows the
+// notice and disables the buttons; api/create-subscription-checkout.js refuses every new subscription. Existing
+// subscriptions are not touched. To resume, set this to false in a reviewed PR.
+export const SUBSCRIPTIONS_PAUSED = true;
+export const SUBSCRIPTIONS_PAUSED_TEXT = {
+  ja: "現在、新規受付を休止しています",
+  en: "New sign-ups are currently paused",
+  es: "Las nuevas suscripciones están en pausa por ahora",
+};
+
 export const PRODUCT_SECTIONS = {
   ja: {
     enmaLabel: "Enma",

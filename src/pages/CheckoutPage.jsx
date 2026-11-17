@@ -1,4 +1,5 @@
 import { trackBeginCheckout } from "../lib/analytics";
+import { SUBSCRIPTIONS_PAUSED, SUBSCRIPTIONS_PAUSED_TEXT } from "../productData";
 import { PAYMENT_API_BASE, stripePublishableKey } from "../lib/paymentEnv";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useCart } from "../CartContext";
@@ -396,7 +397,8 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
 
   const quoteReady  = quote.status === "ok" && quote.key === quoteKey;
   const quoteError  = quote.status === "error" ? quote : null;
-  const isBlocked   = (isInternational && hasSubscription) || (!hasSubscription && Boolean(quoteError));
+  const subscriptionPaused = hasSubscription && SUBSCRIPTIONS_PAUSED;
+  const isBlocked   = subscriptionPaused || (isInternational && hasSubscription) || (!hasSubscription && Boolean(quoteError));
   const canPay      = !hasSubscription && quoteReady;
 
   // ── クーポン検証 ─────────────────────────────────────────────────────────
@@ -433,6 +435,11 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
     try {
       // ── 定期便 ──────────────────────────────────────
       if (hasSubscription) {
+        if (SUBSCRIPTIONS_PAUSED) {
+          setError(SUBSCRIPTIONS_PAUSED_TEXT[lang] || SUBSCRIPTIONS_PAUSED_TEXT.ja);
+          setLoading(false);
+          return;
+        }
         if (cartItems.length !== 1 || cartItems[0].quantity !== 1) {
           setError(t.subscriptionOnlyOne);
           setLoading(false);
@@ -600,7 +607,9 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
     : quoteReady ? quote.total : null;
 
   // ── ブロック・案内メッセージ ─────────────────────────────────────────────
-  const blockMessage = isInternational && hasSubscription
+  const blockMessage = subscriptionPaused
+    ? SUBSCRIPTIONS_PAUSED_TEXT[lang] || SUBSCRIPTIONS_PAUSED_TEXT.ja
+    : isInternational && hasSubscription
     ? t.intlSubscriptionBlocked
     : quoteError ? (quoteMessages[quoteError.code] || quoteMessages.QUOTE_UNAVAILABLE) : null;
   const showContact = Boolean(quoteError?.contact) || (isInternational && hasSubscription);
