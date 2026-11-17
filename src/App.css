@@ -3952,3 +3952,37 @@ html[lang="es"] .story-body {
     gap: 10px;
   }
 }
+
+/* Tea brewing (hot / cold brew) and the farm note, in the product detail panel. */
+.product-brew-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.product-brew-card {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.product-brew-card h5 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f6f1e8;
+}
+
+.product-brew-card p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(245, 241, 232, 0.86);
+}
+
+.product-detail-story {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.8;
+  color: rgba(245, 241, 232, 0.86);
+}

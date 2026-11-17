@@ -94,8 +94,39 @@ test("Zen dark roast: notes shown as the roasting direction, not as a cupping re
   for (const id of ["mokkan-oku-yame-hojicha", "mokkan-oku-yame-genmaicha"]) {
     const tea = PRODUCT_DATA.woodbox.find((p) => p.id === id);
     assert.equal(tea.comingSoon, true, `${id} stays coming soon`);
-    for (const lang of LANGS) assert.ok(loc(tea.tea, lang) && loc(tea.producer, lang), `${id} ${lang}`);
+    for (const lang of LANGS) assert.ok(loc(tea.ingredients, lang) && loc(tea.producer, lang), `${id} ${lang}`);
   }
   assert.match(loc(PRODUCT_DATA.woodbox.find((p) => p.id === "mokkan-oku-yame-hojicha").summary, "ja"), /一番茶.*浅く焙じた/);
-  assert.match(loc(PRODUCT_DATA.woodbox.find((p) => p.id === "mokkan-oku-yame-genmaicha").summary, "ja"), /煎茶に抹茶と炒り玄米/);
+  assert.match(loc(PRODUCT_DATA.woodbox.find((p) => p.id === "mokkan-oku-yame-genmaicha").summary, "ja"), /煎茶に、抹茶と炒り玄米/);
+});
+
+test("Mokkan teas: ingredients, variety, flavour, brewing and the farm as the CEO gave them; nothing unconfirmed", async () => {
+  const { PRODUCT_DATA, DETAIL_TEXT, loc } = await load();
+  const tea = (id) => PRODUCT_DATA.woodbox.find((p) => p.id === id);
+  const genmai = tea("mokkan-oku-yame-genmaicha");
+  const hoji = tea("mokkan-oku-yame-hojicha");
+  assert.equal(loc(genmai.ingredients, "ja"), "煎茶・抹茶・炒り玄米");
+  assert.equal(loc(hoji.ingredients, "ja"), "ほうじ茶");
+  for (const t of [genmai, hoji]) {
+    assert.equal(loc(t.variety, "ja"), "やぶきた");
+    assert.equal(loc(t.origin, "ja"), "福岡県八女市矢部村");
+    assert.equal(loc(t.producer, "ja"), "原島農園");
+    assert.match(loc(t.farm, "ja"), /高冷地/);
+    assert.equal(t.flavorBasis, "tea");
+    assert.equal(t.comingSoon, true);
+    for (const lang of LANGS) {
+      const text = [loc(t.summary, lang), loc(t.farm, lang), ...t.flavorNotes[lang]].join(" ");
+      assert.doesNotMatch(text, /1930|創業|founded|fundad|RAVE|有機|organic|orgánic|JAS|受賞|award|premio|認証|certif/i, `${t.id} ${lang}: unconfirmed claims`);
+    }
+  }
+  const brew = (t, lang) => {
+    const d = DETAIL_TEXT[lang];
+    const { hot, cold } = t.brewing;
+    return [d.hotAmounts(d.range(hot.leafG), hot.waterMl, d.range(hot.tempC)), d.steeps(hot.steepsSec),
+      d.coldAmounts(d.range(cold.leafG), cold.waterL), d.coldTime(d.range(cold.hours))];
+  };
+  assert.deepEqual(brew(genmai, "ja"), ["茶葉 3〜5g・お湯 200ml（70〜80℃）", "1煎目 40秒・2煎目 10秒・3煎目 60秒", "茶葉 15g・水 1L", "冷蔵庫で3〜4時間"]);
+  assert.deepEqual(brew(hoji, "ja"), ["茶葉 3〜5g・お湯 200ml（80℃）", "1煎目 30秒・2煎目 10秒・3煎目 60秒", "茶葉 10g・水 1L", "冷蔵庫で4〜8時間"]);
+  assert.deepEqual(brew(hoji, "en"), ["3–5 g of tea, 200 ml of water at 80 °C", "1st infusion 30 s · 2nd infusion 10 s · 3rd infusion 60 s", "10 g of tea, 1 L of water", "4–8 hours in the fridge"]);
+  assert.equal(brew(genmai, "es")[0], "3–5 g de té, 200 ml de agua a 70–80 °C");
 });
