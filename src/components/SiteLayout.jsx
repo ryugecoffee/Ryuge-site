@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Outlet, Link, useNavigate } from "react-router-dom";
 import { useCart } from "../CartContext";
-import { trackViewCart, trackFreeShippingPromotion } from "../lib/analytics";
+import { trackViewCart } from "../lib/analytics";
 
 export default function SiteLayout({ lang, setLang }) {
   const {
@@ -22,26 +22,10 @@ export default function SiteLayout({ lang, setLang }) {
   }, [isCartOpen]);
 
   useEffect(() => {
-    if (isCartOpen && !hasSubscription && remaining > 0) {
-      trackFreeShippingPromotion(remaining, FREE_SHIPPING);
-    }
-  }, [isCartOpen]);
-
-  useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape") setIsCartOpen(false); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-
-  const FREE_SHIPPING = 3000;
-  const remaining = Math.max(0, FREE_SHIPPING - cartTotal);
-  const hasSubscription = cartItems.some(
-    (item) =>
-      item.id?.includes("subscription") ||
-      item.id === "light" ||
-      item.id === "basic" ||
-      item.id === "premium"
-  );
 
   return (
     <div className="site-shell">
@@ -99,20 +83,8 @@ export default function SiteLayout({ lang, setLang }) {
                     <span className="cart-total-amount">¥{cartTotal.toLocaleString()}</span>
                   </div>
                   <p className="cart-total-note">
-                    {lang === "ja" ? "送料・税は別途" : lang === "es" ? "Envío e impuestos no incluidos" : "Shipping and taxes calculated separately"}
+                    {lang === "ja" ? "税込価格。送料はお届け先に応じて決済画面で計算します（1回のご注文につき1回）。" : lang === "es" ? "Precios con impuestos incluidos. El envío se calcula en el pago según el destino (una vez por pedido)." : "Prices include tax. Shipping is calculated at checkout by destination (once per order)."}
                   </p>
-
-                  {!hasSubscription && remaining > 0 && (
-                    <div className="cart-upsell">
-                      <p className="cart-upsell-shipping">
-                        {lang === "ja"
-                          ? `あと ¥${remaining.toLocaleString()} で送料無料`
-                          : lang === "es"
-                          ? `Envío gratis con ¥${remaining.toLocaleString()} más`
-                          : `Add ¥${remaining.toLocaleString()} more for free shipping`}
-                      </p>
-                    </div>
-                  )}
 
                   <button className="cart-checkout-button" onClick={() => { setIsCartOpen(false); navigate("/checkout"); }}>
                     {lang === "ja" ? "決済へ進む" : lang === "es" ? "Ir al pago" : "Proceed to Checkout"}

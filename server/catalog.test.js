@@ -7,7 +7,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { CATALOG, priceItems, itemsMetadata } = require("./catalog");
-const { calcShipping } = require("./shipping");
+const { quoteOrder } = require("./quote");
 
 test("the browser's price, weight and category are ignored; only id and quantity are used", () => {
   const tampered = [
@@ -15,13 +15,14 @@ test("the browser's price, weight and category are ignored; only id and quantity
     { id: "enma-kindiio", quantity: 1, price: 0 },
   ];
   const priced = priceItems(tampered);
-  assert.deepEqual(priced, [
+  assert.deepEqual(priced.map(({ id, quantity, price, weightG }) => ({ id, quantity, price, weightG })), [
     { id: "enma-karamo", quantity: 2, price: 1800, weightG: 120 },
     { id: "enma-kindiio", quantity: 1, price: 2050, weightG: 120 },
   ]);
   const subtotal = priced.reduce((sum, item) => sum + item.price * item.quantity, 0);
   assert.equal(subtotal, 5650);
-  assert.equal(calcShipping([priced[1]], "JP"), 200, "one bag in Japan pays shipping even if the browser says subscription");
+  assert.equal(quoteOrder([{ id: "enma-kindiio", quantity: 1, category: "subscription" }], { prefecture: "神奈川県" }).shipping, 250,
+    "one bag in Japan pays shipping even if the browser says subscription");
   assert.equal(itemsMetadata(priced), "enma-karamo:2@1800,enma-kindiio:1@2050");
 });
 
@@ -60,8 +61,10 @@ test("the server catalogue matches the storefront: same price, and on sale exact
 test("checkout always prices from the catalogue, with inventory on or off", () => {
   const source = fs.readFileSync(path.join(__dirname, "index.js"), "utf8");
   const route = source.slice(source.indexOf('app.post("/create-payment-intent"'), source.indexOf('app.post("/calc-shipping"'));
-  assert.match(route, /safeItems = priceItems\(items\);/);
+  assert.match(route, /quote = quoteRequest\(req\.body\);/);
   assert.doesNotMatch(route, /Array\.isArray\(items\) \? items : \[\]/, "the browser cart is never used as is");
-  assert.ok(route.indexOf("priceItems(items)") < route.indexOf("if (INVENTORY_ENABLED"), "priced before any inventory branch");
-  assert.match(route, /items: itemsMetadata\(safeItems\),/);
+  assert.ok(route.indexOf("quoteRequest(req.body)") < route.indexOf("if (INVENTORY_ENABLED"), "priced before any inventory branch");
+  assert.match(route, /amount: quote\.total,/);
+  assert.match(route, /items: itemsMetadata\(quote\.items\),/);
+  assert.match(source, /return quoteOrder\(body\?\.items, \{/, "the quote takes items, destination and coupon only");
 });

@@ -11,17 +11,12 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import {
-  calcShipping,
-  getZone,
-  COUNTRY_ZONES,
-} from "../lib/shipping";
+  CONTACT_EMAIL, INTERNATIONAL_COUNTRY_CODES, OTHER_COUNTRY, POLICY_TEXT, QUOTE_MESSAGES, SERVICE_LABELS, contactHref,
+} from "../lib/shippingPolicy";
 
 // Production builds use the live key; any other build only a Stripe test key (see paymentEnv).
 const PUBLISHABLE_KEY = stripePublishableKey();
 const stripePromise = PUBLISHABLE_KEY ? loadStripe(PUBLISHABLE_KEY) : Promise.resolve(null);
-
-// ── 米国配送フラグ（環境変数 VITE_ENABLE_US_SHIPPING=true で有効化）──
-const ENABLE_US_SHIPPING = import.meta.env.VITE_ENABLE_US_SHIPPING === "true";
 
 const PREFECTURES = [
   "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
@@ -33,37 +28,8 @@ const PREFECTURES = [
   "熊本県","大分県","宮崎県","鹿児島県","沖縄県",
 ];
 
-// ── 国セレクト用リスト（JP を先頭に、以降は COUNTRY_ZONES の全コードをアルファベット順）──
-const COUNTRY_CODES_FOR_SELECT = [
-  "JP",
-  // 第1地帯
-  "CN","KR","TW",
-  // 第2地帯
-  "BD","BT","HK","ID","IN","KH","LA","LK","MM","MN","MO","MV","MY",
-  "NP","PH","PK","SG","TH","VN",
-  // 第3地帯（欧州）
-  "AL","AM","AT","AZ","BA","BE","BG","BY","CH","CY","CZ","DE","DK",
-  "EE","ES","FI","FR","GB","GE","GR","HR","HU","IE","IL","IS","IT",
-  "JO","LT","LU","LV","MD","ME","MK","MT","NL","NO","PL","PT","RO",
-  "RS","RU","SE","SI","SK","TR","UA",
-  // 第3地帯（中近東）
-  "AE","BH","EG","IQ","IR","KW","LB","OM","QA","SA","SY","YE",
-  // 第3地帯（オセアニア）
-  "AU","FJ","NZ","PG","SB","TO","VU","WS",
-  // 第3地帯（北米）
-  "CA","MX",
-  // 第4地帯（米国）
-  "US",
-  // 第5地帯（中南米）
-  "AG","AR","BB","BO","BR","BS","BZ","CL","CO","CR","CU","DM","DO",
-  "EC","GD","GT","GY","HN","HT","JM","KN","KY","LC","NI","PA","PE",
-  "PY","SR","SV","TC","TT","UY","VC","VE",
-  // 第5地帯（アフリカ）
-  "AO","BF","BJ","BW","CD","CF","CG","CI","CM","DJ","DZ","EG","ER",
-  "ET","GA","GH","GM","GN","GW","KE","LR","LS","LY","MA","MG","ML",
-  "MR","MU","MW","MZ","NA","NE","NG","RE","RW","SC","SD","SL","SN",
-  "SO","SZ","TD","TG","TN","TZ","UG","YT","ZA","ZM","ZW",
-];
+// ── 国セレクト: 日本、配送を確認済みの国（server/international-rates.js と同じ）、その他（お問い合わせ）──
+const COUNTRY_CODES_FOR_SELECT = ["JP", ...INTERNATIONAL_COUNTRY_CODES, OTHER_COUNTRY];
 
 // Intl.DisplayNames でロケール別の国名を取得
 function getCountryName(code, locale) {
@@ -253,7 +219,7 @@ function isSubscriptionItem(item) {
 }
 
 // ── サーチャブル国セレクト ────────────────────────────────────────────────────
-function CountrySelect({ value, onChange, lang, countryJapanLabel, placeholder }) {
+function CountrySelect({ value, onChange, lang, countryJapanLabel, otherLabel, placeholder }) {
   const [query,   setQuery]   = useState("");
   const [open,    setOpen]    = useState(false);
   const containerRef          = useRef(null);
@@ -261,9 +227,9 @@ function CountrySelect({ value, onChange, lang, countryJapanLabel, placeholder }
   const countryList = useMemo(() =>
     COUNTRY_CODES_FOR_SELECT.map((code) => ({
       code,
-      name: code === "JP" ? countryJapanLabel : getCountryName(code, lang),
+      name: code === "JP" ? countryJapanLabel : code === OTHER_COUNTRY ? otherLabel : getCountryName(code, lang),
     })),
-    [lang, countryJapanLabel]
+    [lang, countryJapanLabel, otherLabel]
   );
 
   const selectedName = useMemo(() =>
@@ -373,12 +339,14 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
   const [intlPostalCode, setIntlPostalCode] = useState("");
   const [phone,          setPhone]          = useState("");
 
-  // 決済状態
-  const [shipping,      setShipping]      = useState(null);
-  const [total,         setTotal]         = useState(null);
-  const [clientSecret,  setClientSecret]  = useState("");
+  // 決済状態。金額は決済サーバーの /quote（server/quote.js）だけが決める。
+  const [quote,         setQuote]         = useState({ status: "idle" });
+  // 送信で作った PaymentIntent。同じ内容でカード決済をやり直すときは作り直さない（在庫の二重確保を防ぐ）。
+  const [pendingIntent, setPendingIntent] = useState(null);
   const [loading,       setLoading]       = useState(false);
   const [error,         setError]         = useState("");
+  const policy = POLICY_TEXT[lang] || POLICY_TEXT.ja;
+  const quoteMessages = QUOTE_MESSAGES[lang] || QUOTE_MESSAGES.ja;
 
   // クーポン
   const [couponCode,   setCouponCode]   = useState("");
@@ -386,130 +354,53 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
 
   // ── 派生値 ──────────────────────────────────────────────────────────────
   const isInternational = country !== "JP";
-  const isUSBlocked     = country === "US" && !ENABLE_US_SHIPPING;
+  const isOtherCountry  = country === OTHER_COUNTRY;
 
   const hasSubscription = useMemo(
     () => (cartItems || []).some(isSubscriptionItem),
     [cartItems]
   );
 
-  const cartSubtotal = useMemo(
-    () => (cartItems || []).reduce((s, i) => s + (i.price || 0) * (i.quantity || 0), 0),
-    [cartItems]
-  );
+  // 決済サーバーに送るのは商品ID・数量・お届け先・クーポンだけ
+  const quoteRequest = useMemo(() => ({
+    items: (cartItems || []).filter((i) => !isSubscriptionItem(i)).map(({ id, quantity }) => ({ id, quantity })),
+    countryCode: country,
+    prefecture: isInternational ? "" : prefecture,
+    couponCode: couponStatus === "valid" ? couponCode : "",
+  }), [cartItems, country, isInternational, prefecture, couponStatus, couponCode]);
+  const quoteKey = JSON.stringify(quoteRequest);
 
-  // クライアントサイドで送料を計算（即時表示用）
-  const shippingCalcResult = useMemo(() => {
-    if (hasSubscription) return { amount: 0 };
-    const nonSubItems = (cartItems || []).filter((i) => !isSubscriptionItem(i));
-    const result = calcShipping(nonSubItems, country);
-    if (typeof result === "object" && result.error) return result;
-    return { amount: result };
-  }, [cartItems, country, hasSubscription]);
-
-  const computedShipping = shippingCalcResult.amount ?? null;
-  const shippingErrCode  = shippingCalcResult.error  ?? null;
-
-  // ── ブロック条件 ─────────────────────────────────────────────────────────
-  const isBlocked =
-    (isInternational && hasSubscription) ||
-    isUSBlocked ||
-    (isInternational && (shippingErrCode === "OVER_WEIGHT" || shippingErrCode === "UNSUPPORTED_COUNTRY"));
-
-  // ── PaymentIntent 初期化 ─────────────────────────────────────────────────
+  // ── 金額の見積もり（表示用。決済も同じ計算でサーバーが確定する）────────────
   useEffect(() => {
-    if (!cartItems || cartItems.length === 0) return;
-
-    if (hasSubscription) {
-      setShipping(0);
-      setTotal(cartSubtotal);
-      setClientSecret("");
-      setError("");
-      return;
-    }
-
-    if (isBlocked) {
-      setShipping(computedShipping);
-      setTotal(null);
-      setClientSecret("");
-      return;
-    }
-
-    // A stable key per tab + cart contents prevents duplicate reservations when
-    // React effects re-run, the network retries or the shopper revisits checkout.
-    const checkoutFingerprint = JSON.stringify({
-      items: cartItems.map(({ id, quantity }) => ({ id, quantity })),
-      country,
-      couponCode: couponStatus === "valid" ? couponCode : "",
-    });
-    const storageKey = "ryuge-checkout-key";
-    let checkoutInfo;
-    try {
-      checkoutInfo = JSON.parse(sessionStorage.getItem(storageKey) || "null");
-    } catch { checkoutInfo = null; }
-    if (!checkoutInfo || checkoutInfo.fingerprint !== checkoutFingerprint) {
-      checkoutInfo = {
-        fingerprint: checkoutFingerprint,
-        key: crypto.randomUUID(),
-      };
-      sessionStorage.setItem(storageKey, JSON.stringify(checkoutInfo));
-    }
+    if (hasSubscription || !quoteRequest.items.length) { setQuote({ status: "idle" }); return; }
+    if (isOtherCountry) { setQuote({ status: "error", code: "COUNTRY_NOT_AVAILABLE", contact: true }); return; }
     let cancelled = false;
     const controller = new AbortController();
-    // A prior intent is not valid for a different cart configuration.
-    setClientSecret("");
-    const initCheckout = async () => {
+    setQuote({ status: "loading" });
+    const timer = setTimeout(async () => {
       try {
-        setError("");
-        const response = await fetch(
-          `${PAYMENT_API_BASE}/create-payment-intent`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            signal: controller.signal,
-            body: JSON.stringify({
-              checkoutKey: checkoutInfo.key,
-              items:       cartItems,
-              countryCode: country,
-              couponCode:  couponStatus === "valid" ? couponCode : "",
-              email:       "tmp@tmp.com",
-              name:        "tmp",
-              address:     "tmp",
-            }),
-          }
-        );
-        const data = await response.json();
-        if (!response.ok) {
-          // The server prices the cart from its own catalogue; an item no longer on sale is refused (nothing is charged).
-          const unavailable = ["PRODUCT_NOT_AVAILABLE", "UNKNOWN_PRODUCT", "INVALID_ITEMS"].includes(data.error);
-          throw new Error(unavailable ? t.checkoutItemUnavailable : (data.error || t.checkoutInitError));
-        }
-
-        // サーバーが送料を権威的に計算して返す
+        const response = await fetch(`${PAYMENT_API_BASE}/quote`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: quoteKey,
+        });
+        const data = await response.json().catch(() => ({}));
         if (cancelled) return;
-        setShipping(data.shipping);
-        setTotal(data.total);
-        setClientSecret(data.clientSecret);
-      } catch (err) {
-        if (cancelled || controller.signal.aborted) return;
-        // サーバー到達不可時はクライアント計算値でフォールバック
-        setShipping(computedShipping);
-        setTotal(
-          couponStatus === "valid"
-            ? null
-            : cartSubtotal + (computedShipping ?? 0)
-        );
-        setClientSecret("");
-        setError(err.message || t.checkoutInitError);
+        if (response.ok) setQuote({ status: "ok", key: quoteKey, ...data });
+        else setQuote({ status: "error", code: data.error || "QUOTE_UNAVAILABLE", contact: Boolean(data.contact) });
+      } catch {
+        // 送料を確認できないときは、推測の金額で決済させない。
+        if (!cancelled && !controller.signal.aborted) setQuote({ status: "error", code: "QUOTE_UNAVAILABLE", contact: false });
       }
-    };
+    }, 250);
+    return () => { cancelled = true; clearTimeout(timer); controller.abort(); };
+  }, [quoteKey, hasSubscription, isOtherCountry, quoteRequest.items.length]);
 
-    initCheckout();
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [cartItems, country, hasSubscription, cartSubtotal, couponStatus, couponCode, isBlocked]);
+  const quoteReady  = quote.status === "ok" && quote.key === quoteKey;
+  const quoteError  = quote.status === "error" ? quote : null;
+  const isBlocked   = (isInternational && hasSubscription) || (!hasSubscription && Boolean(quoteError));
+  const canPay      = !hasSubscription && quoteReady;
 
   // ── クーポン検証 ─────────────────────────────────────────────────────────
   const handleApplyCoupon = async () => {
@@ -572,8 +463,8 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
       }
 
       // ── 通常決済 ─────────────────────────────────────
-      if (!stripe || !elements || !clientSecret) {
-        setError(t.cardNotReady);
+      if (!stripe || !elements || !canPay) {
+        setError(canPay ? t.cardNotReady : (quoteMessages.QUOTE_UNAVAILABLE));
         setLoading(false);
         return;
       }
@@ -583,6 +474,35 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         setLoading(false);
         return;
       }
+
+      // 決済はここで作る（お届け先が確定した後）。サーバーが同じ計算で金額を確定し、表示と違えば決済しない。
+      let intent = pendingIntent && pendingIntent.key === quoteKey ? pendingIntent : null;
+      if (!intent) {
+        const response = await fetch(`${PAYMENT_API_BASE}/create-payment-intent`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...quoteRequest, email, name, address: finalAddress }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const code = data.error || "";
+          const unavailable = ["PRODUCT_NOT_AVAILABLE", "UNKNOWN_PRODUCT", "INVALID_ITEMS"].includes(code);
+          if (quoteMessages[code]) setQuote({ status: "error", code, contact: Boolean(data.contact) });
+          setError(unavailable ? t.checkoutItemUnavailable : (quoteMessages[code] || t.checkoutInitError));
+          setLoading(false);
+          return;
+        }
+        intent = { key: quoteKey, clientSecret: data.clientSecret, total: data.total, shipping: data.shipping };
+        setPendingIntent(intent);
+        if (data.total !== quote.total || data.shipping !== quote.shipping) {
+          setQuote({ status: "ok", key: quoteKey, ...data });
+          setError(quoteMessages.AMOUNT_CHANGED);
+          setLoading(false);
+          return;
+        }
+      }
+      const total = intent.total;
+      const shipping = intent.shipping;
 
       // 国内 / 海外で billing_details を切り替え
       const billingAddress = isInternational
@@ -602,7 +522,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
             line2:       addressLine2Ja,
           };
 
-      const result = await stripe.confirmCardPayment(clientSecret, {
+      const result = await stripe.confirmCardPayment(intent.clientSecret, {
         payment_method: {
           card: cardElement,
           billing_details: {
@@ -645,7 +565,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         }),
       });
 
-      sessionStorage.removeItem("ryuge-checkout-key");
+      setPendingIntent(null);
       onSuccess();
       navigate("/checkout/complete", {
         state: {
@@ -676,23 +596,17 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
     }
   };
 
-  // ── 表示用の送料・合計 ──────────────────────────────────────────────────
-  const displayShipping = shipping ?? computedShipping;
-  const displayTotal    = total    ?? (
-    computedShipping !== null ? cartSubtotal + computedShipping : null
-  );
+  // ── 表示用の送料・合計（サーバーの見積もりだけを表示する）────────────────
+  const displayShipping = hasSubscription ? 0 : quoteReady ? quote.shipping : null;
+  const displayTotal    = hasSubscription
+    ? (cartItems || []).reduce((s, i) => s + (i.price || 0) * (i.quantity || 0), 0)
+    : quoteReady ? quote.total : null;
 
-  // ── ブロックメッセージの選択 ─────────────────────────────────────────────
-  const blockMessage = (() => {
-    if (isInternational && hasSubscription)               return t.intlSubscriptionBlocked;
-    if (isUSBlocked)                                      return t.intlUSBlocked;
-    if (shippingErrCode === "OVER_WEIGHT")                return t.intlOverWeight;
-    if (shippingErrCode === "UNSUPPORTED_COUNTRY")        return t.intlUnsupported;
-    return null;
-  })();
-
-  // ── 国コードが COUNTRY_ZONES に存在するか確認 ─────────────────────────
-  const isSupportedCountry = country === "JP" || getZone(country) !== null;
+  // ── ブロック・案内メッセージ ─────────────────────────────────────────────
+  const blockMessage = isInternational && hasSubscription
+    ? t.intlSubscriptionBlocked
+    : quoteError ? (quoteMessages[quoteError.code] || quoteMessages.QUOTE_UNAVAILABLE) : null;
+  const showContact = Boolean(quoteError?.contact) || (isInternational && hasSubscription);
 
   return (
     <form onSubmit={handleSubmit} className="checkout-inner">
@@ -702,13 +616,18 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
       {/* ── 注文サマリー ─────────────────────────────────────────── */}
       <div className="checkout-order-summary">
         <p className="checkout-section-label">{t.orderSummary}</p>
-        {cartItems.map((item) => (
-          <div key={item.id} className="checkout-order-item">
-            <span className="checkout-order-title">{item.name}</span>
-            <span className="checkout-order-qty">{"×"} {item.quantity}</span>
-            <span className="checkout-order-price">{"¥"}{((item.price || 0) * (item.quantity || 0)).toLocaleString()}</span>
-          </div>
-        ))}
+        {cartItems.map((item) => {
+          // The price charged is the server's (quote); the cart's own price is only shown until it arrives.
+          const quoted = quoteReady ? (quote.items || []).find((q) => q.id === item.id) : null;
+          const unitPrice = quoted ? quoted.price : (item.price || 0);
+          return (
+            <div key={item.id} className="checkout-order-item">
+              <span className="checkout-order-title">{item.name}</span>
+              <span className="checkout-order-qty">{"×"} {item.quantity}</span>
+              <span className="checkout-order-price">{"¥"}{(unitPrice * (item.quantity || 0)).toLocaleString()}</span>
+            </div>
+          );
+        })}
 
         <div className="checkout-order-item">
           <span className="checkout-order-title">{t.shipping}</span>
@@ -723,22 +642,32 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           </span>
         </div>
 
-        {!isInternational && (
+        {!isInternational && !hasSubscription && (
           <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.42)", lineHeight: 1.8, marginTop: "8px", marginBottom: 0 }}>
-            {t.shippingNote}
+            {policy.domesticShipping}
           </p>
         )}
 
-        {isInternational && !isBlocked && (
+        {isInternational && !hasSubscription && (
           <div style={{ marginTop: "8px" }}>
+            {quoteReady && quote.shippingDetail?.service ? (
+              <>
+                <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.42)", lineHeight: 1.8, margin: "0 0 4px" }}>
+                  {(SERVICE_LABELS[lang] || SERVICE_LABELS.ja)[quote.shippingDetail.service] || quote.shippingDetail.service}
+                </p>
+                <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.42)", lineHeight: 1.8, margin: "0 0 4px" }}>
+                  {policy.subsidy(quote.shippingDetail.actual, quote.shippingDetail.subsidy)}
+                </p>
+                <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.42)", lineHeight: 1.8, margin: "0 0 4px" }}>
+                  {t.intlDeliveryDays}
+                </p>
+              </>
+            ) : null}
             <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.42)", lineHeight: 1.8, margin: "0 0 4px" }}>
-              {t.intlShippingMethod}
+              {policy.intlLimits}
             </p>
-            <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.42)", lineHeight: 1.8, margin: "0 0 4px" }}>
-              {t.intlDeliveryDays}
-            </p>
-            <p style={{ fontSize: "11px", color: "rgba(255,200,100,0.7)", lineHeight: 1.8, margin: 0 }}>
-              ⚠ {t.customsDutyNote}
+            <p style={{ fontSize: "11px", color: "rgba(255,200,100,0.8)", lineHeight: 1.8, margin: 0 }}>
+              ⚠ {policy.duties}
             </p>
           </div>
         )}
@@ -766,6 +695,13 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           lineHeight: 1.7,
         }}>
           {blockMessage}
+          {showContact && (
+            <div style={{ marginTop: "8px" }}>
+              <a href={contactHref("RYUGE Coffee order inquiry")} style={{ color: "rgba(255,220,180,0.95)" }}>
+                {policy.contactLink}: {CONTACT_EMAIL}
+              </a>
+            </div>
+          )}
         </div>
       )}
 
@@ -791,9 +727,10 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
             </label>
             <CountrySelect
               value={country}
-              onChange={(code) => { setCountry(code); setError(""); }}
+              onChange={(code) => { setCountry(code); setError(""); setPendingIntent(null); }}
               lang={lang}
               countryJapanLabel={t.countryJapan}
+              otherLabel={policy.countryOther}
               placeholder={t.countryLabel}
             />
           </div>
@@ -909,7 +846,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         disabled={
           loading ||
           isBlocked ||
-          (!hasSubscription && (!stripe || !clientSecret))
+          (!hasSubscription && (!stripe || !canPay))
         }
       >
         {loading
