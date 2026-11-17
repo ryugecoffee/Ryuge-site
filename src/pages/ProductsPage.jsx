@@ -241,7 +241,7 @@ export default function ProductsPage({ lang }) {
   };
 
   // Detail rows, grouped: where it comes from, then how it was grown and processed. Only facts in productData.js.
-  const DETAIL_FIELDS = ["origin", "producer", "tea", "altitude", "variety", "process", "drying", "grade", "harvest", "arrival"];
+  const DETAIL_FIELDS = ["origin", "producer", "ingredients", "altitude", "variety", "process", "drying", "grade", "harvest", "arrival"];
 
   return (
     <>
@@ -755,6 +755,28 @@ export default function ProductsPage({ lang }) {
                       )}
                       </div>
 
+                      {activeItem.brewing && (
+                        <section className="product-detail-section">
+                          <h4>{detailText.howToBrew}</h4>
+                          <div className="product-brew-grid">
+                            {activeItem.brewing.hot && (
+                              <div className="product-brew-card">
+                                <h5>{detailText.brewHot}</h5>
+                                <p>{detailText.hotAmounts(detailText.range(activeItem.brewing.hot.leafG), activeItem.brewing.hot.waterMl, detailText.range(activeItem.brewing.hot.tempC))}</p>
+                                <p>{detailText.steeps(activeItem.brewing.hot.steepsSec)}</p>
+                              </div>
+                            )}
+                            {activeItem.brewing.cold && (
+                              <div className="product-brew-card">
+                                <h5>{detailText.brewCold}</h5>
+                                <p>{detailText.coldAmounts(detailText.range(activeItem.brewing.cold.leafG), activeItem.brewing.cold.waterL)}</p>
+                                <p>{detailText.coldTime(detailText.range(activeItem.brewing.cold.hours))}</p>
+                              </div>
+                            )}
+                          </div>
+                        </section>
+                      )}
+
                       {/* 3. The details, for those who want them. */}
                       {activeItem.category === "beans" && activeItem.roast && ROAST_LEVEL[activeItem.roast.en] !== undefined && (
                         <section className="product-detail-section">
@@ -769,13 +791,15 @@ export default function ProductsPage({ lang }) {
                       )}
                       {DETAIL_FIELDS.some((field) => loc(activeItem[field], lang)) && (
                         <section className="product-detail-section">
-                          <h4>{activeItem.category === "beans" ? detailText.beanDetails : activeItem.tea ? detailText.teaDetails : detailText.productDetails}</h4>
+                          <h4>{activeItem.category === "beans" ? detailText.beanDetails : activeItem.flavorBasis === "tea" ? detailText.teaDetails : detailText.productDetails}</h4>
+                          {activeItem.farm && <p className="product-detail-story">{loc(activeItem.farm, lang)}</p>}
                           <dl className="product-specs product-specs-classic">
                             {DETAIL_FIELDS.map((field) => renderSpecRow(labels[field], activeItem[field]))}
                           </dl>
                           {activeItem.flavorNotes && (
                             <p className="product-detail-small">
-                              {activeItem.flavorBasis === "direction" ? detailText.flavorDirection : detailText.flavorSource}
+                              {activeItem.flavorBasis === "direction" ? detailText.flavorDirection
+                                : activeItem.flavorBasis === "tea" ? detailText.teaFlavorSource : detailText.flavorSource}
                             </p>
                           )}
                         </section>
