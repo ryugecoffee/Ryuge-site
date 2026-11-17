@@ -1,3 +1,40 @@
+// A product field may be one string (same in every language) or { ja, en, es }.
+export function loc(value, lang) {
+  if (value && typeof value === "object" && !Array.isArray(value)) return value[lang] ?? value.ja ?? value.en ?? "";
+  return value ?? "";
+}
+
+// Wording of the product detail panel (src/pages/ProductsPage.jsx).
+export const DETAIL_TEXT = {
+  ja: {
+    beanDetails: "豆の詳細", productDetails: "商品の詳細", flavor: "風味",
+    flavorSource: "風味は仕入れ先の情報をもとにしています。焙煎や淹れ方によって感じ方は変わります。",
+    roastScale: ["浅煎り", "中煎り", "中深煎り", "深煎り"],
+    roastGuide: "浅煎りほど果実のような酸味や香りが、深煎りほど苦みやコクが感じられやすくなります。",
+    howToBrew: "淹れ方", quantity: "数量", addToCart: "カートに入れる", back: "戻る", close: "閉じる",
+    promoNote: "プロモーション豆：お一人様2袋まで",
+  },
+  en: {
+    beanDetails: "About the beans", productDetails: "Product details", flavor: "Flavor notes",
+    flavorSource: "Flavor notes are based on the supplier's information. Roast and brewing change how they come through.",
+    roastScale: ["Light", "Medium", "Medium-Dark", "Dark"],
+    roastGuide: "Lighter roasts tend to bring fruity acidity and aroma; darker roasts, bitterness and body.",
+    howToBrew: "How to Brew", quantity: "Quantity", addToCart: "Add to cart", back: "Back", close: "Close",
+    promoNote: "Promotional beans: up to 2 bags per customer",
+  },
+  es: {
+    beanDetails: "Sobre el grano", productDetails: "Detalles del producto", flavor: "Notas de sabor",
+    flavorSource: "Las notas de sabor se basan en la información del proveedor. El tueste y la preparación cambian cómo se perciben.",
+    roastScale: ["Claro", "Medio", "Medio-oscuro", "Oscuro"],
+    roastGuide: "Los tuestes claros suelen dar acidez frutal y aroma; los oscuros, amargor y cuerpo.",
+    howToBrew: "Preparación", quantity: "Cantidad", addToCart: "Añadir al carrito", back: "Volver", close: "Cerrar",
+    promoNote: "Granos promocionales: máx. 2 bolsas por cliente",
+  },
+};
+
+// Position on the 4-step roast scale, from the product's English roast name.
+export const ROAST_LEVEL = { "Light Roast": 0, "Medium Roast": 1, "Medium-Dark Roast": 2, "Dark Roast": 3 };
+
 export const PRODUCT_SECTIONS = {
   ja: {
     enmaLabel: "Enma",
@@ -13,14 +50,17 @@ export const PRODUCT_SECTIONS = {
     specLabels: {
       origin: "生産地",
       producer: "生産者",
-      process: "プロセス",
+      process: "精製方法",
       variety: "品種",
+      grade: "等級",
       altitude: "標高",
+      drying: "乾燥方法",
+      harvest: "収穫時期",
+      arrival: "入港時期",
       weight: "内容量",
       price: "価格",
-      flavor: "フレーバーノート",
-      harvest: "収穫時期",
-      arrival: "入港月",
+      flavor: "風味",
+      roast: "焙煎度",
     },
   },
 
@@ -40,12 +80,15 @@ export const PRODUCT_SECTIONS = {
       producer: "Producer",
       process: "Process",
       variety: "Variety",
+      grade: "Grade",
       altitude: "Altitude",
+      drying: "Drying",
+      harvest: "Harvest",
+      arrival: "Arrival",
       weight: "Weight",
       price: "Price",
       flavor: "Flavor Notes",
-      harvest: "Harvest",
-      arrival: "Arrival",
+      roast: "Roast",
     },
   },
 
@@ -65,15 +108,21 @@ export const PRODUCT_SECTIONS = {
       producer: "Productor",
       process: "Proceso",
       variety: "Variedad",
+      grade: "Grado",
       altitude: "Altitud",
-      weight: "Peso",
-      price: "Precio",
-      flavor: "Notas de sabor",
+      drying: "Secado",
       harvest: "Cosecha",
       arrival: "Llegada",
+      weight: "Contenido",
+      price: "Precio",
+      flavor: "Notas de sabor",
+      roast: "Tueste",
     },
   },
 };
+
+// Shown on the new beans: they are roasted after the order, not shipped at once.
+const MADE_TO_ORDER = { ja: "生豆入荷済み。ご注文後に焙煎・袋詰めしてお届けします（発送予定日はご注文確認メールでお知らせします）。", en: "Green beans in stock. Roasted and packed after your order (the shipping date is in your order confirmation).", es: "Granos verdes en stock. Se tuestan y envasan tras tu pedido (la fecha de envío figura en la confirmación del pedido)." };
 
 export const PRODUCT_DATA = {
   enma: [
@@ -87,25 +136,22 @@ export const PRODUCT_DATA = {
       weight: "100g",
       weightG: 120, // 焙煎豆100g + 袋・梱包の概算値
       title: { ja: "閻魔　禅の深煎り（ブラジル）", en: "ENMA Zen Dark Roast (Brazil)", es: "ENMA Tueste oscuro Zen (Brasil)" },
-      summary: {
-        ja: "生豆入荷済み。ご注文後に焙煎・袋詰めしてお届けします（発送予定日はご注文確認メールでお知らせします）",
-        en: "Green beans in stock. Roasted and packed after your order (the shipping date is in your order confirmation).",
-        es: "Granos verdes en stock. Se tuestan y envasan tras tu pedido (la fecha de envío figura en la confirmación del pedido)."
-      },
-      origin: "Vale da Grama (São Paulo) / Campos Altos (Minas Gerais), Brazil",
-      process: "Natural",
-      variety: "Yellow Bourbon (Peaberry)",
-      producer: "Smallholder farmers in Vale da Grama and Campos Altos",
-      altitude: "1,000–1,300m",
-      grade: "NY2/3",
-      arrival: "March 2026",
-      drying: "Sun-dried",
+      summary: { ja: "通常版と同じブラジル アマレロブルボンを、深煎りに仕上げたプロモーション豆です。", en: "Our regular Brazil Amarelo Bourbon, roasted dark, at a promotional price.", es: "El mismo Brasil Amarelo Bourbon que el regular, con tueste oscuro y a precio promocional." },
+      origin: { ja: "ブラジル サンパウロ州 ヴァレ・ダ・グラマ／ミナスジェライス州 カンポス・アルトス", en: "Vale da Grama (São Paulo) / Campos Altos (Minas Gerais), Brazil", es: "Vale da Grama (São Paulo) / Campos Altos (Minas Gerais), Brasil" },
+      producer: { ja: "ヴァレ・ダ・グラマとカンポス・アルトスの小規模生産者", en: "Smallholder farmers in Vale da Grama and Campos Altos", es: "Pequeños productores de Vale da Grama y Campos Altos" },
+      process: { ja: "ナチュラル", en: "Natural", es: "Natural" },
+      variety: { ja: "イエローブルボン（ピーベリー）", en: "Yellow Bourbon (Peaberry)", es: "Bourbon amarillo (caracolillo)" },
+      altitude: { ja: "1,000〜1,300m", en: "1,000–1,300 m", es: "1.000–1.300 m" },
+      grade: { ja: "NY2/3", en: "NY2/3", es: "NY2/3" },
+      arrival: { ja: "2026年3月", en: "March 2026", es: "marzo de 2026" },
+      drying: { ja: "天日乾燥", en: "Sun-dried", es: "Secado al sol" },
       price: "¥1,000",
       priceNumber: 1000,
       roast: { ja: "深煎り", en: "Dark Roast", es: "Tueste oscuro" },
       // No tasting notes yet for the dark roast: the supplier notes below the regular one are for its own roast.
       comingSoon: false, // on sale with inventory on (sales cap per product + the shared Brazil lot)
       requiresInventory: true, // = server/catalog.js requiresInventory: "近日公開" until inventory is on
+      notice: MADE_TO_ORDER,
       promo: true, // promotional bean: at most 2 bags per customer (server/catalog.js promo)
       promotion: { active: true, label: { ja: "プロモ・お一人様2袋まで", en: "Promo · max 2 per customer", es: "Promo · máx. 2 por cliente" } },
       isSoldOut: false,
@@ -119,25 +165,22 @@ export const PRODUCT_DATA = {
       weight: "100g",
       weightG: 120, // 焙煎豆100g + 袋・梱包の概算値
       title: { ja: "閻魔　ブラジル アマレロブルボン", en: "ENMA Brazil Amarelo Bourbon", es: "ENMA Brasil Amarelo Bourbon" },
-      summary: {
-        ja: "生豆入荷済み。ご注文後に焙煎・袋詰めしてお届けします（発送予定日はご注文確認メールでお知らせします）",
-        en: "Green beans in stock. Roasted and packed after your order (the shipping date is in your order confirmation).",
-        es: "Granos verdes en stock. Se tuestan y envasan tras tu pedido (la fecha de envío figura en la confirmación del pedido)."
-      },
-      origin: "Vale da Grama (São Paulo) / Campos Altos (Minas Gerais), Brazil",
-      process: "Natural",
-      variety: "Yellow Bourbon (Peaberry)",
-      producer: "Smallholder farmers in Vale da Grama and Campos Altos",
-      altitude: "1,000–1,300m",
-      grade: "NY2/3",
-      arrival: "March 2026",
-      drying: "Sun-dried",
+      summary: { ja: "ナッツやチョコレートのような香ばしさに、ハチミツのようなやさしい甘さ。", en: "Nutty and chocolatey, with a gentle honey-like sweetness.", es: "Frutos secos y chocolate, con un dulzor suave como la miel." },
+      origin: { ja: "ブラジル サンパウロ州 ヴァレ・ダ・グラマ／ミナスジェライス州 カンポス・アルトス", en: "Vale da Grama (São Paulo) / Campos Altos (Minas Gerais), Brazil", es: "Vale da Grama (São Paulo) / Campos Altos (Minas Gerais), Brasil" },
+      producer: { ja: "ヴァレ・ダ・グラマとカンポス・アルトスの小規模生産者", en: "Smallholder farmers in Vale da Grama and Campos Altos", es: "Pequeños productores de Vale da Grama y Campos Altos" },
+      process: { ja: "ナチュラル", en: "Natural", es: "Natural" },
+      variety: { ja: "イエローブルボン（ピーベリー）", en: "Yellow Bourbon (Peaberry)", es: "Bourbon amarillo (caracolillo)" },
+      altitude: { ja: "1,000〜1,300m", en: "1,000–1,300 m", es: "1.000–1.300 m" },
+      grade: { ja: "NY2/3", en: "NY2/3", es: "NY2/3" },
+      arrival: { ja: "2026年3月", en: "March 2026", es: "marzo de 2026" },
+      drying: { ja: "天日乾燥", en: "Sun-dried", es: "Secado al sol" },
       price: "¥1,300",
       priceNumber: 1300,
       roast: { ja: "中深煎り", en: "Medium-Dark Roast", es: "Tueste medio-oscuro" },
       flavorNotes: { ja: ["ナッツ","ハチミツ","チョコレート"], en: ["Nuts","Honey","Chocolate"], es: ["Frutos secos","Miel","Chocolate"] },
       comingSoon: false, // on sale with inventory on (sales cap per product + the shared Brazil lot)
       requiresInventory: true, // = server/catalog.js requiresInventory: "近日公開" until inventory is on
+      notice: MADE_TO_ORDER,
       isSoldOut: false,
     },
     {
@@ -148,25 +191,22 @@ export const PRODUCT_DATA = {
       weight: "100g",
       weightG: 120, // 焙煎豆100g + 袋・梱包の概算値
       title: { ja: "閻魔　エチオピア ジンマ", en: "ENMA Ethiopia Jimma", es: "ENMA Etiopía Jimma" },
-      summary: {
-        ja: "生豆入荷済み。ご注文後に焙煎・袋詰めしてお届けします（発送予定日はご注文確認メールでお知らせします）",
-        en: "Green beans in stock. Roasted and packed after your order (the shipping date is in your order confirmation).",
-        es: "Granos verdes en stock. Se tuestan y envasan tras tu pedido (la fecha de envío figura en la confirmación del pedido)."
-      },
-      origin: "Gera Village, Jimma, Oromia, Ethiopia",
-      process: "Washed",
-      variety: "Ethiopian Heirloom",
-      producer: "Approximately 500 local smallholder families",
-      altitude: "1,900–2,100m",
-      grade: "G1",
-      arrival: "May 2025",
-      drying: "African raised beds",
+      summary: { ja: "柑橘やオレンジのような明るい酸味と、ハチミツのような甘さ。", en: "Bright citrus and orange, with a honey-like sweetness.", es: "Cítricos y naranja luminosos, con un dulzor como la miel." },
+      origin: { ja: "エチオピア オロミア州 ジンマ ゲラ村", en: "Gera Village, Jimma, Oromia, Ethiopia", es: "Aldea de Gera, Jimma, Oromía, Etiopía" },
+      producer: { ja: "地域の小規模生産者 約500世帯", en: "Approximately 500 local smallholder families", es: "Unas 500 familias de pequeños productores locales" },
+      process: { ja: "ウォッシュド", en: "Washed", es: "Lavado" },
+      variety: { ja: "エチオピア在来種（エアルーム）", en: "Ethiopian Heirloom", es: "Variedades nativas etíopes (heirloom)" },
+      altitude: { ja: "1,900〜2,100m", en: "1,900–2,100 m", es: "1.900–2.100 m" },
+      grade: { ja: "G1", en: "G1", es: "G1" },
+      arrival: { ja: "2025年5月", en: "May 2025", es: "mayo de 2025" },
+      drying: { ja: "アフリカンベッド（高床式の棚）で乾燥", en: "African raised beds", es: "Camas africanas elevadas" },
       price: "¥1,500",
       priceNumber: 1500,
       roast: { ja: "浅煎り", en: "Light Roast", es: "Tueste claro" },
       flavorNotes: { ja: ["シトラス","オレンジ","ハチミツ"], en: ["Citrus","Orange","Honey"], es: ["Cítricos","Naranja","Miel"] },
       comingSoon: false, // on sale with inventory on (sales cap per product)
       requiresInventory: true, // = server/catalog.js requiresInventory: "近日公開" until inventory is on
+      notice: MADE_TO_ORDER,
       isSoldOut: false,
     },
     {
@@ -177,25 +217,22 @@ export const PRODUCT_DATA = {
       weight: "100g",
       weightG: 120, // 焙煎豆100g + 袋・梱包の概算値
       title: { ja: "閻魔　グアテマラ ケケスケス", en: "ENMA Guatemala Quequesques", es: "ENMA Guatemala Quequesques" },
-      summary: {
-        ja: "生豆入荷済み。ご注文後に焙煎・袋詰めしてお届けします（発送予定日はご注文確認メールでお知らせします）",
-        en: "Green beans in stock. Roasted and packed after your order (the shipping date is in your order confirmation).",
-        es: "Granos verdes en stock. Se tuestan y envasan tras tu pedido (la fecha de envío figura en la confirmación del pedido)."
-      },
-      origin: "San Juan Sacatepéquez, Guatemala",
-      process: "Washed",
-      variety: "Bourbon, Caturra, Catuai",
-      producer: "Quequesques Farm growers",
-      altitude: "1,500m",
-      grade: "SHB",
-      arrival: "July 2026",
-      drying: "Sun-dried",
+      summary: { ja: "青りんごや柑橘のような爽やかさに、ブラウンシュガーのような甘さ。", en: "Fresh green apple and citrus, with brown-sugar sweetness.", es: "Manzana verde y cítricos frescos, con dulzor de azúcar moreno." },
+      origin: { ja: "グアテマラ サン・フアン・サカテペケス", en: "San Juan Sacatepéquez, Guatemala", es: "San Juan Sacatepéquez, Guatemala" },
+      producer: { ja: "ケケスケス農園の生産者", en: "Quequesques Farm growers", es: "Productores de la finca Quequesques" },
+      process: { ja: "ウォッシュド", en: "Washed", es: "Lavado" },
+      variety: { ja: "ブルボン、カトゥーラ、カトゥアイ", en: "Bourbon, Caturra, Catuai", es: "Bourbon, Caturra, Catuai" },
+      altitude: { ja: "1,500m", en: "1,500 m", es: "1.500 m" },
+      grade: { ja: "SHB", en: "SHB", es: "SHB" },
+      arrival: { ja: "2026年7月", en: "July 2026", es: "julio de 2026" },
+      drying: { ja: "天日乾燥", en: "Sun-dried", es: "Secado al sol" },
       price: "¥1,500",
       priceNumber: 1500,
       roast: { ja: "浅煎り", en: "Light Roast", es: "Tueste claro" },
       flavorNotes: { ja: ["グリーンアップル","シトラス","ブラウンシュガー"], en: ["Green Apple","Citrus","Brown Sugar"], es: ["Manzana verde","Cítricos","Azúcar moreno"] },
       comingSoon: false, // on sale with inventory on (sales cap per product)
       requiresInventory: true, // = server/catalog.js requiresInventory: "近日公開" until inventory is on
+      notice: MADE_TO_ORDER,
       isSoldOut: false,
     },
     {
@@ -206,25 +243,22 @@ export const PRODUCT_DATA = {
       weight: "100g",
       weightG: 120, // 焙煎豆100g + 袋・梱包の概算値
       title: { ja: "閻魔　ペルー アンデスブルー", en: "ENMA Peru Andes Blue", es: "ENMA Perú Andes Blue" },
-      summary: {
-        ja: "生豆入荷済み。ご注文後に焙煎・袋詰めしてお届けします（発送予定日はご注文確認メールでお知らせします）",
-        en: "Green beans in stock. Roasted and packed after your order (the shipping date is in your order confirmation).",
-        es: "Granos verdes en stock. Se tuestan y envasan tras tu pedido (la fecha de envío figura en la confirmación del pedido)."
-      },
-      origin: "La Capilla, Cutervo, Cajamarca, Peru",
-      process: "Washed",
-      variety: "Caturra, Typica, Catimor, Pache and others",
-      producer: "Smallholder farmers in La Capilla",
-      altitude: "1,500–2,000m",
-      grade: "G1",
-      arrival: "November 2025",
-      drying: "Patio sun-dried",
+      summary: { ja: "柑橘の軽やかさに、ナッツやキャラメルのような香ばしい甘さ。", en: "Light citrus, with a nutty, caramel-like sweetness.", es: "Cítricos ligeros, con un dulzor de frutos secos y caramelo." },
+      origin: { ja: "ペルー カハマルカ県 クテルボ ラ・カピージャ", en: "La Capilla, Cutervo, Cajamarca, Peru", es: "La Capilla, Cutervo, Cajamarca, Perú" },
+      producer: { ja: "ラ・カピージャの小規模生産者", en: "Smallholder farmers in La Capilla", es: "Pequeños productores de La Capilla" },
+      process: { ja: "ウォッシュド", en: "Washed", es: "Lavado" },
+      variety: { ja: "カトゥーラ、ティピカ、カティモール、パチェ ほか", en: "Caturra, Typica, Catimor, Pache and others", es: "Caturra, Typica, Catimor, Pache y otras" },
+      altitude: { ja: "1,500〜2,000m", en: "1,500–2,000 m", es: "1.500–2.000 m" },
+      grade: { ja: "G1", en: "G1", es: "G1" },
+      arrival: { ja: "2025年11月", en: "November 2025", es: "noviembre de 2025" },
+      drying: { ja: "パティオで天日乾燥", en: "Patio sun-dried", es: "Secado al sol en patio" },
       price: "¥1,500",
       priceNumber: 1500,
       roast: { ja: "浅煎り", en: "Light Roast", es: "Tueste claro" },
       flavorNotes: { ja: ["シトラス","ナッツ","キャラメル"], en: ["Citrus","Nuts","Caramel"], es: ["Cítricos","Frutos secos","Caramelo"] },
       comingSoon: false, // on sale with inventory on (sales cap per product)
       requiresInventory: true, // = server/catalog.js requiresInventory: "近日公開" until inventory is on
+      notice: MADE_TO_ORDER,
       isSoldOut: false,
     },
     {
@@ -235,25 +269,16 @@ export const PRODUCT_DATA = {
       weight: "100g",
       weightG: 120, // 焙煎豆100g + 袋・梱包の概算値
       title: { ja: "閻魔　エチオピア カラモ", en: "ENMA Ethiopia Karamo", es: "ENMA Etiopía Karamo" },
-      summary: {
-        ja: "レッドグレープやホワイトピーチが印象的なナチュラル。仕入れ先のカッピング情報を参考にしています。",
-        en: "A natural-process lot with red grape and white peach notes, based on supplier cupping.",
-        es: "Lote natural con notas de uva roja y melocotón blanco, según la cata del proveedor."
-      },
-      origin: "Karamo, Bura, Sidama, Ethiopia",
-      producer: "Nigusse Gemeda and local smallholder producers",
-      process: "Natural",
-      variety: "74158",
-      grade: "G1",
-      altitude: "2,320–2,400m",
-      harvest: "Dec 2025 – Feb 2026 (2025/26 crop)",
+      summary: { ja: "赤ぶどうや白桃、ダークチェリーを思わせる、華やかな果実の風味。", en: "A vivid fruit character reminiscent of red grape, white peach and dark cherry.", es: "Un carácter frutal vivo que recuerda a uva roja, melocotón blanco y cereza oscura." },
+      origin: { ja: "エチオピア シダマ州 ブラ カラモ", en: "Karamo, Bura, Sidama, Ethiopia", es: "Karamo, Bura, Sidama, Etiopía" },
+      producer: { ja: "ニグセ・ゲメダ氏と地域の小規模生産者", en: "Nigusse Gemeda and local smallholder producers", es: "Nigusse Gemeda y pequeños productores locales" },
+      process: { ja: "ナチュラル", en: "Natural", es: "Natural" },
+      variety: { ja: "74158", en: "74158", es: "74158" },
+      altitude: { ja: "2,320〜2,400m", en: "2,320–2,400 m", es: "2.320–2.400 m" },
+      grade: { ja: "G1", en: "G1", es: "G1" },
+      harvest: { ja: "2025年12月〜2026年2月（2025/26年クロップ）", en: "Dec 2025 – Feb 2026 (2025/26 crop)", es: "dic. 2025 – feb. 2026 (cosecha 2025/26)" },
       roast: { ja: "浅煎り", en: "Light Roast", es: "Tueste claro" },
-      flavorNotes: {
-        ja: ["レッドグレープ", "ホワイトピーチ", "ダークチェリー"],
-        en: ["Red Grape", "White Peach", "Dark Cherry"],
-        es: ["Uva roja", "Melocotón blanco", "Cereza negra"],
-      },
-      flavor: "Red Grape, White Peach, Dark Cherry (supplier cupping notes)",
+      flavorNotes: { ja: ["赤ぶどう", "白桃", "ダークチェリー"], en: ["Red Grape", "White Peach", "Dark Cherry"], es: ["Uva roja", "Melocotón blanco", "Cereza oscura"] },
       price: "¥1,800",
       priceNumber: 1800,
       comingSoon: false,
@@ -267,23 +292,14 @@ export const PRODUCT_DATA = {
       weight: "100g",
       weightG: 120, // 焙煎豆100g + 袋・梱包の概算値
       title: { ja: "閻魔　コロンビア キンディオ", en: "ENMA Colombia Kindiio", es: "ENMA Colombia Kindiio" },
-      summary: {
-        ja: "ピーチの果実感とココナッツの心地よい甘さが特徴のインフューズドハニー。仕入れ先の紹介に基づきます。",
-        en: "Infused Honey coffee described by the supplier as peach-forward with coconut sweetness.",
-        es: "Café Infused Honey descrito por el proveedor con notas de melocotón y dulzor de coco."
-      },
-      origin: "Quindío, Colombia",
-      process: "Infused Honey",
-      variety: "Castillo",
-      altitude: "1,400–1,450m",
-      arrival: "January 2026 (supplier arrival)",
+      summary: { ja: "桃のような果実感と、ココナッツの心地よい甘さ。", en: "Peach-like fruit with a pleasant coconut sweetness.", es: "Fruta como el melocotón, con un agradable dulzor de coco." },
+      origin: { ja: "コロンビア キンディオ県", en: "Quindío, Colombia", es: "Quindío, Colombia" },
+      process: { ja: "インフューズドハニー", en: "Infused Honey", es: "Honey infusionado" },
+      variety: { ja: "カスティージョ", en: "Castillo", es: "Castillo" },
+      altitude: { ja: "1,400〜1,450m", en: "1,400–1,450 m", es: "1.400–1.450 m" },
+      arrival: { ja: "2026年1月（仕入れ先への入港）", en: "January 2026 (supplier arrival)", es: "enero de 2026 (llegada al proveedor)" },
       roast: { ja: "浅煎り", en: "Light Roast", es: "Tueste claro" },
-      flavorNotes: {
-        ja: ["ピーチ", "ココナッツ", "ハニー"],
-        en: ["Peach", "Coconut", "Honey"],
-        es: ["Melocotón", "Coco", "Miel"],
-      },
-      flavor: "Peach, Coconut, Honey (supplier description)",
+      flavorNotes: { ja: ["桃", "ココナッツ", "ハチミツ"], en: ["Peach", "Coconut", "Honey"], es: ["Melocotón", "Coco", "Miel"] },
       price: "¥2,050",
       priceNumber: 2050,
       comingSoon: false,
@@ -309,16 +325,6 @@ export const PRODUCT_DATA = {
         en: "WOOD BOX Honduras\nGeisha",
         es: "WOOD BOX Honduras\nGeisha",
       },
-      summary: {
-        ja: "木箱で届く贈り物のような静かなプレミアム",
-        en: "A quiet premium format, like a gift",
-        es: "Un formato premium silencioso, como un regalo",
-      },
-      origin: "La Paz, Honduras",
-      producer: "Otilio Hernandez",
-      process: "Washed",
-      variety: "Geisha",
-      altitude: "1750–1800m",
       weight: "100g",
       price: "¥2,600",
       priceNumber: 2600,
@@ -364,7 +370,7 @@ export const PRODUCT_DATA = {
       image: "/images/woodbox-hojicha.jpg", // 既存の茶ギフト画像。実商品写真が揃ったら差替える
       category: "woodbox",
       size: "30g",
-      weight: "30g",
+      weight: { ja: "30g", en: "30 g", es: "30 g" },
       weightG: 100, // 木函・梱包込みの配送重量は要実測
       title: {
         ja: "木函　奥八女ほうじ茶",
@@ -376,7 +382,7 @@ export const PRODUCT_DATA = {
         en: "Roasted Japanese tea from Oku-Yame, presented in a wooden gift box.",
         es: "Té japonés tostado de Oku-Yame, presentado en una caja de madera.",
       },
-      origin: "Oku-Yame, Fukuoka, Japan",
+      origin: { ja: "福岡県 奥八女", en: "Oku-Yame, Fukuoka, Japan", es: "Oku-Yame, Fukuoka, Japón" },
       price: "¥2,800",
       priceNumber: 2800,
       comingSoon: true, // CEO 2026-11-15: 配送重量の実測と販売開始の判断まで準備中
@@ -387,7 +393,7 @@ export const PRODUCT_DATA = {
       image: "/images/woodbox.jpg", // 仮の木函イメージ。玄米茶の実商品写真に要差替え
       category: "woodbox",
       size: "30g",
-      weight: "30g",
+      weight: { ja: "30g", en: "30 g", es: "30 g" },
       weightG: 100, // 木函・梱包込みの配送重量は要実測
       title: {
         ja: "木函　奥八女玄米茶",
@@ -399,7 +405,7 @@ export const PRODUCT_DATA = {
         en: "Japanese green tea with roasted rice from Oku-Yame, presented in a wooden gift box.",
         es: "Té verde japonés con arroz tostado de Oku-Yame, presentado en una caja de madera.",
       },
-      origin: "Oku-Yame, Fukuoka, Japan",
+      origin: { ja: "福岡県 奥八女", en: "Oku-Yame, Fukuoka, Japan", es: "Oku-Yame, Fukuoka, Japón" },
       price: "¥2,800",
       priceNumber: 2800,
       comingSoon: true, // CEO 2026-11-15: 配送重量の実測と販売開始の判断まで準備中
@@ -429,7 +435,7 @@ export const PRODUCT_DATA = {
         en: "No grinder. No fuss. Just hot water, and Enma is ready.",
         es: "Sin molinillo. Sin complicaciones. Solo agua caliente, y Enma está listo.",
       },
-      weight: "8個入り",
+      weight: { ja: "8個入り", en: "8 bags", es: "8 bolsitas" },
       price: "¥2,400",
       priceNumber: 2400,
       brew: {
@@ -472,7 +478,7 @@ export const PRODUCT_DATA = {
         en: "Between coffees, a quiet moment of tea. Housed in wood.",
         es: "Entre cafés, un momento tranquilo de té. Guardado en madera.",
       },
-      weight: "8個入り",
+      weight: { ja: "8個入り", en: "8 bags", es: "8 bolsitas" },
       price: "¥2,800",
       priceNumber: 2800,
       brew: {

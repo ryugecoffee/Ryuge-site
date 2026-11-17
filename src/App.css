@@ -3717,3 +3717,238 @@ html[lang="es"] .story-body {
     font-size: 9px;
   }
 }
+
+/* ============================================================
+   PRODUCT DETAIL (2026-11-17): one layout for coffee, tea and bags.
+   1. name, size, price, roast, short taste line  2. buying  3. details
+============================================================ */
+
+.product-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-top: 8px;
+  color: rgba(245, 241, 232, 0.86);
+}
+
+.product-detail > * {
+  flex: 0 0 auto;
+}
+
+.product-detail-head {
+  display: grid;
+  gap: 10px;
+  padding-right: 64px; /* the 戻る button */
+}
+
+.product-detail .modal-product-title {
+  font-size: clamp(20px, 1.9vw, 28px);
+  line-height: 1.3;
+}
+
+.product-detail-promo {
+  justify-self: start;
+  padding: 4px 10px;
+  border: 1px solid rgba(214, 72, 52, 0.7);
+  border-radius: 999px;
+  color: #f2b4a8;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.product-detail-meta {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 14px;
+  font-size: 14px;
+  color: rgba(245, 241, 232, 0.72);
+}
+
+.product-detail-price {
+  font-size: 20px;
+  color: #f6f1e8;
+  letter-spacing: 0.02em;
+}
+
+.product-detail-roast {
+  padding: 3px 10px;
+  border: 1px solid rgba(245, 241, 232, 0.3);
+  border-radius: 999px;
+  font-size: 13px;
+  color: #f6f1e8;
+}
+
+.product-detail-lead {
+  margin: 4px 0 0;
+  font-size: 15px;
+  line-height: 1.8;
+  color: rgba(245, 241, 232, 0.9);
+  overflow-wrap: anywhere;
+}
+
+.product-detail-notes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.product-detail-notes li {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(245, 241, 232, 0.08);
+  font-size: 13px;
+  line-height: 1.4;
+  color: #f6f1e8;
+}
+
+.product-detail-notice {
+  margin: 2px 0 0;
+  padding: 10px 12px;
+  border-left: 2px solid rgba(245, 241, 232, 0.35);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 13px;
+  line-height: 1.7;
+  color: rgba(245, 241, 232, 0.78);
+}
+
+.product-detail-buy {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+
+.product-detail-buy .simple-quantity-block {
+  margin: 0;
+}
+
+.product-detail-buy .modal-cta-link {
+  margin-top: 0;
+  padding-top: 6px;
+  font-size: 14px;
+}
+
+.product-detail-promo-note {
+  margin: 0;
+  font-size: 13px;
+  color: #f2b4a8;
+}
+
+.product-detail-section {
+  display: grid;
+  gap: 10px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.product-detail-section h4 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: rgba(245, 241, 232, 0.6);
+}
+
+.product-detail .product-specs-classic {
+  border-top: 0;
+}
+
+.product-detail .product-specs-classic .product-spec-row {
+  grid-template-columns: 6.5em 1fr;
+  gap: 14px;
+  padding: 11px 0;
+}
+
+.product-detail .product-specs-classic dt {
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(245, 241, 232, 0.6);
+}
+
+.product-detail .product-specs-classic dd {
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.product-detail-steps {
+  margin: 0;
+  padding-left: 1.4em;
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.product-roast-scale {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.product-roast-scale li {
+  padding: 8px 2px 6px;
+  border-top: 3px solid rgba(245, 241, 232, 0.14);
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.3;
+  color: rgba(245, 241, 232, 0.5);
+}
+
+.product-roast-scale li.is-current {
+  border-top-color: #f6f1e8;
+  color: #f6f1e8;
+  font-weight: 600;
+}
+
+.product-detail-small {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: rgba(245, 241, 232, 0.58);
+}
+
+@media (max-width: 768px) {
+  /* The product panel starts below the 68px site header instead of under it. */
+  .modal-backdrop:has(.modal-premium) {
+    padding: 76px 10px 10px;
+    align-items: start;
+  }
+  /* Name, price and the cart button first: a shorter photo, the text gets the room. */
+  .modal-premium .modal-image-premium img {
+    min-height: 0;
+    max-height: 30dvh;
+  }
+  .modal-premium .modal-copy-premium {
+    max-height: none;
+    padding: 20px 18px 28px;
+  }
+  .modal-premium {
+    max-height: calc(100dvh - 86px);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .product-detail {
+    gap: 20px;
+    padding-top: 0;
+  }
+  .product-detail-head {
+    padding-right: 0;
+  }
+  .product-detail .modal-product-title {
+    font-size: clamp(19px, 5.6vw, 24px);
+  }
+  .product-detail-lead {
+    font-size: 15px;
+  }
+  .product-detail .product-specs-classic .product-spec-row {
+    grid-template-columns: 6em 1fr;
+    gap: 10px;
+  }
+}
