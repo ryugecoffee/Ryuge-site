@@ -133,3 +133,25 @@ Settings (CEO, production; secrets only in Stripe and Render, never in GitHub or
   customer across orders, by e-mail and by delivery address (`promoLedger/{sha256}` = `{ held, bought }`, held with
   the stock in one transaction; released on cancel/abandon, counted as bought on payment). To change the promotional
   bean, move `promo: true` (and its ribbon) to another product in both files.
+
+## Initial stock registration without the Firebase console (2026-11-17)
+`POST https://ryuge-site.onrender.com/internal/inventory/initial-stock` (server/initial-stock.js), through the payment
+server's own Firebase Admin connection (the Firestore of `FIREBASE_PROJECT_ID`, `(default)` database).
+- **Off** (404) unless Render has `INVENTORY_ADMIN_TOKEN` (32+ random characters). The caller sends the same value in
+  `X-Inventory-Admin-Token`. Never in GitHub, Vercel or chat. Remove the variable after registration to switch it off.
+- Writes only the 8 stock records the checkout uses: `inventory/{enma-zen-dark-roast, enma-amarelo-bourbon, enma-jimma,
+  enma-quequesques, enma-andes-blue, enma-karamo, enma-kindiio}` and `inventoryLots/brazil-amarelo-bourbon`, each as
+  `{ ready: <whole number 0–1000>, held: 0, sold: 0 }` (numbers, never text).
+- **Create only, never overwrite.** An existing record is shown in the preview and refused at apply; the whole plan is
+  then refused, nothing is written.
+- Steps:
+  1. `{"mode":"preview","plan":{"inventory/enma-jimma":15, ...}}`: reads all 8 records, writes nothing, returns
+     the project, what each record holds now, what would be created, what would still be missing and a `planHash`.
+  2. The CEO approves that preview (the quantities are the CEO's; nothing is guessed).
+  3. `{"mode":"apply","plan":<same>,"planHash":"…","expectedProjectId":"ryuge-site","approval":"<who/when approved>"}`:
+     one transaction re-reads everything and refuses with `PLAN_CHANGED` if anything differs from the preview, or
+     `ALREADY_EXISTS`; otherwise creates the records and an audit record `inventoryInitialStock/{planHash}`.
+     A resend returns `ALREADY_APPLIED`.
+- Works with `INVENTORY_ENABLED` off: register first, check, then turn inventory on.
+- Later changes to existing stock (corrections, restocking) are not done here. They belong to the Factory route with
+  CEO approval (Jennifer), which is to be extended from the sandbox to production.
