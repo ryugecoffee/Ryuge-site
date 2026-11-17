@@ -22,7 +22,7 @@ test("only counted, packed products are stock-gated; the storefront and the serv
 test("checkout reserves only the managed part of the cart, and abandoned holds are settled without a scheduler", () => {
   const source = fs.readFileSync(path.join(__dirname, "index.js"), "utf8");
   const route = source.slice(source.indexOf('app.post("/create-payment-intent"'), source.indexOf('app.post("/calc-shipping"'));
-  assert.match(route, /const stockItems = managedItems\(safeItems\);\n\s+if \(INVENTORY_ENABLED && stockItems\.length\) \{\n\s+reconcileSoon\(\);/);
+  assert.match(route, /const stockItems = managedItems\(quote\.items\);\n\s+if \(INVENTORY_ENABLED && stockItems\.length\) \{\n\s+reconcileSoon\(\);/);
   assert.match(route, /reservationId = await inventory\.reserve\(db, stockItems\);/);
   const availability = source.slice(source.indexOf('app.get("/inventory/availability"'), source.indexOf('app.post("/create-payment-intent"'));
   assert.match(availability, /reconcileSoon\(\);/);

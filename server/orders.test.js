@@ -96,5 +96,5 @@ test("the signed webhook records orders whenever its secret is set; stock is set
   assert.match(hook, /charge\.refunded/);
   assert.match(hook, /return res\.status\(500\)/, "a failed write makes Stripe resend");
   const route = source.slice(source.indexOf('app.post("/create-payment-intent"'), source.indexOf('app.post("/calc-shipping"'));
-  assert.match(route, /subtotal: String\(subtotal\),\n\s+shipping: String\(shipping\),/);
+  assert.match(route, /subtotal: String\(quote\.subtotal\),\n\s+shipping: String\(quote\.shipping\),/);
 });

@@ -2,7 +2,6 @@ require("dotenv").config({
   path: require("path").resolve(__dirname, "../.env"),
 });
 
-const { calcShipping } = require("./shipping");
 
 const express = require("express");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
@@ -10,7 +9,8 @@ const cors = require("cors");
 const nodemailer = require("nodemailer");
 const admin = require("firebase-admin");
 const inventory = require("./inventory");
-const { priceItems, itemsMetadata, managedItems } = require("./catalog");
+const { itemsMetadata, managedItems } = require("./catalog");
+const { quoteOrder, QuoteError, COUPONS, CONTACT_EMAIL } = require("./quote");
 const orders = require("./orders");
 
 const app = express();
@@ -90,37 +90,6 @@ transporter.verify((error, success) => {
     console.log("mail transporter ready:", success);
   }
 });
-
-// ===== クーポン定義 =====
-const COUPONS = {
-  WELCOME10: { type: "percent", value: 10, label: "10% OFF" },
-  FREESHIP: { type: "shipping", value: 100, label: "送料補助" },
-};
-
-// calcShipping は server/shipping.js からインポート済み
-
-// ===== クーポン適用 =====
-function applyCoupon(subtotal, shipping, couponCode) {
-  if (!couponCode) return { subtotal, shipping };
-
-  const coupon = COUPONS[couponCode.trim().toUpperCase()];
-  if (!coupon) return { subtotal, shipping };
-
-  if (coupon.type === "percent") {
-    const discount = Math.round(subtotal * (coupon.value / 100));
-    return { subtotal: subtotal - discount, shipping };
-  }
-
-  if (coupon.type === "shipping") {
-    const discountedShipping = Math.max(
-      0,
-      shipping - Math.round(shipping * (coupon.value / 100))
-    );
-    return { subtotal, shipping: discountedShipping };
-  }
-
-  return { subtotal, shipping };
-}
 
 function escapeHtml(str = "") {
   return String(str)
@@ -441,48 +410,59 @@ app.get("/inventory/availability", async (req, res) => {
   }
 });
 
+// The amount is decided only by quoteOrder (server/quote.js): products and prices from the server catalogue, shipping
+// from the destination (domestic prefecture, or an enabled country and the packed weight), limits and coupon.
+// The browser sends product ids, quantities, destination and coupon code; everything else is ignored.
+function quoteRequest(body) {
+  return quoteOrder(body?.items, {
+    countryCode: body?.countryCode || "JP",
+    prefecture: body?.prefecture || "",
+    couponCode: body?.couponCode || "",
+  });
+}
+
+function quoteErrorResponse(res, error) {
+  if (!(error instanceof QuoteError)) return false;
+  res.status(error.status).json({ error: error.code, contact: error.contact, contactEmail: CONTACT_EMAIL });
+  return true;
+}
+
+function publicQuote(quote) {
+  const detail = quote.shippingDetail.domestic ? { domestic: true }
+    : { service: quote.shippingDetail.service, actual: quote.shippingDetail.actual, subsidy: quote.shippingDetail.subsidy };
+  return {
+    items: quote.items.map(({ id, quantity, price }) => ({ id, quantity, price })),
+    subtotal: quote.subtotal, shipping: quote.shipping, total: quote.total, shippingDetail: detail,
+  };
+}
+
+// Price shown before payment (the same calculation as the payment itself).
+app.post("/quote", (req, res) => {
+  try {
+    return res.json(publicQuote(quoteRequest(req.body)));
+  } catch (error) {
+    if (quoteErrorResponse(res, error)) return;
+    console.error("quote error:", error.message);
+    return res.status(500).json({ error: "QUOTE_FAILED" });
+  }
+});
+
 app.post("/create-payment-intent", async (req, res) => {
   try {
-    const {
-      items, couponCode, email, name, address, prefecture,
-      countryCode = "JP",
-    } = req.body;
-
-    // ── 米国フラグチェック ──────────────────────────────
-    if (countryCode === "US" && process.env.ENABLE_US_SHIPPING !== "true") {
-      return res.status(400).json({ error: "US_SHIPPING_DISABLED" });
-    }
-
-    // Prices, weights and what is on sale come from the server catalogue (server/catalog.js), never from the
-    // browser cart: only id and quantity are read from it. Before 2026-11-17 this applied only with inventory on.
-    let safeItems;
+    const { email, name, address } = req.body || {};
+    let quote;
     try {
-      safeItems = priceItems(items);
+      quote = quoteRequest(req.body);
     } catch (error) {
-      return res.status(400).json({ error: error.message });
+      if (quoteErrorResponse(res, error)) return;
+      throw error;
     }
-    let reservationId = null;
     if (INVENTORY_ENABLED && !INVENTORY_STRIPE_WEBHOOK_SECRET) {
       return res.status(503).json({ error: "WEBHOOK_NOT_CONFIGURED" });
     }
 
-    let subtotal = safeItems.reduce(
-      (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0),
-      0
-    );
-
-    const shippingResult = calcShipping(safeItems, countryCode);
-    if (typeof shippingResult === "object" && shippingResult.error) {
-      return res.status(400).json({ error: shippingResult.error });
-    }
-    let shipping = shippingResult;
-
-    const afterCoupon = applyCoupon(subtotal, shipping, couponCode);
-    subtotal = afterCoupon.subtotal;
-    shipping = afterCoupon.shipping;
-    const total = subtotal + shipping;
-
-    const stockItems = managedItems(safeItems);
+    let reservationId = null;
+    const stockItems = managedItems(quote.items);
     if (INVENTORY_ENABLED && stockItems.length) {
       reconcileSoon();
       try {
@@ -491,55 +471,50 @@ app.post("/create-payment-intent", async (req, res) => {
         return res.status(error.message === "OUT_OF_STOCK" ? 409 : 400).json({ error: error.message });
       }
     }
+    const detail = quote.shippingDetail;
     try {
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: total,
+        amount: quote.total,
         currency: "jpy",
         metadata: {
-          email: email || "",
-          name: name || "",
-          address: address || "",
-          prefecture: prefecture || "",
-          countryCode,
-          couponCode: couponCode || "",
-          items: itemsMetadata(safeItems),
-          subtotal: String(subtotal),
-          shipping: String(shipping),
+          email: String(email || "").slice(0, 200),
+          name: String(name || "").slice(0, 200),
+          address: String(address || "").slice(0, 400),
+          prefecture: quote.prefecture,
+          countryCode: quote.countryCode,
+          couponCode: quote.coupon,
+          items: itemsMetadata(quote.items),
+          subtotal: String(quote.subtotal),
+          shipping: String(quote.shipping),
+          ...(detail.domestic ? {} : {
+            shippingService: detail.service, shippingActual: String(detail.actual),
+            shippingSubsidy: String(detail.subsidy), packedWeightG: String(detail.weightG), shippingRates: detail.ratesVersion,
+          }),
           ...(reservationId ? { inventoryReservationId: reservationId } : {}),
         },
       });
       if (reservationId) await inventory.attachPaymentIntent(db, reservationId, paymentIntent.id);
-      res.json({ clientSecret: paymentIntent.client_secret, shipping, total });
+      res.json({ clientSecret: paymentIntent.client_secret, ...publicQuote(quote) });
     } catch (error) {
       if (reservationId) {
-        // Fail closed: no successful checkout is handed to a customer.
-        // Reconcile the reservation before enabling in production.
+        // The hold is released by reconciliation (no PaymentIntent -> manual review entry; never sold).
         console.error("Inventory reservation needs reconciliation:", reservationId, error.message);
       }
       throw error;
     }
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "CHECKOUT_FAILED" });
   }
 });
 
-// ===== 送料プレビュー（UI リアルタイム表示用）=====
+// Older storefront builds ask only for the shipping fee; answered from the same quote.
 app.post("/calc-shipping", (req, res) => {
   try {
-    const { items, countryCode = "JP" } = req.body;
-
-    if (countryCode === "US" && process.env.ENABLE_US_SHIPPING !== "true") {
-      return res.json({ error: "US_SHIPPING_DISABLED" });
-    }
-
-    const result = calcShipping(items || [], countryCode);
-    if (typeof result === "object" && result.error) {
-      return res.json({ error: result.error });
-    }
-    return res.json({ shipping: result });
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return res.json({ shipping: quoteRequest(req.body).shipping });
+  } catch (error) {
+    if (error instanceof QuoteError) return res.json({ error: error.code, contact: error.contact });
+    return res.status(500).json({ error: "QUOTE_FAILED" });
   }
 });
 
@@ -704,7 +679,7 @@ app.post("/validate-coupon", (req, res) => {
     return res.status(400).json({ valid: false });
   }
 
-  const coupon = COUPONS[couponCode.trim().toUpperCase()];
+  const coupon = COUPONS[String(couponCode).trim().toUpperCase()];
 
   if (!coupon) {
     return res.status(200).json({ valid: false });
