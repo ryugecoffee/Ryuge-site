@@ -55,7 +55,7 @@ function buildCatalog() {
         (p.origin ? ` / 産地: ${loc(p.origin, "ja")}` : "") +
         (p.process ? ` / 精製方法: ${loc(p.process, "ja")}` : "") +
         (p.ingredients ? ` / 原材料: ${loc(p.ingredients, "ja")}` : "") +
-        (p.flavorNotes?.ja ? ` / 風味（${{ direction: "焙煎の方向性・カッピング未確認", tea: "茶園の情報" }[p.flavorBasis] || "仕入れ先情報"}）: ${p.flavorNotes.ja.join("・")}` : "") +
+        (p.flavorNotes?.ja ? ` / 風味（${{ direction: "焙煎の方向性・カッピング未確認", tea: "生産者の情報" }[p.flavorBasis] || "仕入れ先情報"}）: ${p.flavorNotes.ja.join("・")}` : "") +
         (p.summary?.ja ? ` / ${p.summary.ja}` : "") +
         (p.isSoldOut ? " / ※売り切れ" : "") +
         (p.comingSoon ? " / ※準備中・注文不可" : "") +

@@ -94,7 +94,7 @@ test("Zen dark roast: notes shown as the roasting direction, not as a cupping re
   for (const id of ["mokkan-oku-yame-hojicha", "mokkan-oku-yame-genmaicha"]) {
     const tea = PRODUCT_DATA.woodbox.find((p) => p.id === id);
     assert.equal(tea.comingSoon, true, `${id} stays coming soon`);
-    for (const lang of LANGS) assert.ok(loc(tea.ingredients, lang) && loc(tea.producer, lang), `${id} ${lang}`);
+    for (const lang of LANGS) assert.ok(loc(tea.ingredients, lang) && loc(tea.origin, lang), `${id} ${lang}`);
   }
   assert.match(loc(PRODUCT_DATA.woodbox.find((p) => p.id === "mokkan-oku-yame-hojicha").summary, "ja"), /一番茶.*浅く焙じた/);
   assert.match(loc(PRODUCT_DATA.woodbox.find((p) => p.id === "mokkan-oku-yame-genmaicha").summary, "ja"), /煎茶に、抹茶と炒り玄米/);
@@ -109,14 +109,14 @@ test("Mokkan teas: ingredients, variety, flavour, brewing and the farm as the CE
   assert.equal(loc(hoji.ingredients, "ja"), "ほうじ茶");
   for (const t of [genmai, hoji]) {
     assert.equal(loc(t.variety, "ja"), "やぶきた");
-    assert.equal(loc(t.origin, "ja"), "福岡県八女市矢部村");
-    assert.equal(loc(t.producer, "ja"), "原島農園");
-    assert.match(loc(t.farm, "ja"), /高冷地/);
+    assert.equal(loc(t.origin, "ja"), "福岡県八女市");
+    assert.equal(t.producer, undefined, "the farm is not named until it is confirmed (CEO)");
+    assert.equal(t.farm, undefined);
     assert.equal(t.flavorBasis, "tea");
     assert.equal(t.comingSoon, true);
     for (const lang of LANGS) {
-      const text = [loc(t.summary, lang), loc(t.farm, lang), ...t.flavorNotes[lang]].join(" ");
-      assert.doesNotMatch(text, /1930|創業|founded|fundad|RAVE|有機|organic|orgánic|JAS|受賞|award|premio|認証|certif/i, `${t.id} ${lang}: unconfirmed claims`);
+      const text = JSON.stringify(t);
+      assert.doesNotMatch(text, /原島|Harashima|矢部|Yabe|1930|創業|founded|fundad|RAVE|有機|organic|orgánic|JAS|受賞|award|premio|認証|certif/i, `${t.id} ${lang}: unconfirmed claims`);
     }
   }
   const brew = (t, lang) => {

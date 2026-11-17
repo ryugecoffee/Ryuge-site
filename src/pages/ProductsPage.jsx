@@ -791,7 +791,7 @@ export default function ProductsPage({ lang }) {
                       )}
                       {DETAIL_FIELDS.some((field) => loc(activeItem[field], lang)) && (
                         <section className="product-detail-section">
-                          <h4>{activeItem.category === "beans" ? detailText.beanDetails : activeItem.farm ? detailText.teaDetails : detailText.productDetails}</h4>
+                          <h4>{activeItem.category === "beans" ? detailText.beanDetails : activeItem.flavorBasis === "tea" ? detailText.teaDetails : detailText.productDetails}</h4>
                           {activeItem.farm && <p className="product-detail-story">{loc(activeItem.farm, lang)}</p>}
                           <dl className="product-specs product-specs-classic">
                             {DETAIL_FIELDS.map((field) => renderSpecRow(labels[field], activeItem[field]))}

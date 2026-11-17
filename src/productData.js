@@ -12,8 +12,8 @@ export const DETAIL_TEXT = {
     roastScale: ["浅煎り", "中煎り", "中深煎り", "深煎り"],
     roastGuide: "浅煎りほど果実のような酸味や香りが、深煎りほど苦みやコクが感じられやすくなります。",
     flavorDirection: "風味は焙煎の方向性です。カッピングでの確認前のため、実際の味わいとは異なる場合があります。",
-    teaDetails: "産地・茶園",
-    teaFlavorSource: "風味は茶園の情報をもとにしています。淹れ方によって感じ方は変わります。",
+    teaDetails: "産地・原材料",
+    teaFlavorSource: "風味は生産者の情報をもとにしています。淹れ方によって感じ方は変わります。",
     brewHot: "温かいお茶", brewCold: "水出し",
     range: (r) => r.join("〜"),
     hotAmounts: (leaf, ml, temp) => `茶葉 ${leaf}g・お湯 ${ml}ml（${temp}℃）`,
@@ -29,8 +29,8 @@ export const DETAIL_TEXT = {
     roastScale: ["Light", "Medium", "Medium-Dark", "Dark"],
     roastGuide: "Lighter roasts tend to bring fruity acidity and aroma; darker roasts, bitterness and body.",
     flavorDirection: "These notes are the direction we roast toward; they have not been confirmed by cupping yet, so the cup may differ.",
-    teaDetails: "Origin and farm",
-    teaFlavorSource: "Flavor notes are based on the farm's information. Brewing changes how they come through.",
+    teaDetails: "Origin and ingredients",
+    teaFlavorSource: "Flavor notes are based on the producer's information. Brewing changes how they come through.",
     brewHot: "Hot", brewCold: "Cold brew",
     range: (r) => r.join("–"),
     hotAmounts: (leaf, ml, temp) => `${leaf} g of tea, ${ml} ml of water at ${temp} °C`,
@@ -46,8 +46,8 @@ export const DETAIL_TEXT = {
     roastScale: ["Claro", "Medio", "Medio-oscuro", "Oscuro"],
     roastGuide: "Los tuestes claros suelen dar acidez frutal y aroma; los oscuros, amargor y cuerpo.",
     flavorDirection: "Estas notas son la dirección del tueste; aún no se han confirmado en cata, así que la taza puede variar.",
-    teaDetails: "Origen y granja",
-    teaFlavorSource: "Las notas de sabor se basan en la información de la granja. La preparación cambia cómo se perciben.",
+    teaDetails: "Origen e ingredientes",
+    teaFlavorSource: "Las notas de sabor se basan en la información del productor. La preparación cambia cómo se perciben.",
     brewHot: "En caliente", brewCold: "En frío",
     range: (r) => r.join("–"),
     hotAmounts: (leaf, ml, temp) => `${leaf} g de té, ${ml} ml de agua a ${temp} °C`,
@@ -466,15 +466,9 @@ export const PRODUCT_DATA = {
       flavorNotes: { ja: ["カシス", "カカオ", "フルーティーな甘み"], en: ["Cassis", "Cacao", "Fruity sweetness"], es: ["Grosella negra", "Cacao", "Dulzor afrutado"] },
       flavorBasis: "tea",
       ingredients: { ja: "ほうじ茶", en: "Hojicha (roasted green tea)", es: "Hojicha (té verde tostado)" },
-      // Farm and brewing: CEO, 2026-11-17 (from the farm's materials). Not published: the founding year (not confirmed)
-      // and the trading relationship with RAVE ESTATE. No certification or award claims.
-      origin: { ja: "福岡県八女市矢部村", en: "Yabe, Yame, Fukuoka, Japan", es: "Yabe, Yame, Fukuoka, Japón" },
-      producer: { ja: "原島農園", en: "Harashima Farm", es: "Granja Harashima" },
-      farm: {
-        ja: "原島農園は、福岡県八女市矢部村の高冷地で茶を育てる茶園です。",
-        en: "Harashima Farm grows tea in the cool highlands of Yabe village in Yame, Fukuoka.",
-        es: "Harashima Farm cultiva té en las tierras altas y frescas de Yabe, en Yame (Fukuoka).",
-      },
+      // CEO 2026-11-17: until it is confirmed which farm's leaves these teas use, show the region only (no producer
+      // or farm). Not published either: a founding year, trading relationships, certification or award claims.
+      origin: { ja: "福岡県八女市", en: "Yame, Fukuoka, Japan", es: "Yame, Fukuoka, Japón" },
       variety: { ja: "やぶきた", en: "Yabukita", es: "Yabukita" },
       brewing: {
         hot: { leafG: [3, 5], waterMl: 200, tempC: [80], steepsSec: [30, 10, 60] },
@@ -505,15 +499,9 @@ export const PRODUCT_DATA = {
       flavorNotes: { ja: ["炒り玄米の香ばしさ", "若草の爽やかさ", "抹茶の旨味"], en: ["Toasted rice", "Fresh young grass", "Matcha umami"], es: ["Arroz tostado", "Hierba joven", "Umami del matcha"] },
       flavorBasis: "tea",
       ingredients: { ja: "煎茶・抹茶・炒り玄米", en: "Sencha, matcha, roasted brown rice", es: "Sencha, matcha, arroz integral tostado" },
-      // Farm and brewing: CEO, 2026-11-17 (from the farm's materials). Not published: the founding year (not confirmed)
-      // and the trading relationship with RAVE ESTATE. No certification or award claims.
-      origin: { ja: "福岡県八女市矢部村", en: "Yabe, Yame, Fukuoka, Japan", es: "Yabe, Yame, Fukuoka, Japón" },
-      producer: { ja: "原島農園", en: "Harashima Farm", es: "Granja Harashima" },
-      farm: {
-        ja: "原島農園は、福岡県八女市矢部村の高冷地で茶を育てる茶園です。",
-        en: "Harashima Farm grows tea in the cool highlands of Yabe village in Yame, Fukuoka.",
-        es: "Harashima Farm cultiva té en las tierras altas y frescas de Yabe, en Yame (Fukuoka).",
-      },
+      // CEO 2026-11-17: until it is confirmed which farm's leaves these teas use, show the region only (no producer
+      // or farm). Not published either: a founding year, trading relationships, certification or award claims.
+      origin: { ja: "福岡県八女市", en: "Yame, Fukuoka, Japan", es: "Yame, Fukuoka, Japón" },
       variety: { ja: "やぶきた", en: "Yabukita", es: "Yabukita" },
       brewing: {
         hot: { leafG: [3, 5], waterMl: 200, tempC: [70, 80], steepsSec: [40, 10, 60] },
