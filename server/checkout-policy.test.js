@@ -60,3 +60,16 @@ test("no free-shipping promise is left in the cart or the shipping page", () => 
   assert.match(shippingPage, /沖縄：550円/);
   assert.doesNotMatch(shippingPage, /¥200|2個以上のご注文：送料無料/);
 });
+
+test("launch wording: made-to-order beans follow the usual 3–7 business days; no EMS left; no promise of a date we never send", () => {
+  const read = (...p) => fs.readFileSync(path.join(__dirname, "..", ...p), "utf8");
+  const data = read("src", "productData.js");
+  assert.match(data, /ご注文後に焙煎・袋詰めし、通常3〜7営業日以内に発送します/);
+  assert.match(read("src", "pages", "LegalNotice.jsx"), /3〜7日以内に発送/, "the legal notice gives the same lead time");
+  for (const file of [["src", "productData.js"], ["src", "pages", "ShippingPage.jsx"]]) {
+    assert.doesNotMatch(read(...file), /発送予定日を|発送予定日は|planned shipping date|fecha prevista de envío|shipping date is in your order confirmation/, file.join("/"));
+  }
+  for (const file of [["src", "pages", "CheckoutPage.jsx"], ["server", "index.js"]]) {
+    assert.doesNotMatch(read(...file), /\bEMS\b/, `${file.join("/")}: international orders ship by Air Packet`);
+  }
+});

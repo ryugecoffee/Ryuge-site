@@ -6,7 +6,7 @@ const TEXT = {
     eyebrow: "配送・送料",
     title: "配送・送料について",
     lead:
-      "ご注文確定後、3〜7営業日以内に発送いたします。土日は出荷をお休みしております。焙煎・袋詰め前の商品は、発送予定日を商品ページとご注文確認メールでお知らせします。",
+      "ご注文確定後、3〜7営業日以内に発送いたします。土日は出荷をお休みしております。ご注文後に焙煎・袋詰めする商品も、この期間内に発送します。発送時にメールでお知らせします。",
     sections: [
       {
         title: "国内送料（1回のご注文につき1回）",
@@ -42,7 +42,7 @@ const TEXT = {
     eyebrow: "Shipping",
     title: "Shipping & Delivery",
     lead:
-      "Orders are usually shipped within 3–7 business days after confirmation. We do not ship on weekends. For items not yet roasted and packed, the planned shipping date is shown on the product page and in your order confirmation.",
+      "Orders are usually shipped within 3–7 business days after confirmation. We do not ship on weekends. Items roasted and packed after your order also ship within this period. We email you when your order ships.",
     sections: [
       {
         title: "Shipping in Japan (once per order)",
@@ -78,7 +78,7 @@ const TEXT = {
     eyebrow: "Envío",
     title: "Envío y Entrega",
     lead:
-      "Los pedidos se envían normalmente dentro de 3–7 días hábiles tras la confirmación. No realizamos envíos los fines de semana. Para productos aún no tostados y envasados, la fecha prevista de envío se indica en la página del producto y en la confirmación del pedido.",
+      "Los pedidos se envían normalmente dentro de 3–7 días hábiles tras la confirmación. No realizamos envíos los fines de semana. Los productos que se tuestan y envasan tras el pedido también se envían en este plazo. Te avisamos por correo cuando se envíe.",
     sections: [
       {
         title: "Envío en Japón (una vez por pedido)",
