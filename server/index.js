@@ -170,10 +170,11 @@ async function sendUnifiedReceiptEmail(type, data) {
     en: "Import duties and taxes may apply and are the responsibility of the recipient.",
     es: "Pueden aplicarse derechos de importación e impuestos, que son responsabilidad del destinatario.",
   };
+  // International orders ship by Japan Post International Air Packet (tracked) since 2026-11-17 (server/quote.js).
   const emsNotes = {
-    ja: "配送方法：日本郵便 EMS（国際スピード郵便）。発送後、通常5〜10日程度でお届けします（地域・通関状況により異なります）。",
-    en: "Shipping method: Japan Post EMS. Usually delivered within 5–10 days after shipment (varies by region and customs clearance).",
-    es: "Método de envío: Japan Post EMS. Generalmente entregado en 5–10 días tras el envío (varía según región y aduanas).",
+    ja: "配送方法：日本郵便 国際エアパケット（追跡あり）。発送時に追跡番号をお知らせします。",
+    en: "Shipping method: Japan Post International Air Packet (tracked). We will send you the tracking number when it ships.",
+    es: "Método de envío: Japan Post International Air Packet (con seguimiento). Te enviaremos el número de seguimiento al enviarlo.",
   };
   const customsDutyNote = customsDutyNotes[lang] || customsDutyNotes.ja;
   const emsNote         = emsNotes[lang]         || emsNotes.ja;
