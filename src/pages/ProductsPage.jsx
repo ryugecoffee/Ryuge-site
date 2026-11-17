@@ -35,9 +35,9 @@ const PAGE_TEXT = {
 // Temporary checkout preview handles only these two stocked coffee SKUs.
 // Do not infer "sold out" for untracked products from a missing API quantity.
 // Must equal the products with managedStock: true in server/catalog.js (a server test checks it).
-const INVENTORY_MANAGED_SKUS = new Set(["enma-karamo", "enma-kindiio", "enma-amarelo-bourbon", "enma-jimma", "enma-quequesques", "enma-andes-blue"]);
+const INVENTORY_MANAGED_SKUS = new Set(["enma-karamo", "enma-kindiio", "enma-zen-dark-roast", "enma-amarelo-bourbon", "enma-jimma", "enma-quequesques", "enma-andes-blue"]);
 // Sold only while the payment server has inventory on (a sales cap must hold): requiresInventory in server/catalog.js.
-const REQUIRES_INVENTORY_SKUS = new Set(["enma-amarelo-bourbon", "enma-jimma", "enma-quequesques", "enma-andes-blue"]);
+const REQUIRES_INVENTORY_SKUS = new Set(["enma-zen-dark-roast", "enma-amarelo-bourbon", "enma-jimma", "enma-quequesques", "enma-andes-blue"]);
 // Promotional beans: at most 2 bags per customer (the payment server enforces it across orders).
 const PROMO_MAX_BAGS = 2;
 

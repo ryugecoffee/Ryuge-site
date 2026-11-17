@@ -9,16 +9,21 @@
 // contentG: coffee/tea weight in grams (the international 600 g limit); weightG: packed item weight for shipping.
 // promo: a promotional bean (at most 2 bags per order and per customer); change it here and in src/productData.js.
 // requiresInventory: sold only while inventory is on (a sales cap must hold; with inventory off it is not purchasable).
+// lot: products roasted from the same purchase of green beans share inventoryLots/{lot} (what can really be roasted);
+// each product keeps its own sales cap in inventory/{sku}. An order must fit both (server/inventory.js).
 // managedStock: true = sold from counted, packed bags (inventory/{sku}); with inventory on, checkout reserves them and
 // refuses past zero. Others are not stock-gated. Must equal INVENTORY_MANAGED_SKUS in src/pages/ProductsPage.jsx.
 const { validItems } = require("./inventory");
 
 const CATALOG = Object.freeze({
-  // CEO 2026-11-17: on sale, 15 bags each as the sales cap; Amarelo is the promotional bean (¥1,000, 2 per customer).
-  "enma-amarelo-bourbon": { price: 1000, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true, requiresInventory: true, promo: true },
-  "enma-jimma": { price: 1300, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true, requiresInventory: true },
-  "enma-quequesques": { price: 1300, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true, requiresInventory: true },
-  "enma-andes-blue": { price: 1300, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true, requiresInventory: true },
+  // CEO final prices (2026-11-17). The Brazil Amarelo Bourbon is sold as two products from the same green beans: the
+  // promotional "Zen dark roast" (¥1,000, 2 per customer) and the regular medium-dark roast (¥1,300). They have their
+  // own sales caps, orders and promo rules, and share one lot so together they never sell more than can be roasted.
+  "enma-zen-dark-roast": { price: 1000, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true, requiresInventory: true, promo: true, lot: "brazil-amarelo-bourbon" },
+  "enma-amarelo-bourbon": { price: 1300, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true, requiresInventory: true, lot: "brazil-amarelo-bourbon" },
+  "enma-jimma": { price: 1500, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true, requiresInventory: true },
+  "enma-quequesques": { price: 1500, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true, requiresInventory: true },
+  "enma-andes-blue": { price: 1500, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true, requiresInventory: true },
   "enma-karamo": { price: 1800, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true },
   "enma-kindiio": { price: 2050, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true },
   "enma-coffee-bag": { price: 2400, weightG: 100, kind: "bag", contentG: 100, availableForSale: true },
@@ -54,4 +59,19 @@ function managedItems(items, catalog = CATALOG) {
   return items.filter(({ id }) => catalog[id]?.managedStock === true).map(({ id, quantity }) => ({ id, quantity }));
 }
 
-module.exports = { CATALOG, priceItems, itemsMetadata, managedItems };
+// sku -> its lot (or null).
+function lotOf(id, catalog = CATALOG) {
+  return Object.prototype.hasOwnProperty.call(catalog, id) ? catalog[id].lot || null : null;
+}
+
+// The managed part of a priced cart, summed per lot: [{ id: lot, quantity }] (what checkout holds in inventoryLots).
+function lotItems(items, catalog = CATALOG) {
+  const totals = new Map();
+  for (const { id, quantity } of managedItems(items, catalog)) {
+    const lot = lotOf(id, catalog);
+    if (lot) totals.set(lot, (totals.get(lot) || 0) + quantity);
+  }
+  return [...totals].map(([id, quantity]) => ({ id, quantity }));
+}
+
+module.exports = { CATALOG, priceItems, itemsMetadata, managedItems, lotOf, lotItems };

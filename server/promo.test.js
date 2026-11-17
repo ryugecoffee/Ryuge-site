@@ -29,7 +29,7 @@ function fakeFirestore(initial = {}) {
   };
   return db;
 }
-const stock = () => ({ "inventory/enma-amarelo-bourbon": { ready: 15, held: 0, sold: 0 } });
+const stock = () => ({ "inventory/enma-zen-dark-roast": { ready: 15, held: 0, sold: 0 } });
 const claim = (who) => ({ keys: promoKeys(who), quantity: 0, limit: PROMO_MAX_BAGS });
 const hanako = { email: "Hanako.Yamada+coffee@gmail.com", countryCode: "JP", postalCode: "248-0006", address: "神奈川県 鎌倉市小町1-1" };
 
@@ -46,11 +46,11 @@ test("one customer is recognised however the e-mail or address is written", () =
 
 test("2 promotional bags per customer across orders: a second order, a new e-mail to the same home, all refused", async () => {
   const db = fakeFirestore(stock());
-  const first = await reserve(db, [{ id: "enma-amarelo-bourbon", quantity: 2 }], null, { ...claim(hanako), quantity: 2 });
-  await assert.rejects(reserve(db, [{ id: "enma-amarelo-bourbon", quantity: 1 }], null, { ...claim(hanako), quantity: 1 }), /PROMO_CUSTOMER_LIMIT/);
-  await assert.rejects(reserve(db, [{ id: "enma-amarelo-bourbon", quantity: 1 }], null,
+  const first = await reserve(db, [{ id: "enma-zen-dark-roast", quantity: 2 }], null, { ...claim(hanako), quantity: 2 });
+  await assert.rejects(reserve(db, [{ id: "enma-zen-dark-roast", quantity: 1 }], null, { ...claim(hanako), quantity: 1 }), /PROMO_CUSTOMER_LIMIT/);
+  await assert.rejects(reserve(db, [{ id: "enma-zen-dark-roast", quantity: 1 }], null,
     { ...claim({ ...hanako, email: "other@example.com" }), quantity: 1 }), /PROMO_CUSTOMER_LIMIT/, "same delivery address");
-  await assert.rejects(reserve(db, [{ id: "enma-amarelo-bourbon", quantity: 1 }], null,
+  await assert.rejects(reserve(db, [{ id: "enma-zen-dark-roast", quantity: 1 }], null,
     { ...claim({ ...hanako, address: "東京都千代田区1-1", postalCode: "100-0001" }), quantity: 1 }), /PROMO_CUSTOMER_LIMIT/, "same e-mail");
   // Paid: the 2 bags stay counted as bought; a Stripe resend does not count them twice.
   await attachPaymentIntent(db, first, "pi_promo_1");
@@ -59,22 +59,22 @@ test("2 promotional bags per customer across orders: a second order, a new e-mai
   const ledgers = [...db.store.entries()].filter(([key]) => key.startsWith("promoLedger/")).map(([, value]) => value);
   assert.equal(ledgers.length, 2);
   for (const ledger of ledgers) assert.deepEqual([ledger.held, ledger.bought], [0, 2]);
-  await assert.rejects(reserve(db, [{ id: "enma-amarelo-bourbon", quantity: 1 }], null, { ...claim(hanako), quantity: 1 }), /PROMO_CUSTOMER_LIMIT/);
+  await assert.rejects(reserve(db, [{ id: "enma-zen-dark-roast", quantity: 1 }], null, { ...claim(hanako), quantity: 1 }), /PROMO_CUSTOMER_LIMIT/);
 });
 
 test("a canceled or abandoned checkout gives the promotional bags back", async () => {
   const db = fakeFirestore(stock());
-  const first = await reserve(db, [{ id: "enma-amarelo-bourbon", quantity: 2 }], null, { ...claim(hanako), quantity: 2 });
+  const first = await reserve(db, [{ id: "enma-zen-dark-roast", quantity: 2 }], null, { ...claim(hanako), quantity: 2 });
   await attachPaymentIntent(db, first, "pi_promo_2");
   await finish(db, first, "pi_promo_2", "released");
-  const again = await reserve(db, [{ id: "enma-amarelo-bourbon", quantity: 2 }], null, { ...claim(hanako), quantity: 2 });
+  const again = await reserve(db, [{ id: "enma-zen-dark-roast", quantity: 2 }], null, { ...claim(hanako), quantity: 2 });
   assert.ok(again);
-  assert.equal(db.store.get("inventory/enma-amarelo-bourbon").held, 2);
+  assert.equal(db.store.get("inventory/enma-zen-dark-roast").held, 2);
 });
 
 test("one order cannot carry more than 2 promotional bags; capped products need inventory on", () => {
-  assert.throws(() => quoteOrder([{ id: "enma-amarelo-bourbon", quantity: 3 }], { prefecture: "東京都" }), /PROMO_LIMIT/);
-  assert.equal(quoteOrder([{ id: "enma-amarelo-bourbon", quantity: 2 }], { prefecture: "東京都" }).total, 2000 + 250);
+  assert.throws(() => quoteOrder([{ id: "enma-zen-dark-roast", quantity: 3 }], { prefecture: "東京都" }), /PROMO_LIMIT/);
+  assert.equal(quoteOrder([{ id: "enma-zen-dark-roast", quantity: 2 }], { prefecture: "東京都" }).total, 2000 + 250);
   const source = fs.readFileSync(path.join(__dirname, "index.js"), "utf8");
   const route = source.slice(source.indexOf('app.post("/create-payment-intent"'), source.indexOf('app.post("/calc-shipping"'));
   assert.match(route, /if \(!INVENTORY_ENABLED && quote\.items\.some\(\(item\) => item\.requiresInventory\)\) \{\n\s+return res\.status\(400\)\.json\(\{ error: "PRODUCT_NOT_AVAILABLE" \}\);/);
@@ -84,13 +84,13 @@ test("one order cannot carry more than 2 promotional bags; capped products need 
 
 test("a checkout whose payment could not be created gives the stock and promotional bags back at once", async () => {
   const db = fakeFirestore(stock());
-  const failed = await reserve(db, [{ id: "enma-amarelo-bourbon", quantity: 2 }], null, { ...claim(hanako), quantity: 2 });
+  const failed = await reserve(db, [{ id: "enma-zen-dark-roast", quantity: 2 }], null, { ...claim(hanako), quantity: 2 });
   assert.equal(await releaseWithoutPayment(db, failed), true);
-  assert.equal(db.store.get("inventory/enma-amarelo-bourbon").held, 0);
+  assert.equal(db.store.get("inventory/enma-zen-dark-roast").held, 0);
   for (const [key, value] of db.store) if (key.startsWith("promoLedger/")) assert.equal(value.held, 0);
-  assert.ok(await reserve(db, [{ id: "enma-amarelo-bourbon", quantity: 2 }], null, { ...claim(hanako), quantity: 2 }), "the customer can try again");
+  assert.ok(await reserve(db, [{ id: "enma-zen-dark-roast", quantity: 2 }], null, { ...claim(hanako), quantity: 2 }), "the customer can try again");
   // A reservation with a PaymentIntent is never released this way (the customer may be paying it).
-  const paying = await reserve(db, [{ id: "enma-amarelo-bourbon", quantity: 1 }]);
+  const paying = await reserve(db, [{ id: "enma-zen-dark-roast", quantity: 1 }]);
   await attachPaymentIntent(db, paying, "pi_paying");
   assert.equal(await releaseWithoutPayment(db, paying), false);
 });

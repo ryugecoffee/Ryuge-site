@@ -9,7 +9,7 @@ const cors = require("cors");
 const nodemailer = require("nodemailer");
 const admin = require("firebase-admin");
 const inventory = require("./inventory");
-const { itemsMetadata, managedItems } = require("./catalog");
+const { itemsMetadata, managedItems, lotOf, lotItems } = require("./catalog");
 const { quoteOrder, QuoteError, COUPONS, CONTACT_EMAIL, PROMO_MAX_BAGS } = require("./quote");
 const { promoKeys } = require("./promo");
 const orders = require("./orders");
@@ -404,7 +404,7 @@ app.get("/inventory/availability", async (req, res) => {
   reconcileSoon();
   try {
     const ids = String(req.query.ids || "").split(",").filter(Boolean);
-    const quantities = await inventory.availability(db, ids);
+    const quantities = await inventory.availability(db, ids, (id) => lotOf(id));
     return res.json({ enabled: true, quantities });
   } catch {
     return res.status(500).json({ error: "INVENTORY_UNAVAILABLE" });
@@ -480,7 +480,7 @@ app.post("/create-payment-intent", async (req, res) => {
     if (INVENTORY_ENABLED && stockItems.length) {
       reconcileSoon();
       try {
-        reservationId = await inventory.reserve(db, stockItems, null, promo);
+        reservationId = await inventory.reserve(db, stockItems, null, promo, lotItems(quote.items));
       } catch (error) {
         const conflict = ["OUT_OF_STOCK", "PROMO_CUSTOMER_LIMIT"].includes(error.message);
         return res.status(conflict ? 409 : 400).json({ error: error.message });

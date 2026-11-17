@@ -101,11 +101,32 @@ Settings (CEO, production; secrets only in Stripe and Render, never in GitHub or
    counted numbers, then a real purchase of one bag.
 
 ## New beans and promotional beans (2026-11-17, PR #9)
-- On sale with inventory on (`requiresInventory`): Brazil Amarelo Bourbon Natural (promo, ¥1,000), Ethiopia Jimma
-  Washed G1 (¥1,300), Guatemala Quequesques Washed SHB (¥1,300), Peru Andes Blue Washed G1 (¥1,300). With inventory
-  off they show "coming soon" and the server refuses them, so the sales cap always holds.
-- Sales cap: `inventory/{sku}` = `{ ready: 15, held: 0, sold: 0 }` for each of the four (CEO: 15 bags each). `ready`
-  is the number of 100 g bags that may be sold, not green-bean weight. The product pages say the beans are roasted and
+- On sale with inventory on (`requiresInventory`). With inventory off they show "coming soon" and the server refuses
+  them, so the sales caps always hold. Final prices (CEO, 2026-11-17):
+
+  | SKU | Product | Price | Roast |
+  |---|---|---|---|
+  | `enma-zen-dark-roast` | 禅の深煎り（ブラジル） — promotional, 2 per customer | ¥1,000 | dark |
+  | `enma-amarelo-bourbon` | ブラジル アマレロブルボン (regular) | ¥1,300 | medium-dark |
+  | `enma-jimma` | エチオピア ジンマ | ¥1,500 | light |
+  | `enma-quequesques` | グアテマラ ケケスケス | ¥1,500 | light |
+  | `enma-andes-blue` | ペルー アンデスブルー | ¥1,500 | light |
+  | `enma-karamo` / `enma-kindiio` | unchanged | ¥1,800 / ¥2,050 | light |
+
+- Sales cap per product: `inventory/{sku}` = `{ ready: <bags that may be sold>, held: 0, sold: 0 }`. `ready` is a
+  number of 100 g bags, not green-bean weight.
+- **The two Brazil products are roasted from the same green beans** (one purchase). Each has its own sales cap, promo
+  rule and order lines, and both also draw on one shared lot: `inventoryLots/brazil-amarelo-bourbon` =
+  `{ ready: <100 g bags that can really be roasted from the Brazil purchase, both roasts together>, held: 0, sold: 0 }`.
+  An order must fit its product cap and the lot (one transaction), and `/inventory/availability` shows the smaller of
+  the two. **Without the lot record, neither Brazil product can be bought.** Do not give both products the whole
+  purchase as their cap and leave it at that (e.g. 15 + 15 from one 15-bag purchase): set the lot to what can really be
+  roasted, and the product caps to how the CEO wants to split it (they may add up to more than the lot; the lot wins).
+  The dark roast loses more weight in roasting, so count the lot conservatively.
+- Example: a 2 kg Brazil purchase roasted to about 1.7–1.8 kg gives at most 15 bags of 100 g after samples and losses.
+  `inventoryLots/brazil-amarelo-bourbon.ready = 15`; `inventory/enma-zen-dark-roast.ready = 6`,
+  `inventory/enma-amarelo-bourbon.ready = 12` → at most 15 bags are sold in total, at most 6 of them promotional.
+  These numbers are an illustration only; the CEO sets the real ones. The product pages say the beans are roasted and
   packed after the order and that the shipping date comes with the order confirmation; update this once real packed
   stock and shipping dates are confirmed.
 - Promotional beans (`promo: true` in `server/catalog.js` and `src/productData.js`): at most 2 bags per order and per
