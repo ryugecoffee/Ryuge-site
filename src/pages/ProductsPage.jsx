@@ -4,7 +4,7 @@ import { PAYMENT_API_BASE, classifyAvailability } from "../lib/paymentEnv";
 import { useLocation } from "react-router-dom";
 import SiteFooter from "../components/SiteFooter";
 import BeanConcierge from "../components/BeanConcierge";
-import { PRODUCT_DATA, PRODUCT_SECTIONS } from "../productData";
+import { PRODUCT_DATA, PRODUCT_SECTIONS, DETAIL_TEXT, ROAST_LEVEL, loc } from "../productData";
 import { useCart } from "../CartContext";
 import { trackViewItem } from "../lib/analytics";
 
@@ -65,6 +65,7 @@ export default function ProductsPage({ lang }) {
   const page = PAGE_TEXT[lang] || PAGE_TEXT.ja;
   const sectionText = PRODUCT_SECTIONS[lang] || PRODUCT_SECTIONS.ja;
   const labels = sectionText.specLabels;
+  const detailText = DETAIL_TEXT[lang] || DETAIL_TEXT.ja;
   const products = PRODUCT_DATA;
   const activeWoodbox = products.woodbox.filter((item) => !item.archived);
 
@@ -227,14 +228,18 @@ export default function ProductsPage({ lang }) {
   }, []);
 
   const renderSpecRow = (label, value) => {
-    if (!value) return null;
+    const text = loc(value, lang);
+    if (!text) return null;
     return (
       <div className="product-spec-row" key={label}>
         <dt>{label}</dt>
-        <dd>{value}</dd>
+        <dd>{text}</dd>
       </div>
     );
   };
+
+  // Detail rows, grouped: where it comes from, then how it was grown and processed. Only facts in productData.js.
+  const DETAIL_FIELDS = ["origin", "producer", "altitude", "variety", "process", "drying", "grade", "harvest", "arrival"];
 
   return (
     <>
@@ -302,9 +307,9 @@ export default function ProductsPage({ lang }) {
                   </h3>
                   <div className="enma-price-row">
                     {item.regularPriceNumber && item.promotion?.active && <span className="enma-original-price">¥{item.regularPriceNumber.toLocaleString()}</span>}
-                    <span className="enma-current-price">{item.price} <small>/ {item.weight}</small></span>
+                    <span className="enma-current-price">{item.price} <small>/ {loc(item.weight, lang)}</small></span>
                   </div>
-                  <p className="enma-card-origin">{({ Natural: { ja: "ナチュラル", en: "Natural", es: "Natural" }, Washed: { ja: "ウォッシュド", en: "Washed", es: "Lavado" }, "Infused Honey": { ja: "インフューズドハニー", en: "Infused Honey", es: "Honey infusionado" } })[item.process]?.[lang] || item.process}</p>
+                  <p className="enma-card-origin">{loc(item.process, lang)}</p>
                   {item.roast?.[lang] && <p className="enma-card-roast">{item.roast[lang]}</p>}
                   {item.flavorNotes?.[lang] && <p className="enma-card-flavors">{item.flavorNotes[lang].join(" · ")}</p>}
                 </div>
@@ -393,7 +398,7 @@ export default function ProductsPage({ lang }) {
                 <div className="oriori-service-copy">
                   <h3>{item.title?.[lang]}</h3>
                   <p>{item.summary?.[lang]}</p>
-                  {item.weight && <p className="product-card-weight">{item.weight}</p>}
+                  {item.weight && <p className="product-card-weight">{loc(item.weight, lang)}</p>}
                   {item.price && <p className="product-card-price">{item.price}</p>}
                 </div>
               </article>
@@ -411,10 +416,10 @@ export default function ProductsPage({ lang }) {
             <button
               type="button"
               className="modal-close-safe"
-              aria-label="閉じる"
+              aria-label={detailText.close}
               onClick={() => setActiveItemId(null)}
             >
-              戻る
+              {detailText.back}
             </button>
 
             <div className="modal-image modal-image-premium">
@@ -479,13 +484,7 @@ export default function ProductsPage({ lang }) {
 
                       <div className="subscription-plan-meta">
                         <div className="subscription-meta-row">
-                          <span>
-                            {lang === "ja"
-                              ? "価格"
-                              : lang === "es"
-                              ? "Precio"
-                              : "Price"}
-                          </span>
+                          <span>{labels.price}</span>
                           <strong>{currentSubscriptionPlan.price}</strong>
                         </div>
 
@@ -545,34 +544,25 @@ export default function ProductsPage({ lang }) {
                           setActiveItemId(null);
                         }}
                       >
-                        {lang === "ja"
-                          ? "カートに入れる"
-                          : lang === "es"
-                          ? "Añadir al carrito"
-                          : "Add to cart"}
+                        {detailText.addToCart}
                       </button>
                     </div>
                   )}
                 </div>
               ) : (
                 <div className="modal-copy-inner modal-copy-classic">
+                  {activeItem.id === "oriori-apps" ? (
+                  <>
                   <h3
                     className="modal-product-title modal-title-animate"
                     style={{ whiteSpace: "pre-line" }}
                   >
-                    {activeItem.modalTitle?.[lang] ||
-                      activeItem.modalTitle?.en ||
-                      activeItem.title?.[lang] ||
-                      activeItem.title?.en}
+                    {loc(activeItem.modalTitle, lang) || loc(activeItem.title, lang)}
                   </h3>
 
                   <p className="modal-summary modal-product-summary modal-fade-up">
-                    {activeItem.summary?.[lang] ||
-                      activeItem.summary?.en ||
-                      activeItem.summary}
+                    {loc(activeItem.summary, lang)}
                   </p>
-
-                  {activeItem.id === "oriori-apps" ? (
                     <>
   <p className="modal-summary modal-product-summary modal-fade-up">
     {activeItem.description?.[lang] ||
@@ -636,46 +626,46 @@ export default function ProductsPage({ lang }) {
     ))}
   </div>
 </>
+                  </>
                   ) : (
-                    <>
-                      {(activeItem.category === "bag" || activeItem.category === "tea-bag") ? (
-                        <div className="modal-brew-block modal-fade-up">
-                          <p className="modal-brew-label">
-                            {lang === "ja" ? "淹れ方" : lang === "es" ? "Preparación" : "How to Brew"}
-                          </p>
-                          <div className="modal-brew-steps">
-                            {(activeItem.brew?.[lang] || []).map((step, i) => (
-                              <p key={i}>{step}</p>
-                            ))}
-                          </div>
-                          {renderSpecRow(labels.weight, activeItem.weight)}
-                          {renderSpecRow(labels.price, activeItem.price)}
-                        </div>
-                      ) : (
-                        <dl className="product-specs product-specs-classic modal-fade-up">
-                          {renderSpecRow(activeItem.category === "beans" ? "Origin" : labels.origin, activeItem.origin)}
-                          {renderSpecRow(activeItem.category === "beans" ? "Producer" : labels.producer, activeItem.producer)}
-                          {renderSpecRow(activeItem.category === "beans" ? "Process" : labels.process, activeItem.process)}
-                          {renderSpecRow(activeItem.category === "beans" ? "Variety" : labels.variety, activeItem.variety)}
-                          {renderSpecRow(activeItem.category === "beans" ? "Grade" : "Grade", activeItem.grade)}
-                          {renderSpecRow(activeItem.category === "beans" ? "Altitude" : labels.altitude, activeItem.altitude)}
-                          {renderSpecRow(activeItem.category === "beans" ? "Drying" : "Drying", activeItem.drying)}
-                          {renderSpecRow(activeItem.category === "beans" ? "Harvest" : labels.harvest, activeItem.harvest)}
-                          {renderSpecRow(activeItem.category === "beans" ? "Arrival" : labels.arrival, activeItem.arrival)}
-                          {renderSpecRow(activeItem.category === "beans" ? "Weight" : labels.weight, activeItem.weight)}
-                          {renderSpecRow(activeItem.category === "beans" ? "Price" : labels.price, activeItem.price)}
-                          {renderSpecRow(activeItem.category === "beans" ? "Flavor Notes" : labels.flavor, activeItem.category === "beans" ? (activeItem.flavorNotes?.en?.join(" · ") || activeItem.flavor) : (activeItem.flavorNotes?.[lang]?.join(" · ") || activeItem.flavor))}
-                        </dl>
+                    <div className="product-detail modal-fade-up">
+                      {/* 1. What it is: name, size, price, roast and a short description of the taste. */}
+                      <header className="product-detail-head">
+                        {activeItem.promotion?.active && (
+                          <span className="product-detail-promo">{loc(activeItem.promotion.label, lang)}</span>
+                        )}
+                        <h3 className="modal-product-title modal-title-animate" style={{ whiteSpace: "pre-line" }}>
+                          {loc(activeItem.modalTitle, lang) || loc(activeItem.title, lang)}
+                        </h3>
+                        <p className="product-detail-meta">
+                          {activeItem.weight && <span>{loc(activeItem.weight, lang)}</span>}
+                          {activeItem.price && <span className="product-detail-price">{activeItem.price}</span>}
+                          {activeItem.roast && <span className="product-detail-roast">{loc(activeItem.roast, lang)}</span>}
+                        </p>
+                        {loc(activeItem.summary, lang) && <p className="product-detail-lead">{loc(activeItem.summary, lang)}</p>}
+                        {activeItem.flavorNotes?.[lang]?.length > 0 && (
+                          <ul className="product-detail-notes" aria-label={detailText.flavor}>
+                            {activeItem.flavorNotes[lang].map((note) => <li key={note}>{note}</li>)}
+                          </ul>
+                        )}
+                        {activeItem.notice && <p className="product-detail-notice">{loc(activeItem.notice, lang)}</p>}
+                      </header>
+
+                      {(activeItem.category === "bag" || activeItem.category === "tea-bag") && (
+                        <section className="product-detail-section">
+                          <h4>{detailText.howToBrew}</h4>
+                          <ol className="product-detail-steps">
+                            {(activeItem.brew?.[lang] || []).map((step, i) => <li key={i}>{step}</li>)}
+                          </ol>
+                        </section>
                       )}
 
+                      {/* 2. Buying. */}
+                      <div className="product-detail-buy">
                       {stockStatus(activeItem) !== "comingSoon" && (
                         <div className="simple-quantity-block">
                           <p className="simple-quantity-label">
-                            {lang === "ja"
-                              ? "数量"
-                              : lang === "es"
-                              ? "Cantidad"
-                              : "Quantity"}
+                            {detailText.quantity}
                           </p>
 
                           <div className="simple-quantity-control">
@@ -719,8 +709,8 @@ export default function ProductsPage({ lang }) {
                       )}
 
                       {activeItem.promo && stockStatus(activeItem) !== "comingSoon" && (
-                        <p className="simple-quantity-label">
-                          {lang === "ja" ? "プロモーション豆：お一人様2袋まで" : lang === "es" ? "Granos promocionales: máx. 2 bolsas por cliente" : "Promotional beans: up to 2 bags per customer"}
+                        <p className="product-detail-promo-note">
+                          {detailText.promoNote}
                         </p>
                       )}
                       {stockStatus(activeItem) === "comingSoon" ? (
@@ -758,14 +748,33 @@ export default function ProductsPage({ lang }) {
                             setActiveItemId(null);
                           }}
                         >
-                          {lang === "ja"
-                            ? "カートに入れる"
-                            : lang === "es"
-                            ? "Añadir al carrito"
-                            : "Add to cart"}
+                          {detailText.addToCart}
                         </button>
                       )}
-                    </>
+                      </div>
+
+                      {/* 3. The details, for those who want them. */}
+                      {activeItem.roast && ROAST_LEVEL[activeItem.roast.en] !== undefined && (
+                        <section className="product-detail-section">
+                          <h4>{labels.roast}</h4>
+                          <ol className="product-roast-scale" aria-label={labels.roast}>
+                            {detailText.roastScale.map((step, i) => (
+                              <li key={step} className={i === ROAST_LEVEL[activeItem.roast.en] ? "is-current" : ""} aria-current={i === ROAST_LEVEL[activeItem.roast.en] ? "true" : undefined}>{step}</li>
+                            ))}
+                          </ol>
+                          <p className="product-detail-small">{detailText.roastGuide}</p>
+                        </section>
+                      )}
+                      {DETAIL_FIELDS.some((field) => loc(activeItem[field], lang)) && (
+                        <section className="product-detail-section">
+                          <h4>{activeItem.category === "beans" ? detailText.beanDetails : detailText.productDetails}</h4>
+                          <dl className="product-specs product-specs-classic">
+                            {DETAIL_FIELDS.map((field) => renderSpecRow(labels[field], activeItem[field]))}
+                          </dl>
+                          {activeItem.flavorNotes && <p className="product-detail-small">{detailText.flavorSource}</p>}
+                        </section>
+                      )}
+                    </div>
                   )}
                 </div>
               )}

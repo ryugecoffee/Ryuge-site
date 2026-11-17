@@ -3,7 +3,7 @@
 //   ANTHROPIC_API_KEY  … Anthropic の API キー
 //   ANTHROPIC_MODEL    … 省略可。デフォルトは claude-sonnet-5
 
-import { PRODUCT_DATA } from "../src/productData.js";
+import { PRODUCT_DATA, loc } from "../src/productData.js";
 
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
 const MAX_MESSAGES = 12; // 会話履歴の上限(コスト管理)
@@ -50,10 +50,11 @@ function buildCatalog() {
   const lines = [];
   const push = (p, series) => {
     lines.push(
-      `- [${series}] ${p.title?.ja} (${p.title?.en}) / ${p.price} / ${p.size || p.weight || ""}` +
-        (p.origin ? ` / 産地: ${p.origin}` : "") +
-        (p.process ? ` / プロセス: ${p.process}` : "") +
-        (p.flavor ? ` / フレーバー: ${p.flavor}` : "") +
+      `- [${series}] ${p.title?.ja} (${p.title?.en}) / ${p.price} / ${p.size || loc(p.weight, "ja")}` +
+        (p.roast ? ` / 焙煎度: ${loc(p.roast, "ja")}` : "") +
+        (p.origin ? ` / 産地: ${loc(p.origin, "ja")}` : "") +
+        (p.process ? ` / 精製方法: ${loc(p.process, "ja")}` : "") +
+        (p.flavorNotes?.ja ? ` / 風味（仕入れ先情報）: ${p.flavorNotes.ja.join("・")}` : "") +
         (p.summary?.ja ? ` / ${p.summary.ja}` : "") +
         (p.isSoldOut ? " / ※売り切れ" : "") +
         (p.comingSoon ? " / ※準備中・注文不可" : "") +
