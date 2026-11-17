@@ -101,6 +101,7 @@ const UI = {
     back: "← 戻る",
     subscriptionOnlyOne: "サブスクは1プランのみ購入できます。通常商品とは分けて決済してください。",
     checkoutInitError: "決済情報の初期化に失敗しました。",
+    checkoutItemUnavailable: "カートに現在販売していない商品が含まれています。カートから削除してから、もう一度お試しください。",
     cardNotReady: "カード入力フォームの準備ができていません。",
     paymentFailed: "決済に失敗しました。",
     subscriptionStartError: "サブスク決済の開始に失敗しました。",
@@ -147,6 +148,7 @@ const UI = {
     back: "← Back",
     subscriptionOnlyOne: "Subscription checkout supports one plan only. Please purchase regular items separately.",
     checkoutInitError: "Failed to initialize checkout.",
+    checkoutItemUnavailable: "Your cart contains an item that is not currently on sale. Please remove it and try again.",
     cardNotReady: "Card form is not ready yet.",
     paymentFailed: "Payment failed.",
     subscriptionStartError: "Failed to start subscription checkout.",
@@ -193,6 +195,7 @@ const UI = {
     back: "← Volver",
     subscriptionOnlyOne: "La suscripción solo admite un plan por compra. Compra los productos normales por separado.",
     checkoutInitError: "No se pudo inicializar el pago.",
+    checkoutItemUnavailable: "Tu carrito contiene un producto que no está a la venta. Elimínalo e inténtalo de nuevo.",
     cardNotReady: "El formulario de tarjeta aún no está listo.",
     paymentFailed: "El pago falló.",
     subscriptionStartError: "No se pudo iniciar la suscripción.",
@@ -476,7 +479,11 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           }
         );
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || t.checkoutInitError);
+        if (!response.ok) {
+          // The server prices the cart from its own catalogue; an item no longer on sale is refused (nothing is charged).
+          const unavailable = ["PRODUCT_NOT_AVAILABLE", "UNKNOWN_PRODUCT", "INVALID_ITEMS"].includes(data.error);
+          throw new Error(unavailable ? t.checkoutItemUnavailable : (data.error || t.checkoutInitError));
+        }
 
         // サーバーが送料を権威的に計算して返す
         if (cancelled) return;

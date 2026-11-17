@@ -10,6 +10,7 @@ const cors = require("cors");
 const nodemailer = require("nodemailer");
 const admin = require("firebase-admin");
 const inventory = require("./inventory");
+const { priceItems, itemsMetadata } = require("./catalog");
 
 const app = express();
 const INVENTORY_ENABLED = process.env.INVENTORY_ENABLED === "true";
@@ -425,34 +426,17 @@ app.post("/create-payment-intent", async (req, res) => {
       return res.status(400).json({ error: "US_SHIPPING_DISABLED" });
     }
 
-    // The legacy checkout remains untouched unless explicitly enabled and seeded.
-    // Prices must be verified on the server; never trust browser cart prices.
-    const CANONICAL_PRODUCTS = {
-      "enma-amarelo-bourbon": { price: 1000, weightG: 120, availableForSale: false },
-      "enma-jimma": { price: 1300, weightG: 120, availableForSale: false },
-      "enma-quequesques": { price: 1300, weightG: 120, availableForSale: false },
-      "enma-andes-blue": { price: 1300, weightG: 120, availableForSale: false },
-      "enma-karamo": { price: 1800, weightG: 120, availableForSale: true },
-      "enma-kindiio": { price: 2050, weightG: 120, availableForSale: true },
-      "mokkan-oku-yame-hojicha": { price: 2800, weightG: 100, availableForSale: false },
-      "mokkan-oku-yame-genmaicha": { price: 2800, weightG: 100, availableForSale: false },
-    };
-    let safeItems = Array.isArray(items) ? items : [];
+    // Prices, weights and what is on sale come from the server catalogue (server/catalog.js), never from the
+    // browser cart: only id and quantity are read from it. Before 2026-11-17 this applied only with inventory on.
+    let safeItems;
+    try {
+      safeItems = priceItems(items);
+    } catch (error) {
+      return res.status(400).json({ error: error.message });
+    }
     let reservationId = null;
-    if (INVENTORY_ENABLED) {
-      if (!INVENTORY_STRIPE_WEBHOOK_SECRET) {
-        return res.status(503).json({ error: "WEBHOOK_NOT_CONFIGURED" });
-      }
-      try {
-        safeItems = inventory.validItems(safeItems).map((item) => {
-          const product = CANONICAL_PRODUCTS[item.id];
-          if (!product) throw new Error("UNKNOWN_PRODUCT");
-          if (!product.availableForSale) throw new Error("PRODUCT_NOT_AVAILABLE");
-          return { ...item, price: product.price, weightG: product.weightG };
-        });
-      } catch (error) {
-        return res.status(400).json({ error: error.message });
-      }
+    if (INVENTORY_ENABLED && !INVENTORY_STRIPE_WEBHOOK_SECRET) {
+      return res.status(503).json({ error: "WEBHOOK_NOT_CONFIGURED" });
     }
 
     let subtotal = safeItems.reduce(
@@ -489,6 +473,7 @@ app.post("/create-payment-intent", async (req, res) => {
           prefecture: prefecture || "",
           countryCode,
           couponCode: couponCode || "",
+          items: itemsMetadata(safeItems),
           ...(reservationId ? { inventoryReservationId: reservationId } : {}),
         },
       });
