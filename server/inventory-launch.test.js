@@ -10,8 +10,8 @@ const { reconcileExpired } = require("./inventory");
 
 test("only counted, packed products are stock-gated; the storefront and the server agree on which", () => {
   const priced = priceItems([{ id: "enma-karamo", quantity: 2 }, { id: "enma-coffee-bag", quantity: 1 }, { id: "woodbox-tea-bag", quantity: 1 }]);
-  assert.deepEqual(managedItems(priced), [{ id: "enma-karamo", quantity: 2 }],
-    "coffee and tea bags have no stock record: gating them would refuse every order for them");
+  assert.deepEqual(managedItems(priced), [{ id: "enma-karamo", quantity: 2 }, { id: "enma-coffee-bag", quantity: 1 }],
+    "the coffee bag is counted stock (CEO 2026-11-17); the hojicha bag has no stock record, gating it would refuse every order");
   const page = fs.readFileSync(path.join(__dirname, "..", "src", "pages", "ProductsPage.jsx"), "utf8");
   const listed = /const INVENTORY_MANAGED_SKUS = new Set\(\[([^\]]*)\]\);/.exec(page)[1].match(/"([a-z0-9-]+)"/g).map((s) => s.slice(1, -1));
   const managed = Object.keys(CATALOG).filter((id) => CATALOG[id].managedStock === true);
@@ -64,4 +64,14 @@ test("reconciliation needs no composite Firestore index and only touches reserva
   assert.equal(filters, 1);
   assert.deepEqual(looked, ["pi_old"], "a checkout still within 20 minutes is left alone");
   assert.deepEqual(results, [{ id: "a0000000-0000-4000-8000-000000000001", action: "pending-reconciliation" }]);
+});
+
+test("the coffee bag: counted with inventory on, and still on sale with inventory off (never stopped by this change)", () => {
+  const { CATALOG: catalog } = require("./catalog");
+  assert.equal(catalog["enma-coffee-bag"].managedStock, true);
+  assert.notEqual(catalog["enma-coffee-bag"].requiresInventory, true, "inventory off must not stop the coffee bag");
+  assert.equal(catalog["enma-coffee-bag"].availableForSale, true);
+  const page = fs.readFileSync(path.join(__dirname, "..", "src", "pages", "ProductsPage.jsx"), "utf8");
+  // With inventory off, a managed product that does not require inventory is shown as on sale ("unmanaged").
+  assert.match(page, /if \(inventoryMode === "disabled"\) return REQUIRES_INVENTORY_SKUS\.has\(item\.id\) \? "comingSoon" : "unmanaged";/);
 });

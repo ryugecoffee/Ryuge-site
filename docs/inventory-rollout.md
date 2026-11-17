@@ -139,8 +139,8 @@ Settings (CEO, production; secrets only in Stripe and Render, never in GitHub or
 server's own Firebase Admin connection (the Firestore of `FIREBASE_PROJECT_ID`, `(default)` database).
 - **Off** (404) unless Render has `INVENTORY_ADMIN_TOKEN` (32+ random characters). The caller sends the same value in
   `X-Inventory-Admin-Token`. Never in GitHub, Vercel or chat. Remove the variable after registration to switch it off.
-- Writes only the 8 stock records the checkout uses: `inventory/{enma-zen-dark-roast, enma-amarelo-bourbon, enma-jimma,
-  enma-quequesques, enma-andes-blue, enma-karamo, enma-kindiio}` and `inventoryLots/brazil-amarelo-bourbon`, each as
+- Writes only the 9 stock records the checkout uses: `inventory/{enma-zen-dark-roast, enma-amarelo-bourbon, enma-jimma,
+  enma-quequesques, enma-andes-blue, enma-karamo, enma-kindiio, enma-coffee-bag}` and `inventoryLots/brazil-amarelo-bourbon`, each as
   `{ ready: <whole number 0–1000>, held: 0, sold: 0 }` (numbers, never text).
 - **Create only, never overwrite.** An existing record is shown in the preview and refused at apply; the whole plan is
   then refused, nothing is written.
@@ -155,3 +155,10 @@ server's own Firebase Admin connection (the Firestore of `FIREBASE_PROJECT_ID`, 
 - Works with `INVENTORY_ENABLED` off: register first, check, then turn inventory on.
 - Later changes to existing stock (corrections, restocking) are not done here. They belong to the Factory route with
   CEO approval (Jennifer), which is to be extended from the sandbox to production.
+
+## Coffee bag stock (2026-11-17)
+`enma-coffee-bag` (8 bags per pack) is counted stock (`managedStock: true`), counted in packs. It is not
+`requiresInventory`: with inventory off it stays on sale exactly as before. With inventory on, checkout reserves it
+and refuses past zero, so `inventory/enma-coffee-bag` must exist before inventory is turned on (or it shows as sold
+out). Register it with the initial stock route (its own preview and approval). The coffee bag subscription is a Stripe
+subscription and is not counted here.
