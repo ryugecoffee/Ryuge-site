@@ -27,9 +27,10 @@ test("checkout reserves only the managed part of the cart, and abandoned holds a
   const source = fs.readFileSync(path.join(__dirname, "index.js"), "utf8");
   const route = source.slice(source.indexOf('app.post("/create-payment-intent"'), source.indexOf('app.post("/calc-shipping"'));
   assert.match(route, /const stockItems = managedItems\(quote\.items\);\n\s+if \(INVENTORY_ENABLED && stockItems\.length\) \{\n\s+reconcileSoon\(\);/);
-  assert.match(route, /reservationId = await inventory\.reserve\(db, stockItems, null, promo\);/);
+  assert.match(route, /reservationId = await inventory\.reserve\(db, stockItems, null, promo, lotItems\(quote\.items\)\);/);
   const availability = source.slice(source.indexOf('app.get("/inventory/availability"'), source.indexOf('app.post("/create-payment-intent"'));
   assert.match(availability, /reconcileSoon\(\);/);
+  assert.match(availability, /inventory\.availability\(db, ids, \(id\) => lotOf\(id\)\)/, "a product of a lot shows what is left in the lot");
   assert.match(source, /if \(INVENTORY_ENABLED\) setInterval\(reconcileSoon, 5 \* 60 \* 1000\)/);
   assert.match(source, /if \(!INVENTORY_ENABLED \|\| reconciling \|\| Date\.now\(\) - lastReconcile < RECONCILE_MIN_INTERVAL_MS\) return;/,
     "at most once a minute, never two at a time");

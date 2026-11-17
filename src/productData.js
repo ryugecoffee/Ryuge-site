@@ -78,13 +78,15 @@ export const PRODUCT_SECTIONS = {
 export const PRODUCT_DATA = {
   enma: [
     {
-      id: "enma-amarelo-bourbon",
+      // Promotional product (CEO 2026-11-17): the Brazil Amarelo Bourbon roasted dark. A separate SKU from the regular
+      // Amarelo Bourbon below; both are roasted from the same green beans and share one lot (server/catalog.js lot).
+      id: "enma-zen-dark-roast",
       image: "/images/enma-brazil.jpg", // 既存の閻魔写真を再利用
       category: "beans",
       size: "100g",
       weight: "100g",
       weightG: 120, // 焙煎豆100g + 袋・梱包の概算値
-      title: { ja: "閻魔　禅の深煎り", en: "ENMA Zen Medium-Dark Roast · Brazil Amarelo Bourbon", es: "ENMA Tueste medio-oscuro Zen · Brasil Amarelo Bourbon" },
+      title: { ja: "閻魔　禅の深煎り（ブラジル）", en: "ENMA Zen Dark Roast (Brazil)", es: "ENMA Tueste oscuro Zen (Brasil)" },
       summary: {
         ja: "生豆入荷済み。ご注文後に焙煎・袋詰めしてお届けします（発送予定日はご注文確認メールでお知らせします）",
         en: "Green beans in stock. Roasted and packed after your order (the shipping date is in your order confirmation).",
@@ -100,11 +102,42 @@ export const PRODUCT_DATA = {
       drying: "Sun-dried",
       price: "¥1,000",
       priceNumber: 1000,
-      roast: { ja: "中深煎り", en: "Medium-Dark Roast", es: "Tueste medio-oscuro" },
-      flavorNotes: { ja: ["ナッツ","ハチミツ","チョコレート"], en: ["Nuts","Honey","Chocolate"], es: ["Frutos secos","Miel","Chocolate"] },
-      comingSoon: false, // CEO 2026-11-17: on sale, 15 bags each as the sales cap (inventory on)
+      roast: { ja: "深煎り", en: "Dark Roast", es: "Tueste oscuro" },
+      // No tasting notes yet for the dark roast: the supplier notes below the regular one are for its own roast.
+      comingSoon: false, // on sale with inventory on (sales cap per product + the shared Brazil lot)
+      requiresInventory: true, // = server/catalog.js requiresInventory: "近日公開" until inventory is on
       promo: true, // promotional bean: at most 2 bags per customer (server/catalog.js promo)
       promotion: { active: true, label: { ja: "プロモ・お一人様2袋まで", en: "Promo · max 2 per customer", es: "Promo · máx. 2 por cliente" } },
+      isSoldOut: false,
+    },
+    {
+      // Regular product (CEO 2026-11-17): the same Brazil beans, medium-dark roast.
+      id: "enma-amarelo-bourbon",
+      image: "/images/enma.jpg", // 既存の閻魔写真を再利用（実商品写真に要差替え）
+      category: "beans",
+      size: "100g",
+      weight: "100g",
+      weightG: 120, // 焙煎豆100g + 袋・梱包の概算値
+      title: { ja: "閻魔　ブラジル アマレロブルボン", en: "ENMA Brazil Amarelo Bourbon", es: "ENMA Brasil Amarelo Bourbon" },
+      summary: {
+        ja: "生豆入荷済み。ご注文後に焙煎・袋詰めしてお届けします（発送予定日はご注文確認メールでお知らせします）",
+        en: "Green beans in stock. Roasted and packed after your order (the shipping date is in your order confirmation).",
+        es: "Granos verdes en stock. Se tuestan y envasan tras tu pedido (la fecha de envío figura en la confirmación del pedido)."
+      },
+      origin: "Vale da Grama (São Paulo) / Campos Altos (Minas Gerais), Brazil",
+      process: "Natural",
+      variety: "Yellow Bourbon (Peaberry)",
+      producer: "Smallholder farmers in Vale da Grama and Campos Altos",
+      altitude: "1,000–1,300m",
+      grade: "NY2/3",
+      arrival: "March 2026",
+      drying: "Sun-dried",
+      price: "¥1,300",
+      priceNumber: 1300,
+      roast: { ja: "中深煎り", en: "Medium-Dark Roast", es: "Tueste medio-oscuro" },
+      flavorNotes: { ja: ["ナッツ","ハチミツ","チョコレート"], en: ["Nuts","Honey","Chocolate"], es: ["Frutos secos","Miel","Chocolate"] },
+      comingSoon: false, // on sale with inventory on (sales cap per product + the shared Brazil lot)
+      requiresInventory: true, // = server/catalog.js requiresInventory: "近日公開" until inventory is on
       isSoldOut: false,
     },
     {
@@ -128,11 +161,12 @@ export const PRODUCT_DATA = {
       grade: "G1",
       arrival: "May 2025",
       drying: "African raised beds",
-      price: "¥1,300",
-      priceNumber: 1300,
+      price: "¥1,500",
+      priceNumber: 1500,
       roast: { ja: "浅煎り", en: "Light Roast", es: "Tueste claro" },
       flavorNotes: { ja: ["シトラス","オレンジ","ハチミツ"], en: ["Citrus","Orange","Honey"], es: ["Cítricos","Naranja","Miel"] },
-      comingSoon: false, // CEO 2026-11-17: on sale, 15 bags each as the sales cap (inventory on)
+      comingSoon: false, // on sale with inventory on (sales cap per product)
+      requiresInventory: true, // = server/catalog.js requiresInventory: "近日公開" until inventory is on
       isSoldOut: false,
     },
     {
@@ -156,11 +190,12 @@ export const PRODUCT_DATA = {
       grade: "SHB",
       arrival: "July 2026",
       drying: "Sun-dried",
-      price: "¥1,300",
-      priceNumber: 1300,
+      price: "¥1,500",
+      priceNumber: 1500,
       roast: { ja: "浅煎り", en: "Light Roast", es: "Tueste claro" },
       flavorNotes: { ja: ["グリーンアップル","シトラス","ブラウンシュガー"], en: ["Green Apple","Citrus","Brown Sugar"], es: ["Manzana verde","Cítricos","Azúcar moreno"] },
-      comingSoon: false, // CEO 2026-11-17: on sale, 15 bags each as the sales cap (inventory on)
+      comingSoon: false, // on sale with inventory on (sales cap per product)
+      requiresInventory: true, // = server/catalog.js requiresInventory: "近日公開" until inventory is on
       isSoldOut: false,
     },
     {
@@ -184,11 +219,12 @@ export const PRODUCT_DATA = {
       grade: "G1",
       arrival: "November 2025",
       drying: "Patio sun-dried",
-      price: "¥1,300",
-      priceNumber: 1300,
+      price: "¥1,500",
+      priceNumber: 1500,
       roast: { ja: "浅煎り", en: "Light Roast", es: "Tueste claro" },
       flavorNotes: { ja: ["シトラス","ナッツ","キャラメル"], en: ["Citrus","Nuts","Caramel"], es: ["Cítricos","Frutos secos","Caramelo"] },
-      comingSoon: false, // CEO 2026-11-17: on sale, 15 bags each as the sales cap (inventory on)
+      comingSoon: false, // on sale with inventory on (sales cap per product)
+      requiresInventory: true, // = server/catalog.js requiresInventory: "近日公開" until inventory is on
       isSoldOut: false,
     },
     {

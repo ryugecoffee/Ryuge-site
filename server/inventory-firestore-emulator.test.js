@@ -271,17 +271,45 @@ test("promotional beans: two simultaneous orders from one customer cannot both p
   const { promoKeys } = require("./promo");
   // Own collection roots (never real data): inventory, reservations and the promo ledger.
   const scoped = { collection: (name) => firestore.collection("emulatorPromoTest_" + name), runTransaction: (fn) => firestore.runTransaction(fn) };
-  await firestore.collection("emulatorPromoTest_inventory").doc("enma-amarelo-bourbon").set({ ready: 15, held: 0, sold: 0 });
+  await firestore.collection("emulatorPromoTest_inventory").doc("enma-zen-dark-roast").set({ ready: 15, held: 0, sold: 0 });
   await firestore.collection("emulatorPromoTest_inventory").doc("enma-jimma").set({ ready: 15, held: 0, sold: 0 });
   const keys = promoKeys({ email: "same@example.com", countryCode: "JP", postalCode: "2480006", address: "鎌倉市小町1-1" });
   const attempts = await Promise.allSettled([1, 2, 3].map(() =>
-    inventory.reserve(scoped, [{ id: "enma-amarelo-bourbon", quantity: 2 }], null, { keys, quantity: 2, limit: 2 })));
+    inventory.reserve(scoped, [{ id: "enma-zen-dark-roast", quantity: 2 }], null, { keys, quantity: 2, limit: 2 })));
   assert.equal(attempts.filter((a) => a.status === "fulfilled").length, 1);
   assert.ok(attempts.filter((a) => a.status === "rejected").every((a) => /PROMO_CUSTOMER_LIMIT/.test(a.reason.message)));
-  const held = (await firestore.collection("emulatorPromoTest_inventory").doc("enma-amarelo-bourbon").get()).data().held;
+  const held = (await firestore.collection("emulatorPromoTest_inventory").doc("enma-zen-dark-roast").get()).data().held;
   assert.equal(held, 2, "only the accepted order holds stock");
   // 15 bags is the cap: 16 cannot be reserved, 15 can.
   await assert.rejects(inventory.reserve(scoped, [{ id: "enma-jimma", quantity: 16 }]), /OUT_OF_STOCK/);
   assert.ok(await inventory.reserve(scoped, [{ id: "enma-jimma", quantity: 15 }]));
   await assert.rejects(inventory.reserve(scoped, [{ id: "enma-jimma", quantity: 1 }]), /OUT_OF_STOCK/);
+});
+
+test("Brazil lot: the regular and the promotional Brazil, ordered at the same moment, never sell more than the lot", { skip }, async () => {
+  const { lotItems, priceItems } = require("./catalog");
+  // Own collection roots (never real data).
+  const scoped = { collection: (name) => firestore.collection("emulatorLotTest_" + name), runTransaction: (fn) => firestore.runTransaction(fn) };
+  // Each product has its own sales cap (10 + 10), but only 12 bags can be roasted from the purchase.
+  await firestore.collection("emulatorLotTest_inventory").doc("enma-zen-dark-roast").set({ ready: 10, held: 0, sold: 0 });
+  await firestore.collection("emulatorLotTest_inventory").doc("enma-amarelo-bourbon").set({ ready: 10, held: 0, sold: 0 });
+  await firestore.collection("emulatorLotTest_inventoryLots").doc("brazil-amarelo-bourbon").set({ ready: 12, held: 0, sold: 0 });
+  const order = (id, quantity) => {
+    const items = priceItems([{ id, quantity }]);
+    return inventory.reserve(scoped, items.map(({ id: sku, quantity: q }) => ({ id: sku, quantity: q })), null, null, lotItems(items));
+  };
+  // 4 + 4 + 4 + 4 bags at once: only 3 orders (12 bags) fit the lot.
+  const attempts = await Promise.allSettled([
+    order("enma-amarelo-bourbon", 4), order("enma-amarelo-bourbon", 4), order("enma-zen-dark-roast", 2), order("enma-zen-dark-roast", 2),
+    order("enma-amarelo-bourbon", 2), order("enma-amarelo-bourbon", 2),
+  ]);
+  const accepted = attempts.filter((a) => a.status === "fulfilled").length;
+  assert.ok(attempts.filter((a) => a.status === "rejected").every((a) => /OUT_OF_STOCK/.test(a.reason.message)));
+  const lot = (await firestore.collection("emulatorLotTest_inventoryLots").doc("brazil-amarelo-bourbon").get()).data();
+  const zen = (await firestore.collection("emulatorLotTest_inventory").doc("enma-zen-dark-roast").get()).data();
+  const regular = (await firestore.collection("emulatorLotTest_inventory").doc("enma-amarelo-bourbon").get()).data();
+  assert.ok(lot.held <= 12, "never more than the lot");
+  assert.equal(lot.held, zen.held + regular.held, "the lot counts both products");
+  assert.ok(accepted >= 1);
+  assert.ok(regular.held <= 10 && zen.held <= 10, "each product keeps its own cap");
 });
