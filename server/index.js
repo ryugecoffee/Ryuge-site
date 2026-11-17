@@ -11,34 +11,42 @@ const nodemailer = require("nodemailer");
 const admin = require("firebase-admin");
 const inventory = require("./inventory");
 const { priceItems, itemsMetadata } = require("./catalog");
+const orders = require("./orders");
 
 const app = express();
 const INVENTORY_ENABLED = process.env.INVENTORY_ENABLED === "true";
 const INVENTORY_STRIPE_WEBHOOK_SECRET = process.env.STRIPE_INVENTORY_WEBHOOK_SECRET;
 
 // Stripe requires the exact raw signed request body, before express.json().
+// Active whenever its signing secret is set: paid orders are recorded (orders/{paymentIntentId}, server/orders.js);
+// stock is settled only with inventory on. Every step is idempotent, so a Stripe resend never writes twice.
+// Stripe events to subscribe: payment_intent.succeeded, payment_intent.canceled, charge.refunded.
 app.post("/stripe-inventory-webhook", express.raw({ type: "application/json" }), async (req, res) => {
-  if (!INVENTORY_ENABLED) return res.status(404).end();
-  if (!INVENTORY_STRIPE_WEBHOOK_SECRET) return res.status(503).json({ error: "WEBHOOK_NOT_CONFIGURED" });
+  if (!INVENTORY_STRIPE_WEBHOOK_SECRET) {
+    return INVENTORY_ENABLED ? res.status(503).json({ error: "WEBHOOK_NOT_CONFIGURED" }) : res.status(404).end();
+  }
   let event;
   try {
     event = stripe.webhooks.constructEvent(req.body, req.headers["stripe-signature"], INVENTORY_STRIPE_WEBHOOK_SECRET);
   } catch {
     return res.status(400).send("Invalid Stripe signature");
   }
-  const intent = event.data.object;
-  const reservationId = intent?.metadata?.inventoryReservationId;
-  if (!reservationId) return res.json({ received: true });
+  const object = event.data.object;
+  const reservationId = object?.metadata?.inventoryReservationId;
   try {
     if (event.type === "payment_intent.succeeded") {
-      await inventory.finish(db, reservationId, intent.id, "paid");
+      // The paid order is kept first, whatever happens to the stock step.
+      await orders.recordPaidOrder(db, stripe, object);
+      if (INVENTORY_ENABLED && reservationId) await inventory.finish(db, reservationId, object.id, "paid");
     } else if (event.type === "payment_intent.canceled") {
-      await inventory.finish(db, reservationId, intent.id, "released");
+      if (INVENTORY_ENABLED && reservationId) await inventory.finish(db, reservationId, object.id, "released");
+    } else if (event.type === "charge.refunded") {
+      await orders.recordRefund(db, object);
     }
     return res.json({ received: true });
   } catch (error) {
-    console.error("Inventory webhook failed:", error.message);
-    // Non-2xx makes Stripe retry rather than silently losing the stock update.
+    console.error("Stripe webhook failed:", event.type, error.message);
+    // Non-2xx makes Stripe retry rather than silently losing the stock update or the order.
     return res.status(500).json({ error: "INVENTORY_WEBHOOK_FAILED" });
   }
 });
@@ -474,6 +482,8 @@ app.post("/create-payment-intent", async (req, res) => {
           countryCode,
           couponCode: couponCode || "",
           items: itemsMetadata(safeItems),
+          subtotal: String(subtotal),
+          shipping: String(shipping),
           ...(reservationId ? { inventoryReservationId: reservationId } : {}),
         },
       });

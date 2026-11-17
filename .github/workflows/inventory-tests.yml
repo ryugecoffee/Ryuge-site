@@ -7,6 +7,8 @@ on:
     paths:
       - 'server/inventory.js'
       - 'server/catalog.js'
+      - 'server/orders.js'
+      - 'server/orders.test.js'
       - 'server/catalog.test.js'
       - 'src/productData.js'
       - 'src/pages/CheckoutPage.jsx'
@@ -49,6 +51,7 @@ jobs:
         run: |
           node --check server/inventory.js
           node --check server/catalog.js
+          node --check server/orders.js
           node --check server/factory-inventory-api.js
           node --check server/factory-inventory-api.test.js
           node --check server/firestore-preview-checkout.js
@@ -66,14 +69,14 @@ jobs:
         run: npm ci --prefix server
       - name: Lint inventory and sandbox payment code
         run: >
-          npx eslint server/inventory.js server/catalog.js server/inventory-adjustments.js
+          npx eslint server/inventory.js server/catalog.js server/orders.js server/inventory-adjustments.js
           server/factory-inventory-api.js server/firestore-preview-checkout.js
           server/sandbox-checkout.js server/staging-entry.js server/resp-client.js server/rate-limit.js
           server/*.test.js
       - name: Build site preview
         run: npm run build
       - name: Unit tests
-        run: node --test server/catalog.test.js server/inventory.test.js server/inventory-scenarios.test.js server/inventory-adjustments.test.js server/firestore-preview-checkout.test.js server/factory-inventory-api.test.js server/rate-limit.test.js
+        run: node --test server/catalog.test.js server/orders.test.js server/inventory.test.js server/inventory-scenarios.test.js server/inventory-adjustments.test.js server/firestore-preview-checkout.test.js server/factory-inventory-api.test.js server/rate-limit.test.js
       - name: Set up Java for Firestore emulator
         uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
