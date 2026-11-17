@@ -10,7 +10,9 @@ const api = require("./factory-refund-api");
 
 const SECRET = "factory-refund-test-secret-0123456789abcdef";
 const CEO = "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b";
-const ENV = { FACTORY_REFUND_API_ENABLED: "true", FACTORY_REFUND_HMAC_SECRET: SECRET, FACTORY_CEO_USER_ID: CEO };
+// The three settings alone are read-only; the refund tests below also switch refund operations on.
+const READ_ONLY_ENV = { FACTORY_REFUND_API_ENABLED: "true", FACTORY_REFUND_HMAC_SECRET: SECRET, FACTORY_CEO_USER_ID: CEO };
+const ENV = { ...READ_ONLY_ENV, FACTORY_REFUND_OPS_ENABLED: "true" };
 const PI = "pi_FactoryOrder0001";
 const RES = "d0000000-0000-4000-8000-000000000001";
 
@@ -108,6 +110,33 @@ test("search and look up orders, with their refunds", async (t) => {
   [s, b] = await call({ op: "orders.get", orderId: PI });
   assert.equal(b.order.amount, 3850);
   assert.deepEqual(b.refunds, []);
+});
+
+test("read-only by default: search and details work; every refund operation is refused before Firestore or Stripe", async (t) => {
+  for (const env of [READ_ONLY_ENV, { ...READ_ONLY_ENV, FACTORY_REFUND_OPS_ENABLED: "TRUE" }, { ...READ_ONLY_ENV, FACTORY_REFUND_OPS_ENABLED: "1" }]) {
+    const { w, call, now } = await server(t, { env });
+    const [s1, found] = await call({ op: "orders.search", query: { email: "hanako@example.com" } });
+    assert.equal(s1, 200);
+    assert.equal(found.orders.length, 1);
+    const [s2, detail] = await call({ op: "orders.get", orderId: PI });
+    assert.equal(s2, 200);
+    assert.equal(detail.order.amount, 3850);
+    const before = JSON.stringify([...w.db.store]);
+    const refused = [
+      { op: "refund.preview", orderId: PI, lines: LINES, refundShipping: false, acknowledgeExternalRefunds: false },
+      { op: "refund.apply", orderId: PI, lines: LINES, refundShipping: false, acknowledgeExternalRefunds: false, planHash: "a".repeat(64), approval: approval(now) },
+      { op: "refund.resume", refundId: crypto.randomUUID() },
+      { op: "refund.status", refundId: crypto.randomUUID() },
+    ];
+    for (const body of refused) assert.deepEqual(await call(body), [403, { error: "REFUND_OPS_DISABLED" }], body.op);
+    assert.equal(JSON.stringify([...w.db.store]), before, "no nonce, refund or stock written");
+    assert.equal(w.stripe.refundsMade.length, 0);
+    assert.equal(w.db.store.get("inventory/enma-karamo").ready, 28);
+    // Still signed first: an unsigned refund request is 401, not a hint about the mode.
+    assert.equal((await call({ op: "refund.preview", orderId: PI, lines: LINES, refundShipping: false, acknowledgeExternalRefunds: false }, { secret: "wrong-secret-0123456789abcdef0123456789" }))[0], 401);
+  }
+  assert.equal(api.refundOpsEnabled(READ_ONLY_ENV), false);
+  assert.equal(api.refundOpsEnabled(ENV), true);
 });
 
 test("signature: wrong secret, tampered body, old or future timestamp are refused before anything is read", async (t) => {

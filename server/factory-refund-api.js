@@ -21,6 +21,10 @@ const APPROVAL_MAX_AGE_MS = 15 * 60 * 1000;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const NONCES = "factoryRefundRequests";
 const MAX_BODY = 8192;
+// Read-only unless refunds are switched on separately: with only the three settings above, Factory can search and
+// look up orders, and every refund operation (preview, apply, resume, status) is refused before anything is touched.
+const READ_ONLY_OPS = new Set(["orders.search", "orders.get"]);
+const refundOpsEnabled = (env) => env.FACTORY_REFUND_OPS_ENABLED === "true";
 
 function enabled(env) {
   return env.FACTORY_REFUND_API_ENABLED === "true" &&
@@ -118,6 +122,8 @@ async function process_({ db, stripe, env, rawBody, timestamp, signature, now })
   if (!enabled(env)) deny("DISABLED");
   if (!verifySignature({ secret: env.FACTORY_REFUND_HMAC_SECRET, timestamp, signature, rawBody, now })) deny("INVALID_FACTORY_SIGNATURE");
   const body = parse(rawBody);
+  // Before the nonce is stored: a refused refund operation leaves no trace in Firestore and never reaches Stripe.
+  if (!READ_ONLY_OPS.has(body.op) && !refundOpsEnabled(env)) deny("REFUND_OPS_DISABLED");
   // One-time nonce: a captured request is refused the second time, whatever it asks.
   try {
     await db.collection(NONCES).doc(body.nonce).create({ op: body.op, at: new Date(now), signedAt: new Date(Number(timestamp)) });
@@ -153,7 +159,7 @@ async function process_({ db, stripe, env, rawBody, timestamp, signature, now })
 }
 
 const STATUS = {
-  INVALID_FACTORY_SIGNATURE: 401, CEO_APPROVAL_REQUIRED: 403, CEO_APPROVAL_EXPIRED: 403, REPLAYED_REQUEST: 409,
+  INVALID_FACTORY_SIGNATURE: 401, REFUND_OPS_DISABLED: 403, CEO_APPROVAL_REQUIRED: 403, CEO_APPROVAL_EXPIRED: 403, REPLAYED_REQUEST: 409,
   BODY_TOO_LARGE: 413, INVALID_JSON: 400, INVALID_FIELDS: 400, INVALID_OPERATION: 400, NONCE_REQUIRED: 400, INVALID_QUERY: 400,
 };
 const REFUND_CONFLICTS = ["PLAN_CHANGED", "EXCEEDS_REMAINING_QUANTITY", "SHIPPING_ALREADY_REFUNDED", "ALREADY_FULLY_REFUNDED",
@@ -183,4 +189,4 @@ function createHandler({ getDb, getStripe, env = process.env, limiter = createRa
   };
 }
 
-module.exports = { PATH, enabled, signatureFor, verifySignature, verifyCeoApproval, createHandler, process: process_ };
+module.exports = { PATH, enabled, refundOpsEnabled, signatureFor, verifySignature, verifyCeoApproval, createHandler, process: process_ };
