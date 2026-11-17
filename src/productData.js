@@ -86,9 +86,9 @@ export const PRODUCT_DATA = {
       weightG: 120, // 焙煎豆100g + 袋・梱包の概算値
       title: { ja: "閻魔　禅の深煎り", en: "ENMA Zen Medium-Dark Roast · Brazil Amarelo Bourbon", es: "ENMA Tueste medio-oscuro Zen · Brasil Amarelo Bourbon" },
       summary: {
-        ja: "仕入れ済み・入荷と焙煎の準備中",
-        en: "Purchased; awaiting arrival and roasting.",
-        es: "Comprado; pendiente de llegada y tueste."
+        ja: "生豆入荷済み。ご注文後に焙煎・袋詰めしてお届けします（発送予定日はご注文確認メールでお知らせします）",
+        en: "Green beans in stock. Roasted and packed after your order (the shipping date is in your order confirmation).",
+        es: "Granos verdes en stock. Se tuestan y envasan tras tu pedido (la fecha de envío figura en la confirmación del pedido)."
       },
       origin: "Vale da Grama (São Paulo) / Campos Altos (Minas Gerais), Brazil",
       process: "Natural",
@@ -102,7 +102,9 @@ export const PRODUCT_DATA = {
       priceNumber: 1000,
       roast: { ja: "中深煎り", en: "Medium-Dark Roast", es: "Tueste medio-oscuro" },
       flavorNotes: { ja: ["ナッツ","ハチミツ","チョコレート"], en: ["Nuts","Honey","Chocolate"], es: ["Frutos secos","Miel","Chocolate"] },
-      comingSoon: true,
+      comingSoon: false, // CEO 2026-11-17: on sale, 15 bags each as the sales cap (inventory on)
+      promo: true, // promotional bean: at most 2 bags per customer (server/catalog.js promo)
+      promotion: { active: true, label: { ja: "プロモ・お一人様2袋まで", en: "Promo · max 2 per customer", es: "Promo · máx. 2 por cliente" } },
       isSoldOut: false,
     },
     {
@@ -114,9 +116,9 @@ export const PRODUCT_DATA = {
       weightG: 120, // 焙煎豆100g + 袋・梱包の概算値
       title: { ja: "閻魔　エチオピア ジンマ", en: "ENMA Ethiopia Jimma", es: "ENMA Etiopía Jimma" },
       summary: {
-        ja: "仕入れ済み・入荷と焙煎の準備中",
-        en: "Purchased; awaiting arrival and roasting.",
-        es: "Comprado; pendiente de llegada y tueste."
+        ja: "生豆入荷済み。ご注文後に焙煎・袋詰めしてお届けします（発送予定日はご注文確認メールでお知らせします）",
+        en: "Green beans in stock. Roasted and packed after your order (the shipping date is in your order confirmation).",
+        es: "Granos verdes en stock. Se tuestan y envasan tras tu pedido (la fecha de envío figura en la confirmación del pedido)."
       },
       origin: "Gera Village, Jimma, Oromia, Ethiopia",
       process: "Washed",
@@ -130,7 +132,7 @@ export const PRODUCT_DATA = {
       priceNumber: 1300,
       roast: { ja: "浅煎り", en: "Light Roast", es: "Tueste claro" },
       flavorNotes: { ja: ["シトラス","オレンジ","ハチミツ"], en: ["Citrus","Orange","Honey"], es: ["Cítricos","Naranja","Miel"] },
-      comingSoon: true,
+      comingSoon: false, // CEO 2026-11-17: on sale, 15 bags each as the sales cap (inventory on)
       isSoldOut: false,
     },
     {
@@ -142,9 +144,9 @@ export const PRODUCT_DATA = {
       weightG: 120, // 焙煎豆100g + 袋・梱包の概算値
       title: { ja: "閻魔　グアテマラ ケケスケス", en: "ENMA Guatemala Quequesques", es: "ENMA Guatemala Quequesques" },
       summary: {
-        ja: "仕入れ済み・入荷と焙煎の準備中",
-        en: "Purchased; awaiting arrival and roasting.",
-        es: "Comprado; pendiente de llegada y tueste."
+        ja: "生豆入荷済み。ご注文後に焙煎・袋詰めしてお届けします（発送予定日はご注文確認メールでお知らせします）",
+        en: "Green beans in stock. Roasted and packed after your order (the shipping date is in your order confirmation).",
+        es: "Granos verdes en stock. Se tuestan y envasan tras tu pedido (la fecha de envío figura en la confirmación del pedido)."
       },
       origin: "San Juan Sacatepéquez, Guatemala",
       process: "Washed",
@@ -158,7 +160,7 @@ export const PRODUCT_DATA = {
       priceNumber: 1300,
       roast: { ja: "浅煎り", en: "Light Roast", es: "Tueste claro" },
       flavorNotes: { ja: ["グリーンアップル","シトラス","ブラウンシュガー"], en: ["Green Apple","Citrus","Brown Sugar"], es: ["Manzana verde","Cítricos","Azúcar moreno"] },
-      comingSoon: true,
+      comingSoon: false, // CEO 2026-11-17: on sale, 15 bags each as the sales cap (inventory on)
       isSoldOut: false,
     },
     {
@@ -170,9 +172,9 @@ export const PRODUCT_DATA = {
       weightG: 120, // 焙煎豆100g + 袋・梱包の概算値
       title: { ja: "閻魔　ペルー アンデスブルー", en: "ENMA Peru Andes Blue", es: "ENMA Perú Andes Blue" },
       summary: {
-        ja: "仕入れ済み・入荷と焙煎の準備中",
-        en: "Purchased; awaiting arrival and roasting.",
-        es: "Comprado; pendiente de llegada y tueste."
+        ja: "生豆入荷済み。ご注文後に焙煎・袋詰めしてお届けします（発送予定日はご注文確認メールでお知らせします）",
+        en: "Green beans in stock. Roasted and packed after your order (the shipping date is in your order confirmation).",
+        es: "Granos verdes en stock. Se tuestan y envasan tras tu pedido (la fecha de envío figura en la confirmación del pedido)."
       },
       origin: "La Capilla, Cutervo, Cajamarca, Peru",
       process: "Washed",
@@ -186,7 +188,7 @@ export const PRODUCT_DATA = {
       priceNumber: 1300,
       roast: { ja: "浅煎り", en: "Light Roast", es: "Tueste claro" },
       flavorNotes: { ja: ["シトラス","ナッツ","キャラメル"], en: ["Citrus","Nuts","Caramel"], es: ["Cítricos","Frutos secos","Caramelo"] },
-      comingSoon: true,
+      comingSoon: false, // CEO 2026-11-17: on sale, 15 bags each as the sales cap (inventory on)
       isSoldOut: false,
     },
     {

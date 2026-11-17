@@ -481,7 +481,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
         const response = await fetch(`${PAYMENT_API_BASE}/create-payment-intent`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...quoteRequest, email, name, address: finalAddress }),
+          body: JSON.stringify({ ...quoteRequest, email, name, address: finalAddress, postalCode: isInternational ? intlPostalCode : postalCode }),
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {

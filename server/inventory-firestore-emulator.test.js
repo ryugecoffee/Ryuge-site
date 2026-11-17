@@ -266,3 +266,22 @@ test("paid order records: a Stripe resend, even concurrent, writes one order on 
   assert.equal(snapshot.size, 1);
   assert.deepEqual(snapshot.docs[0].data().items, [{ id: "enma-karamo", quantity: 1, unitPrice: 1800 }]);
 });
+
+test("promotional beans: two simultaneous orders from one customer cannot both pass; the 15-bag cap holds", { skip }, async () => {
+  const { promoKeys } = require("./promo");
+  // Own collection roots (never real data): inventory, reservations and the promo ledger.
+  const scoped = { collection: (name) => firestore.collection("emulatorPromoTest_" + name), runTransaction: (fn) => firestore.runTransaction(fn) };
+  await firestore.collection("emulatorPromoTest_inventory").doc("enma-amarelo-bourbon").set({ ready: 15, held: 0, sold: 0 });
+  await firestore.collection("emulatorPromoTest_inventory").doc("enma-jimma").set({ ready: 15, held: 0, sold: 0 });
+  const keys = promoKeys({ email: "same@example.com", countryCode: "JP", postalCode: "2480006", address: "鎌倉市小町1-1" });
+  const attempts = await Promise.allSettled([1, 2, 3].map(() =>
+    inventory.reserve(scoped, [{ id: "enma-amarelo-bourbon", quantity: 2 }], null, { keys, quantity: 2, limit: 2 })));
+  assert.equal(attempts.filter((a) => a.status === "fulfilled").length, 1);
+  assert.ok(attempts.filter((a) => a.status === "rejected").every((a) => /PROMO_CUSTOMER_LIMIT/.test(a.reason.message)));
+  const held = (await firestore.collection("emulatorPromoTest_inventory").doc("enma-amarelo-bourbon").get()).data().held;
+  assert.equal(held, 2, "only the accepted order holds stock");
+  // 15 bags is the cap: 16 cannot be reserved, 15 can.
+  await assert.rejects(inventory.reserve(scoped, [{ id: "enma-jimma", quantity: 16 }]), /OUT_OF_STOCK/);
+  assert.ok(await inventory.reserve(scoped, [{ id: "enma-jimma", quantity: 15 }]));
+  await assert.rejects(inventory.reserve(scoped, [{ id: "enma-jimma", quantity: 1 }]), /OUT_OF_STOCK/);
+});
