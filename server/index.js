@@ -13,6 +13,8 @@ const { itemsMetadata, managedItems, lotOf, lotItems } = require("./catalog");
 const { quoteOrder, QuoteError, COUPONS, CONTACT_EMAIL, PROMO_MAX_BAGS } = require("./quote");
 const { promoKeys } = require("./promo");
 const orders = require("./orders");
+const initialStock = require("./initial-stock");
+const { createRateLimiter, clientKey } = require("./rate-limit");
 
 const app = express();
 const INVENTORY_ENABLED = process.env.INVENTORY_ENABLED === "true";
@@ -397,6 +399,41 @@ app.post("/inventory/reconcile", async (req, res) => {
   } catch (error) {
     console.error("Inventory reconciliation failed:", error.message);
     return res.status(500).json({ error: "RECONCILIATION_FAILED" });
+  }
+});
+
+// One-time initial stock registration (server/initial-stock.js): preview, then apply after the CEO approved that
+// preview. Off (404) unless INVENTORY_ADMIN_TOKEN is set on Render; the caller sends it in X-Inventory-Admin-Token.
+// Works with inventory off, creates missing stock records only, never overwrites one.
+const initialStockLimit = createRateLimiter({ limit: 10, windowMs: 60 * 1000 });
+app.post("/internal/inventory/initial-stock", async (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  const token = process.env.INVENTORY_ADMIN_TOKEN;
+  if (!token || token.length < 32) return res.status(404).end();
+  if (!initialStockLimit(clientKey(req).key)) return res.status(429).json({ error: "RATE_LIMITED" });
+  const supplied = req.headers["x-inventory-admin-token"];
+  const digest = (value) => require("node:crypto").createHash("sha256").update(String(value)).digest();
+  if (typeof supplied !== "string" || !require("node:crypto").timingSafeEqual(digest(token), digest(supplied))) {
+    return res.status(403).json({ error: "FORBIDDEN" });
+  }
+  const projectId = process.env.FIREBASE_PROJECT_ID || "";
+  const { mode, plan, planHash, approval, expectedProjectId } = req.body || {};
+  try {
+    if (mode === "preview") return res.json(await initialStock.previewInitialStock(db, plan, { projectId }));
+    if (mode === "apply") {
+      const result = await initialStock.applyInitialStock(db, plan, { projectId, expectedProjectId, planHash, approval });
+      console.log("Initial stock:", JSON.stringify({ applied: result.applied, created: result.created }));
+      return res.json({ projectId, ...result });
+    }
+    return res.status(400).json({ error: "INVALID_MODE" });
+  } catch (error) {
+    const known = ["INVALID_PLAN", "UNKNOWN_STOCK_RECORD", "INVALID_QUANTITY", "PROJECT_MISMATCH", "PLAN_HASH_REQUIRED",
+      "APPROVAL_REQUIRED", "PLAN_CHANGED", "ALREADY_EXISTS"];
+    if (known.includes(error.message)) {
+      return res.status(["PLAN_CHANGED", "ALREADY_EXISTS"].includes(error.message) ? 409 : 400).json({ error: error.message });
+    }
+    console.error("Initial stock failed:", error.message);
+    return res.status(500).json({ error: "INITIAL_STOCK_FAILED" });
   }
 });
 

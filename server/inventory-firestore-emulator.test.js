@@ -313,3 +313,24 @@ test("Brazil lot: the regular and the promotional Brazil, ordered at the same mo
   assert.ok(accepted >= 1);
   assert.ok(regular.held <= 10 && zen.held <= 10, "each product keeps its own cap");
 });
+
+test("initial stock: real transactions — two applies at once create each record once; an existing record is never touched", { skip }, async () => {
+  const { previewInitialStock, applyInitialStock } = require("./initial-stock");
+  // Own collection roots (never real data).
+  const scoped = { collection: (name) => firestore.collection("emulatorInitialStock_" + name), runTransaction: (fn) => firestore.runTransaction(fn) };
+  await firestore.collection("emulatorInitialStock_inventory").doc("enma-karamo").set({ ready: 15, held: 2, sold: 3 });
+  const plan = { "inventory/enma-jimma": 15, "inventoryLots/brazil-amarelo-bourbon": 12 };
+  const { planHash, refused } = await previewInitialStock(scoped, plan, { projectId: "demo-ryuge-inventory" });
+  assert.deepEqual(refused, []);
+  const opts = { projectId: "demo-ryuge-inventory", expectedProjectId: "demo-ryuge-inventory", planHash, approval: "CEO承認（エミュレーター）" };
+  const results = await Promise.allSettled([applyInitialStock(scoped, plan, opts), applyInitialStock(scoped, plan, opts)]);
+  const applied = results.filter((r) => r.status === "fulfilled" && r.value.applied).length;
+  assert.equal(applied, 1, "exactly one apply wrote");
+  for (const r of results) if (r.status === "rejected") assert.match(r.reason.message, /PLAN_CHANGED|ALREADY_EXISTS/);
+  const jimma = (await firestore.collection("emulatorInitialStock_inventory").doc("enma-jimma").get()).data();
+  assert.deepEqual([jimma.ready, jimma.held, jimma.sold], [15, 0, 0]);
+  const karamo = (await firestore.collection("emulatorInitialStock_inventory").doc("enma-karamo").get()).data();
+  assert.deepEqual(karamo, { ready: 15, held: 2, sold: 3 }, "untouched");
+  const logs = await firestore.collection("emulatorInitialStock_inventoryInitialStock").get();
+  assert.equal(logs.size, 1);
+});
