@@ -26,7 +26,8 @@ const CATALOG = Object.freeze({
   "enma-andes-blue": { price: 1500, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true, requiresInventory: true },
   "enma-karamo": { price: 1800, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true },
   "enma-kindiio": { price: 2050, weightG: 120, kind: "beans", contentG: 100, availableForSale: true, managedStock: true },
-  "enma-coffee-bag": { price: 2400, weightG: 100, kind: "bag", contentG: 100, availableForSale: true },
+  // CEO 2026-11-17: counted stock (20 packs of 8). Managed, but not requiresInventory: still sold while inventory is off.
+  "enma-coffee-bag": { price: 2400, weightG: 100, kind: "bag", contentG: 100, availableForSale: true, managedStock: true },
   "woodbox-tea-bag": { price: 2800, weightG: 120, kind: "tea", contentG: 100, availableForSale: true },
   "woodbox-geisha": { price: 2600, weightG: 170, kind: "beans", contentG: 100, availableForSale: false },
   "woodbox-ecuador": { price: 3000, weightG: 170, kind: "beans", contentG: 100, availableForSale: false },
