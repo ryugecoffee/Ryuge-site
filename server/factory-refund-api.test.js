@@ -18,12 +18,12 @@ function fakeFirestore(initial) {
   const store = new Map(Object.entries(initial).map(([k, v]) => [k, structuredClone(v)]));
   const snap = (key) => ({ id: key.split("/").pop(), exists: store.has(key), data: () => structuredClone(store.get(key)) });
   const query = (name, filters = [], order = null, max = 1000) => ({
-    where: (f, op, v) => query(name, [...filters, [f, v]], order, max),
+    where: (f, op, v) => query(name, [...filters, [f, op, v]], order, max),
     orderBy: (f, dir) => query(name, filters, [f, dir], max),
     limit: (n) => query(name, filters, order, n),
     get: async () => {
       let docs = [...store.keys()].filter((k) => k.startsWith(name + "/")).map(snap);
-      docs = docs.filter((d) => filters.every(([f, v]) => f.split(".").reduce((o, p) => o?.[p], d.data()) === v));
+      docs = docs.filter((d) => filters.every(([f, op, v]) => { const got = f.split(".").reduce((o, p) => o?.[p], d.data()); return op === "in" ? v.includes(got) : got === v; }));
       return { docs: docs.slice(0, max) };
     },
   });
@@ -98,7 +98,9 @@ test("off by default: no flag, short secret or no CEO id -> 404 and nothing runs
 
 test("search and look up orders, with their refunds", async (t) => {
   const { call } = await server(t);
-  let [s, b] = await call({ op: "orders.search", query: { email: "Hanako@example.com" } });
+  let [s, b] = await call({ op: "orders.search", query: { email: "Hanako@Example.com" } });
+  assert.equal(b.orders[0]?.orderId, PI, "found whatever the case of the address typed");
+  [s, b] = await call({ op: "orders.search", query: { email: "hanako@example.com" } });
   assert.equal(s, 200);
   assert.equal(b.orders[0].orderId, PI);
   [s, b] = await call({ op: "orders.search", query: { orderId: PI } });

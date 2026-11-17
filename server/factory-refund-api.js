@@ -102,10 +102,12 @@ async function searchOrders(db, query = {}) {
   const limit = Math.min(Math.max(Number.isSafeInteger(query.limit) ? query.limit : 20, 1), 50);
   let docs;
   if (query.email) {
-    const email = String(query.email).trim().toLowerCase();
-    if (!/^[^@\s]{1,100}@[^@\s]{1,150}$/.test(email)) deny("INVALID_QUERY");
-    // Equality only: no composite index needed. Newest first, sorted here.
-    docs = (await db.collection("orders").where("customer.email", "==", email).limit(50).get()).docs;
+    const typed = String(query.email).trim();
+    if (!/^[^@\s]{1,100}@[^@\s]{1,150}$/.test(typed)) deny("INVALID_QUERY");
+    // The email as Stripe stored it may differ in case: both spellings. Equality only (no composite index needed);
+    // newest first, sorted here.
+    const spellings = [...new Set([typed, typed.toLowerCase()])];
+    docs = (await db.collection("orders").where("customer.email", "in", spellings).limit(50).get()).docs;
   } else {
     docs = (await db.collection("orders").orderBy("paidAt", "desc").limit(limit).get()).docs;
   }
