@@ -259,3 +259,18 @@ test("wiring: the refund route is off without its own token; the webhook syncs r
   assert.doesNotMatch(webhook, /recordRefund/);
   assert.ok(source.indexOf("app.use(express.json());") < source.indexOf('app.post("/internal/orders/refund"'), "JSON body parsed before the route");
 });
+
+test("a refund Stripe fails after it had succeeded: kept, stock not taken back automatically, flagged once for review", async () => {
+  const w = world();
+  const { result } = await approve(w, { lines: [{ id: "enma-jimma", quantity: 1, shipped: false }] });
+  assert.equal(result.status, "refunded");
+  assert.deepEqual(stock(w, "inventory/enma-jimma"), { ready: 15, held: 0, sold: 0 });
+  w.stripe.state.refunds[0].status = "failed"; // Stripe: charge.refund.updated, status failed
+  await refunds.syncRefunds(w.db, w.stripe, PI);
+  await refunds.syncRefunds(w.db, w.stripe, PI);
+  const audit = w.db.store.get(`orderRefunds/${result.refundId}`);
+  assert.equal(audit.stripeFailedAfterSettle, "failed");
+  assert.equal(audit.transitions.filter((t) => t.status === "stripe_failed_after_settle").length, 1, "flagged once");
+  assert.equal(order(w).needsReview, true);
+  assert.deepEqual(stock(w, "inventory/enma-jimma"), { ready: 15, held: 0, sold: 0 }, "no automatic stock change");
+});
