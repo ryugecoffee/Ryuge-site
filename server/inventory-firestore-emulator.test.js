@@ -334,3 +334,43 @@ test("initial stock: real transactions — two applies at once create each recor
   const logs = await firestore.collection("emulatorInitialStock_inventoryInitialStock").get();
   assert.equal(logs.size, 1);
 });
+
+test("refunds: two approvals of one preview at once refund once; the apply and the webhook settling together restock once", { skip }, async () => {
+  const refunds = require("./refunds");
+  const scoped = { collection: (name) => firestore.collection("emulatorRefund_" + name), runTransaction: (fn) => firestore.runTransaction(fn) };
+  const PI = "pi_EmulatorRefund01";
+  const RES = "c0000000-0000-4000-8000-000000000001";
+  await firestore.collection("emulatorRefund_orders").doc(PI).set({ status: "paid", amount: 3850, subtotal: 3600, shipping: 250, livemode: false,
+    items: [{ id: "enma-karamo", quantity: 2, unitPrice: 1800 }], inventoryReservationId: RES });
+  await firestore.collection("emulatorRefund_inventoryReservations").doc(RES).set({ status: "paid", items: [{ id: "enma-karamo", quantity: 2 }] });
+  await firestore.collection("emulatorRefund_inventory").doc("enma-karamo").set({ ready: 28, held: 0, sold: 2 });
+  const made = [];
+  const stripe = {
+    paymentIntents: { retrieve: async (id) => ({ id, status: "succeeded", latest_charge: { id: "ch", amount: 3850, amount_captured: 3850, amount_refunded: made.reduce((s, r) => s + r.amount, 0) } }) },
+    refunds: {
+      create: async (params, opts) => {
+        const prior = made.find((r) => r.key === opts.idempotencyKey);
+        if (prior) return prior;
+        const r = { id: "re_" + made.length, key: opts.idempotencyKey, amount: params.amount, status: "succeeded", metadata: params.metadata, payment_intent: params.payment_intent };
+        made.push(r);
+        return r;
+      },
+      list: async () => ({ data: made }),
+    },
+  };
+  const input = { orderId: PI, lines: [{ id: "enma-karamo", quantity: 2, shipped: false }], refundShipping: true };
+  const p = await refunds.previewRefund(scoped, stripe, input);
+  const opts = { planHash: p.planHash, approval: "CEO承認（エミュレーター）", actor: "test:ceo" };
+  const both = await Promise.allSettled([refunds.applyRefund(scoped, stripe, input, opts), refunds.applyRefund(scoped, stripe, input, opts)]);
+  assert.equal(both.filter((r) => r.status === "fulfilled" && r.value.status === "refunded").length, 1, "one approval went through");
+  for (const r of both) if (r.status === "rejected") assert.match(r.reason.message, /PLAN_CHANGED|EXCEEDS_REMAINING_QUANTITY|SHIPPING_ALREADY_REFUNDED/);
+  assert.equal(made.length, 1, "Stripe refunded once");
+  // The webhook settles the same refund again, twice and concurrently: nothing more happens.
+  await Promise.all([refunds.syncRefunds(scoped, stripe, PI), refunds.syncRefunds(scoped, stripe, PI)]);
+  const karamo = (await firestore.collection("emulatorRefund_inventory").doc("enma-karamo").get()).data();
+  assert.deepEqual(karamo, { ready: 30, held: 0, sold: 0 }, "restocked exactly once");
+  const order = (await firestore.collection("emulatorRefund_orders").doc(PI).get()).data();
+  assert.equal(order.status, "refunded");
+  assert.equal(order.amountRefunded, 3850);
+  assert.deepEqual(order.refundLedger.external, {});
+});
