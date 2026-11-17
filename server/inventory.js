@@ -104,15 +104,21 @@ async function availability(db, ids) {
 }
 
 
+const asDate = (value) => (value && typeof value.toDate === "function" ? value.toDate() : new Date(value));
+
 async function reconcileExpired(db, stripe, limit = 30) {
   const cutoff = new Date(Date.now() - 20 * 60 * 1000);
+  // Equality on status only: no composite index is needed in production Firestore (status + createdAt would need
+  // one, and without it the query fails). Open reservations are few (checkouts in progress), so age is checked here.
   const snapshot = await db.collection("inventoryReservations")
     .where("status", "==", "reserved")
-    .where("createdAt", "<", cutoff)
-    .limit(Math.min(Math.max(limit, 1), 50))
+    .limit(500)
     .get();
+  const stale = snapshot.docs
+    .filter((doc) => asDate(doc.data().createdAt) < cutoff)
+    .slice(0, Math.min(Math.max(limit, 1), 50));
   const results = [];
-  for (const doc of snapshot.docs) {
+  for (const doc of stale) {
     const reservation = doc.data();
     if (!reservation.paymentIntentId) {
       results.push({ id: doc.id, action: "manual-review-missing-intent" });

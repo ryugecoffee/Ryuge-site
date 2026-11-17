@@ -9,6 +9,7 @@ on:
       - 'server/catalog.js'
       - 'server/orders.js'
       - 'server/orders.test.js'
+      - 'server/inventory-launch.test.js'
       - 'server/catalog.test.js'
       - 'src/productData.js'
       - 'src/pages/CheckoutPage.jsx'
@@ -76,7 +77,7 @@ jobs:
       - name: Build site preview
         run: npm run build
       - name: Unit tests
-        run: node --test server/catalog.test.js server/orders.test.js server/inventory.test.js server/inventory-scenarios.test.js server/inventory-adjustments.test.js server/firestore-preview-checkout.test.js server/factory-inventory-api.test.js server/rate-limit.test.js
+        run: node --test server/catalog.test.js server/orders.test.js server/inventory-launch.test.js server/inventory.test.js server/inventory-scenarios.test.js server/inventory-adjustments.test.js server/firestore-preview-checkout.test.js server/factory-inventory-api.test.js server/rate-limit.test.js
       - name: Set up Java for Firestore emulator
         uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:

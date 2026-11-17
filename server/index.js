@@ -10,7 +10,7 @@ const cors = require("cors");
 const nodemailer = require("nodemailer");
 const admin = require("firebase-admin");
 const inventory = require("./inventory");
-const { priceItems, itemsMetadata } = require("./catalog");
+const { priceItems, itemsMetadata, managedItems } = require("./catalog");
 const orders = require("./orders");
 
 const app = express();
@@ -393,6 +393,24 @@ app.get("/", (req, res) => {
   res.send("Ryuge server is running");
 });
 
+// Reservations of abandoned checkouts are settled from Stripe's state (inventory.reconcileExpired: paid -> sold,
+// canceled -> released, still unpaid after 20 minutes -> canceled at Stripe first, then released). No external
+// scheduler is needed: it runs in the background when stock is looked at or reserved (at most once a minute) and
+// every 5 minutes while the server is awake. It never delays the customer's request.
+const RECONCILE_MIN_INTERVAL_MS = 60 * 1000;
+let lastReconcile = 0;
+let reconciling = false;
+function reconcileSoon() {
+  if (!INVENTORY_ENABLED || reconciling || Date.now() - lastReconcile < RECONCILE_MIN_INTERVAL_MS) return;
+  reconciling = true;
+  lastReconcile = Date.now();
+  inventory.reconcileExpired(db, stripe, 30)
+    .then((results) => { if (results.length) console.log("Inventory reconciliation:", JSON.stringify(results)); })
+    .catch((error) => console.error("Inventory reconciliation failed:", error.message))
+    .finally(() => { reconciling = false; });
+}
+if (INVENTORY_ENABLED) setInterval(reconcileSoon, 5 * 60 * 1000).unref?.();
+
 app.post("/inventory/reconcile", async (req, res) => {
   if (!INVENTORY_ENABLED) return res.status(404).end();
   const token = process.env.INVENTORY_RECONCILE_TOKEN;
@@ -413,6 +431,7 @@ app.post("/inventory/reconcile", async (req, res) => {
 
 app.get("/inventory/availability", async (req, res) => {
   if (!INVENTORY_ENABLED) return res.json({ enabled: false });
+  reconcileSoon();
   try {
     const ids = String(req.query.ids || "").split(",").filter(Boolean);
     const quantities = await inventory.availability(db, ids);
@@ -463,9 +482,11 @@ app.post("/create-payment-intent", async (req, res) => {
     shipping = afterCoupon.shipping;
     const total = subtotal + shipping;
 
-    if (INVENTORY_ENABLED) {
+    const stockItems = managedItems(safeItems);
+    if (INVENTORY_ENABLED && stockItems.length) {
+      reconcileSoon();
       try {
-        reservationId = await inventory.reserve(db, safeItems);
+        reservationId = await inventory.reserve(db, stockItems);
       } catch (error) {
         return res.status(error.message === "OUT_OF_STOCK" ? 409 : 400).json({ error: error.message });
       }

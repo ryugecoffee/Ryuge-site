@@ -78,3 +78,24 @@ npx firebase-tools@13.35.1 emulators:exec --only firestore --project demo-ryuge-
 - Legacy one-shot smoke runners that wrote to official collections were removed.
 - Pending: nodemailer (<=10.1.3, unused `raw` option advisory) and firebase-admin 13 transitive advisories need
   major upgrades with regression tests.
+
+## Production launch checklist (2026-11-17)
+Code (PRs #5 → #6 → #7):
+- #5 Every one-time checkout is priced from `server/catalog.js` (inventory on or off); only id and quantity come from
+  the browser.
+- #6 Paid orders are recorded in `orders/{paymentIntentId}` from the signed Stripe event (refunds too), whenever
+  `STRIPE_INVENTORY_WEBHOOK_SECRET` is set.
+- #7 Only products with `managedStock: true` (= `INVENTORY_MANAGED_SKUS` in the storefront) are stock-gated. Abandoned
+  holds are reconciled in the background (on stock look-ups and checkouts, at most once a minute, and every 5 minutes):
+  no external scheduler, and no composite Firestore index is needed.
+
+Settings (CEO, production; secrets only in Stripe and Render, never in GitHub or chat):
+1. Stripe (live): webhook endpoint `https://ryuge-site.onrender.com/stripe-inventory-webhook` with
+   `payment_intent.succeeded`, `payment_intent.canceled`, `charge.refunded`.
+2. Render (production): `STRIPE_INVENTORY_WEBHOOK_SECRET` = that endpoint's signing secret. Orders start being
+   recorded; stock gating stays off.
+3. Firestore (production): `inventory/{sku}` = `{ ready: <packed, unsold bags counted by the CEO>, held: 0, sold: 0 }`
+   for every managed product. Never from green-bean weight. The provisional `enma-karamo = 15` must be replaced by the
+   real count.
+4. Render (production): `INVENTORY_ENABLED=true` (stock gating on). Check `/inventory/availability?ids=…` shows the
+   counted numbers, then a real purchase of one bag.

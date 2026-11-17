@@ -34,6 +34,7 @@ const PAGE_TEXT = {
 
 // Temporary checkout preview handles only these two stocked coffee SKUs.
 // Do not infer "sold out" for untracked products from a missing API quantity.
+// Must equal the products with managedStock: true in server/catalog.js (a server test checks it).
 const INVENTORY_MANAGED_SKUS = new Set(["enma-karamo", "enma-kindiio"]);
 
 const STOCK_CHECK_TEXT = {

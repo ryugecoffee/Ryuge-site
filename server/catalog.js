@@ -5,6 +5,8 @@
 // production (inventory off) charged whatever price the browser sent, and a browser-sent `category: "subscription"`
 // made domestic shipping free. Keep in step with src/productData.js (a test checks the two agree).
 // availableForSale: false keeps "coming soon" and archived products unpurchasable even if a cart still holds them.
+// managedStock: true = sold from counted, packed bags (inventory/{sku}); with inventory on, checkout reserves them and
+// refuses past zero. Others are not stock-gated. Must equal INVENTORY_MANAGED_SKUS in src/pages/ProductsPage.jsx.
 const { validItems } = require("./inventory");
 
 const CATALOG = Object.freeze({
@@ -12,8 +14,8 @@ const CATALOG = Object.freeze({
   "enma-jimma": { price: 1300, weightG: 120, availableForSale: false },
   "enma-quequesques": { price: 1300, weightG: 120, availableForSale: false },
   "enma-andes-blue": { price: 1300, weightG: 120, availableForSale: false },
-  "enma-karamo": { price: 1800, weightG: 120, availableForSale: true },
-  "enma-kindiio": { price: 2050, weightG: 120, availableForSale: true },
+  "enma-karamo": { price: 1800, weightG: 120, availableForSale: true, managedStock: true },
+  "enma-kindiio": { price: 2050, weightG: 120, availableForSale: true, managedStock: true },
   "enma-coffee-bag": { price: 2400, weightG: 100, availableForSale: true },
   "woodbox-tea-bag": { price: 2800, weightG: 120, availableForSale: true },
   "woodbox-geisha": { price: 2600, weightG: 170, availableForSale: false },
@@ -41,4 +43,9 @@ function itemsMetadata(items) {
   return value;
 }
 
-module.exports = { CATALOG, priceItems, itemsMetadata };
+// The part of a priced cart that is sold from counted stock (what checkout reserves with inventory on).
+function managedItems(items, catalog = CATALOG) {
+  return items.filter(({ id }) => catalog[id]?.managedStock === true).map(({ id, quantity }) => ({ id, quantity }));
+}
+
+module.exports = { CATALOG, priceItems, itemsMetadata, managedItems };
