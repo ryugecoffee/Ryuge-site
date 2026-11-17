@@ -1,6 +1,6 @@
 # Refunds and partial cancellations (design, 2026-11-17)
 
-Core: `server/refunds.js`. This first PR adds the core and its tests only; nothing calls it in production yet.
+Core: `server/refunds.js`. Route and webhook: `server/index.js` (see "Wiring").
 
 ## What is refunded
 - A request names lines (`{ id, quantity, shipped }`) and optionally the shipping. `shipped` must be stated for every
@@ -42,7 +42,17 @@ refund are flagged for review.
 status transition. The order keeps `refundLedger` (per line: refunded quantity, amount, units restocked; shipping;
 in-flight; external refunds), `amountRefunded` and `status` (`partially_refunded` / `refunded`).
 
-## Next (separate PRs)
-- Wiring: a CEO-approved route (off unless its token is set; later the Factory/Jennifer signed approval, like
-  `server/factory-inventory-api.js`) and the webhook calling `syncRefunds`.
+## Wiring
+- `POST /internal/orders/refund` with `mode: "preview" | "apply" | "resume"`. **Off (404)** unless Render has
+  `ORDER_ADMIN_TOKEN` (32+ random characters); the caller sends it in `X-Order-Admin-Token`. Rate limited. The actor
+  recorded is set by the server (`ceo:order-admin-token`), never taken from the request. Remove the variable to switch
+  it off again.
+  - preview: `{ mode, orderId, lines: [{ id, quantity, shipped }], refundShipping, acknowledgeExternalRefunds }`
+  - apply: the same plus `planHash` and `approval` (who approved, when); optional `refundId` (UUID) to make a resend safe
+  - resume: `{ mode, refundId }`
+- Webhook: `charge.refunded` (already subscribed) and, if added in Stripe, `charge.refund.updated` call
+  `syncRefunds`. Without `charge.refund.updated`, a refund Stripe finishes later is settled by `resume`.
+- Later, the Factory (Jennifer) signed CEO approval calls the same functions (like `server/factory-inventory-api.js`).
+
+## Next
 - Shipping records per line, so `shipped` can come from data instead of being stated.

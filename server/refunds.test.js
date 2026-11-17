@@ -242,3 +242,20 @@ test("Stripe cannot be asked for more than the charge still holds", async () => 
   w.stripe.paymentIntents.retrieve = async (id) => ({ id, status: "succeeded", latest_charge: { id: "ch", amount: 6640, amount_captured: 6640, amount_refunded: 6500 } });
   await assert.rejects(refunds.previewRefund(w.db, w.stripe, { orderId: PI, lines: [{ id: "enma-karamo", quantity: 1, shipped: false }] }), /EXCEEDS_STRIPE_REFUNDABLE/);
 });
+
+test("wiring: the refund route is off without its own token; the webhook syncs refunds instead of overwriting totals", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const source = fs.readFileSync(path.join(__dirname, "index.js"), "utf8");
+  const route = source.slice(source.indexOf('app.post("/internal/orders/refund"'), source.indexOf('app.get("/inventory/availability"'));
+  assert.match(route, /const token = process\.env\.ORDER_ADMIN_TOKEN;\n\s+if \(!token \|\| token\.length < 32\) return res\.status\(404\)\.end\(\);/);
+  assert.match(route, /timingSafeEqual\(digest\(token\), digest\(supplied\)\)/);
+  assert.match(route, /refundLimit\(clientKey\(req\)\.key\)/);
+  assert.match(route, /actor: "ceo:order-admin-token"/, "the actor comes from the server, never from the request");
+  assert.doesNotMatch(route, /req\.body[^;]*actor/);
+  const webhook = source.slice(source.indexOf('app.post("/stripe-inventory-webhook"'), source.indexOf("app.use(express.json());"));
+  assert.match(webhook, /event\.type === "charge\.refunded" \|\| event\.type === "charge\.refund\.updated"/);
+  assert.match(webhook, /await refunds\.syncRefunds\(db, stripe, paymentIntentId\);/);
+  assert.doesNotMatch(webhook, /recordRefund/);
+  assert.ok(source.indexOf("app.use(express.json());") < source.indexOf('app.post("/internal/orders/refund"'), "JSON body parsed before the route");
+});
