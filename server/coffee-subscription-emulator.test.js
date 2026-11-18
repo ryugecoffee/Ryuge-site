@@ -82,3 +82,37 @@ test("two subscriptions for one email finishing at the same moment: exactly one 
   const email_ = (await db.collection(records.EMAILS).doc(records.emailKey(email)).get()).data();
   assert.ok(shipped[0].startsWith(email_.subscriptionId), "the owner is the one shipped to");
 });
+
+test("account (②) on real transactions: one link → one session; one request id → one change; crossing address changes agree with Stripe", { skip }, async () => {
+  const account = require("./coffee-subscription-account");
+  const sub = `sub_acc_${crypto.randomUUID().slice(0, 8)}`;
+  const email = `${sub}@example.com`;
+  await db.collection(records.SUBS).doc(sub).set({ email, customerId: `cus_${sub}`, status: "trialing", frequency: 2, startMonth: "2026-12", skips: [], changes: {},
+    planVersion: 0, ownerChecked: true, duplicateOf: null, shipping: null });
+  await db.collection(records.EMAILS).doc(records.emailKey(email)).set({ status: "active", subscriptionId: sub });
+  const mails = [];
+  const now = Date.now();
+  await account.requestLogin({ db, config: { siteUrl: "https://ryuge.test" }, sendMail: async (m) => { mails.push(m); }, email, now });
+  const token = mails[0].text.match(/#login=([A-Za-z0-9_-]+)/)[1];
+  const tries = await Promise.allSettled(Array.from({ length: 6 }, () => account.startSession({ db, token, now })));
+  assert.equal(tries.filter((r) => r.status === "fulfilled").length, 1, "a link starts one session, even six times at once");
+  const sessionToken = tries.find((r) => r.status === "fulfilled").value.sessionToken;
+  const auth = await account.authenticate({ db, header: `Bearer ${sessionToken}`, now });
+  assert.equal(auth.subscriptionId, sub);
+  // The same request id sent six times at once: the change runs once; the others get its answer or "in progress".
+  let runs = 0;
+  const requestId = `req-${crypto.randomUUID()}`;
+  const same = await Promise.allSettled(Array.from({ length: 6 }, () => account.once({ db, auth, requestId, action: "preference", now,
+    run: async () => { runs += 1; await new Promise((r) => setTimeout(r, 100)); return { ok: true }; } })));
+  assert.equal(runs, 1);
+  assert.ok(same.every((r) => r.status === "fulfilled" || r.reason.code === "REQUEST_IN_PROGRESS"));
+  // Address changes crossing each other: Firestore and the (stand-in) Stripe customer end the same.
+  const stripeCustomer = {};
+  const stripe = { customers: { update: async (id, p) => { await new Promise((r) => setTimeout(r, Math.random() * 40)); Object.assign(stripeCustomer, structuredClone(p)); } } };
+  const addr = (city) => account.validateAddress({ name: "山田 太郎", postalCode: "1000001", prefecture: "東京都", city, line1: "1-1", phone: "0312345678" });
+  await Promise.all(["港区", "中央区", "新宿区", "渋谷区"].map((city) => account.changeAddress({ db, stripe, auth, address: addr(city), now })));
+  const c = (await db.collection(records.SUBS).doc(sub).get()).data();
+  assert.equal(c.shippingPending, null);
+  assert.equal(stripeCustomer.shipping.address.city, c.shipping.city);
+  assert.equal(stripeCustomer.metadata.coffeeShippingVersion, String(c.shippingSyncedVersion));
+});

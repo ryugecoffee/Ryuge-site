@@ -4,7 +4,7 @@
 //   STRIPE_SECRET_KEY=<test-mode key> npx --yes firebase-tools@13.35.1 emulators:exec --only firestore \
 //     --project demo-ryuge-inventory "node server/coffee-subscription-stripe-e2e.js"
 // The key needs, in test mode: Subscriptions, Test clocks, Customers, PaymentMethods, Products, Prices,
-// Checkout Sessions and Invoices (write), and Events (read).
+// Checkout Sessions and Invoices (write), Customer portal (write, for scenario F's card portal) and Events (read).
 // Safety: refuses a live-mode key or account and a non-local Firestore. Everything it makes in Stripe is on test clocks
 // named "coffee-sub-e2e …" and is deleted with them at the end (a deleted test clock takes its customers,
 // subscriptions and invoices along); its test products and prices (lookup keys coffee_sub_e2e_*) are reused by later
@@ -21,6 +21,8 @@ const plan = require("./coffee-subscription-plan");
 const records = require("./coffee-subscription-records");
 const checkout = require("./coffee-subscription-checkout");
 const ops = require("./coffee-subscription-stripe");
+const account = require("./coffee-subscription-account");
+const express = require("express");
 const { CALENDAR } = require("./coffee-subscription-calendar");
 
 const KEY = String(process.env.STRIPE_SECRET_KEY || "");
@@ -37,6 +39,11 @@ const jst = (y, m, d, h = 12, min = 0) => Date.UTC(y, m - 1, d, h - 9, min);
 const fmt = (sec) => (sec ? new Date(sec * 1000 + 9 * 3600e3).toISOString().slice(0, 16).replace("T", " ") + " JST" : "-");
 
 const results = [];
+// Not checked in this run, with the reason (e.g. a permission the test key does not have yet). Not a failure.
+function skip(item, name, reason) {
+  results.push({ item, name, ok: true, skipped: true, detail: reason });
+  console.log(`SKIP [${item}] ${name} — ${reason}`);
+}
 const twins = []; // subscriptions whose owner depends on event order (scenario E backstop)
 function check(item, name, ok, detail = "") {
   results.push({ item, name, ok: !!ok, detail });
@@ -382,6 +389,128 @@ async function scenarioE(config) {
   check("dup", "…and no monthly deliveries for it either", (await shipmentsOf(e2.sub.id)).length === 0 && (await shipmentsOf(e1.sub.id)).filter((s) => s.month === "2026-12").length === 1);
 }
 
+// ---- Scenario F (②): the customer's page over HTTP — sign-in, skip, frequency, address, card portal, cancel -------
+async function ensurePortalConfiguration() {
+  for await (const c of stripe.billingPortal.configurations.list({ limit: 100 })) {
+    if (c.metadata?.tag === TAG && c.active) return c.id;
+  }
+  return (await stripe.billingPortal.configurations.create({ ...account.PORTAL_CONFIGURATION, metadata: { tag: TAG } })).id;
+}
+
+async function scenarioF(config) {
+  const clock = await newClock(jst(2026, 11, 20, 10), "F");
+  const email = `f-${RUN}@example.com`;
+  const f = await signUp(config, clock, { frequency: 2, email, pm: "pm_card_mastercard" });
+  // As Stripe Checkout leaves it: the card is also the subscription's own.
+  const firstCard = (await stripe.customers.retrieve(f.customer.id)).invoice_settings.default_payment_method;
+  await stripe.subscriptions.update(f.sub.id, { default_payment_method: firstCard });
+  await settle(config);
+  let portal = null;
+  let portalReason = "";
+  try { portal = await ensurePortalConfiguration(); } catch (e) { portalReason = String(e.message).slice(0, 120); }
+  const env = { COFFEE_SUBSCRIPTION_MANAGE_ENABLED: "true", SITE_URL: "https://ryuge.test", STRIPE_PRICE_COFFEE_SUB_FIRST: config.firstPriceId,
+    ...Object.fromEntries(Object.entries(config.priceIds).map(([n, id]) => [`STRIPE_PRICE_COFFEE_SUB_${n}`, id])), ...(portal ? { STRIPE_PORTAL_CONFIGURATION_ID: portal } : {}) };
+  const mails = [];
+  const now = { at: jst(2026, 11, 20, 12) };
+  const app = express();
+  app.use(express.json());
+  app.use(account.PATH, account.createRouter({ getDb: () => db, getStripe: () => stripe, sendMail: async (m) => { mails.push(m); }, env, clock: () => now.at }));
+  const server = await new Promise((resolve) => { const s = app.listen(0, "127.0.0.1", () => resolve(s)); });
+  const base = `http://127.0.0.1:${server.address().port}${account.PATH}`;
+  const call = async (method, path, body, token) => {
+    const res = await fetch(base + path, { method, headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) }, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  const rid = () => `req-${crypto.randomUUID()}`;
+  const newCard = { id: null };
+  try {
+    await advance(clock, now.at);
+    await call("POST", "/login", { email: "nobody-" + email });
+    await call("POST", "/login", { email });
+    check("②", "sign-in: a link mailed only for the subscription's email (test mail stand-in, nothing sent)", mails.length === 1 && mails[0].to === email, `${mails.length} mail(s)`);
+    const token = mails[0].text.match(/#login=([A-Za-z0-9_-]+)/)[1];
+    const s = await call("POST", "/session", { token });
+    const again = await call("POST", "/session", { token });
+    check("②", "sign-in: the link works once", s.status === 200 && again.body?.error === "LOGIN_LINK_USED");
+    const t = s.body.sessionToken;
+    const me = (await call("GET", "/me", null, t)).body;
+    check("②", "the page shows the plan from Stripe-backed records (January start, ¥5,800, deadline 11/25)", me.startMonth === "2027-01" && me.months[0].month === "2027-01"
+      && me.months[0].amount === 5800 && me.changeDeadline === "2026-11-25", `${me.months.slice(0, 2).map((m) => `${m.month}:${m.amount}`).join(" ")}`);
+
+    // The same skip pressed twice at once (one request id): applied once. Then a frequency change from March.
+    const id = rid();
+    const both = await Promise.all([call("POST", "/plan", { action: "skip", month: "2027-02", requestId: id }, t), call("POST", "/plan", { action: "skip", month: "2027-02", requestId: id }, t)]);
+    const k1 = await contractOf(f.sub.id);
+    check("②", "skip pressed twice at once → applied once", both.some((r) => r.status === 200) && both.every((r) => r.status === 200 || r.body?.error === "REQUEST_IN_PROGRESS")
+      && k1.planVersion === 1, `statuses ${both.map((r) => r.status)} version ${k1.planVersion}`);
+    const ch = await call("POST", "/plan", { action: "frequency", month: "2027-03", frequency: 3, requestId: rid() }, t);
+    check("②", "frequency change from March accepted", ch.status === 200, JSON.stringify(ch.body));
+    const late = await call("POST", "/plan", { action: "skip", month: "2026-12", requestId: rid() }, t);
+    check("②", "a month past the deadline is refused", late.body?.error === "CHANGE_DEADLINE_PASSED" || late.body?.error === "BEFORE_START", late.body?.error);
+
+    // Address: Firestore and the Stripe customer the same afterwards.
+    const addr = await call("PUT", "/address", { address: { name: "テスト 次郎", postalCode: "6050073", prefecture: "京都府", city: "京都市東山区", line1: "祇園町北側1", line2: "2F", phone: "075-000-0000" }, requestId: rid() }, t);
+    const k2 = await contractOf(f.sub.id);
+    const cust = await stripe.customers.retrieve(f.customer.id);
+    check("②", "address change: Firestore and the Stripe customer agree", addr.status === 200 && k2.shipping.city === "京都市東山区" && cust.shipping?.address?.city === "京都市東山区"
+      && cust.shipping?.phone === "0750000000" && cust.metadata?.coffeeShippingVersion === String(k2.shippingSyncedVersion), `${cust.shipping?.address?.postal_code} ${cust.shipping?.phone}`);
+
+    // Card and invoices: Stripe's portal, limited to them.
+    if (portal) {
+      const pr = await call("POST", "/portal", {}, t);
+      const conf = await stripe.billingPortal.configurations.retrieve(portal);
+      const ft = conf.features;
+      check("②", "card portal opens for this customer, limited to card and invoices", pr.status === 200 && /^https:\/\/billing\.stripe\.com\//.test(pr.body?.url)
+        && ft.payment_method_update.enabled && ft.invoice_history.enabled && !ft.customer_update.enabled && !ft.subscription_cancel.enabled && !ft.subscription_update.enabled,
+        `${pr.status} ${String(pr.body?.url).slice(0, 40)}`);
+      for (const type of ["subscription_cancel", "subscription_update"]) {
+        const refused = await stripe.billingPortal.sessions.create({ customer: f.customer.id, configuration: portal, flow_data: { type, [type]: { subscription: f.sub.id } } }).then(() => false, () => true);
+        check("②", `the portal refuses ${type} (only the Ryuge page changes the plan)`, refused);
+      }
+      const subAfter = await stripe.subscriptions.retrieve(f.sub.id);
+      const custAfter = await stripe.customers.retrieve(f.customer.id);
+      check("②", "opening the portal moves the subscription's own card to the customer's default", !subAfter.default_payment_method && custAfter.invoice_settings.default_payment_method === firstCard);
+      // What the portal does when the customer adds a card "as default": the customer's default becomes the new card.
+      const visa = await stripe.paymentMethods.attach("pm_card_visa", { customer: f.customer.id });
+      await stripe.customers.update(f.customer.id, { invoice_settings: { default_payment_method: visa.id } });
+      newCard.id = visa.id;
+    } else {
+      skip("②", "card portal (Stripe customer portal)", `the test key cannot write Customer portal yet: ${portalReason}`);
+    }
+
+    // Months go by: January charged, February skipped, March at 3 a month.
+    for (const [y, m] of [[2027, 1], [2027, 2], [2027, 3]]) { now.at = jst(y, m, 1, 10, 30); await advance(clock, now.at); }
+    await settle(config);
+    const inv = await invoicesOf(f.sub.id);
+    const amounts = ["2027-01", "2027-02", "2027-03"].map((mm) => cycleFor(inv, mm).map((i) => i.amount_paid).join("+") || "none");
+    check("②", "made on the page → Stripe: January ¥5,800, February skipped (¥0), March ¥8,550, no pro-rating", amounts.join(",") === "5800,0,8550" && prorations(inv) === 0, amounts.join(","));
+    if (newCard.id) {
+      const jan = cycleFor(inv, "2027-01")[0];
+      const pays = await stripe.invoicePayments.list({ invoice: jan.id, limit: 3 });
+      const pi = await stripe.paymentIntents.retrieve(pays.data[0].payment.payment_intent);
+      const used = await stripe.paymentMethods.retrieve(pi.payment_method);
+      check("②", "after the card change, January is paid with the new card (not the subscription's old one)", pi.payment_method === newCard.id, `${used.card.brand} ${used.card.last4}`);
+    }
+
+    // Cancel: preview then confirm, on 3/10 → ends 4/1 09:00, nothing charged in April.
+    now.at = jst(2027, 3, 10, 12);
+    await advance(clock, now.at);
+    const t2 = await (async () => { await call("POST", "/login", { email }); const tk = mails.at(-1).text.match(/#login=([A-Za-z0-9_-]+)/)[1]; return (await call("POST", "/session", { token: tk })).body.sessionToken; })();
+    const pv = (await call("GET", "/cancel", null, t2)).body;
+    const done = await call("POST", "/cancel", { key: pv.key, requestId: rid() }, t2);
+    check("②", "cancel from the page: preview 4/1, confirmed", pv.action === "CANCEL_AT" && pv.endsAt === plan.billingStartUnix("2027-04") * 1000 && done.status === 200, `${pv.action} ${fmt(pv.endsAt / 1000)}`);
+    now.at = jst(2027, 4, 1, 10, 30);
+    await advance(clock, now.at);
+    await settle(config);
+    const april = cycleFor(await invoicesOf(f.sub.id), "2027-04");
+    check("②", "after cancelling on the page, nothing is charged in April", april.length === 0 && (await stripe.subscriptions.retrieve(f.sub.id)).status === "canceled");
+    check("②", "every mail went to the stand-in (sign-in links and confirmations only)", mails.every((m) => m.to === email));
+  } finally {
+    server.closeAllConnections();
+    server.close();
+  }
+}
+
 // ---- Item 7: webhooks again, at once, and in reverse order ---------------------------------------------------
 async function snapshot(store) {
   const out = {};
@@ -439,15 +568,19 @@ async function cleanup() {
   const started = Date.now();
   try {
     // Separate test clocks, run side by side.
-    const outcomes = await Promise.allSettled([scenarioA(config), scenarioB(config), scenarioC(config), scenarioD(config), scenarioE(config)]);
-    outcomes.forEach((o, i) => { if (o.status === "rejected") check("run", `scenario ${"ABCDE"[i]} finished`, false, o.reason?.stack?.split("\n").slice(0, 3).join(" | ")); });
+    const all = { A: scenarioA, B: scenarioB, C: scenarioC, D: scenarioD, E: scenarioE, F: scenarioF };
+    const only = String(process.env.E2E_ONLY || "ABCDEF").split("").filter((k) => all[k]);
+    const outcomes = await Promise.allSettled(only.map((k) => all[k](config)));
+    outcomes.forEach((o, i) => { if (o.status === "rejected") check("run", `scenario ${only[i]} finished`, false, o.reason?.stack?.split("\n").slice(0, 3).join(" | ")); });
     await settle(config);
     await replayChecks(config);
   } finally {
     await cleanup();
   }
   const failed = results.filter((r) => !r.ok);
-  console.log(`\n${results.length - failed.length}/${results.length} checks passed in ${Math.round((Date.now() - started) / 1000)} s (run ${RUN})`);
+  const skipped = results.filter((r) => r.skipped).length;
+  if (skipped) console.log(`${skipped} not checked (see SKIP lines)`);
+  console.log(`\n${results.length - failed.length - skipped}/${results.length - skipped} checks passed in ${Math.round((Date.now() - started) / 1000)} s (run ${RUN})`);
   if (process.env.E2E_REPORT) require("fs").writeFileSync(process.env.E2E_REPORT, JSON.stringify({ run: RUN, results }, null, 2));
   process.exit(failed.length ? 1 : 0);
 })().catch(async (e) => { console.error(e); await cleanup().catch(() => {}); process.exit(1); });
