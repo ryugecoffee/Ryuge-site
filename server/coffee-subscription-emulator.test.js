@@ -116,3 +116,24 @@ test("account (②) on real transactions: one link → one session; one request 
   assert.equal(stripeCustomer.shipping.address.city, c.shipping.city);
   assert.equal(stripeCustomer.metadata.coffeeShippingVersion, String(c.shippingSyncedVersion));
 });
+
+test("③ Factory reads on real Firestore: list/get/schedule queries; one contact view per request even when sent at once", { skip }, async () => {
+  const read = require("./factory-subscription-read");
+  const id = `sub_emu3${crypto.randomUUID().replace(/-/g, "").slice(0, 10)}`;
+  await db.collection(records.SUBS).doc(id).set({ email: `${id}@example.com`, status: "active", frequency: 1, startMonth: "2026-12", skips: [], changes: {},
+    shipping: { name: "エミュ 花子", prefecture: "京都府", city: "京都市", line1: "1-1", postalCode: "600-0000", phone: "0750000000" }, preference: { text: "中煎り" }, createdAt: new Date() });
+  await db.collection(records.SHIPMENTS).doc(`${id}_2026-12_1`).set({ subscriptionId: id, kind: "monthly", month: "2026-12", seq: 1, plannedDate: "2026-12-07", status: "planned", grams: 200 });
+  const now = Date.UTC(2026, 11, 9, 3);
+  const list = await read.listSubscriptions(db, { filter: "all", limit: 100 }, now);
+  assert.ok(list.subscriptions.some((s) => s.ref === read.contractRef(id) && s.prefecture === "京都府"));
+  assert.equal((await read.getSubscription(db, id, now)).subscription.preference.text, "中煎り");
+  const week = await read.schedule(db, "week", now);
+  assert.ok(week.deliveries.some((d) => d.ref === read.contractRef(id) && d.date === "2026-12-07"));
+  assert.ok(!JSON.stringify([list, week]).includes("エミュ 花子"));
+  const env = { FACTORY_CEO_USER_ID: "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b" };
+  const view = { requestId: crypto.randomUUID(), viewedBy: env.FACTORY_CEO_USER_ID, viewedAt: Date.now() - 1000 };
+  const tries = await Promise.allSettled(Array.from({ length: 5 }, () => read.contact(db, id, view, env, Date.now())));
+  assert.equal(tries.filter((r) => r.status === "fulfilled").length, 1, "one view record, one answer");
+  const audit = (await db.collection(read.VIEWS).doc(view.requestId).get()).data();
+  assert.ok(!JSON.stringify(audit).includes("エミュ 花子") && !JSON.stringify(audit).includes("0750000000"));
+});

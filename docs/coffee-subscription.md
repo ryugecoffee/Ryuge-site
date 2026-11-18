@@ -38,6 +38,18 @@ Verification against Stripe test mode: `server/coffee-subscription-stripe-e2e.js
 - The final confirmation screen states everything of 特定商取引法 第12条の6 next to the button; the same terms are
   repeated next to Stripe's pay button (`custom_text`). The wording is provisional (`LEGAL_TEXT_REVIEWED = false`).
 
+## ③ Jennifer reads subscriptions (off: `FACTORY_SUBSCRIPTION_READ_ENABLED` unset)
+- Through the signed connection Factory already uses for orders (`/internal/factory/order-refund`, same secret, same
+  nonce and time checks); read only. Code: `server/factory-subscription-read.js`.
+- `subscriptions.list` (filters: all, active, payment_issue, review, cancel_scheduled, skip_next), `subscriptions.get`
+  (by `SUB-XXXXXX` or `sub_…`), `subscriptions.schedule` (`week` = Monday–Sunday, `month` = 1st–last day, Japan time):
+  contract number, prefecture, state, plan, charges, deliveries, preference, skips, cancellation. No name, email, phone
+  or street address.
+- `subscriptions.contact`: name, email, phone, address, only with the CEO's view record (Factory user id =
+  `FACTORY_CEO_USER_ID`, at most 2 minutes old, used once). The view is recorded in
+  `factorySubscriptionContactViews/{requestId}` (contract and time, no details). Nothing is logged but error codes.
+- Refund operations are unaffected: still refused unless `FACTORY_REFUND_OPS_ENABLED=true`.
+
 ## Operating rules (CEO, 2026-11-18)
 - Billing: the 1st of each month at 09:00 JST (00:00 UTC; Stripe counts months in UTC, so 00:00 JST would slide to
   the last day of the previous month after a 30-day month). Stripe makes the invoice as a draft and charges it about an
