@@ -81,7 +81,8 @@ function shippingFrom(session) {
   if (!details?.address) return null;
   const a = details.address;
   return { name: String(details.name || ""), postalCode: String(a.postal_code || ""), prefecture: String(a.state || ""),
-    city: String(a.city || ""), line1: String(a.line1 || ""), line2: String(a.line2 || ""), country: String(a.country || "") };
+    city: String(a.city || ""), line1: String(a.line1 || ""), line2: String(a.line2 || ""), country: String(a.country || ""),
+    phone: String(details.phone || session.customer_details?.phone || "") };
 }
 
 // checkout.session.completed: the contract with the customer's details and preference. The paid first delivery is

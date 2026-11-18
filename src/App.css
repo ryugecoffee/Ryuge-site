@@ -4170,3 +4170,63 @@ html[lang="es"] .story-body {
   .coffee-sub-frequency-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 .coffee-sub-billing { margin: 14px 0 0; padding-left: 1.1em; font-size: 12px; line-height: 1.8; color: rgba(255, 255, 255, 0.7); }
+
+/* 珈琲の定期便: sign-up confirmation (/subscription/apply) and the customer's page (/subscription/manage) */
+.subm { display: flex; flex-direction: column; gap: 18px; }
+.subm h1 { margin-bottom: 4px; font-size: clamp(1.9rem, 3.2vw, 3rem); }
+.subm .legal-lead { margin-bottom: 4px; }
+.subm-card { display: flex; flex-direction: column; gap: 12px; padding: 22px 0 6px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+.subm-card h2 { margin: 0; font-size: 1.05rem; font-weight: 500; letter-spacing: 0.06em; color: rgba(255, 255, 255, 0.92); }
+.subm-card h3 { margin: 6px 0 0; font-size: 0.9rem; font-weight: 500; color: rgba(255, 255, 255, 0.82); }
+.subm-text { margin: 0; line-height: 1.85; font-size: 0.92rem; color: rgba(255, 255, 255, 0.78); }
+.subm-note, .subm-hint { margin: 0; font-size: 0.78rem; line-height: 1.7; color: rgba(255, 255, 255, 0.5); }
+.subm-ok, .subm-alert, .subm-error { margin: 0; padding: 12px 14px; border-radius: 6px; font-size: 0.88rem; line-height: 1.7; }
+.subm-ok { background: rgba(120, 190, 140, 0.12); border: 1px solid rgba(120, 190, 140, 0.35); color: #cfe9d6; }
+.subm-alert { background: rgba(230, 180, 90, 0.1); border: 1px solid rgba(230, 180, 90, 0.4); color: #f2dcb0; }
+.subm-error { padding: 4px 0; color: #f0a8a0; }
+.subm-field { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; border: 0; width: 100%; }
+.subm-field legend, .subm-label { font-size: 0.78rem; letter-spacing: 0.06em; color: rgba(255, 255, 255, 0.6); margin-bottom: 4px; }
+.subm input, .subm select, .subm textarea {
+  width: 100%; box-sizing: border-box; padding: 11px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.04); color: rgba(255, 255, 255, 0.92); font: inherit; font-size: 16px;
+}
+.subm select option { color: #111; }
+.subm-choices { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.subm-choice { display: flex; flex-direction: column; gap: 2px; align-items: center; padding: 12px 6px; border-radius: 8px; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.18); background: transparent; color: rgba(255, 255, 255, 0.78); }
+.subm-choice small { font-size: 0.72rem; color: rgba(255, 255, 255, 0.5); }
+.subm-choice.active { border-color: rgba(255, 255, 255, 0.75); background: rgba(255, 255, 255, 0.08); color: #fff; }
+.subm-terms .legal-row { grid-template-columns: 160px 1fr; padding: 16px 0; gap: 18px; }
+.subm-terms .legal-row dd { font-size: 0.92rem; line-height: 1.8; }
+.subm-agree { display: flex; gap: 10px; align-items: flex-start; font-size: 0.9rem; line-height: 1.7; color: rgba(255, 255, 255, 0.85); }
+.subm-agree input { width: 20px; height: 20px; flex: none; margin-top: 3px; }
+.subm-primary, .subm-secondary { min-height: 46px; padding: 0 20px; border-radius: 999px; font: inherit; font-size: 0.92rem; cursor: pointer; letter-spacing: 0.04em; }
+.subm-primary { border: 0; background: #f4efe6; color: #15120f; }
+.subm-secondary { border: 1px solid rgba(255, 255, 255, 0.3); background: transparent; color: rgba(255, 255, 255, 0.88); align-self: flex-start; }
+.subm-primary:disabled, .subm-secondary:disabled { opacity: 0.45; cursor: not-allowed; }
+.subm-primary.danger { background: #d9826f; color: #1a0f0c; }
+.subm-secondary.danger { border-color: rgba(217, 130, 111, 0.6); color: #f0b4a6; }
+.subm-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.subm-months { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.subm-month { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.12); }
+.subm-month.skipped { border-style: dashed; opacity: 0.8; }
+.subm-month-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.subm-month-head span { font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); }
+.subm-month dl, .subm-facts { margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.subm-month dl div, .subm-facts div { display: flex; justify-content: space-between; gap: 10px; font-size: 0.82rem; }
+.subm-month dt, .subm-facts dt { color: rgba(255, 255, 255, 0.5); }
+.subm-month dd, .subm-facts dd { margin: 0; text-align: right; color: rgba(255, 255, 255, 0.86); }
+.subm-month .subm-secondary { min-height: 38px; font-size: 0.8rem; align-self: stretch; }
+.subm-inline { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.subm-inline-fields { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
+.subm-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
+.subm-list li { display: grid; grid-template-columns: 1fr auto auto; gap: 14px; padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); font-size: 0.84rem; color: rgba(255, 255, 255, 0.8); }
+.subm-confirm { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 8px; border: 1px solid rgba(217, 130, 111, 0.45); background: rgba(217, 130, 111, 0.06); }
+@media (max-width: 640px) {
+  .subm-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .subm-terms .legal-row { grid-template-columns: 1fr; gap: 4px; }
+  .subm-inline-fields { grid-template-columns: 1fr; }
+  .subm-primary { width: 100%; }
+  .subm-list li { grid-template-columns: 1fr auto; }
+  .subm-list li span:last-child { grid-column: 1 / -1; color: rgba(255, 255, 255, 0.55); }
+}

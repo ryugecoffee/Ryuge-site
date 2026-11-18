@@ -18,6 +18,7 @@ const refunds = require("./refunds");
 const factoryRefundApi = require("./factory-refund-api");
 const coffeeSubscription = require("./coffee-subscription-records");
 const coffeeSubscriptionCheckout = require("./coffee-subscription-checkout");
+const coffeeSubscriptionAccount = require("./coffee-subscription-account");
 const { createRateLimiter, clientKey } = require("./rate-limit");
 
 const app = express();
@@ -75,11 +76,15 @@ app.post(factoryRefundApi.PATH, express.raw({ type: "application/json", limit: "
   factoryRefundApi.createHandler({ getDb: () => db, getStripe: () => stripe }));
 
 app.use(express.json());
+app.use(cors());
 
 // 珈琲の定期便 sign-up (server/coffee-subscription-checkout.js): 404 unless COFFEE_SUBSCRIPTION_ENABLED=true and the five
 // STRIPE_PRICE_COFFEE_SUB_* price ids are set. Sign-ups also stay paused on the store (src/productData.js).
 app.post(coffeeSubscriptionCheckout.PATH, coffeeSubscriptionCheckout.createHandler({ getDb: () => db, getStripe: () => stripe }));
-app.use(cors());
+// 珈琲の定期便 ②, the customer's page (server/coffee-subscription-account.js): 404 unless COFFEE_SUBSCRIPTION_MANAGE_ENABLED=true
+// (separate from sign-ups). Mails go through the shop's existing mail account.
+app.use(coffeeSubscriptionAccount.PATH, coffeeSubscriptionAccount.createRouter({ getDb: () => db, getStripe: () => stripe,
+  sendMail: (message) => transporter.sendMail({ from: `"Ryuge Coffee" <${process.env.EMAIL_USER}>`, ...message }) }));
 
 console.log("FIREBASE_PROJECT_ID exists:", !!process.env.FIREBASE_PROJECT_ID);
 console.log("FIREBASE_CLIENT_EMAIL exists:", !!process.env.FIREBASE_CLIENT_EMAIL);

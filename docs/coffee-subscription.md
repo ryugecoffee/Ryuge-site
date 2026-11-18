@@ -1,7 +1,9 @@
-# 珈琲の定期便: backend ① and what must be done before sign-ups reopen (2026-11-18)
+# 珈琲の定期便: backend ①, the customer's page ② and what must be done before sign-ups reopen (2026-11-18)
 
 Code: `server/coffee-subscription-plan.js` (rules), `-records.js` (Stripe events → Firestore), `-checkout.js`
 (sign-up, off by default), `-stripe.js` (skips, changes, cancellation on Stripe), `-calendar.js` (closed days).
+② the customer's page: `server/coffee-subscription-account.js` (API), `src/pages/SubscriptionApplyPage.jsx`
+(`/subscription/apply`, the 定期購入 final confirmation), `src/pages/SubscriptionManagePage.jsx` (`/subscription/manage`).
 Verification against Stripe test mode: `server/coffee-subscription-stripe-e2e.js` (by hand, test-mode key only).
 
 ## State
@@ -9,6 +11,23 @@ Verification against Stripe test mode: `server/coffee-subscription-stripe-e2e.js
   ids `STRIPE_PRICE_COFFEE_SUB_1..4` and `STRIPE_PRICE_COFFEE_SUB_FIRST` are set. No live prices exist.
 - The store keeps sign-ups paused (`SUBSCRIPTIONS_PAUSED` in `src/productData.js`); the old plans' API answers 403.
 - Webhook events of other subscriptions and of single orders are not touched (only `metadata.kind = coffee-subscription-v2`).
+
+## ② The customer's page (off: `COFFEE_SUBSCRIPTION_MANAGE_ENABLED` unset)
+- Separate switch from sign-ups; every route under `/coffee-subscription/account` answers 404 while it is off.
+- Sign-in: a link mailed to the subscription's email, valid 15 minutes, usable once (only its SHA-256 is stored); then
+  a 30-minute session (Bearer, hash stored). The same answer whether or not the email is known. Limits: 10 sign-in
+  requests per connection per 15 minutes; 3 mails per email per 15 minutes (Firestore, all instances). Each request
+  checks that the session's email still owns the contract; only 珈琲の定期便 contracts are reachable (old plans never).
+- Changes: frequency (from a changeable month), skip / unskip a month, the preference, the delivery address (name,
+  postal code, prefecture, city, line 1–2, phone), cancellation (preview, then confirm with its key). Each change has a
+  request id: sent twice, applied once. Confirmation mails go through the shop's mail account.
+- Address: Firestore and the Stripe customer (shipping + `metadata.coffeeShippingVersion`) are written together; when
+  two changes cross, the last one recorded is pushed to Stripe again. Deliveries being prepared or shipped (status set by
+  the shipping work, ④) keep their address.
+- Card and invoices: Stripe's customer portal with a configuration limited to the card and invoice history (no address,
+  plan or cancellation there): `account.PORTAL_CONFIGURATION`, its id in `STRIPE_PORTAL_CONFIGURATION_ID`.
+- The final confirmation screen states everything of 特定商取引法 第12条の6 next to the button; the same terms are
+  repeated next to Stripe's pay button (`custom_text`). The wording is provisional (`LEGAL_TEXT_REVIEWED = false`).
 
 ## Operating rules (CEO, 2026-11-18)
 - Billing: the 1st of each month at 09:00 JST (00:00 UTC; Stripe counts months in UTC, so 00:00 JST would slide to
@@ -38,11 +57,16 @@ Verification against Stripe test mode: `server/coffee-subscription-stripe-e2e.js
    today, the subscription trialing until 09:00 JST on the 1st of the start month, the shipping address and preference
    recorded, one first delivery. (Checkout's amount due today and every later step were verified through the API; the
    page itself could not be opened from the verification environment.)
-3. ② the customer's management page (frequency, skip, cancel, preference, email sign-in) and the 定期購入 confirmation
-   screen required by law.
+3. ② the customer's management page and the 定期購入 confirmation screen: built (this PR), off until approved.
 4. Live products and prices (¥3,000 / ¥5,800 / ¥8,550 / ¥11,200 monthly, ¥3,000 first) created by the CEO, their ids set
    on the payment server, then `COFFEE_SUBSCRIPTION_ENABLED=true`, then `SUBSCRIPTIONS_PAUSED` lifted in the store.
-5. Run `server/coffee-subscription-stripe-e2e.js` once more with a test-mode key.
+5. Run `server/coffee-subscription-stripe-e2e.js` once more with a test-mode key (with Customer portal write, so the
+   card portal is checked too).
+6. The final confirmation screen's wording checked by a specialist; then `LEGAL_TEXT_REVIEWED = true`
+   (`src/lib/coffeeSubscriptionTerms.js`).
+7. The customer portal configuration created in live mode (`account.PORTAL_CONFIGURATION`) and its id set as
+   `STRIPE_PORTAL_CONFIGURATION_ID`; then `COFFEE_SUBSCRIPTION_MANAGE_ENABLED=true` (CEO approval).
+8. A link to `/subscription/manage` where customers will find it (the confirmation mail and the store), once open.
 
 ## Verified (Stripe test mode with test clocks + Firestore emulator, 57/57)
 First payment only ¥3,000; monthly start (1st–15th → next month, 16th– → the month after) at 09:00 JST on the 1st;

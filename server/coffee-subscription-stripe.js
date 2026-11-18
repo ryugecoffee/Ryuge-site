@@ -113,10 +113,25 @@ async function currentMonthInvoice(stripe, subscriptionId, now) {
     && plan.monthOf(l.period.start * 1000) === month)) || null;
 }
 
-async function cancelSubscription({ db, stripe, subscriptionId, now = Date.now() }) {
+// What a cancellation asked now would do, for the customer to confirm first: the decision and a key that changes when
+// the decision would (e.g. the clock passing 09:00 on the 1st, or this month's invoice being paid meanwhile).
+const decisionKey = (d) => [d.action, d.cancelAt || "", d.voidInvoice || "", d.firstUnchargedMonth || ""].join("|");
+async function cancellationPreview({ db, stripe, subscriptionId, now = Date.now() }) {
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const ended = ENDED.includes(subscription.status);
+  const invoice = ended ? null : await currentMonthInvoice(stripe, subscriptionId, now);
+  const decision = plan.cancellationFor(now, invoice);
+  const first = await db.collection(SHIPMENTS).doc(`${subscriptionId}_first`).get();
+  const firstNotShipped = first.exists && first.data().status === "planned";
+  return { ended, decision, key: decisionKey(decision), firstNotShipped, refundProposalAmount: firstNotShipped ? plan.FIRST_DELIVERY_PRICE : 0 };
+}
+
+async function cancelSubscription({ db, stripe, subscriptionId, now = Date.now(), expectKey = null }) {
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const invoice = ENDED.includes(subscription.status) ? null : await currentMonthInvoice(stripe, subscriptionId, now);
   const decision = plan.cancellationFor(now, invoice);
+  // The customer confirmed a preview: if what would happen has changed since, nothing is done (shown again).
+  if (expectKey && expectKey !== decisionKey(decision) && !ENDED.includes(subscription.status)) throw new PlanChangeError("CANCEL_CHANGED", 409);
   if (!ENDED.includes(subscription.status)) {
     // A schedule would keep (or restart) the plan; the cancellation replaces it.
     if (idOf(subscription.schedule)) await stripe.subscriptionSchedules.release(idOf(subscription.schedule));
@@ -149,4 +164,5 @@ async function cancelSubscription({ db, stripe, subscriptionId, now = Date.now()
   });
 }
 
-module.exports = { PlanChangeError, buildSchedulePhases, syncSchedule, requestPlanChange, cancelSubscription, currentMonthInvoice };
+module.exports = { PlanChangeError, buildSchedulePhases, syncSchedule, requestPlanChange, cancelSubscription, cancellationPreview, decisionKey,
+  currentMonthInvoice, ENDED };

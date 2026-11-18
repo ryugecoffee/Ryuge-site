@@ -69,6 +69,14 @@ async function finishReservation(db, email, nonce, patch) {
   });
 }
 
+// The terms next to Stripe's pay button (定期購入: amounts, the second charge's date, how to change or cancel).
+function submitTerms(startMonth, frequency) {
+  const [y, m] = startMonth.split("-").map(Number);
+  return `定期購入のお申し込みです。本日のお支払いは初回200gの${plan.FIRST_DELIVERY_PRICE.toLocaleString("ja-JP")}円です。`
+    + `${y}年${m}月1日から毎月1日に月額${plan.MONTHLY_PRICES[frequency].toLocaleString("ja-JP")}円（税込・全国一律送料込み・月${frequency}回）を自動でお支払いいただきます。`
+    + "契約期間の定めや最低継続回数はありません。頻度の変更・スキップは前月25日まで、解約はいつでも管理ページから行えます（日割りはありません）。";
+}
+
 async function createCheckout({ db, stripe, config, input, now = Date.now(), waitMs = WAIT_FOR_OTHER_MS }) {
   if (!config.enabled) throw new CheckoutError("DISABLED", 404);
   const frequency = (() => { try { return plan.validFrequency(input?.frequency); } catch { throw new CheckoutError("INVALID_FREQUENCY"); } })();
@@ -103,10 +111,14 @@ async function createCheckout({ db, stripe, config, input, now = Date.now(), wai
       payment_method_collection: "always",
       customer_email: email,
       shipping_address_collection: { allowed_countries: ["JP"] },
+      phone_number_collection: { enabled: true },
       locale: "ja",
+      // The pay button is on Stripe's page: the subscription terms are repeated next to it (provisional wording,
+      // to be checked by a specialist before sign-ups reopen; the full terms are on /subscription/apply).
+      custom_text: { submit: { message: submitTerms(startMonth, frequency) } },
       expires_at: Math.floor(now / 1000) + CHECKOUT_MINUTES * 60,
       metadata: { ...metadata, preference },
-      success_url: `${config.siteUrl}/checkout/complete?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${config.siteUrl}/subscription/manage?started=1`,
       cancel_url: `${config.siteUrl}/products#oriori`,
     }, { idempotencyKey: `coffee-sub-${reservation.nonce}` });
   } catch (error) {
@@ -135,4 +147,4 @@ function createHandler({ getDb, getStripe, env = process.env, clock = Date.now }
   };
 }
 
-module.exports = { PATH, configFrom, createCheckout, createHandler, CheckoutError };
+module.exports = { PATH, configFrom, createCheckout, createHandler, CheckoutError, submitTerms };

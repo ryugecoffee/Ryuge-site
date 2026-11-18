@@ -13,6 +13,8 @@ import ShippingPage from "./pages/ShippingPage";
 import RefundPolicy from "./pages/RefundPolicy";
 import { Analytics } from "@vercel/analytics/react";
 import AccessSection from "./pages/AccessSection";
+import SubscriptionApplyPage from "./pages/SubscriptionApplyPage";
+import SubscriptionManagePage from "./pages/SubscriptionManagePage";
 import { pageview } from "./lib/analytics";
 import { updatePageMeta, injectProductJsonLd } from "./lib/seo";
 
@@ -122,6 +124,9 @@ export default function App() {
             <Route path="/legal" element={<LegalNotice lang={lang} />} />
             <Route path="/refund" element={<RefundPolicy lang={lang} />} />
             <Route path="/access" element={<AccessSection lang={lang} />} />
+            {/* 珈琲の定期便 (Japanese only, not linked while sign-ups are paused; noindex) */}
+            <Route path="/subscription/apply" element={<SubscriptionApplyPage />} />
+            <Route path="/subscription/manage" element={<SubscriptionManagePage />} />
           </Route>
 
           <Route path="/checkout" element={<CheckoutPage lang={lang} />} />
