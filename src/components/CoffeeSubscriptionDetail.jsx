@@ -68,6 +68,9 @@ export default function CoffeeSubscriptionDetail({ lang }) {
       <ul className="coffee-sub-terms">
         {list(SUB.terms).map((term) => <li key={term}>{term}</li>)}
       </ul>
+      <ul className="coffee-sub-billing">
+        {list(SUB.billing).map((rule) => <li key={rule}>{rule}</li>)}
+      </ul>
       <p className="coffee-sub-pending">{loc(SUB.pendingNote, lang)}</p>
 
       <div className="coffee-sub-preference">

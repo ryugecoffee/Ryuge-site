@@ -73,9 +73,9 @@ export const SUBSCRIPTIONS_PAUSED_TEXT = {
 };
 
 // 珈琲の定期便 (CEO, 2026-11-18): one subscription, the customer chooses how many deliveries a month. Every text shown
-// for it is here, so wording can be changed without touching the page. Prices are tax and basic shipping included.
-// Not decided yet (do not state them as fixed): extra shipping for Hokkaido/Kyushu/Okinawa etc., shipping days, the
-// deadline for changes and when payment is taken. New sign-ups stay paused (SUBSCRIPTIONS_PAUSED above).
+// for it is here, so wording can be changed without touching the page. Prices: tax and shipping included, one price
+// nationwide (CEO, 2026-11-18). Not decided yet (do not state them as fixed): shipping days, the first month's payment
+// and first delivery, and what happens on cancellation. New sign-ups stay paused (SUBSCRIPTIONS_PAUSED above).
 export const COFFEE_SUBSCRIPTION = {
   id: "coffee-subscription",
   name: { ja: "珈琲の定期便", en: "Coffee Subscription", es: "Suscripción de café" },
@@ -95,7 +95,7 @@ export const COFFEE_SUBSCRIPTION = {
     en: "We choose the coffees according to the season and what we have sourced.",
     es: "Elegimos los cafés según la estación y lo que hemos conseguido.",
   },
-  // deliveriesPerMonth × 200 g. Prices: tax and basic shipping included.
+  // deliveriesPerMonth × 200 g. Prices: tax and shipping included, the same everywhere in Japan.
   frequencies: [
     { id: "monthly-1", deliveriesPerMonth: 1, priceNumber: 3000, gramsPerMonth: 200 },
     { id: "monthly-2", deliveriesPerMonth: 2, priceNumber: 5800, gramsPerMonth: 400 },
@@ -105,20 +105,26 @@ export const COFFEE_SUBSCRIPTION = {
   defaultFrequency: "monthly-1",
   frequencyLabel: { ja: (n) => `月${n}回`, en: (n) => (n === 1 ? "Once a month" : `${n} times a month`), es: (n) => (n === 1 ? "1 vez al mes" : `${n} veces al mes`) },
   labels: {
-    ja: { frequency: "配送回数", monthly: "月額", amount: "月間の配送量", perDelivery: "1回のお届け", perMonth: "/月", priceNote: "税込・基本送料込み" },
-    en: { frequency: "Deliveries", monthly: "Monthly", amount: "Coffee per month", perDelivery: "Each delivery", perMonth: "/month", priceNote: "Tax and basic shipping included" },
-    es: { frequency: "Envíos", monthly: "Mensual", amount: "Café al mes", perDelivery: "Cada envío", perMonth: "/mes", priceNote: "Impuestos y envío básico incluidos" },
+    ja: { frequency: "配送回数", monthly: "月額", amount: "月間の配送量", perDelivery: "1回のお届け", perMonth: "/月", priceNote: "税込・全国一律送料込み" },
+    en: { frequency: "Deliveries", monthly: "Monthly", amount: "Coffee per month", perDelivery: "Each delivery", perMonth: "/month", priceNote: "Tax and shipping included, same price nationwide" },
+    es: { frequency: "Envíos", monthly: "Mensual", amount: "Café al mes", perDelivery: "Cada envío", perMonth: "/mes", priceNote: "Impuestos y envío incluidos, mismo precio en todo Japón" },
   },
   terms: {
-    ja: ["毎月の配送回数は途中で変更できます", "スキップ自由", "解約自由", "最低継続回数なし", "国内配送のみ"],
-    en: ["Change the number of deliveries at any time", "Skip whenever you like", "Cancel anytime", "No minimum term", "Delivery within Japan only"],
-    es: ["Cambia el número de envíos cuando quieras", "Omite envíos libremente", "Cancela cuando quieras", "Sin permanencia mínima", "Solo envíos dentro de Japón"],
+    ja: ["全国一律・送料込み（追加送料なし）", "配送回数は月1〜4回で途中変更できます", "スキップ自由", "解約自由", "最低継続回数なし", "国内配送のみ"],
+    en: ["One price nationwide, shipping included", "Change between 1 and 4 deliveries a month", "Skip whenever you like", "Cancel anytime", "No minimum term", "Delivery within Japan only"],
+    es: ["Precio único en todo Japón, envío incluido", "Cambia entre 1 y 4 envíos al mes", "Omite envíos libremente", "Cancela cuando quieras", "Sin permanencia mínima", "Solo envíos dentro de Japón"],
+  },
+  // Billing and changes (CEO, 2026-11-18).
+  billing: {
+    ja: ["毎月、月初に月額を一括でお支払いいただきます", "配送回数の変更・スキップは、原則として翌月から反映されます", "変更の締切は前月25日です", "日割りの精算はありません"],
+    en: ["The monthly price is charged in full at the start of each month", "Changes to deliveries and skips normally apply from the following month", "The deadline for changes is the 25th of the previous month", "No pro-rated charges or refunds"],
+    es: ["El precio mensual se cobra completo al inicio de cada mes", "Los cambios de envíos y las omisiones se aplican normalmente desde el mes siguiente", "El plazo para cambios es el día 25 del mes anterior", "Sin cobros ni reembolsos prorrateados"],
   },
   // Conditions still to be decided: announced when sign-ups reopen (never shown as fixed before that).
   pendingNote: {
-    ja: "地域ごとの追加送料（北海道・九州・沖縄など）、発送日、変更の締切、お支払いのタイミングは、受付再開時にご案内します。",
-    en: "Extra shipping for some regions (Hokkaido, Kyushu, Okinawa, etc.), shipping days, change deadlines and payment timing will be announced when sign-ups reopen.",
-    es: "El envío adicional para algunas regiones (Hokkaido, Kyushu, Okinawa, etc.), los días de envío, los plazos de cambio y el momento del pago se anunciarán al reabrir las suscripciones.",
+    ja: "発送日、初月のお支払いと初回のお届け、解約時のお取り扱いは、受付再開時にご案内します。",
+    en: "Shipping days, the first month's payment and first delivery, and how cancellation is handled will be announced when sign-ups reopen.",
+    es: "Los días de envío, el pago y el primer envío del primer mes, y el tratamiento de la cancelación se anunciarán al reabrir las suscripciones.",
   },
   preference: {
     maxLength: 300,

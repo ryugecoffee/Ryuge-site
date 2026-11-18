@@ -4146,3 +4146,4 @@ html[lang="es"] .story-body {
 @media (max-width: 480px) {
   .coffee-sub-frequency-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+.coffee-sub-billing { margin: 14px 0 0; padding-left: 1.1em; font-size: 12px; line-height: 1.8; color: rgba(255, 255, 255, 0.7); }

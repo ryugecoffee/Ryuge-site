@@ -12,7 +12,7 @@ const read = (...p) => fs.readFileSync(path.join(root, ...p), "utf8");
 const data = () => import(path.join(root, "src", "productData.js"));
 const pref = () => import(path.join(root, "src", "lib", "subscriptionPreference.js"));
 
-test("the CEO's prices and amounts: 1–4 deliveries, 200 g each, tax and basic shipping included", async () => {
+test("the CEO's prices and amounts: 1–4 deliveries, 200 g each, tax and shipping included, one price nationwide", async () => {
   const { COFFEE_SUBSCRIPTION: S, subscriptionFrequency } = await data();
   assert.deepEqual(S.frequencies.map((f) => [f.deliveriesPerMonth, f.priceNumber, f.gramsPerMonth]),
     [[1, 3000, 200], [2, 5800, 400], [3, 8550, 600], [4, 11200, 800]]);
@@ -20,8 +20,9 @@ test("the CEO's prices and amounts: 1–4 deliveries, 200 g each, tax and basic 
   assert.equal(S.perDelivery.ja, "100g × 2袋（1回 200g）");
   assert.match(S.lead.ja, /当店おまかせの珈琲豆を2種類/);
   assert.match(S.selectionNote.ja, /季節や仕入れの状況に合わせて当店が選びます/);
-  assert.equal(S.labels.ja.priceNote, "税込・基本送料込み");
-  assert.deepEqual(S.terms.ja, ["毎月の配送回数は途中で変更できます", "スキップ自由", "解約自由", "最低継続回数なし", "国内配送のみ"]);
+  assert.equal(S.labels.ja.priceNote, "税込・全国一律送料込み");
+  assert.deepEqual(S.terms.ja, ["全国一律・送料込み（追加送料なし）", "配送回数は月1〜4回で途中変更できます", "スキップ自由", "解約自由", "最低継続回数なし", "国内配送のみ"]);
+  assert.deepEqual(S.billing.ja, ["毎月、月初に月額を一括でお支払いいただきます", "配送回数の変更・スキップは、原則として翌月から反映されます", "変更の締切は前月25日です", "日割りの精算はありません"]);
   assert.equal(subscriptionFrequency("monthly-3").priceNumber, 8550);
   assert.equal(subscriptionFrequency("unknown").id, S.defaultFrequency, "an unknown choice falls back to the default");
   assert.equal(S.frequencyLabel.ja(2), "月2回");
@@ -35,7 +36,8 @@ test("the old plans are gone; one card in 折々 shows the new subscription; eve
   assert.doesNotMatch(read("src", "productData.js"), /豆の定期便|珈琲袋定期便|禅の仕立て便/);
   for (const lang of ["ja", "en", "es"]) {
     for (const key of ["name", "cardSummary", "lead", "perDelivery", "selectionNote", "pendingNote"]) assert.ok(S[key][lang], `${key} ${lang}`);
-    assert.equal(S.terms[lang].length, 5, `terms ${lang}`);
+    assert.equal(S.terms[lang].length, 6, `terms ${lang}`);
+    assert.equal(S.billing[lang].length, 4, `billing ${lang}`);
     assert.ok(S.preference.label[lang] && S.preference.placeholder[lang] && S.preference.notes[lang].length === 3, `preference ${lang}`);
     assert.equal(S.manage.items[lang].length, 3, `manage ${lang}`);
     assert.ok(S.labels[lang].monthly && S.frequencyLabel[lang](1), `labels ${lang}`);
@@ -44,12 +46,20 @@ test("the old plans are gone; one card in 折々 shows the new subscription; eve
   assert.equal(S.preference.placeholder.ja, "例：酸味が少なく、苦味のある珈琲が好きです。フルーティーな珈琲を試してみたいです。");
 });
 
-test("conditions not decided yet are announced later, never stated as fixed", async () => {
+test("conditions not decided yet are announced later, never stated as fixed; shipping is one price nationwide", async () => {
   const { COFFEE_SUBSCRIPTION: S } = await data();
-  assert.match(S.pendingNote.ja, /北海道・九州・沖縄/);
-  assert.match(S.pendingNote.ja, /受付再開時にご案内します/);
+  assert.equal(S.pendingNote.ja, "発送日、初月のお支払いと初回のお届け、解約時のお取り扱いは、受付再開時にご案内します。");
   const texts = JSON.stringify(S);
-  assert.doesNotMatch(texts, /締切は|毎月\d+日|発送日は|決済日は/);
+  assert.doesNotMatch(texts, /発送日は|毎月\d+日(に|発送)|初回.{0,6}(\d+日|月末)/);
+  assert.doesNotMatch(texts, /北海道|九州|沖縄|追加送料がかかり|基本送料|1,700|1700/);
+  // Everywhere the store talks about subscription shipping: one price nationwide, shipping included.
+  for (const file of [["src", "App.jsx"], ["src", "pages", "ShippingPage.jsx"], ["src", "lib", "seo.js"], ["api", "coffee-concierge.js"]]) {
+    const text = read(...file);
+    assert.doesNotMatch(text, /定期便は送料無料|Subscriptions ship free|envío gratis/, file.join("/"));
+    assert.match(text, /定期便は全国一律・送料込み|one price nationwide/, file.join("/"));
+  }
+  // One-off orders keep their regional fees.
+  assert.match(read("src", "App.jsx"), /本州・四国 ¥250 \/ 北海道・九州 ¥500 \/ 沖縄 ¥550/);
 });
 
 test("preference comment: optional, at most 300 characters, cleaned, and refuses personal or payment details", async () => {
