@@ -103,6 +103,9 @@ jobs:
           npx eslint server/inventory.js server/catalog.js server/initial-stock.js server/refunds.js server/factory-refund-api.js server/orders.js server/quote.js server/promo.js server/international-rates.js src/lib/shippingPolicy.js src/pages/CheckoutPage.jsx server/inventory-adjustments.js
           server/factory-inventory-api.js server/firestore-preview-checkout.js
           server/sandbox-checkout.js server/staging-entry.js server/resp-client.js server/rate-limit.js
+          server/coffee-subscription-plan.js server/coffee-subscription-records.js server/coffee-subscription-checkout.js
+          server/coffee-subscription-stripe.js server/coffee-subscription-stripe-e2e.js server/coffee-subscription-calendar.js
+          server/coffee-subscription-preference.js
           server/*.test.js
       - name: Build site preview
         run: npm run build

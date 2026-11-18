@@ -9,6 +9,7 @@ const path = require("node:path");
 const plan = require("./coffee-subscription-plan");
 const { CALENDAR } = require("./coffee-subscription-calendar");
 const records = require("./coffee-subscription-records");
+const ops = require("./coffee-subscription-stripe");
 const checkout = require("./coffee-subscription-checkout");
 const serverPref = require("./coffee-subscription-preference");
 
@@ -22,7 +23,14 @@ test("start month: 1st–15th → next month, 16th–end → the month after (JS
   assert.equal(plan.startMonthFor(jstAt(2026, 11, 16, 0, 0)), "2027-01");
   assert.equal(plan.startMonthFor(Date.UTC(2026, 10, 15, 15, 0)), "2027-01", "15:00 UTC on the 15th is the 16th in Japan");
   assert.equal(plan.startMonthFor(jstAt(2026, 12, 31, 23, 0)), "2027-02");
-  assert.equal(plan.monthStartUnix("2027-01"), Date.UTC(2026, 11, 31, 15, 0) / 1000, "00:00 JST on the 1st");
+  assert.equal(plan.billingStartUnix("2027-01"), Date.UTC(2027, 0, 1, 0, 0) / 1000, "09:00 JST (00:00 UTC) on the 1st");
+  // Stripe counts months in UTC: every boundary must be on the 1st in UTC too, or periods slide after a 30-day month.
+  for (let m = 0; m < 24; m++) {
+    const key = plan.addMonths("2026-12", m);
+    const at = new Date(plan.billingStartUnix(key) * 1000);
+    assert.equal(at.getUTCDate(), 1, key);
+    assert.equal(plan.monthOf(at.getTime()), key, `${key} is still the same month in Japan`);
+  }
 });
 
 test("changes and skips: by the 25th from next month, after it from the month after", () => {
@@ -59,28 +67,31 @@ test("skip and change become Stripe schedule phases set in advance: a skipped mo
   const { phases, endBehavior } = plan.schedulePhases(state, "2027-01", PRICES);
   assert.equal(endBehavior, "release");
   assert.deepEqual(phases.map((p) => [new Date(p.start_date * 1000).toISOString().slice(0, 10), p.items[0].price, p.trial === true, p.metadata.months]), [
-    ["2026-12-31", "price_m2", false, "1"], // January (00:00 JST = 15:00 UTC the day before)
-    ["2027-01-31", "price_m2", true, "1"],  // February skipped
-    ["2027-02-28", "price_m4", false, "1"], // from March: 4 a month, then released (continues)
+    ["2027-01-01", "price_m2", false, "1"], // January (09:00 JST = 00:00 UTC on the 1st)
+    ["2027-02-01", "price_m2", true, "1"],  // February skipped
+    ["2027-03-01", "price_m4", false, "1"], // from March: 4 a month, then released (continues)
   ]);
   assert.ok(phases.every((p) => p.proration_behavior === "none"));
   for (let i = 1; i < phases.length; i++) assert.equal(phases[i].start_date, phases[i - 1].end_date, "no gap, no overlap");
   const cancelled = plan.schedulePhases({ ...state, cancelFrom: "2027-03" }, "2027-01", PRICES);
   assert.equal(cancelled.endBehavior, "cancel");
-  assert.equal(cancelled.phases.at(-1).end_date, plan.monthStartUnix("2027-03"));
+  assert.equal(cancelled.phases.at(-1).end_date, plan.billingStartUnix("2027-03"));
   assert.throws(() => plan.schedulePhases(state, "2027-01", { 1: "p" }), /PRICE_NOT_CONFIGURED/);
 });
 
 test("cancellation: any time; the next charge stops if it is not paid yet; never pushed to the month after next", () => {
   const late = jstAt(2026, 11, 28);
   const paid = plan.cancellationFor(late, { id: "in_nov", status: "paid" });
-  assert.deepEqual([paid.action, paid.cancelAt, paid.lastDeliveredMonth, paid.firstUnchargedMonth],
-    ["CANCEL_AT_NEXT_MONTH", plan.monthStartUnix("2026-12"), "2026-11", "2026-12"], "on the 28th: December is not charged");
+  assert.deepEqual([paid.action, paid.cancelAt, paid.lastChargedMonth, paid.firstUnchargedMonth],
+    ["CANCEL_AT", plan.billingStartUnix("2026-12"), "2026-11", "2026-12"], "on the 28th: December is not charged");
   const retrying = plan.cancellationFor(jstAt(2026, 12, 3), { id: "in_dec", status: "open" });
-  assert.deepEqual([retrying.action, retrying.voidInvoice, retrying.lastDeliveredMonth], ["VOID_AND_CANCEL_NOW", "in_dec", null], "unpaid: voided, nothing shipped");
+  assert.deepEqual([retrying.action, retrying.voidInvoice, retrying.firstUnchargedMonth], ["VOID_AND_CANCEL_NOW", "in_dec", "2026-12"], "unpaid: voided, nothing shipped");
+  const draft = plan.cancellationFor(jstAt(2026, 12, 1, 9, 30), { id: "in_dec", status: "draft" });
+  assert.deepEqual([draft.action, draft.firstUnchargedMonth], ["CANCEL_NOW", "2026-12"], "in the draft hour: ends now, the draft is never charged");
+  const early = plan.cancellationFor(jstAt(2026, 12, 1, 8, 59), null);
+  assert.deepEqual([early.action, early.cancelAt, early.firstUnchargedMonth], ["CANCEL_AT", plan.billingStartUnix("2026-12"), "2026-12"], "before 09:00 on the 1st: this month is not charged");
   const initial = plan.cancellationFor(jstAt(2026, 11, 20), null);
-  assert.equal(initial.action, "CANCEL_AT_NEXT_MONTH");
-  assert.equal(initial.cancelAt, plan.monthStartUnix("2026-12"));
+  assert.deepEqual([initial.action, initial.cancelAt], ["CANCEL_AT", plan.billingStartUnix("2026-12")]);
 });
 
 // In-memory Firestore with serialized transactions, create-once, merge and where.
@@ -124,10 +135,10 @@ const session = (over = {}) => ({ id: "cs_1", mode: "subscription", subscription
   collected_information: { shipping_details: { name: "Hanako", address: { postal_code: "248-0006", state: "神奈川県", city: "鎌倉市", line1: "1-1", country: "JP" } } }, ...over });
 const invoice = (over = {}) => ({ id: "in_1", customer: "cus_1", livemode: false, billing_reason: "subscription_create", amount_paid: 3000,
   status_transitions: { paid_at: jstAt(2026, 11, 10) / 1000 }, parent: { subscription_details: { subscription: SUB, metadata: meta } },
-  lines: { data: [{ type: "subscription", pricing: { price_details: { price: "price_m2" } }, period: { start: plan.monthStartUnix("2026-12"), end: plan.monthStartUnix("2027-01") } }] }, ...over });
+  lines: { data: [{ type: "subscription", pricing: { price_details: { price: "price_m2" } }, period: { start: plan.billingStartUnix("2026-12"), end: plan.billingStartUnix("2027-01") } }] }, ...over });
 const cycle = (month, over = {}) => invoice({ id: `in_${month}`, billing_reason: "subscription_cycle", amount_paid: 5800,
-  status_transitions: { paid_at: plan.monthStartUnix(month) + 3600 },
-  lines: { data: [{ type: "subscription", pricing: { price_details: { price: "price_m2" } }, period: { start: plan.monthStartUnix(month), end: plan.monthStartUnix(plan.addMonths(month, 1)) } }] }, ...over });
+  status_transitions: { paid_at: plan.billingStartUnix(month) + 3600 },
+  lines: { data: [{ type: "subscription", pricing: { price_details: { price: "price_m2" } }, period: { start: plan.billingStartUnix(month), end: plan.billingStartUnix(plan.addMonths(month, 1)) } }] }, ...over });
 const shipments = (db) => [...db.store.keys()].filter((k) => k.startsWith(records.SHIPMENTS + "/")).sort();
 const ev = (type, object) => ({ type, data: { object } });
 
@@ -151,7 +162,7 @@ test("sign-up: the contract and exactly one first delivery, whichever event come
 test("monthly: deliveries only from a paid invoice, once; a failed month ships nothing until it is paid", async () => {
   const db = fakeFirestore();
   await records.handleEvent(db, ev("checkout.session.completed", session()), CONFIG);
-  await records.handleEvent(db, ev("invoice.payment_failed", cycle("2026-12", { amount_paid: 0, attempt_count: 1, next_payment_attempt: plan.monthStartUnix("2026-12") + 86400 })), CONFIG);
+  await records.handleEvent(db, ev("invoice.payment_failed", cycle("2026-12", { amount_paid: 0, attempt_count: 1, next_payment_attempt: plan.billingStartUnix("2026-12") + 86400 })), CONFIG);
   assert.deepEqual(shipments(db), []);
   assert.equal(db.store.get(`${records.MONTHS}/${SUB}_2026-12`).status, "payment_failed");
   assert.equal(db.store.get(`${records.SUBS}/${SUB}`).paymentIssue, true);
@@ -199,7 +210,7 @@ test("only our subscriptions are touched; a preference with personal details is 
   assert.equal(db.store.get(`${records.SUBS}/${SUB}`).frequencyNow, 3);
 });
 
-test("sign-up session: ¥3,000 now, the monthly price from 00:00 JST on the 1st of the start month; off by default", async () => {
+test("sign-up session: ¥3,000 now, the monthly price from 09:00 JST on the 1st of the start month; off by default", async () => {
   assert.equal(checkout.configFrom({}).enabled, false);
   const env = { COFFEE_SUBSCRIPTION_ENABLED: "true", STRIPE_PRICE_COFFEE_SUB_1: "price_m1", STRIPE_PRICE_COFFEE_SUB_2: "price_m2",
     STRIPE_PRICE_COFFEE_SUB_3: "price_m3", STRIPE_PRICE_COFFEE_SUB_4: "price_m4", STRIPE_PRICE_COFFEE_SUB_FIRST: "price_first" };
@@ -207,23 +218,88 @@ test("sign-up session: ¥3,000 now, the monthly price from 00:00 JST on the 1st 
   assert.equal(checkout.configFrom({ ...env, STRIPE_PRICE_COFFEE_SUB_FIRST: "" }).enabled, false);
   const config = checkout.configFrom(env);
   const calls = [];
-  const stripe = { checkout: { sessions: { create: async (params, opts) => { calls.push([params, opts]); return { url: "https://checkout.stripe.test/s" }; } } } };
+  const stripe = { checkout: { sessions: { create: async (params, opts) => { calls.push([params, opts]); return { id: `cs_${calls.length}`, url: `https://checkout.stripe.test/s${calls.length}`, expires_at: params.expires_at }; } } } };
   const db = fakeFirestore();
-  const r = await checkout.createCheckout({ db, stripe, config, input: { frequency: 3, email: "A@example.com", preference: "  深煎りが好き  " }, now: jstAt(2026, 11, 20), idempotencyKey: "coffee-sub-abcdefghijklmnop" });
+  const r = await checkout.createCheckout({ db, stripe, config, input: { frequency: 3, email: "A@example.com", preference: "  深煎りが好き  " }, now: jstAt(2026, 11, 20) });
   assert.deepEqual([r.startMonth, r.firstCharge, r.monthly], ["2027-01", 3000, 8550]);
   const [params, opts] = calls[0];
   assert.deepEqual(params.line_items, [{ price: "price_m3", quantity: 1 }, { price: "price_first", quantity: 1 }]);
-  assert.equal(params.subscription_data.trial_end, plan.monthStartUnix("2027-01"));
+  assert.equal(params.subscription_data.trial_end, plan.billingStartUnix("2027-01"));
   assert.deepEqual(params.subscription_data.metadata, { kind: records.KIND, frequency: "3", startMonth: "2027-01" });
   assert.equal(params.metadata.preference, "深煎りが好き");
   assert.deepEqual(params.shipping_address_collection, { allowed_countries: ["JP"] });
-  assert.deepEqual(opts, { idempotencyKey: "coffee-sub-abcdefghijklmnop" });
+  assert.match(opts.idempotencyKey, /^coffee-sub-[0-9a-f]{24}$/);
+  assert.equal(params.expires_at, jstAt(2026, 11, 20) / 1000 + 30 * 60, "the Checkout page lives 30 minutes");
   // One running subscription per email; preferences with personal details are refused; frequency 1–4 only.
   db.store.set(`${records.SUBS}/sub_x`, { email: "a@example.com", status: "active" });
   await assert.rejects(checkout.createCheckout({ db, stripe, config, input: { frequency: 1, email: "a@example.com" }, now: jstAt(2026, 11, 2) }), (e) => e.code === "ALREADY_SUBSCRIBED" && e.status === 409);
   await assert.rejects(checkout.createCheckout({ db: fakeFirestore(), stripe, config, input: { frequency: 1, email: "b@example.com", preference: "hanako@example.com" }, now: 0 }), (e) => e.code === "PREFERENCE_EMAIL");
   await assert.rejects(checkout.createCheckout({ db: fakeFirestore(), stripe, config, input: { frequency: 5, email: "b@example.com" }, now: 0 }), (e) => e.code === "INVALID_FREQUENCY");
   assert.equal(calls.length, 1, "refused before Stripe is called");
+});
+
+test("one sign-up per email: requests at the same moment share one Checkout page; a new page only after it ends", async () => {
+  const config = checkout.configFrom({ COFFEE_SUBSCRIPTION_ENABLED: "true", STRIPE_PRICE_COFFEE_SUB_1: "price_m1", STRIPE_PRICE_COFFEE_SUB_2: "price_m2",
+    STRIPE_PRICE_COFFEE_SUB_3: "price_m3", STRIPE_PRICE_COFFEE_SUB_4: "price_m4", STRIPE_PRICE_COFFEE_SUB_FIRST: "price_first" });
+  let created = 0;
+  const stripe = { checkout: { sessions: { create: async (params) => { created += 1; await new Promise((r) => setTimeout(r, 30));
+    return { id: `cs_${created}`, url: `https://checkout.stripe.test/s${created}`, expires_at: params.expires_at }; } } } };
+  const db = fakeFirestore();
+  const now = jstAt(2026, 11, 20);
+  // Without a reservation, five requests would all pass the contract search (no contract exists before payment).
+  const results = await Promise.all(["a@example.com", "A@example.com ", "a@example.com", "a@EXAMPLE.com", "a@example.com"].map((email) =>
+    checkout.createCheckout({ db, stripe, config, input: { frequency: 2, email }, now, waitMs: 2000 })));
+  assert.equal(created, 1, "one Checkout page");
+  assert.deepEqual(new Set(results.map((r) => r.url)), new Set(["https://checkout.stripe.test/s1"]));
+  // Still open 20 minutes later: the same page.
+  assert.equal((await checkout.createCheckout({ db, stripe, config, input: { frequency: 1, email: "a@example.com" }, now: now + 20 * 60_000 })).url, "https://checkout.stripe.test/s1");
+  // The page expired (event): a new one may be made.
+  await records.handleEvent(db, ev("checkout.session.expired", { id: "cs_1", mode: "subscription", customer_email: "a@example.com", metadata: meta }), CONFIG);
+  assert.equal((await checkout.createCheckout({ db, stripe, config, input: { frequency: 1, email: "a@example.com" }, now: now + 21 * 60_000 })).url, "https://checkout.stripe.test/s2");
+  // Or simply ran out (no event): after 30 minutes a new one may be made.
+  assert.equal((await checkout.createCheckout({ db, stripe, config, input: { frequency: 1, email: "a@example.com" }, now: now + 60 * 60_000 })).url, "https://checkout.stripe.test/s3");
+  // Once paid, the email belongs to that subscription: no new sign-up while it runs.
+  await records.handleEvent(db, ev("checkout.session.completed", session({ id: "cs_3", customer_details: { email: "a@example.com" } })), CONFIG);
+  await assert.rejects(checkout.createCheckout({ db, stripe, config, input: { frequency: 1, email: "a@example.com" }, now: now + 61 * 60_000 }), (e) => e.code === "ALREADY_SUBSCRIBED");
+  // A Stripe failure frees the reservation.
+  const failing = { checkout: { sessions: { create: async () => { throw new Error("stripe down"); } } } };
+  await assert.rejects(checkout.createCheckout({ db, stripe: failing, config, input: { frequency: 1, email: "c@example.com" }, now }));
+  assert.equal(db.store.get(`${records.EMAILS}/${records.emailKey("c@example.com")}`).status, "released");
+});
+
+test("a second subscription for the same email is never shipped to, whichever events come first", async () => {
+  const SUB2 = "sub_test2";
+  const inv2 = () => invoice({ id: "in_2", parent: { subscription_details: { subscription: SUB2, metadata: meta } }, customer_email: "hanako@example.com" });
+  const ses2 = () => session({ id: "cs_2", subscription: SUB2 });
+  for (const order of [["c1", "i1", "c2", "i2"], ["i2", "c1", "i1", "c2"], ["i1", "i2", "c2", "c1"]]) {
+    const db = fakeFirestore();
+    const send = { c1: () => records.handleEvent(db, ev("checkout.session.completed", session()), CONFIG),
+      i1: () => records.handleEvent(db, ev("invoice.paid", invoice({ customer_email: "hanako@example.com" })), CONFIG),
+      c2: () => records.handleEvent(db, ev("checkout.session.completed", ses2()), CONFIG),
+      i2: () => records.handleEvent(db, ev("invoice.paid", inv2()), CONFIG) };
+    for (const step of order) await send[step]();
+    const first = order.findIndex((x) => x.endsWith("1")) < order.findIndex((x) => x.endsWith("2")) ? SUB : SUB2;
+    const second = first === SUB ? SUB2 : SUB;
+    assert.deepEqual(shipments(db), [`${records.SHIPMENTS}/${first}_first`], order.join(">"));
+    const dup = db.store.get(`${records.SUBS}/${second}`);
+    assert.deepEqual([dup.duplicateOf, dup.needsReview, dup.reviewReason], [first, true, "DUPLICATE_SUBSCRIPTION"], order.join(">"));
+    // Its monthly charges are not shipped either.
+    const r = await records.handleEvent(db, ev("invoice.paid", cycle("2026-12", { parent: { subscription_details: { subscription: second, metadata: meta } } })), CONFIG);
+    assert.equal(r.review, "DUPLICATE_SUBSCRIPTION");
+    assert.equal(shipments(db).length, 1);
+  }
+});
+
+test("a skipped month's zero invoice (subscription_update) is not charged; any other paid invoice is flagged, never shipped", async () => {
+  const db = fakeFirestore();
+  await records.handleEvent(db, ev("checkout.session.completed", session()), CONFIG);
+  const zero = await records.handleEvent(db, ev("invoice.paid", cycle("2027-01", { id: "in_skip", billing_reason: "subscription_update", amount_paid: 0 })), CONFIG);
+  assert.equal(zero.shipments, 0);
+  assert.equal(db.store.get(`${records.MONTHS}/${SUB}_2027-01`).status, "not_charged");
+  const odd = await records.handleEvent(db, ev("invoice.paid", cycle("2027-02", { id: "in_odd", billing_reason: "subscription_update", amount_paid: 1200 })), CONFIG);
+  assert.equal(odd.review, "UNEXPECTED_INVOICE");
+  assert.equal(db.store.get(`${records.SUBS}/${SUB}`).reviewReason, "UNEXPECTED_INVOICE");
+  assert.deepEqual(shipments(db), []);
 });
 
 test("the server's preference rules match the store's", async () => {
@@ -242,5 +318,32 @@ test("wiring: subscription events go to the new handlers; existing order and ref
   assert.match(index, /\} else if \(coffeeSubscription\.EVENT_TYPES\.includes\(event\.type\)\) \{\n\s*await coffeeSubscription\.handleEvent\(db, event, coffeeSubscriptionCheckout\.configFrom\(\)\);/);
   assert.ok(index.indexOf('event.type === "payment_intent.succeeded"') < index.indexOf("coffeeSubscription.EVENT_TYPES.includes"), "existing events first");
   assert.match(index, /app\.post\(coffeeSubscriptionCheckout\.PATH, coffeeSubscriptionCheckout\.createHandler/);
-  assert.deepEqual(records.EVENT_TYPES.sort(), ["checkout.session.completed", "customer.subscription.deleted", "customer.subscription.updated", "invoice.paid", "invoice.payment_failed"]);
+  assert.deepEqual(records.EVENT_TYPES.sort(), ["checkout.session.completed", "checkout.session.expired", "customer.subscription.deleted", "customer.subscription.updated", "invoice.paid", "invoice.payment_failed"]);
+});
+
+test("schedule rebuild: the month being charged and every month before the deadline stay as Stripe has them", () => {
+  const B = plan.billingStartUnix;
+  const day = (sec) => new Date(sec * 1000).toISOString().slice(0, 10);
+  // Signed up 11/10 (December start); on 11/20 January is skipped: the initial trial phase is kept as it is.
+  const trialing = [{ start_date: jstAt(2026, 11, 10, 10) / 1000, end_date: B("2026-12"), trial_end: B("2026-12"), items: [{ price: "price_m2", quantity: 1 }] },
+    { start_date: B("2026-12"), end_date: B("2027-01"), items: [{ price: { id: "price_m2" }, quantity: 1 }] }];
+  const state = { startMonth: "2026-12", frequency: 2, changes: {}, skips: ["2027-01"] };
+  const a = ops.buildSchedulePhases({ existingPhases: trialing, state, now: jstAt(2026, 11, 20), priceIds: PRICES });
+  assert.deepEqual(a.phases.map((p) => [day(p.start_date), p.items[0].price, !!(p.trial || p.trial_end)]),
+    [["2026-11-10", "price_m2", true], ["2026-12-01", "price_m2", false], ["2027-01-01", "price_m2", true], ["2027-02-01", "price_m2", false]]);
+  assert.equal(a.endBehavior, "release");
+  // On 12/26 (after the deadline), a change for February: December's phase is cut at 1/1, January follows the plan as
+  // it was, February changes.
+  const active = [{ start_date: B("2026-12"), end_date: B("2027-01"), items: [{ price: "price_m2", quantity: 1 }] }];
+  const b = ops.buildSchedulePhases({ existingPhases: active, state: { startMonth: "2026-12", frequency: 2, changes: { "2027-02": 3 }, skips: [] }, now: jstAt(2026, 12, 26), priceIds: PRICES });
+  assert.deepEqual(b.phases.map((p) => [day(p.start_date), day(p.end_date), p.items[0].price]),
+    [["2026-12-01", "2027-01-01", "price_m2"], ["2027-01-01", "2027-02-01", "price_m2"], ["2027-02-01", "2027-03-01", "price_m3"]]);
+  assert.equal(b.fromMonth, "2027-02");
+  // A phase that already ended is not sent again; a long current phase is cut at the first changeable month.
+  const long = [{ start_date: B("2026-10"), end_date: B("2026-12"), items: [{ price: "price_m1", quantity: 1 }] },
+    { start_date: B("2026-12"), end_date: B("2027-06"), items: [{ price: "price_m4", quantity: 1 }] }];
+  const c = ops.buildSchedulePhases({ existingPhases: long, state: { startMonth: "2026-10", frequency: 4, changes: {}, skips: ["2027-03"] }, now: jstAt(2026, 12, 10), priceIds: PRICES });
+  assert.deepEqual(c.phases.map((p) => [day(p.start_date), day(p.end_date), !!p.trial]),
+    [["2026-12-01", "2027-01-01", false], ["2027-01-01", "2027-03-01", false], ["2027-03-01", "2027-04-01", true], ["2027-04-01", "2027-05-01", false]]);
+  assert.ok(c.phases.every((p) => p.proration_behavior === "none"));
 });

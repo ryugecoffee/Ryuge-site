@@ -2,6 +2,8 @@
 
 // Days the shop does not ship 珈琲の定期便 (besides Saturdays and Sundays), as data. Shipping dates falling on one of
 // them move to the next working day (server/coffee-subscription-plan.js shippingDates).
+// CEO, 2026-11-18: closed on Saturdays, Sundays and public holidays for now; extra closures (year-end holidays and so
+// on) are added to CLOSURES when decided.
 // Japanese public holidays 2026–2027 (内閣府「国民の祝日」, including substitute holidays and the 国民の休日 of
 // 2026-09-22). To be checked against the Cabinet Office table and extended every year.
 const HOLIDAYS = [
@@ -15,7 +17,7 @@ const HOLIDAYS = [
   "2027-11-23",
 ];
 
-// Shop closures (e.g. year-end holidays): not decided yet, so none. Add "YYYY-MM-DD" days here when the CEO sets them.
+// Extra closures (e.g. year-end holidays): none decided yet. Add "YYYY-MM-DD" days here when the CEO sets them.
 const CLOSURES = [];
 
 const CALENDAR = Object.freeze({ holidays: new Set(HOLIDAYS), closures: new Set(CLOSURES) });

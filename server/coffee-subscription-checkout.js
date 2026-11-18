@@ -5,11 +5,19 @@
 //  - the monthly price for the chosen frequency starts at 00:00 JST on the 1st of the start month (a trial until then:
 //    nothing else is charged before it), next month for a sign-up on the 1st–15th, the month after for the 16th–end;
 //  - the coffee preference (optional, at most 300 characters, no personal or payment details) travels in the metadata.
+// One sign-up per email (2026-11-18: searching contracts by email cannot stop it, because a contract is only recorded
+// when a Checkout is paid, so two Checkout pages opened before either is paid both pass the search):
+//  - the email is reserved first, in a transaction on coffeeSubscriptionEmails/{sha256(email)}; while its Checkout is
+//    open, another request for the same email gets the same Checkout page (one page, so one payment) instead of a new
+//    one; a running subscription for the email refuses the sign-up (409);
+//  - the reservation ends with the Checkout (30 minutes, or checkout.session.expired); a paid Checkout makes its
+//    subscription the email's owner (coffee-subscription-records.js), and a second owner is never shipped to.
 // Off (404) unless COFFEE_SUBSCRIPTION_ENABLED=true and the five price ids are set; the store also keeps sign-ups
 // paused (src/productData.js SUBSCRIPTIONS_PAUSED). Nothing here creates products or prices.
 
+const crypto = require("crypto");
 const plan = require("./coffee-subscription-plan");
-const { KIND, SUBS } = require("./coffee-subscription-records");
+const { KIND, SUBS, EMAILS, RUNNING, emailKey } = require("./coffee-subscription-records");
 const { normalizePreference, preferenceIssues } = require("./coffee-subscription-preference");
 
 const PATH = "/coffee-subscription/checkout";
@@ -26,9 +34,42 @@ class CheckoutError extends Error {
   constructor(code, status = 400) { super(code); this.code = code; this.status = status; }
 }
 
-const ACTIVE = ["trialing", "active", "past_due", "incomplete_record"];
+const CHECKOUT_MINUTES = 30; // Stripe's shortest Checkout lifetime
+const WAIT_FOR_OTHER_MS = 8000;
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const toMs = (value) => (value?.toMillis ? value.toMillis() : value instanceof Date ? value.getTime() : Number(value || 0));
 
-async function createCheckout({ db, stripe, config, input, now = Date.now(), idempotencyKey }) {
+// Reserves the email for one Checkout. Returns { url } of the open Checkout, { wait: true } while another request is
+// creating it, or { nonce } when this request is to create it.
+async function reserveEmail(db, email, now) {
+  const ref = db.collection(EMAILS).doc(emailKey(email));
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const current = snap.exists ? snap.data() : null;
+    if (current?.subscriptionId) {
+      const owner = await tx.get(db.collection(SUBS).doc(current.subscriptionId));
+      if (owner.exists && RUNNING.includes(owner.data().status)) throw new CheckoutError("ALREADY_SUBSCRIBED", 409);
+    }
+    if (current?.status === "pending" && toMs(current.expiresAt) > now + 60_000) {
+      if (current.url) return { url: current.url, reused: true };
+      if (toMs(current.reservedAt) > now - 60_000) return { wait: true };
+    }
+    const nonce = crypto.randomBytes(12).toString("hex");
+    tx.set(ref, { status: "pending", nonce, sessionId: null, url: null, reservedAt: new Date(now),
+      expiresAt: new Date(now + CHECKOUT_MINUTES * 60_000), updatedAt: new Date(now) }, { merge: true });
+    return { nonce };
+  });
+}
+
+async function finishReservation(db, email, nonce, patch) {
+  const ref = db.collection(EMAILS).doc(emailKey(email));
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (snap.exists && snap.data().nonce === nonce) tx.update(ref, patch);
+  });
+}
+
+async function createCheckout({ db, stripe, config, input, now = Date.now(), waitMs = WAIT_FOR_OTHER_MS }) {
   if (!config.enabled) throw new CheckoutError("DISABLED", 404);
   const frequency = (() => { try { return plan.validFrequency(input?.frequency); } catch { throw new CheckoutError("INVALID_FREQUENCY"); } })();
   const email = String(input?.email || "").trim().toLowerCase();
@@ -36,25 +77,45 @@ async function createCheckout({ db, stripe, config, input, now = Date.now(), ide
   const preference = normalizePreference(input?.preference || "");
   const issues = preferenceIssues(preference);
   if (issues.length) throw new CheckoutError(`PREFERENCE_${issues[0]}`);
-  // One running subscription per email: a second sign-up would mean a second charge and a second delivery.
+  // Contracts recorded before reservations existed (none in production yet; kept as a second check).
   const existing = await db.collection(SUBS).where("email", "==", email).limit(10).get();
-  if (existing.docs.some((d) => ACTIVE.includes(d.data().status))) throw new CheckoutError("ALREADY_SUBSCRIBED", 409);
+  if (existing.docs.some((d) => RUNNING.includes(d.data().status))) throw new CheckoutError("ALREADY_SUBSCRIBED", 409);
   const startMonth = plan.startMonthFor(now);
+  const summary = { startMonth, firstCharge: plan.FIRST_DELIVERY_PRICE, monthly: plan.MONTHLY_PRICES[frequency] };
+
+  let reservation = await reserveEmail(db, email, now);
+  for (let waited = 0; reservation.wait && waited < waitMs; waited += 250) {
+    await sleep(250);
+    reservation = await reserveEmail(db, email, now + waited);
+  }
+  if (reservation.wait) throw new CheckoutError("SIGNUP_IN_PROGRESS", 409);
+  // The same open Checkout page for the same email: one page can only be paid once.
+  if (reservation.url) return { url: reservation.url, reused: true, ...summary };
+
   const metadata = { kind: KIND, frequency: String(frequency), startMonth };
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    line_items: [{ price: config.priceIds[frequency], quantity: 1 }, { price: config.firstPriceId, quantity: 1 }],
-    subscription_data: { trial_end: plan.monthStartUnix(startMonth), metadata,
-      trial_settings: { end_behavior: { missing_payment_method: "cancel" } } },
-    payment_method_collection: "always",
-    customer_email: email,
-    shipping_address_collection: { allowed_countries: ["JP"] },
-    locale: "ja",
-    metadata: { ...metadata, preference },
-    success_url: `${config.siteUrl}/checkout/complete?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${config.siteUrl}/products#oriori`,
-  }, idempotencyKey ? { idempotencyKey } : undefined);
-  return { url: session.url, startMonth, firstCharge: plan.FIRST_DELIVERY_PRICE, monthly: plan.MONTHLY_PRICES[frequency] };
+  let session;
+  try {
+    session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      line_items: [{ price: config.priceIds[frequency], quantity: 1 }, { price: config.firstPriceId, quantity: 1 }],
+      subscription_data: { trial_end: plan.billingStartUnix(startMonth), metadata,
+        trial_settings: { end_behavior: { missing_payment_method: "cancel" } } },
+      payment_method_collection: "always",
+      customer_email: email,
+      shipping_address_collection: { allowed_countries: ["JP"] },
+      locale: "ja",
+      expires_at: Math.floor(now / 1000) + CHECKOUT_MINUTES * 60,
+      metadata: { ...metadata, preference },
+      success_url: `${config.siteUrl}/checkout/complete?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${config.siteUrl}/products#oriori`,
+    }, { idempotencyKey: `coffee-sub-${reservation.nonce}` });
+  } catch (error) {
+    await finishReservation(db, email, reservation.nonce, { status: "released", updatedAt: new Date(now) }).catch(() => {});
+    throw error;
+  }
+  await finishReservation(db, email, reservation.nonce, { sessionId: session.id, url: session.url,
+    expiresAt: new Date(Number(session.expires_at || 0) * 1000 || now + CHECKOUT_MINUTES * 60_000), updatedAt: new Date(now) });
+  return { url: session.url, ...summary };
 }
 
 function createHandler({ getDb, getStripe, env = process.env, clock = Date.now } = {}) {
@@ -63,9 +124,8 @@ function createHandler({ getDb, getStripe, env = process.env, clock = Date.now }
     const config = configFrom(env);
     if (!config.enabled) return res.status(404).end();
     try {
-      const key = String(req.get("idempotency-key") || "");
-      const result = await createCheckout({ db: getDb(), stripe: getStripe(), config, input: req.body, now: clock(),
-        idempotencyKey: /^[A-Za-z0-9_-]{16,80}$/.test(key) ? `coffee-sub-${key}` : undefined });
+      // Repeated requests are made safe by the email reservation (the same open Checkout is returned).
+      const result = await createCheckout({ db: getDb(), stripe: getStripe(), config, input: req.body, now: clock() });
       return res.json(result);
     } catch (error) {
       if (error instanceof CheckoutError) return res.status(error.status).json({ error: error.code });

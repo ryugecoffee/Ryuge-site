@@ -4,11 +4,14 @@
 //  - one plan; 1–4 deliveries a month; 100 g × 2 per delivery; tax and shipping included, the same everywhere in Japan;
 //  - sign-up pays ¥3,000 for a first 200 g delivery; the monthly charge starts on the 1st of the next month (sign-up on
 //    the 1st–15th) or of the month after (16th–end), so the first delivery and the first monthly charge never crowd;
-//  - the monthly price is charged in full on the 1st (JST); no pro-rating;
+//  - the monthly price is charged in full on the 1st, at 09:00 JST (00:00 UTC); no pro-rating. Stripe counts monthly
+//    periods in UTC: a period starting at 00:00 JST (15:00 UTC the day before) slides to the last day of the previous
+//    month after a 30-day month (verified with Stripe test clocks, 2026-11-18). 00:00 UTC on the 1st never slides;
 //  - changes and skips: by the 25th, from the next month; after the 25th, from the month after;
 //  - a skipped month is neither charged nor shipped: it is a zero-price (trial) phase of the Stripe subscription schedule,
 //    set when the customer asks, so Stripe never creates a charge for it (nothing is voided afterwards);
 //  - cancellation: any time; the next monthly charge is stopped whenever it has not been paid yet.
+// Stripe creates the monthly invoice at 09:00 JST as a draft and finalizes and charges it about an hour later.
 
 const TZ_OFFSET_MS = 9 * 60 * 60 * 1000; // JST, no daylight saving
 
@@ -52,10 +55,11 @@ function addMonths(key, n) {
 
 const monthOf = (at) => { const p = jst(at); return monthKey(p.year, p.month); };
 
-// 00:00 JST on the 1st of the month, as a Unix timestamp in seconds (what Stripe takes).
-function monthStartUnix(key) {
+// When a month is charged: 09:00 JST (00:00 UTC) on the 1st, as a Unix timestamp in seconds (what Stripe takes). Every
+// period boundary given to Stripe (trial end, schedule phases, cancel_at) is one of these.
+function billingStartUnix(key) {
   const { year, month } = parseMonth(key);
-  return Math.floor((Date.UTC(year, month - 1, 1) - TZ_OFFSET_MS) / 1000);
+  return Math.floor(Date.UTC(year, month - 1, 1) / 1000);
 }
 
 // First month charged monthly: next month for a sign-up on the 1st–15th, the month after for the 16th–end.
@@ -113,7 +117,7 @@ function monthPlan(state, fromMonth, count) {
 }
 
 // Stripe subscription schedule phases for that plan, from `fromMonth` on: one phase per run of identical months, each
-// from 00:00 JST on the 1st; skipped months are trial phases (Stripe charges nothing for them). The last phase is open
+// from 09:00 JST on the 1st; skipped months are trial phases (Stripe charges nothing for them). The last phase is open
 // ended (released to the plain subscription), unless the customer cancelled.
 // priceIds: { 1: "price_…", …, 4: "price_…" }.
 function schedulePhases(state, fromMonth, priceIds, horizonMonths = 24) {
@@ -131,8 +135,8 @@ function schedulePhases(state, fromMonth, priceIds, horizonMonths = 24) {
     const price = priceIds[run.frequency];
     if (!price) throw new PlanError("PRICE_NOT_CONFIGURED");
     return {
-      start_date: monthStartUnix(run.start),
-      end_date: monthStartUnix(addMonths(run.start, run.months)),
+      start_date: billingStartUnix(run.start),
+      end_date: billingStartUnix(addMonths(run.start, run.months)),
       items: [{ price, quantity: 1 }],
       proration_behavior: "none",
       ...(run.skipped ? { trial: true } : {}),
@@ -143,25 +147,32 @@ function schedulePhases(state, fromMonth, priceIds, horizonMonths = 24) {
 }
 
 // What a cancellation asked for `now` does. The next monthly charge is stopped whenever it has not been paid:
+//  - before 09:00 JST on the 1st, this month is not charged yet: the subscription ends at 09:00, before the charge;
 //  - `currentMonthInvoice` is this month's monthly invoice as Stripe has it (null when there is none: initial period,
-//    a skipped month, or before 00:00 JST on the 1st);
-//  - paid: this month was paid for, so its deliveries go out; the subscription ends with the month (no refund);
-//  - open / draft / uncollectible (not paid, being retried): that invoice is voided and the subscription ends now;
-//    nothing more is shipped for this month;
-//  - none: the subscription ends at the next 1st, before any further charge.
+//    a skipped month);
+//  - paid: this month was paid for, so its deliveries go out; the subscription ends at the next 1st (no refund);
+//  - draft (the hour between 09:00 and the charge): the subscription ends now; Stripe then never finalizes or charges
+//    the draft (a subscription's draft cannot be deleted or voided; verified with test clocks);
+//  - open / uncollectible (not paid, being retried): that invoice is voided and the subscription ends now;
+//  - in every unpaid case nothing more is shipped for this month (deliveries come only from a paid invoice).
 // The 25th deadline is for changes and skips only; a cancellation is never pushed to a later month.
 function cancellationFor(now, currentMonthInvoice) {
   const month = monthOf(now);
   const status = currentMonthInvoice?.status || null;
-  if (status && status !== "paid" && status !== "void") {
-    return { action: "VOID_AND_CANCEL_NOW", voidInvoice: currentMonthInvoice.id, lastDeliveredMonth: null, firstUnchargedMonth: month };
+  const previous = addMonths(month, -1);
+  if (Math.floor(new Date(now).getTime() / 1000) < billingStartUnix(month)) {
+    return { action: "CANCEL_AT", cancelAt: billingStartUnix(month), firstUnchargedMonth: month, lastChargedMonth: previous };
   }
-  return { action: "CANCEL_AT_NEXT_MONTH", cancelAt: monthStartUnix(addMonths(month, 1)),
-    lastDeliveredMonth: status === "paid" ? month : null, firstUnchargedMonth: addMonths(month, 1) };
+  if (status === "draft") return { action: "CANCEL_NOW", firstUnchargedMonth: month, lastChargedMonth: previous };
+  if (status && status !== "paid" && status !== "void") {
+    return { action: "VOID_AND_CANCEL_NOW", voidInvoice: currentMonthInvoice.id, firstUnchargedMonth: month, lastChargedMonth: previous };
+  }
+  return { action: "CANCEL_AT", cancelAt: billingStartUnix(addMonths(month, 1)), firstUnchargedMonth: addMonths(month, 1),
+    lastChargedMonth: status === "paid" ? month : previous };
 }
 
 module.exports = {
   PlanError, MONTHLY_PRICES, FIRST_DELIVERY_PRICE, GRAMS_PER_DELIVERY, CHANGE_DEADLINE_DAY, START_NEXT_MONTH_UNTIL_DAY,
-  SHIPPING_DAYS, validFrequency, jst, monthOf, addMonths, parseMonth, monthStartUnix, startMonthFor, firstChangeableMonth,
+  SHIPPING_DAYS, validFrequency, jst, monthOf, addMonths, parseMonth, billingStartUnix, startMonthFor, firstChangeableMonth,
   isWorkingDay, shippingDates, monthPlan, schedulePhases, cancellationFor,
 };
