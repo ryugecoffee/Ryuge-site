@@ -1,0 +1,152 @@
+"use strict";
+
+// 珈琲の定期便: applying the customer's plan (skips, frequency changes) and cancellations to Stripe. Not reachable from
+// the store yet: the customer's management page and its API come in step ② and call these functions.
+//  - Skips and changes are a Stripe subscription schedule, set when the customer asks (by the 25th for the next month,
+//    after it for the month after). A skipped month is a trial phase: Stripe charges nothing and sends a zero invoice
+//    (billing_reason "subscription_update"), so nothing is shipped. A change is a new price from the 1st, no pro-rating.
+//    The month being charged (and every month before the first changeable one) is never touched.
+//  - The plan lives in Firestore (coffeeSubscriptions/{id}: skips, changes, planVersion); the schedule is rebuilt from
+//    it each time, so two requests at the same moment end with Stripe showing the latest plan (planVersion check).
+//  - A cancellation stops the next charge whenever it is not paid yet (plan.cancellationFor). A cancellation before
+//    the first 200 g is shipped records a refund proposal of ¥3,000 for the CEO; nothing is refunded automatically.
+// Verified against Stripe test mode with test clocks (2026-11-18): server/coffee-subscription-stripe-e2e.js.
+
+const plan = require("./coffee-subscription-plan");
+const { SUBS, SHIPMENTS } = require("./coffee-subscription-records");
+
+class PlanChangeError extends Error {
+  constructor(code, status = 400) { super(code); this.code = code; this.status = status; }
+}
+
+const idOf = (value) => (typeof value === "string" ? value : value?.id || null);
+const ENDED = ["canceled", "incomplete_expired"];
+
+// The full list of phases for subscriptionSchedules.update: the current (and any already fixed) phases as Stripe has
+// them, cut at the first month the customer may still change, then the plan from that month on.
+function buildSchedulePhases({ existingPhases, state, now, priceIds }) {
+  const nowSec = Math.floor(now / 1000);
+  const changeable = plan.firstChangeableMonth(now);
+  const fromMonth = changeable > state.startMonth ? changeable : state.startMonth;
+  const cut = plan.billingStartUnix(fromMonth);
+  const kept = (existingPhases || [])
+    .filter((p) => p.end_date > nowSec && p.start_date < cut)
+    .map((p) => {
+      const end = Math.min(p.end_date, cut);
+      return { start_date: p.start_date, end_date: end, items: p.items.map((i) => ({ price: idOf(i.price), quantity: i.quantity || 1 })),
+        proration_behavior: "none", ...(p.trial_end ? { trial_end: Math.min(p.trial_end, end) } : {}), metadata: p.metadata || {} };
+    });
+  // Months between the last fixed phase and the cut follow the same plan (it cannot have changed for them).
+  const lastEnd = kept.length ? kept[kept.length - 1].end_date : null;
+  const genFrom = lastEnd && lastEnd < cut ? plan.monthOf(lastEnd * 1000) : fromMonth;
+  const { phases, endBehavior } = plan.schedulePhases({ ...state, cancelFrom: null }, genFrom, priceIds);
+  const all = [...kept, ...phases];
+  for (let i = 1; i < all.length; i++) if (all[i].start_date !== all[i - 1].end_date) throw new PlanChangeError("SCHEDULE_GAP", 500);
+  return { phases: all, endBehavior, fromMonth };
+}
+
+async function readContract(db, subscriptionId) {
+  const snap = await db.collection(SUBS).doc(subscriptionId).get();
+  if (!snap.exists) throw new PlanChangeError("NOT_FOUND", 404);
+  return snap.data();
+}
+
+// Brings the Stripe schedule in line with the plan in Firestore. Repeats when the plan changed while it ran.
+async function syncSchedule({ db, stripe, subscriptionId, config, now = Date.now() }) {
+  for (let round = 0; round < 3; round++) {
+    const contract = await readContract(db, subscriptionId);
+    const version = Number(contract.planVersion || 0);
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    if (ENDED.includes(subscription.status) || subscription.cancel_at) throw new PlanChangeError("SUBSCRIPTION_ENDING", 409);
+    let scheduleId = idOf(subscription.schedule);
+    if (!scheduleId) {
+      // Two requests at once may both try to create it; the second uses the first one's.
+      try { scheduleId = (await stripe.subscriptionSchedules.create({ from_subscription: subscriptionId })).id; }
+      catch (error) { scheduleId = idOf((await stripe.subscriptions.retrieve(subscriptionId)).schedule); if (!scheduleId) throw error; }
+    }
+    const schedule = await stripe.subscriptionSchedules.retrieve(scheduleId);
+    const state = { startMonth: contract.startMonth, frequency: contract.frequency, changes: contract.changes || {}, skips: contract.skips || [] };
+    const { phases, endBehavior } = buildSchedulePhases({ existingPhases: schedule.phases, state, now, priceIds: config.priceIds });
+    await stripe.subscriptionSchedules.update(scheduleId, { phases, end_behavior: endBehavior, proration_behavior: "none",
+      metadata: { planVersion: String(version) } });
+    const applied = await db.runTransaction(async (tx) => {
+      const ref = db.collection(SUBS).doc(subscriptionId);
+      const snap = await tx.get(ref);
+      if (Number(snap.data().planVersion || 0) !== version) return false;
+      tx.update(ref, { appliedPlanVersion: version, scheduleId, updatedAt: new Date(now) });
+      return true;
+    });
+    if (applied) return { scheduleId, planVersion: version, phases: phases.length };
+  }
+  throw new PlanChangeError("PLAN_CHANGING", 409);
+}
+
+// A customer's request: { skip: "YYYY-MM" } / { unskip: "YYYY-MM" } / { frequency: n, from: "YYYY-MM" }. Recorded in
+// Firestore (only for months still changeable), then applied to Stripe.
+async function requestPlanChange({ db, stripe, subscriptionId, request, config, now = Date.now() }) {
+  const changeable = plan.firstChangeableMonth(now);
+  const month = String(request.skip || request.unskip || request.from || "");
+  plan.parseMonth(month);
+  if (month < changeable) throw new PlanChangeError("CHANGE_DEADLINE_PASSED", 409);
+  const ref = db.collection(SUBS).doc(subscriptionId);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw new PlanChangeError("NOT_FOUND", 404);
+    const contract = snap.data();
+    if (contract.cancelRequestedAt || ENDED.includes(contract.status)) throw new PlanChangeError("SUBSCRIPTION_ENDING", 409);
+    if (month < contract.startMonth) throw new PlanChangeError("BEFORE_START", 409);
+    const skips = new Set(contract.skips || []);
+    const changes = { ...(contract.changes || {}) };
+    if (request.skip) skips.add(month);
+    else if (request.unskip) skips.delete(month);
+    else changes[month] = plan.validFrequency(request.frequency);
+    tx.update(ref, { skips: [...skips].sort(), changes, planVersion: Number(contract.planVersion || 0) + 1, updatedAt: new Date(now) });
+  });
+  return syncSchedule({ db, stripe, subscriptionId, config, now });
+}
+
+// This month's monthly invoice as Stripe has it (null when there is none: initial period, a skipped month).
+async function currentMonthInvoice(stripe, subscriptionId, now) {
+  const month = plan.monthOf(now);
+  const list = await stripe.invoices.list({ subscription: subscriptionId, limit: 5 });
+  return list.data.find((inv) => inv.billing_reason === "subscription_cycle" && (inv.lines?.data || []).some((l) => l.period?.start
+    && plan.monthOf(l.period.start * 1000) === month)) || null;
+}
+
+async function cancelSubscription({ db, stripe, subscriptionId, now = Date.now() }) {
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const invoice = ENDED.includes(subscription.status) ? null : await currentMonthInvoice(stripe, subscriptionId, now);
+  const decision = plan.cancellationFor(now, invoice);
+  if (!ENDED.includes(subscription.status)) {
+    // A schedule would keep (or restart) the plan; the cancellation replaces it.
+    if (idOf(subscription.schedule)) await stripe.subscriptionSchedules.release(idOf(subscription.schedule));
+    if (decision.action === "CANCEL_AT") {
+      await stripe.subscriptions.update(subscriptionId, { cancel_at: decision.cancelAt, proration_behavior: "none" });
+    } else {
+      await stripe.subscriptions.cancel(subscriptionId, { invoice_now: false, prorate: false });
+      if (decision.action === "VOID_AND_CANCEL_NOW") await stripe.invoices.voidInvoice(decision.voidInvoice);
+    }
+  }
+  return db.runTransaction(async (tx) => {
+    const ref = db.collection(SUBS).doc(subscriptionId);
+    const firstRef = db.collection(SHIPMENTS).doc(`${subscriptionId}_first`);
+    const [snap, first] = [await tx.get(ref), await tx.get(firstRef)];
+    if (!snap.exists) throw new PlanChangeError("NOT_FOUND", 404);
+    const contract = snap.data();
+    if (contract.cancelRequestedAt) return { ...decision, duplicate: true, refundProposal: contract.refundProposal || null };
+    const patch = { cancelRequestedAt: new Date(now), cancelDecision: decision.action, firstUnchargedMonth: decision.firstUnchargedMonth,
+      cancelAt: decision.cancelAt ? new Date(decision.cancelAt * 1000) : new Date(now), updatedAt: new Date(now) };
+    let refundProposal = null;
+    if (first.exists && first.data().status === "planned") {
+      // The first 200 g was paid but not shipped yet: not shipped, and ¥3,000 proposed for refund (CEO approval).
+      tx.update(firstRef, { status: "cancelled_before_shipping", updatedAt: new Date(now) });
+      refundProposal = { reason: "CANCELLED_BEFORE_FIRST_SHIPMENT", amount: plan.FIRST_DELIVERY_PRICE, invoiceId: first.data().invoiceId || null,
+        status: "awaiting_ceo_approval", createdAt: new Date(now) };
+      Object.assign(patch, { refundProposal, needsReview: true, reviewReason: "REFUND_PROPOSAL" });
+    }
+    tx.update(ref, patch);
+    return { ...decision, refundProposal };
+  });
+}
+
+module.exports = { PlanChangeError, buildSchedulePhases, syncSchedule, requestPlanChange, cancelSubscription, currentMonthInvoice };
