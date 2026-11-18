@@ -29,8 +29,9 @@ const INVENTORY_STRIPE_WEBHOOK_SECRET = process.env.STRIPE_INVENTORY_WEBHOOK_SEC
 // stock is settled only with inventory on. Every step is idempotent, so a Stripe resend never writes twice.
 // Stripe events to subscribe: payment_intent.succeeded, payment_intent.canceled, charge.refunded
 // (and, to settle refunds that Stripe finishes later, charge.refund.updated).
-// 珈琲の定期便 (server/coffee-subscription-records.js), when it opens: checkout.session.completed, invoice.paid,
-// invoice.payment_failed, customer.subscription.updated, customer.subscription.deleted. Only objects marked
+// 珈琲の定期便 (server/coffee-subscription-records.js), when it opens: checkout.session.completed,
+// checkout.session.expired, invoice.paid, invoice.payment_failed, customer.subscription.updated,
+// customer.subscription.deleted (docs/coffee-subscription.md). Only objects marked
 // metadata.kind = "coffee-subscription-v2" are handled; other events of these types are left alone.
 app.post("/stripe-inventory-webhook", express.raw({ type: "application/json" }), async (req, res) => {
   if (!INVENTORY_STRIPE_WEBHOOK_SECRET) {
