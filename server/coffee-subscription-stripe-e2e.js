@@ -400,7 +400,10 @@ async function ensurePortalConfiguration() {
 async function scenarioF(config) {
   const clock = await newClock(jst(2026, 11, 20, 10), "F");
   const email = `f-${RUN}@example.com`;
-  const f = await signUp(config, clock, { frequency: 2, email });
+  const f = await signUp(config, clock, { frequency: 2, email, pm: "pm_card_mastercard" });
+  // As Stripe Checkout leaves it: the card is also the subscription's own.
+  const firstCard = (await stripe.customers.retrieve(f.customer.id)).invoice_settings.default_payment_method;
+  await stripe.subscriptions.update(f.sub.id, { default_payment_method: firstCard });
   await settle(config);
   let portal = null;
   let portalReason = "";
@@ -419,6 +422,7 @@ async function scenarioF(config) {
     return { status: res.status, body: await res.json().catch(() => null) };
   };
   const rid = () => `req-${crypto.randomUUID()}`;
+  const newCard = { id: null };
   try {
     await advance(clock, now.at);
     await call("POST", "/login", { email: "nobody-" + email });
@@ -459,6 +463,17 @@ async function scenarioF(config) {
       check("②", "card portal opens for this customer, limited to card and invoices", pr.status === 200 && /^https:\/\/billing\.stripe\.com\//.test(pr.body?.url)
         && ft.payment_method_update.enabled && ft.invoice_history.enabled && !ft.customer_update.enabled && !ft.subscription_cancel.enabled && !ft.subscription_update.enabled,
         `${pr.status} ${String(pr.body?.url).slice(0, 40)}`);
+      for (const type of ["subscription_cancel", "subscription_update"]) {
+        const refused = await stripe.billingPortal.sessions.create({ customer: f.customer.id, configuration: portal, flow_data: { type, [type]: { subscription: f.sub.id } } }).then(() => false, () => true);
+        check("②", `the portal refuses ${type} (only the Ryuge page changes the plan)`, refused);
+      }
+      const subAfter = await stripe.subscriptions.retrieve(f.sub.id);
+      const custAfter = await stripe.customers.retrieve(f.customer.id);
+      check("②", "opening the portal moves the subscription's own card to the customer's default", !subAfter.default_payment_method && custAfter.invoice_settings.default_payment_method === firstCard);
+      // What the portal does when the customer adds a card "as default": the customer's default becomes the new card.
+      const visa = await stripe.paymentMethods.attach("pm_card_visa", { customer: f.customer.id });
+      await stripe.customers.update(f.customer.id, { invoice_settings: { default_payment_method: visa.id } });
+      newCard.id = visa.id;
     } else {
       skip("②", "card portal (Stripe customer portal)", `the test key cannot write Customer portal yet: ${portalReason}`);
     }
@@ -469,6 +484,13 @@ async function scenarioF(config) {
     const inv = await invoicesOf(f.sub.id);
     const amounts = ["2027-01", "2027-02", "2027-03"].map((mm) => cycleFor(inv, mm).map((i) => i.amount_paid).join("+") || "none");
     check("②", "made on the page → Stripe: January ¥5,800, February skipped (¥0), March ¥8,550, no pro-rating", amounts.join(",") === "5800,0,8550" && prorations(inv) === 0, amounts.join(","));
+    if (newCard.id) {
+      const jan = cycleFor(inv, "2027-01")[0];
+      const pays = await stripe.invoicePayments.list({ invoice: jan.id, limit: 3 });
+      const pi = await stripe.paymentIntents.retrieve(pays.data[0].payment.payment_intent);
+      const used = await stripe.paymentMethods.retrieve(pi.payment_method);
+      check("②", "after the card change, January is paid with the new card (not the subscription's old one)", pi.payment_method === newCard.id, `${used.card.brand} ${used.card.last4}`);
+    }
 
     // Cancel: preview then confirm, on 3/10 → ends 4/1 09:00, nothing charged in April.
     now.at = jst(2027, 3, 10, 12);

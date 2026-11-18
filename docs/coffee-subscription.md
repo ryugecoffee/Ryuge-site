@@ -25,7 +25,16 @@ Verification against Stripe test mode: `server/coffee-subscription-stripe-e2e.js
   two changes cross, the last one recorded is pushed to Stripe again. Deliveries being prepared or shipped (status set by
   the shipping work, ④) keep their address.
 - Card and invoices: Stripe's customer portal with a configuration limited to the card and invoice history (no address,
-  plan or cancellation there): `account.PORTAL_CONFIGURATION`, its id in `STRIPE_PORTAL_CONFIGURATION_ID`.
+  plan or cancellation there): `account.PORTAL_CONFIGURATION`, its id in `STRIPE_PORTAL_CONFIGURATION_ID`. Stripe
+  refuses portal links to cancel or change the plan with this configuration (verified in test mode).
+- Stripe Checkout gives the subscription its own card, which Stripe charges before the customer's default card (verified
+  in test mode): a card changed in the portal would not be used. Before the portal opens, the subscription's card is
+  made the customer's default and the subscription's own is removed (`prepareCardChange`); the next charge then uses
+  the card set in the portal (verified: January paid with the new card).
+- Verified in a browser (test mode): the portal opens with the shop's headline, lists past invoices (¥3,000 first,
+  monthly amounts, paid), offers "add a card / use as default", and shows no cancel, plan change or address editing.
+  Submitting a card from the verification environment is refused by Stripe because that environment's network proxy
+  adds the server key to the browser's calls to api.stripe.com; the change itself was checked through the API.
 - The final confirmation screen states everything of 特定商取引法 第12条の6 next to the button; the same terms are
   repeated next to Stripe's pay button (`custom_text`). The wording is provisional (`LEGAL_TEXT_REVIEWED = false`).
 

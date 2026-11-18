@@ -275,8 +275,18 @@ test("card and invoices: Stripe's portal with the limited configuration; unavail
   const t = await setup();
   t.contract("sub_a", "a@example.com");
   const a = await t.signIn("a@example.com");
+  // As Stripe Checkout leaves it: the subscription has its own card.
+  t.stripe.subs.get("sub_a").default_payment_method = "pm_checkout_card";
   const r = await t.call("POST", "/portal", {}, a);
   assert.equal(r.body.url, "https://billing.stripe.test/p/cus_sub_a");
+  const order = t.stripe.calls.map(([n]) => n).filter((n) => ["customers.update", "subscriptions.update", "portal.create"].includes(n));
+  assert.deepEqual(order, ["customers.update", "subscriptions.update", "portal.create"], "card moved to the customer first, then the portal");
+  assert.deepEqual(t.stripe.calls.find(([n]) => n === "customers.update")[1][1], { invoice_settings: { default_payment_method: "pm_checkout_card" } });
+  assert.deepEqual(t.stripe.calls.find(([n]) => n === "subscriptions.update")[1][1], { default_payment_method: "" });
+  // Opened again: nothing left to move.
+  t.stripe.subs.get("sub_a").default_payment_method = null;
+  await t.call("POST", "/portal", {}, a);
+  assert.equal(t.stripe.calls.filter(([n]) => n === "subscriptions.update").length, 1);
   const [, [params]] = t.stripe.calls.find(([n]) => n === "portal.create");
   assert.deepEqual([params.configuration, params.customer, params.return_url], ["bpc_test123", "cus_sub_a", "https://ryuge.test/subscription/manage"]);
   t.close();

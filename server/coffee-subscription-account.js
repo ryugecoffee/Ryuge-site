@@ -391,11 +391,26 @@ function createRouter({ getDb, getStripe, sendMail, env = process.env, clock = D
   router.post("/portal", authed(async ({ stripe, auth, config }) => {
     if (!config.portalConfigurationId) throw new AccountError("PORTAL_NOT_CONFIGURED", 503);
     if (!auth.contract.customerId) throw new AccountError("NO_CUSTOMER", 409);
+    await prepareCardChange({ stripe, subscriptionId: auth.subscriptionId, customerId: auth.contract.customerId });
     const session = await stripe.billingPortal.sessions.create({ customer: auth.contract.customerId, configuration: config.portalConfigurationId,
       return_url: `${config.siteUrl}/subscription/manage`, locale: "ja" });
     return { url: session.url };
   }));
   return router;
+}
+
+// Stripe Checkout gives the subscription its own card, and a subscription's own card is charged before the customer's
+// default (verified in test mode, 2026-11-18): a card changed in the portal (the customer's default) would not be used.
+// Before the portal opens, the subscription's card becomes the customer's default and the subscription's own is
+// removed (in that order, so there is always a card), so the card the customer sets in the portal pays the next and
+// any retried charge.
+async function prepareCardChange({ stripe, subscriptionId, customerId }) {
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const own = typeof subscription.default_payment_method === "string" ? subscription.default_payment_method : subscription.default_payment_method?.id;
+  if (!own || ops.ENDED.includes(subscription.status)) return { moved: false };
+  await stripe.customers.update(customerId, { invoice_settings: { default_payment_method: own } });
+  await stripe.subscriptions.update(subscriptionId, { default_payment_method: "" });
+  return { moved: true };
 }
 
 // The portal configuration the account page uses (made once per Stripe account; its id goes in
@@ -412,5 +427,5 @@ const PORTAL_CONFIGURATION = {
   },
 };
 
-module.exports = { PATH, configFrom, createRouter, requestLogin, startSession, authenticate, validateAddress, changeAddress, summary, once,
+module.exports = { PATH, configFrom, createRouter, requestLogin, startSession, authenticate, validateAddress, changeAddress, summary, once, prepareCardChange,
   AccountError, PORTAL_CONFIGURATION, LOGINS, SESSIONS, REQUESTS, AUDIT, LOGIN_LIMITS, LOGIN_TTL_MS, SESSION_TTL_MS, PREFECTURES };
