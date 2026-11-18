@@ -19,9 +19,9 @@ import { updatePageMeta, injectProductJsonLd } from "./lib/seo";
 import ScrollToTop from "./components/ScrollToTop";
 
 const BANNER_TEXT = {
-  ja: "国内送料（1回のご注文につき）：本州・四国 ¥250 / 北海道・九州 ¥500 / 沖縄 ¥550 ・ 定期便は送料無料",
-  en: "Shipping in Japan (per order): Honshu/Shikoku ¥250 / Hokkaido/Kyushu ¥500 / Okinawa ¥550 · Subscriptions ship free",
-  es: "Envío en Japón (por pedido): Honshu/Shikoku ¥250 / Hokkaido/Kyushu ¥500 / Okinawa ¥550 · Suscripciones con envío gratis",
+  ja: "国内送料（1回のご注文につき）：本州・四国 ¥250 / 北海道・九州 ¥500 / 沖縄 ¥550 ・ 定期便は全国一律・送料込み",
+  en: "Shipping in Japan (per order): Honshu/Shikoku ¥250 / Hokkaido/Kyushu ¥500 / Okinawa ¥550 · Subscriptions: one price nationwide, shipping included",
+  es: "Envío en Japón (por pedido): Honshu/Shikoku ¥250 / Hokkaido/Kyushu ¥500 / Okinawa ¥550 · Suscripciones: precio único en todo Japón, envío incluido",
 };
 
 const BANNER_KEY = "shipping-banner-closed-at";

@@ -4,12 +4,10 @@ import { PAYMENT_API_BASE, classifyAvailability } from "../lib/paymentEnv";
 import { useLocation } from "react-router-dom";
 import SiteFooter from "../components/SiteFooter";
 import BeanConcierge from "../components/BeanConcierge";
-import { PRODUCT_DATA, PRODUCT_SECTIONS, DETAIL_TEXT, ROAST_LEVEL, SUBSCRIPTIONS_PAUSED, SUBSCRIPTIONS_PAUSED_TEXT, loc } from "../productData";
+import { PRODUCT_DATA, PRODUCT_SECTIONS, DETAIL_TEXT, ROAST_LEVEL, SUBSCRIPTIONS_PAUSED, SUBSCRIPTIONS_PAUSED_TEXT, COFFEE_SUBSCRIPTION, loc } from "../productData";
+import CoffeeSubscriptionDetail from "../components/CoffeeSubscriptionDetail";
 import { useCart } from "../CartContext";
 import { trackViewItem } from "../lib/analytics";
-
-// productData.js の plan.id に合わせる（mame = 一番人気 = デフォルト）
-const DEFAULT_SUBSCRIPTION_PLAN = "mame";
 
 const PAGE_TEXT = {
   ja: {
@@ -72,9 +70,6 @@ export default function ProductsPage({ lang }) {
   const listedBags = (products.bag || []).filter((item) => !item.hidden);
 
   const [activeItemId, setActiveItemId] = useState(null);
-  const [selectedSubscriptionPlan, setSelectedSubscriptionPlan] = useState(
-    DEFAULT_SUBSCRIPTION_PLAN
-  );
   const [showEnmaHeading, setShowEnmaHeading] = useState(false);
   const [simpleQuantity, setSimpleQuantity] = useState(1);
   const [showWoodboxHeading, setShowWoodboxHeading] = useState(false);
@@ -138,22 +133,6 @@ export default function ProductsPage({ lang }) {
     [...products.enma, ...activeWoodbox, ...listedBags, ...products.oriori].find(
       (item) => item.id === activeItemId
     ) || null;
-
-  const subscriptionPlans =
-    activeItem?.id === "oriori-subscription"
-      ? activeItem.plans?.[lang] || activeItem.plans?.en || []
-      : [];
-
-  const currentSubscriptionPlan =
-    subscriptionPlans.find((plan) => plan.id === selectedSubscriptionPlan) ||
-    subscriptionPlans[0] ||
-    null;
-
-  useEffect(() => {
-    if (activeItem?.id === "oriori-subscription") {
-      setSelectedSubscriptionPlan(DEFAULT_SUBSCRIPTION_PLAN);
-    }
-  }, [activeItem]);
 
   useEffect(() => {
     if (activeItem && activeItem.id !== "oriori-bag") {
@@ -346,30 +325,32 @@ export default function ProductsPage({ lang }) {
             <h2>{sectionText.woodboxTitle}</h2>
           </div>
 
-          <div className="products-two-col">
+          {/* Tea: the photo, then the information below it (as the coffee cards), so nothing sits on the photo. */}
+          <div className="products-woodbox-grid">
             {activeWoodbox.map((item) => (
               <article
                 key={item.id}
-                className="products-enma-static-card products-woodbox-card"
+                className="woodbox-product-card"
                 onClick={() => { setActiveItemId(item.id); trackViewItem(item); }}
               >
-                <img src={item.image} alt="" />
+                <div className="woodbox-card-photo">
+                  <img src={item.image} alt="" />
+                  {item.isSoldOut && (
+                    <span className="product-soldout-badge">
+                      {SOLD_OUT_TEXT[lang]}
+                    </span>
+                  )}
+                  {item.comingSoon && !item.isSoldOut && (
+                    <span className="product-soldout-badge">
+                      {COMING_SOON_TEXT[lang]}
+                    </span>
+                  )}
+                </div>
 
-                {item.isSoldOut && (
-                  <span className="product-soldout-badge">
-                    {SOLD_OUT_TEXT[lang]}
-                  </span>
-                )}
-                {item.comingSoon && !item.isSoldOut && (
-                  <span className="product-soldout-badge">
-                    {COMING_SOON_TEXT[lang]}
-                  </span>
-                )}
-
-                <div className="products-enma-card-text">
+                <div className="woodbox-card-info">
                   <h3>{item.title?.[lang]}</h3>
-                  <p>{item.summary?.[lang]}</p>
-                  {item.price && <p className="product-card-price">{item.price}</p>}
+                  {item.price && <p className="woodbox-card-price">{item.price}</p>}
+                  <p className="woodbox-card-summary">{item.summary?.[lang]}</p>
                 </div>
               </article>
             ))}
@@ -405,6 +386,11 @@ export default function ProductsPage({ lang }) {
                   <p>{item.summary?.[lang]}</p>
                   {item.weight && <p className="product-card-weight">{loc(item.weight, lang)}</p>}
                   {item.price && <p className="product-card-price">{item.price}</p>}
+                  {item.subscription && (
+                    <p className="product-card-price">
+                      {(COFFEE_SUBSCRIPTION.frequencyLabel[lang] || COFFEE_SUBSCRIPTION.frequencyLabel.ja)(1)} ¥{COFFEE_SUBSCRIPTION.frequencies[0].priceNumber.toLocaleString("ja-JP")}〜
+                    </p>
+                  )}
                 </div>
               </article>
             ))}
@@ -435,134 +421,7 @@ export default function ProductsPage({ lang }) {
 
             <div className="modal-copy modal-copy-premium">
               {activeItem.id === "oriori-subscription" ? (
-                <div className="modal-copy-inner subscription-modal-copy">
-                  <h3>
-                    {activeItem.modalTitle?.[lang] ||
-                      activeItem.modalTitle?.en ||
-                      activeItem.title?.[lang] ||
-                      activeItem.title?.en ||
-                      activeItem.title}
-                  </h3>
-
-                  <p className="modal-summary">
-                    {activeItem.summary?.[lang] ||
-                      activeItem.summary?.en ||
-                      activeItem.summary}
-                  </p>
-
-                  <div className="subscription-plan-tabs">
-                    {subscriptionPlans.map((plan) => (
-                      <button
-                        key={plan.id}
-                        type="button"
-                        className={`subscription-plan-tab ${
-                          currentSubscriptionPlan?.id === plan.id ? "active" : ""
-                        }`}
-                        onClick={() => setSelectedSubscriptionPlan(plan.id)}
-                      >
-                        <span className="subscription-plan-tab-name">
-                          {plan.name}
-                        </span>
-                        <span className="subscription-plan-tab-price">
-                          {plan.price}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-
-                  {currentSubscriptionPlan && (
-                    <div className="subscription-plan-panel">
-                      <div className="subscription-plan-header">
-                        <div>
-                          <p className="subscription-plan-lead">
-                            {currentSubscriptionPlan.lead}
-                          </p>
-                          <h4>{currentSubscriptionPlan.name}</h4>
-                        </div>
-
-                        {currentSubscriptionPlan.badge && (
-                          <span className="subscription-plan-badge">
-                            {currentSubscriptionPlan.badge}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="subscription-plan-meta">
-                        <div className="subscription-meta-row">
-                          <span>{labels.price}</span>
-                          <strong>{currentSubscriptionPlan.price}</strong>
-                        </div>
-
-                        <div className="subscription-meta-row">
-                          <span>
-                            {lang === "ja"
-                              ? "配送頻度"
-                              : lang === "es"
-                              ? "Entrega"
-                              : "Delivery"}
-                          </span>
-                          <strong>{currentSubscriptionPlan.frequency}</strong>
-                        </div>
-
-                        <div className="subscription-meta-row">
-                          <span>
-                            {lang === "ja"
-                              ? "送料"
-                              : lang === "es"
-                              ? "Envío"
-                              : "Shipping"}
-                          </span>
-                          <strong>{currentSubscriptionPlan.shipping}</strong>
-                        </div>
-                      </div>
-
-                      <div className="subscription-plan-items">
-                        {currentSubscriptionPlan.items.map((item) => (
-                          <div key={item} className="subscription-plan-item">
-                            <span className="subscription-plan-dot" />
-                            <span>{item}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      <p className="subscription-plan-note">
-                        {currentSubscriptionPlan.note}
-                      </p>
-
-                      {SUBSCRIPTIONS_PAUSED ? (
-                        <>
-                          <p className="product-detail-notice" style={{ marginTop: "16px" }}>{loc(SUBSCRIPTIONS_PAUSED_TEXT, lang)}</p>
-                          <button type="button" className="modal-cta-link is-disabled" disabled style={{ marginTop: "12px" }}>
-                            {loc(SUBSCRIPTIONS_PAUSED_TEXT, lang)}
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          type="button"
-                          className="modal-cta-link"
-                          style={{ marginTop: "16px" }}
-                          onClick={() => {
-                            if (!currentSubscriptionPlan) return;
-                            setItem(
-                              {
-                                id: `subscription-${currentSubscriptionPlan.id}`,
-                                name: `${activeItem.title?.[lang] || "定期便"} — ${currentSubscriptionPlan.name}`,
-                                price: currentSubscriptionPlan.priceNumber ?? 0,
-                                category: "subscription",
-                                size: "100g",
-                              },
-                              1
-                            );
-
-                            setActiveItemId(null);
-                          }}
-                        >
-                          {detailText.addToCart}
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <CoffeeSubscriptionDetail lang={lang} />
               ) : (
                 <div className="modal-copy-inner modal-copy-classic">
                   {activeItem.id === "oriori-apps" ? (

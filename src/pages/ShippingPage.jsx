@@ -17,8 +17,8 @@ const TEXT = {
         body: "100gの商品1〜2袋：レターパックライト（梱包後の厚さ3cm以内の場合）\n3袋以上：ゆうパック\n※梱包の状態により配送方法が変わる場合がありますが、送料は上記のとおりです。",
       },
       {
-        title: "定期便は送料無料",
-        body: "定期便商品は送料無料です（国内のみ）。",
+        title: "定期便は全国一律・送料込み",
+        body: "定期便の月額料金には送料が含まれています。全国一律で、地域による追加の送料はかかりません（国内のみ）。",
       },
       {
         title: "海外へのお届け",
@@ -53,8 +53,8 @@ const TEXT = {
         body: "1–2 bags of 100 g: Letter Pack Light (when the parcel is within 3 cm thick)\n3 bags or more: Yu-Pack\nThe method may change with the packing; the fee stays as above.",
       },
       {
-        title: "Subscriptions ship free",
-        body: "Subscription products include free shipping (Japan only).",
+        title: "Subscriptions: one price nationwide, shipping included",
+        body: "The monthly subscription price includes shipping. It is the same everywhere in Japan, with no regional extra charge (Japan only).",
       },
       {
         title: "International delivery",
@@ -89,8 +89,8 @@ const TEXT = {
         body: "1–2 bolsas de 100 g: Letter Pack Light (si el paquete no supera 3 cm de grosor)\n3 bolsas o más: Yu-Pack\nEl método puede cambiar según el embalaje; la tarifa es la indicada arriba.",
       },
       {
-        title: "Las suscripciones tienen envío gratis",
-        body: "Los productos de suscripción incluyen envío gratuito (solo Japón).",
+        title: "Suscripciones: precio único en todo Japón, envío incluido",
+        body: "El precio mensual de la suscripción incluye el envío. Es el mismo en todo Japón, sin cargos adicionales por región (solo Japón).",
       },
       {
         title: "Envío internacional",

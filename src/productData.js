@@ -62,7 +62,7 @@ export const DETAIL_TEXT = {
 // Position on the 4-step roast scale, from the product's English roast name.
 export const ROAST_LEVEL = { "Light Roast": 0, "Medium Roast": 1, "Medium-Dark Roast": 2, "Dark Roast": 3 };
 
-// Subscriptions (珈琲袋定期便・豆の定期便・禅の仕立て便): new sign-ups paused (CEO, 2026-11-17). The store shows the
+// Subscriptions: new sign-ups paused (CEO, 2026-11-17; kept for the new 珈琲の定期便, 2026-11-18). The store shows the
 // notice and disables the buttons; api/create-subscription-checkout.js refuses every new subscription. Existing
 // subscriptions are not touched. To resume, set this to false in a reviewed PR.
 export const SUBSCRIPTIONS_PAUSED = true;
@@ -71,6 +71,102 @@ export const SUBSCRIPTIONS_PAUSED_TEXT = {
   en: "New sign-ups are currently paused",
   es: "Las nuevas suscripciones están en pausa por ahora",
 };
+
+// 珈琲の定期便 (CEO, 2026-11-18): one subscription, the customer chooses how many deliveries a month. Every text shown
+// for it is here, so wording can be changed without touching the page. Prices: tax and shipping included, one price
+// nationwide (CEO, 2026-11-18). Not decided yet (do not state them as fixed): shipping days, the first month's payment
+// and first delivery, and what happens on cancellation. New sign-ups stay paused (SUBSCRIPTIONS_PAUSED above).
+export const COFFEE_SUBSCRIPTION = {
+  id: "coffee-subscription",
+  name: { ja: "珈琲の定期便", en: "Coffee Subscription", es: "Suscripción de café" },
+  cardSummary: {
+    ja: "当店おまかせの珈琲豆2種類を、季節に合わせてお届けします",
+    en: "Two coffees of our choosing, delivered with the seasons",
+    es: "Dos cafés elegidos por nosotros, al ritmo de las estaciones",
+  },
+  lead: {
+    ja: "毎回、当店おまかせの珈琲豆を2種類お届けします。",
+    en: "Each delivery brings two coffees chosen by us.",
+    es: "Cada envío incluye dos cafés elegidos por nosotros.",
+  },
+  perDelivery: { ja: "100g × 2袋（1回 200g）", en: "100 g × 2 bags (200 g per delivery)", es: "100 g × 2 bolsas (200 g por envío)" },
+  selectionNote: {
+    ja: "銘柄は、季節や仕入れの状況に合わせて当店が選びます。",
+    en: "We choose the coffees according to the season and what we have sourced.",
+    es: "Elegimos los cafés según la estación y lo que hemos conseguido.",
+  },
+  // deliveriesPerMonth × 200 g. Prices: tax and shipping included, the same everywhere in Japan.
+  frequencies: [
+    { id: "monthly-1", deliveriesPerMonth: 1, priceNumber: 3000, gramsPerMonth: 200 },
+    { id: "monthly-2", deliveriesPerMonth: 2, priceNumber: 5800, gramsPerMonth: 400 },
+    { id: "monthly-3", deliveriesPerMonth: 3, priceNumber: 8550, gramsPerMonth: 600 },
+    { id: "monthly-4", deliveriesPerMonth: 4, priceNumber: 11200, gramsPerMonth: 800 },
+  ],
+  defaultFrequency: "monthly-1",
+  frequencyLabel: { ja: (n) => `月${n}回`, en: (n) => (n === 1 ? "Once a month" : `${n} times a month`), es: (n) => (n === 1 ? "1 vez al mes" : `${n} veces al mes`) },
+  labels: {
+    ja: { frequency: "配送回数", monthly: "月額", amount: "月間の配送量", perDelivery: "1回のお届け", perMonth: "/月", priceNote: "税込・全国一律送料込み" },
+    en: { frequency: "Deliveries", monthly: "Monthly", amount: "Coffee per month", perDelivery: "Each delivery", perMonth: "/month", priceNote: "Tax and shipping included, same price nationwide" },
+    es: { frequency: "Envíos", monthly: "Mensual", amount: "Café al mes", perDelivery: "Cada envío", perMonth: "/mes", priceNote: "Impuestos y envío incluidos, mismo precio en todo Japón" },
+  },
+  terms: {
+    ja: ["全国一律・送料込み（追加送料なし）", "配送回数は月1〜4回で途中変更できます", "スキップ自由", "解約自由", "最低継続回数なし", "国内配送のみ"],
+    en: ["One price nationwide, shipping included", "Change between 1 and 4 deliveries a month", "Skip whenever you like", "Cancel anytime", "No minimum term", "Delivery within Japan only"],
+    es: ["Precio único en todo Japón, envío incluido", "Cambia entre 1 y 4 envíos al mes", "Omite envíos libremente", "Cancela cuando quieras", "Sin permanencia mínima", "Solo envíos dentro de Japón"],
+  },
+  // Billing and changes (CEO, 2026-11-18).
+  billing: {
+    ja: ["毎月、月初に月額を一括でお支払いいただきます", "配送回数の変更・スキップは、原則として翌月から反映されます", "変更の締切は前月25日です", "日割りの精算はありません"],
+    en: ["The monthly price is charged in full at the start of each month", "Changes to deliveries and skips normally apply from the following month", "The deadline for changes is the 25th of the previous month", "No pro-rated charges or refunds"],
+    es: ["El precio mensual se cobra completo al inicio de cada mes", "Los cambios de envíos y las omisiones se aplican normalmente desde el mes siguiente", "El plazo para cambios es el día 25 del mes anterior", "Sin cobros ni reembolsos prorrateados"],
+  },
+  // Conditions still to be decided: announced when sign-ups reopen (never shown as fixed before that).
+  pendingNote: {
+    ja: "発送日、初月のお支払いと初回のお届け、解約時のお取り扱いは、受付再開時にご案内します。",
+    en: "Shipping days, the first month's payment and first delivery, and how cancellation is handled will be announced when sign-ups reopen.",
+    es: "Los días de envío, el pago y el primer envío del primer mes, y el tratamiento de la cancelación se anunciarán al reabrir las suscripciones.",
+  },
+  preference: {
+    maxLength: 300,
+    label: { ja: "珈琲の好み・ご希望（任意）", en: "Your coffee preferences (optional)", es: "Tus preferencias de café (opcional)" },
+    placeholder: {
+      ja: "例：酸味が少なく、苦味のある珈琲が好きです。フルーティーな珈琲を試してみたいです。",
+      en: "e.g. I like low-acidity, bitter coffee. I'd like to try something fruity.",
+      es: "p. ej.: Me gusta el café poco ácido y amargo. Quiero probar algo afrutado.",
+    },
+    notes: {
+      ja: [
+        "ご記入の内容は豆選びの参考にします。必ずご希望どおりになるとは限りません。",
+        "お名前・住所・電話番号・メールアドレス・カード番号などの個人情報や決済情報は書かないでください。",
+        "お申し込み後も変更できます。",
+      ],
+      en: [
+        "We use this as a guide when choosing your coffee; we cannot always match it exactly.",
+        "Please do not write personal or payment details (name, address, phone, email, card number).",
+        "You can change it after signing up.",
+      ],
+      es: [
+        "Lo usamos como referencia al elegir tu café; no siempre podremos ajustarnos exactamente.",
+        "No escribas datos personales ni de pago (nombre, dirección, teléfono, correo, tarjeta).",
+        "Puedes cambiarlo después de suscribirte.",
+      ],
+    },
+  },
+  // For subscribers. Not available yet: shown as information only, never as working buttons.
+  manage: {
+    title: { ja: "ご契約後の変更", en: "After you subscribe", es: "Después de suscribirte" },
+    items: {
+      ja: ["配送回数の変更", "スキップ", "解約"],
+      en: ["Change deliveries per month", "Skip a delivery", "Cancel"],
+      es: ["Cambiar envíos al mes", "Omitir un envío", "Cancelar"],
+    },
+    unavailable: { ja: "受付再開時にご案内します（準備中）", en: "Available when sign-ups reopen (in preparation)", es: "Disponible al reabrir las suscripciones (en preparación)" },
+  },
+};
+
+export function subscriptionFrequency(id) {
+  return COFFEE_SUBSCRIPTION.frequencies.find((f) => f.id === id) || COFFEE_SUBSCRIPTION.frequencies[0];
+}
 
 export const PRODUCT_SECTIONS = {
   ja: {
@@ -603,147 +699,12 @@ export const PRODUCT_DATA = {
     {
       id: "oriori-subscription",
       category: "subscription",
-      size: "100g",
       image: "/images/oriori-1.jpg",
-      title: {
-        ja: "定期便",
-        en: "Subscription",
-        es: "Suscripción",
-      },
-      summary: {
-        ja: "季節に寄り添う定期便",
-        en: "A recurring delivery shaped by the season",
-        es: "Una entrega periódica marcada por la estación",
-      },
-
-      plans: {
-        ja: [
-          {
-            id: "coffee-bag",
-            name: "珈琲袋定期便",
-            badge: null,
-            lead: "手軽に本格コーヒー",
-            price: "¥2,000",
-            priceNumber: 2000,
-            frequency: "月1回",
-            shipping: "送料込み",
-            items: ["閻魔 珈琲袋 ×8"],
-            note: "急須も、ミルも、必要ない。お湯を注ぐだけで、一杯が整う。毎月8個をお届けします。",
-            button: "珈琲袋定期便を選ぶ",
-          },
-          {
-            id: "mame",
-            name: "豆の定期便",
-            badge: "一番人気",
-            lead: "その月の閻魔を届ける",
-            price: "¥1,700",
-            priceNumber: 1700,
-            frequency: "月1回",
-            shipping: "送料込み",
-            items: ["閻魔 180g（季節のランダム）"],
-            note: "その月に最もふさわしい焙煎の閻魔をお届けします。豆の種類はお楽しみに。",
-            button: "豆の定期便を選ぶ",
-          },
-          {
-            id: "zen",
-            name: "禅の仕立て便",
-            badge: null,
-            lead: "珈琲とお茶、静かな余白",
-            price: "¥3,300",
-            priceNumber: 3300,
-            frequency: "月1回",
-            shipping: "送料込み",
-            items: ["珈琲袋 ×8", "一煎袋 ×8"],
-            note: "珈琲とお茶、どちらにも通底する禅の余白を静かに楽しむための特別な定期便。鎌倉の空気感をそのままご自宅で。",
-            button: "禅の仕立て便を選ぶ",
-          },
-        ],
-
-        en: [
-          {
-            id: "coffee-bag",
-            name: "Coffee Bag Subscription",
-            badge: null,
-            lead: "Specialty coffee, simply",
-            price: "¥2,000",
-            priceNumber: 2000,
-            frequency: "Monthly",
-            shipping: "Shipping included",
-            items: ["ENMA Coffee Sachet ×8"],
-            note: "No grinder, no fuss. Just pour hot water and Enma is ready. Eight bags delivered every month.",
-            button: "Choose Coffee Bag",
-          },
-          {
-            id: "mame",
-            name: "Bean Subscription",
-            badge: "Most Selected",
-            lead: "This month's ENMA",
-            price: "¥1,700",
-            priceNumber: 1700,
-            frequency: "Monthly",
-            shipping: "Shipping included",
-            items: ["ENMA 180g (seasonal rotation)"],
-            note: "We select the roast of ENMA best suited to the season. The variety is a quiet surprise each month.",
-            button: "Choose Bean Subscription",
-          },
-          {
-            id: "zen",
-            name: "Zen Selection",
-            badge: null,
-            lead: "Coffee and tea, in stillness",
-            price: "¥3,300",
-            priceNumber: 3300,
-            frequency: "Monthly",
-            shipping: "Shipping included",
-            items: ["Coffee Sachet ×8", "Hojicha Sachet ×8"],
-            note: "A special monthly set to quietly explore the stillness shared by coffee and tea. The atmosphere of Kamakura, delivered to your home.",
-            button: "Choose Zen Selection",
-          },
-        ],
-
-        es: [
-          {
-            id: "coffee-bag",
-            name: "Suscripción de Coffee Bags",
-            badge: null,
-            lead: "Café especial, sin complicaciones",
-            price: "¥2,000",
-            priceNumber: 2000,
-            frequency: "Mensual",
-            shipping: "Envío incluido",
-            items: ["ENMA Coffee Sachet ×8"],
-            note: "Sin molinillo, sin complicaciones. Solo agua caliente y Enma está listo. Ocho bolsas entregadas cada mes.",
-            button: "Elegir Coffee Bags",
-          },
-          {
-            id: "mame",
-            name: "Suscripción de Granos",
-            badge: "Más elegido",
-            lead: "El ENMA de este mes",
-            price: "¥1,700",
-            priceNumber: 1700,
-            frequency: "Mensual",
-            shipping: "Envío incluido",
-            items: ["ENMA 180g (rotación estacional)"],
-            note: "Seleccionamos el tueste de ENMA más adecuado para la estación. La variedad es una sorpresa tranquila cada mes.",
-            button: "Elegir Suscripción de Granos",
-          },
-          {
-            id: "zen",
-            name: "Selección Zen",
-            badge: null,
-            lead: "Café y té, en quietud",
-            price: "¥3,300",
-            priceNumber: 3300,
-            frequency: "Mensual",
-            shipping: "Envío incluido",
-            items: ["Coffee Sachet ×8", "Hojicha Sachet ×8"],
-            note: "Un conjunto mensual especial para explorar en silencio la calma compartida entre el café y el té. El ambiente de Kamakura, entregado en casa.",
-            button: "Elegir Selección Zen",
-          },
-        ],
-      },
-
+      // The wording lives in COFFEE_SUBSCRIPTION below (one place to edit).
+      title: COFFEE_SUBSCRIPTION.name,
+      modalTitle: COFFEE_SUBSCRIPTION.name,
+      summary: COFFEE_SUBSCRIPTION.cardSummary,
+      subscription: COFFEE_SUBSCRIPTION,
     },
     {
   id: "oriori-apps",
