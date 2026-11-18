@@ -100,6 +100,44 @@ function shippingDates(key, frequency, calendar) {
   return dates.map((day) => `${key}-${String(day).padStart(2, "0")}`);
 }
 
+// The n-th working day after a day ("YYYY-MM-DD", JST), across months. Throws when none comes within 60 days.
+function workingDayAfter(dayKey, n, calendar) {
+  const [y, m, d] = String(dayKey).split("-").map(Number);
+  let found = 0;
+  for (let i = 1; i <= 60; i++) {
+    const at = new Date(Date.UTC(y, m - 1, d + i));
+    if (isWorkingDay(at.getUTCFullYear(), at.getUTCMonth() + 1, at.getUTCDate(), calendar) && ++found === n) return at.toISOString().slice(0, 10);
+  }
+  throw new PlanError("NO_WORKING_DAY");
+}
+
+const dayOf = (at) => { const p = jst(at); return `${monthKey(p.year, p.month)}-${String(p.day).padStart(2, "0")}`; };
+
+// A paid month's deliveries (CEO, 2026-11-18): on-time ones keep their dates. When the payment came after a date (a
+// retried payment), that delivery goes out after the payment: from the next working day, within 3 working days. Two
+// late deliveries, a late one reaching the next planned delivery, or one that cannot be scheduled are not planned:
+// they go to review (no delivery is ever made twice or before payment). Retry counts and days are Stripe's settings and
+// are not assumed here.
+const LATE_SHIP_WITHIN_WORKING_DAYS = 3;
+function deliveryPlan(month, frequency, paidDay, calendar) {
+  const dates = shippingDates(month, frequency, calendar);
+  const late = dates.filter((d) => d < paidDay);
+  if (!late.length) return { review: null, deliveries: dates.map((d) => ({ plannedDate: d, originalDate: d, paidLate: false })) };
+  let review = null;
+  let from = null;
+  let shipBy = null;
+  try {
+    from = workingDayAfter(paidDay, 1, calendar);
+    shipBy = workingDayAfter(paidDay, LATE_SHIP_WITHIN_WORKING_DAYS, calendar);
+  } catch { review = "LATE_DELIVERY_UNSCHEDULABLE"; }
+  let next = dates.find((d) => d >= paidDay);
+  if (!next) { try { next = shippingDates(addMonths(month, 1), frequency, calendar)[0]; } catch { next = null; } }
+  if (!review && (late.length > 1 || (next && shipBy >= next))) review = "LATE_DELIVERIES_OVERLAP";
+  return { review, deliveries: dates.map((d) => (d < paidDay
+    ? { plannedDate: review ? null : from, shipBy: review ? null : shipBy, originalDate: d, paidLate: true }
+    : { plannedDate: d, originalDate: d, paidLate: false })) };
+}
+
 // The month-by-month plan the customer has asked for, from the first monthly month: a frequency per month, or a skip.
 // state: { startMonth, frequency (from startMonth), changes: { "YYYY-MM": frequency } (from that month on),
 //          skips: ["YYYY-MM"], cancelFrom: "YYYY-MM" | null (first month not charged) }
@@ -174,5 +212,5 @@ function cancellationFor(now, currentMonthInvoice) {
 module.exports = {
   PlanError, MONTHLY_PRICES, FIRST_DELIVERY_PRICE, GRAMS_PER_DELIVERY, CHANGE_DEADLINE_DAY, START_NEXT_MONTH_UNTIL_DAY,
   SHIPPING_DAYS, validFrequency, jst, monthOf, addMonths, parseMonth, billingStartUnix, startMonthFor, firstChangeableMonth,
-  isWorkingDay, shippingDates, monthPlan, schedulePhases, cancellationFor,
+  isWorkingDay, shippingDates, workingDayAfter, dayOf, deliveryPlan, LATE_SHIP_WITHIN_WORKING_DAYS, monthPlan, schedulePhases, cancellationFor,
 };

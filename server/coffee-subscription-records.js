@@ -176,7 +176,10 @@ async function handleInvoicePaid(db, invoice, config, now = Date.now()) {
       } else if (snap.exists) {
         result = { handled: true, duplicate: true };
       } else {
-        writes.push(() => tx.create(ref, { subscriptionId: sub.id, kind: "first", month: plan.monthOf(Number(invoice.status_transitions?.paid_at || 0) * 1000 || now),
+        const paidMs = Number(invoice.status_transitions?.paid_at || 0) * 1000 || now;
+        // The first 200 g goes out after the sign-up payment, within 3 working days.
+        const shipBy = (() => { try { return plan.workingDayAfter(plan.dayOf(paidMs), plan.LATE_SHIP_WITHIN_WORKING_DAYS, config.calendar || CALENDAR); } catch { return null; } })();
+        writes.push(() => tx.create(ref, { subscriptionId: sub.id, kind: "first", month: plan.monthOf(paidMs), shipBy,
           seq: 0, plannedDate: null, grams: plan.GRAMS_PER_DELIVERY, status: "planned", invoiceId: invoice.id, createdAt: new Date(now) }));
         result = { handled: true, shipments: 1 };
       }
@@ -202,18 +205,21 @@ async function handleInvoicePaid(db, invoice, config, now = Date.now()) {
         writes.push(() => tx.set(monthRef, { subscriptionId: sub.id, month, status: "paid", invoiceId: invoice.id, amount, needsReview: true, reviewReason: why, updatedAt: new Date(now) }, { merge: true }));
         result = { handled: true, review: why };
       } else {
-        const dates = plan.shippingDates(month, frequency, config.calendar || CALENDAR);
-        const refs = dates.map((_, i) => db.collection(SHIPMENTS).doc(`${sub.id}_${month}_${i + 1}`));
+        const paidMs = Number(invoice.status_transitions?.paid_at || 0) * 1000 || now;
+        const { review, deliveries } = plan.deliveryPlan(month, frequency, plan.dayOf(paidMs), config.calendar || CALENDAR);
+        const refs = deliveries.map((_, i) => db.collection(SHIPMENTS).doc(`${sub.id}_${month}_${i + 1}`));
         const snaps = await Promise.all(refs.map((ref) => tx.get(ref)));
         writes.push(() => tx.set(monthRef, { subscriptionId: sub.id, month, status: "paid", invoiceId: invoice.id, amount, frequency,
-          paidAt: new Date(Number(invoice.status_transitions?.paid_at || 0) * 1000 || now), updatedAt: new Date(now) }, { merge: true }));
-        // Paid after a planned date (a retried payment): that delivery is marked to go out as soon as possible.
-        const paidDay = ((ms) => `${plan.monthOf(ms)}-${String(plan.jst(ms).day).padStart(2, "0")}`)(Number(invoice.status_transitions?.paid_at || 0) * 1000 || now);
+          paidAt: new Date(paidMs), ...(review ? { needsReview: true, reviewReason: review } : {}), updatedAt: new Date(now) }, { merge: true }));
+        // A late delivery that cannot be planned safely waits for review instead of going out (never twice).
         refs.forEach((ref, i) => {
-          if (!snaps[i].exists) writes.push(() => tx.create(ref, { subscriptionId: sub.id, kind: "monthly", month, seq: i + 1, plannedDate: dates[i],
-            ...(dates[i] < paidDay ? { paidLate: true } : {}), grams: plan.GRAMS_PER_DELIVERY, status: "planned", invoiceId: invoice.id, createdAt: new Date(now) }));
+          const d = deliveries[i];
+          if (!snaps[i].exists) writes.push(() => tx.create(ref, { subscriptionId: sub.id, kind: "monthly", month, seq: i + 1, plannedDate: d.plannedDate,
+            originalDate: d.originalDate, ...(d.paidLate ? { paidLate: true, shipBy: d.shipBy || null } : {}), grams: plan.GRAMS_PER_DELIVERY,
+            status: d.paidLate && review ? "needs_review" : "planned", invoiceId: invoice.id, createdAt: new Date(now) }));
         });
-        result = { handled: true, shipments: dates.length };
+        if (review) Object.assign(contractPatch, { needsReview: true, reviewReason: review });
+        result = { handled: true, shipments: deliveries.length, ...(review ? { review } : {}) };
       }
     } else {
       // Other invoices of the subscription (a skipped month starts with a zero "subscription_update" invoice): a zero
@@ -264,7 +270,9 @@ async function handleSubscriptionChanged(db, subscription, config, now = Date.no
   if (subscription?.metadata?.kind !== KIND) return { handled: false };
   const ref = db.collection(SUBS).doc(subscription.id);
   const price = idOf(subscription.items?.data?.[0]?.price);
+  // Stripe's own retry settings decide when an unpaid subscription ends; the reason is kept (e.g. payment_failed).
   await ref.set({ status: subscription.status, frequencyNow: frequencyOfPrice(price, config),
+    endedReason: subscription.status === "canceled" ? subscription.cancellation_details?.reason || null : null,
     cancelAt: subscription.cancel_at ? new Date(subscription.cancel_at * 1000) : null,
     canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
     customerId: idOf(subscription.customer), updatedAt: new Date(now) }, { merge: true });

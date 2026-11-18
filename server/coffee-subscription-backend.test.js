@@ -347,3 +347,41 @@ test("schedule rebuild: the month being charged and every month before the deadl
     [["2026-12-01", "2027-01-01", false], ["2027-01-01", "2027-03-01", false], ["2027-03-01", "2027-04-01", true], ["2027-04-01", "2027-05-01", false]]);
   assert.ok(c.phases.every((p) => p.proration_behavior === "none"));
 });
+
+test("a late payment: shipped after it within 3 working days; overlapping or unschedulable deliveries go to review", () => {
+  // On time: dates unchanged.
+  assert.deepEqual(plan.deliveryPlan("2027-01", 2, "2027-01-01", CALENDAR).deliveries.map((d) => [d.plannedDate, d.paidLate]), [["2027-01-05", false], ["2027-01-20", false]]);
+  // Paid on Sat 1/9: the 1/5 delivery goes from Tue 1/12 (Mon 1/11 is a holiday), by Thu 1/14; 1/20 as planned.
+  const one = plan.deliveryPlan("2027-01", 2, "2027-01-09", CALENDAR);
+  assert.equal(one.review, null);
+  assert.deepEqual(one.deliveries.map((d) => [d.originalDate, d.plannedDate, d.shipBy || null]), [["2027-01-05", "2027-01-12", "2027-01-14"], ["2027-01-20", "2027-01-20", null]]);
+  // Paid on 12/18: the late 12/7 delivery would reach the 12/21 one → review, not planned.
+  const crowd = plan.deliveryPlan("2026-12", 2, "2026-12-18", CALENDAR);
+  assert.equal(crowd.review, "LATE_DELIVERIES_OVERLAP");
+  assert.deepEqual(crowd.deliveries.map((d) => d.plannedDate), [null, "2026-12-21"]);
+  // Two deliveries already late → review.
+  assert.equal(plan.deliveryPlan("2027-01", 4, "2027-01-14", CALENDAR).review, "LATE_DELIVERIES_OVERLAP");
+  // A shop closed for weeks → cannot be scheduled → review.
+  const closed = { holidays: new Set(), closures: new Set(Array.from({ length: 70 }, (_, i) => new Date(Date.UTC(2027, 0, 8 + i)).toISOString().slice(0, 10))) };
+  assert.equal(plan.deliveryPlan("2027-01", 1, "2027-01-07", { ...closed, closures: new Set([...closed.closures].filter((d) => d !== "2027-01-05")) }).review, "LATE_DELIVERY_UNSCHEDULABLE");
+  assert.equal(plan.workingDayAfter("2026-12-30", 1, CALENDAR), "2026-12-31");
+  assert.equal(plan.workingDayAfter("2026-12-31", 1, CALENDAR), "2027-01-04", "1/1 is a holiday, 1/2–3 a weekend");
+});
+
+test("records: a late month's deliveries follow the plan; a crowded one is held for review; the end reason is kept", async () => {
+  const db = fakeFirestore();
+  await records.handleEvent(db, ev("checkout.session.completed", session()), CONFIG);
+  await records.handleEvent(db, ev("invoice.paid", cycle("2026-12", { status_transitions: { paid_at: jstAt(2026, 12, 18, 15) / 1000 } })), CONFIG);
+  const dec = shipments(db).map((k) => db.store.get(k)).filter((x) => x.month === "2026-12");
+  assert.deepEqual(dec.map((x) => [x.originalDate, x.status, x.plannedDate]), [["2026-12-07", "needs_review", null], ["2026-12-21", "planned", "2026-12-21"]]);
+  assert.equal(db.store.get(`${records.MONTHS}/${SUB}_2026-12`).reviewReason, "LATE_DELIVERIES_OVERLAP");
+  // Replayed: nothing new.
+  await records.handleEvent(db, ev("invoice.paid", cycle("2026-12", { status_transitions: { paid_at: jstAt(2026, 12, 18, 15) / 1000 } })), CONFIG);
+  assert.equal(shipments(db).filter((k) => k.includes("2026-12")).length, 2);
+  // The first delivery carries its ship-by date (3 working days after the sign-up payment).
+  await records.handleEvent(db, ev("invoice.paid", invoice({ status_transitions: { paid_at: jstAt(2026, 11, 20, 10) / 1000 } })), CONFIG);
+  assert.equal(db.store.get(`${records.SHIPMENTS}/${SUB}_first`).shipBy, "2026-11-26", "Mon 11/23 is a holiday");
+  await records.handleEvent(db, ev("customer.subscription.deleted", { id: SUB, status: "canceled", metadata: meta, customer: "cus_1", canceled_at: jstAt(2026, 12, 20) / 1000,
+    cancellation_details: { reason: "payment_failed" }, items: { data: [{ price: { id: "price_m2" } }] } }), CONFIG);
+  assert.deepEqual([db.store.get(`${records.SUBS}/${SUB}`).status, db.store.get(`${records.SUBS}/${SUB}`).endedReason], ["canceled", "payment_failed"]);
+});
