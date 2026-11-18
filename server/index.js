@@ -16,6 +16,8 @@ const orders = require("./orders");
 const initialStock = require("./initial-stock");
 const refunds = require("./refunds");
 const factoryRefundApi = require("./factory-refund-api");
+const coffeeSubscription = require("./coffee-subscription-records");
+const coffeeSubscriptionCheckout = require("./coffee-subscription-checkout");
 const { createRateLimiter, clientKey } = require("./rate-limit");
 
 const app = express();
@@ -27,6 +29,9 @@ const INVENTORY_STRIPE_WEBHOOK_SECRET = process.env.STRIPE_INVENTORY_WEBHOOK_SEC
 // stock is settled only with inventory on. Every step is idempotent, so a Stripe resend never writes twice.
 // Stripe events to subscribe: payment_intent.succeeded, payment_intent.canceled, charge.refunded
 // (and, to settle refunds that Stripe finishes later, charge.refund.updated).
+// 珈琲の定期便 (server/coffee-subscription-records.js), when it opens: checkout.session.completed, invoice.paid,
+// invoice.payment_failed, customer.subscription.updated, customer.subscription.deleted. Only objects marked
+// metadata.kind = "coffee-subscription-v2" are handled; other events of these types are left alone.
 app.post("/stripe-inventory-webhook", express.raw({ type: "application/json" }), async (req, res) => {
   if (!INVENTORY_STRIPE_WEBHOOK_SECRET) {
     return INVENTORY_ENABLED ? res.status(503).json({ error: "WEBHOOK_NOT_CONFIGURED" }) : res.status(404).end();
@@ -51,6 +56,8 @@ app.post("/stripe-inventory-webhook", express.raw({ type: "application/json" }),
       // (e.g. the Stripe dashboard) are recorded for review and never give stock back.
       const paymentIntentId = typeof object?.payment_intent === "string" ? object.payment_intent : object?.payment_intent?.id;
       await refunds.syncRefunds(db, stripe, paymentIntentId);
+    } else if (coffeeSubscription.EVENT_TYPES.includes(event.type)) {
+      await coffeeSubscription.handleEvent(db, event, coffeeSubscriptionCheckout.configFrom());
     }
     return res.json({ received: true });
   } catch (error) {
@@ -67,6 +74,10 @@ app.post(factoryRefundApi.PATH, express.raw({ type: "application/json", limit: "
   factoryRefundApi.createHandler({ getDb: () => db, getStripe: () => stripe }));
 
 app.use(express.json());
+
+// 珈琲の定期便 sign-up (server/coffee-subscription-checkout.js): 404 unless COFFEE_SUBSCRIPTION_ENABLED=true and the five
+// STRIPE_PRICE_COFFEE_SUB_* price ids are set. Sign-ups also stay paused on the store (src/productData.js).
+app.post(coffeeSubscriptionCheckout.PATH, coffeeSubscriptionCheckout.createHandler({ getDb: () => db, getStripe: () => stripe }));
 app.use(cors());
 
 console.log("FIREBASE_PROJECT_ID exists:", !!process.env.FIREBASE_PROJECT_ID);
