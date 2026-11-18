@@ -1,5 +1,6 @@
 "use strict";
-// Factory (Jennifer) -> Ryuge-site: orders and refunds, signed. Off unless configured (404).
+// Factory (Jennifer) -> Ryuge-site: orders and refunds, signed. Off unless configured (404). 珈琲の定期便 can also be
+// read here (server/factory-subscription-read.js), behind its own switch FACTORY_SUBSCRIPTION_READ_ENABLED.
 //
 // Every request needs, independently:
 //  1. Service signature: X-Factory-Timestamp (13-digit ms, within ±5 min) and X-Factory-Signature =
@@ -13,6 +14,7 @@
 // The refund itself, the stock given back and the audit trail are server/refunds.js; this module only authenticates.
 const crypto = require("node:crypto");
 const refunds = require("./refunds");
+const subscriptionRead = require("./factory-subscription-read");
 const { createRateLimiter, clientKey } = require("./rate-limit");
 
 const PATH = "/internal/factory/order-refund";
@@ -24,6 +26,9 @@ const MAX_BODY = 8192;
 // Read-only unless refunds are switched on separately: with only the three settings above, Factory can search and
 // look up orders, and every refund operation (preview, apply, resume, status) is refused before anything is touched.
 const READ_ONLY_OPS = new Set(["orders.search", "orders.get"]);
+// 珈琲の定期便 (server/factory-subscription-read.js): read only, behind their own switch FACTORY_SUBSCRIPTION_READ_ENABLED
+// (refused before anything is stored while it is off); contact details also need the CEO's fresh view record.
+const SUBSCRIPTION_OPS = new Set(["subscriptions.list", "subscriptions.get", "subscriptions.schedule", "subscriptions.contact"]);
 const refundOpsEnabled = (env) => env.FACTORY_REFUND_OPS_ENABLED === "true";
 
 function enabled(env) {
@@ -53,6 +58,10 @@ const FIELDS = {
   "refund.apply": ["nonce", "op", "orderId", "lines", "refundShipping", "acknowledgeExternalRefunds", "planHash", "approval"],
   "refund.resume": ["nonce", "op", "refundId"],
   "refund.status": ["nonce", "op", "refundId"],
+  "subscriptions.list": ["nonce", "op", "query"],
+  "subscriptions.get": ["nonce", "op", "subscription"],
+  "subscriptions.schedule": ["nonce", "op", "range"],
+  "subscriptions.contact": ["nonce", "op", "subscription", "view"],
 };
 
 function parse(rawBody) {
@@ -123,7 +132,9 @@ async function process_({ db, stripe, env, rawBody, timestamp, signature, now })
   if (!verifySignature({ secret: env.FACTORY_REFUND_HMAC_SECRET, timestamp, signature, rawBody, now })) deny("INVALID_FACTORY_SIGNATURE");
   const body = parse(rawBody);
   // Before the nonce is stored: a refused refund operation leaves no trace in Firestore and never reaches Stripe.
-  if (!READ_ONLY_OPS.has(body.op) && !refundOpsEnabled(env)) deny("REFUND_OPS_DISABLED");
+  if (SUBSCRIPTION_OPS.has(body.op)) {
+    if (!subscriptionRead.readEnabled(env)) deny("SUBSCRIPTION_READ_DISABLED");
+  } else if (!READ_ONLY_OPS.has(body.op) && !refundOpsEnabled(env)) deny("REFUND_OPS_DISABLED");
   // One-time nonce: a captured request is refused the second time, whatever it asks.
   try {
     await db.collection(NONCES).doc(body.nonce).create({ op: body.op, at: new Date(now), signedAt: new Date(Number(timestamp)) });
@@ -154,6 +165,10 @@ async function process_({ db, stripe, env, rawBody, timestamp, signature, now })
       const snap = await db.collection("orderRefunds").doc(body.refundId).get();
       return { refund: snap.exists ? refundSummary(snap.id, snap.data()) : null };
     }
+    case "subscriptions.list": return subscriptionRead.listSubscriptions(db, body.query, now);
+    case "subscriptions.get": return subscriptionRead.getSubscription(db, body.subscription, now);
+    case "subscriptions.schedule": return subscriptionRead.schedule(db, body.range, now);
+    case "subscriptions.contact": return subscriptionRead.contact(db, body.subscription, body.view, env, now);
     default: return deny("INVALID_OPERATION");
   }
 }
@@ -161,6 +176,7 @@ async function process_({ db, stripe, env, rawBody, timestamp, signature, now })
 const STATUS = {
   INVALID_FACTORY_SIGNATURE: 401, REFUND_OPS_DISABLED: 403, CEO_APPROVAL_REQUIRED: 403, CEO_APPROVAL_EXPIRED: 403, REPLAYED_REQUEST: 409,
   BODY_TOO_LARGE: 413, INVALID_JSON: 400, INVALID_FIELDS: 400, INVALID_OPERATION: 400, NONCE_REQUIRED: 400, INVALID_QUERY: 400,
+  SUBSCRIPTION_READ_DISABLED: 403, CEO_VIEW_REQUIRED: 403, CEO_VIEW_EXPIRED: 403, UNKNOWN_SUBSCRIPTION: 404, AMBIGUOUS_SUBSCRIPTION: 409, INVALID_RANGE: 400,
 };
 const REFUND_CONFLICTS = ["PLAN_CHANGED", "EXCEEDS_REMAINING_QUANTITY", "SHIPPING_ALREADY_REFUNDED", "ALREADY_FULLY_REFUNDED",
   "EXTERNAL_REFUNDS_PRESENT", "EXCEEDS_STRIPE_REFUNDABLE", "EXCEEDS_ORDER_TOTAL", "REFUND_ID_CONFLICT"];
@@ -175,7 +191,7 @@ function createHandler({ getDb, getStripe, env = process.env, limiter = createRa
         timestamp: req.get("x-factory-timestamp"), signature: req.get("x-factory-signature") });
       return res.json({ ok: true, ...result });
     } catch (error) {
-      if (error instanceof ApiError) {
+      if (error instanceof ApiError || error instanceof subscriptionRead.ReadError) {
         const status = STATUS[error.code] || 400;
         if (status === 401 || status === 403 || status === 409) log.warn("Factory refund request refused:", error.code);
         return res.status(status).json({ error: error.code });

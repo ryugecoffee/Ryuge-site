@@ -22,6 +22,7 @@ const records = require("./coffee-subscription-records");
 const checkout = require("./coffee-subscription-checkout");
 const ops = require("./coffee-subscription-stripe");
 const account = require("./coffee-subscription-account");
+const factoryApi = require("./factory-refund-api");
 const express = require("express");
 const { CALENDAR } = require("./coffee-subscription-calendar");
 
@@ -511,6 +512,56 @@ async function scenarioF(config) {
   }
 }
 
+// ---- Scenario G (③): Factory reads Stripe-made contracts through the signed connection, without personal details ---
+async function scenarioG(config) {
+  const clock = await newClock(jst(2026, 11, 20, 10), "G");
+  const g1 = await signUp(config, clock, { frequency: 2, email: `g1-${RUN}@example.com` });
+  const g2 = await signUp(config, clock, { frequency: 1, email: `g2-${RUN}@example.com` });
+  await ops.requestPlanChange({ db, stripe, subscriptionId: g2.sub.id, request: { skip: "2027-01" }, config, now: jst(2026, 11, 20, 12) });
+  await advance(clock, jst(2027, 1, 1, 10, 30));
+  await settle(config);
+  const CEO = "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b";
+  const SECRET = crypto.randomBytes(32).toString("hex");
+  const env = { FACTORY_REFUND_API_ENABLED: "true", FACTORY_REFUND_HMAC_SECRET: SECRET, FACTORY_CEO_USER_ID: CEO, FACTORY_SUBSCRIPTION_READ_ENABLED: "true" };
+  const now = jst(2027, 1, 5, 12);
+  const app = express();
+  app.post(factoryApi.PATH, express.raw({ type: "application/json", limit: "8kb" }), factoryApi.createHandler({ getDb: () => db, getStripe: () => stripe, env, clock: () => now, log: { warn() {}, error() {} } }));
+  const server = await new Promise((resolve) => { const sv = app.listen(0, "127.0.0.1", () => resolve(sv)); });
+  const call = async (body) => {
+    const text = JSON.stringify({ nonce: crypto.randomUUID(), ...body });
+    const r = await fetch(`http://127.0.0.1:${server.address().port}${factoryApi.PATH}`, { method: "POST", headers: { "content-type": "application/json",
+      "x-factory-timestamp": String(now), "x-factory-signature": factoryApi.signatureFor(SECRET, String(now), Buffer.from(text)) }, body: text });
+    return [r.status, await r.json().catch(() => null)];
+  };
+  const pii = (v) => ["テスト 花子", `g1-${RUN}@example.com`, `g2-${RUN}@example.com`, "鎌倉市", "248-0006"].filter((p) => JSON.stringify(v).includes(p));
+  const read = require("./factory-subscription-read");
+  try {
+    const refs = [g1, g2].map((x) => read.contractRef(x.sub.id));
+    const [, list] = await call({ op: "subscriptions.list", query: { filter: "all", limit: 100 } });
+    const mine = list.subscriptions.filter((x) => refs.includes(x.ref));
+    check("③", "list: both Stripe-made contracts, by number and prefecture, no personal details", mine.length === 2 && mine.every((x) => x.prefecture === "神奈川県") && pii(list).length === 0,
+      mine.map((x) => `${x.ref}:${x.status}:月${x.frequency}`).join(" "));
+    const [, d1] = await call({ op: "subscriptions.get", subscription: refs[0] });
+    check("③", "detail: January charged ¥5,800 (from Stripe's invoice), plan and preference, no personal details",
+      d1.subscription.charges.some((c) => c.month === "2027-01" && c.status === "paid" && c.amount === 5800) && d1.subscription.preference.text === "深煎りが好き" && pii(d1).length === 0);
+    const [, d2] = await call({ op: "subscriptions.get", subscription: refs[1] });
+    check("③", "detail: the skipped January shows as not charged and skipped", d2.subscription.charges.some((c) => c.month === "2027-01" && c.status === "not_charged")
+      && d2.subscription.plan.some((m) => m.month === "2027-01" && m.skipped));
+    const [, week] = await call({ op: "subscriptions.schedule", range: "week" });
+    const [, month] = await call({ op: "subscriptions.schedule", range: "month" });
+    const m1 = month.deliveries.filter((x) => x.ref === refs[0]).map((x) => x.date);
+    check("③", "schedule: this week (1/4–1/10) and this month, from the paid January invoice; the skip listed; no personal details",
+      week.range.from === "2027-01-04" && week.range.to === "2027-01-10" && week.deliveries.some((x) => x.ref === refs[0] && x.date === "2027-01-05")
+      && m1.join() === plan.shippingDates("2027-01", 2, CALENDAR).join() && month.skipped.some((x) => x.ref === refs[1]) && pii([week, month]).length === 0, `${m1.join(",")}`);
+    const [okStatus, contactBody] = await call({ op: "subscriptions.contact", subscription: refs[0], view: { requestId: crypto.randomUUID(), viewedBy: CEO, viewedAt: now - 5000 } });
+    const [noStatus] = await call({ op: "subscriptions.contact", subscription: refs[0], view: { requestId: crypto.randomUUID(), viewedBy: "11111111-2222-4333-8444-555555555555", viewedAt: now - 5000 } });
+    check("③", "contact: the CEO's view gets the address; anyone else is refused", okStatus === 200 && contactBody.contact.address.city === "鎌倉市" && noStatus === 403, `${okStatus}/${noStatus}`);
+  } finally {
+    server.closeAllConnections();
+    server.close();
+  }
+}
+
 // ---- Item 7: webhooks again, at once, and in reverse order ---------------------------------------------------
 async function snapshot(store) {
   const out = {};
@@ -568,8 +619,8 @@ async function cleanup() {
   const started = Date.now();
   try {
     // Separate test clocks, run side by side.
-    const all = { A: scenarioA, B: scenarioB, C: scenarioC, D: scenarioD, E: scenarioE, F: scenarioF };
-    const only = String(process.env.E2E_ONLY || "ABCDEF").split("").filter((k) => all[k]);
+    const all = { A: scenarioA, B: scenarioB, C: scenarioC, D: scenarioD, E: scenarioE, F: scenarioF, G: scenarioG };
+    const only = String(process.env.E2E_ONLY || "ABCDEFG").split("").filter((k) => all[k]);
     const outcomes = await Promise.allSettled(only.map((k) => all[k](config)));
     outcomes.forEach((o, i) => { if (o.status === "rejected") check("run", `scenario ${only[i]} finished`, false, o.reason?.stack?.split("\n").slice(0, 3).join(" | ")); });
     await settle(config);
