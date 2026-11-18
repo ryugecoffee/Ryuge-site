@@ -3988,14 +3988,15 @@ html[lang="es"] .story-body {
 }
 
 /* ============================================================
-   2026-11-18 — Tea (木函) cards: photo, then an information frame below it (as the coffee cards).
-   Own class names, so the coffee (閻魔) cards are not touched.
+   2026-11-18 — Tea (木函) cards: photo, then an information frame below it, in two columns on PC and phone,
+   sized like the coffee (閻魔) cards (same photo ratio, frame, radius and type). Own class names, so the coffee
+   cards are not touched.
 ============================================================ */
 .products-woodbox-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
-  max-width: 1080px;
+  gap: 18px;
+  max-width: 940px;
   margin: 0 auto;
   padding: 0 28px 32px;
 }
@@ -4013,7 +4014,7 @@ html[lang="es"] .story-body {
 
 .woodbox-card-photo {
   position: relative;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 4 / 5;
   overflow: hidden;
 }
 
@@ -4022,57 +4023,69 @@ html[lang="es"] .story-body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: brightness(0.92);
+  filter: brightness(0.9) saturate(0.9);
 }
 
 .woodbox-card-info {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 8px;
-  padding: 18px 20px 22px;
+  padding: 18px 16px 20px;
 }
 
 .woodbox-card-info h3 {
   margin: 0;
   color: #f0ece6;
-  font-size: clamp(16px, 1.4vw, 19px);
+  font-size: clamp(15px, 1.3vw, 19px);
   font-weight: 400;
   line-height: 1.45;
-  letter-spacing: 0.03em;
 }
 
 .woodbox-card-price {
   margin: 0;
   color: #eee9e3;
-  font-size: 18px;
+  font-size: 19px;
   letter-spacing: 0.03em;
 }
 
 .woodbox-card-summary {
   margin: 0;
   color: #c4bfb8;
-  font-size: 13px;
-  line-height: 1.75;
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 @media (max-width: 768px) {
   .products-woodbox-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 16px;
-    padding: 0 16px 24px;
+    gap: 10px;
+    padding: 0 12px 20px;
   }
-  .woodbox-card-info { padding: 14px 16px 18px; }
-  .woodbox-card-info h3 { font-size: 16px; }
+  .woodbox-card-info { padding: 12px 10px 14px; gap: 6px; }
+  .woodbox-card-info h3 { font-size: 13px; }
   .woodbox-card-price { font-size: 16px; }
+  /* Name and price first; the full description is in the detail. */
+  .woodbox-card-summary {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    font-size: 10px;
+    overflow-wrap: anywhere;
+  }
+  .woodbox-card-photo .product-soldout-badge { top: 8px; right: 8px; padding: 4px 7px; font-size: 9px; letter-spacing: 0.06em; }
 }
 
 /* ============================================================
-   2026-11-18 — 折々: the cards centred, one width and one gap (PC and phone).
+   2026-11-18 — 折々: three cards side by side and centred, on PC and phone. The subscription (in the middle) is
+   a little larger; the cookie and Ryuge Apps are compact. On a phone only the names (and the subscription price)
+   are shown; the descriptions are in the detail.
 ============================================================ */
 .oriori-services-grid {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
+  align-items: center;
   gap: 24px;
   max-width: 1040px;
   margin: 8px auto 0;
@@ -4080,10 +4093,15 @@ html[lang="es"] .story-body {
 }
 
 .oriori-services-grid > .oriori-service-card {
-  flex: 0 1 300px;
+  flex: 0 1 260px;
   min-width: 0;
   border: 1px solid rgba(245, 241, 232, 0.1);
   border-radius: 5px;
+}
+
+.oriori-services-grid > .oriori-service-card.is-featured {
+  flex-basis: 340px;
+  border-color: rgba(245, 241, 232, 0.22);
 }
 
 .oriori-services-grid .oriori-service-copy {
@@ -4092,13 +4110,18 @@ html[lang="es"] .story-body {
 
 @media (max-width: 768px) {
   .oriori-services-grid {
-    gap: 16px;
+    gap: 8px;
     padding: 0;
   }
-  .oriori-services-grid > .oriori-service-card {
-    flex: 0 1 100%;
-    max-width: 340px;
-  }
+  .oriori-services-grid > .oriori-service-card { flex: 1 1 0; }
+  .oriori-services-grid > .oriori-service-card.is-featured { flex: 1.55 1 0; }
+  .oriori-services-grid .oriori-service-copy { padding: 8px 7px 10px; }
+  .oriori-services-grid .oriori-service-copy h3 { margin: 0; font-size: 11px; line-height: 1.35; }
+  .oriori-services-grid .is-featured .oriori-service-copy h3 { font-size: 13px; }
+  .oriori-services-grid .oriori-service-summary,
+  .oriori-services-grid .product-card-weight { display: none; }
+  .oriori-services-grid .product-card-price { margin: 4px 0 0; font-size: 11px; }
+  .oriori-services-grid .product-soldout-badge { top: 6px; right: 6px; padding: 3px 6px; font-size: 9px; letter-spacing: 0.04em; }
 }
 
 /* ============================================================

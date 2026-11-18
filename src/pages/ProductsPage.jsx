@@ -4,7 +4,7 @@ import { PAYMENT_API_BASE, classifyAvailability } from "../lib/paymentEnv";
 import { useLocation } from "react-router-dom";
 import SiteFooter from "../components/SiteFooter";
 import BeanConcierge from "../components/BeanConcierge";
-import { PRODUCT_DATA, PRODUCT_SECTIONS, DETAIL_TEXT, ROAST_LEVEL, SUBSCRIPTIONS_PAUSED, SUBSCRIPTIONS_PAUSED_TEXT, COFFEE_SUBSCRIPTION, loc } from "../productData";
+import { PRODUCT_DATA, PRODUCT_SECTIONS, DETAIL_TEXT, ROAST_LEVEL, SUBSCRIPTIONS_PAUSED, SUBSCRIPTIONS_PAUSED_SHORT_TEXT, COFFEE_SUBSCRIPTION, loc } from "../productData";
 import CoffeeSubscriptionDetail from "../components/CoffeeSubscriptionDetail";
 import { useCart } from "../CartContext";
 import { trackViewItem } from "../lib/analytics";
@@ -369,7 +369,7 @@ export default function ProductsPage({ lang }) {
             {[...listedBags, ...products.oriori].map((item) => (
               <article
                 key={item.id}
-                className="oriori-service-card"
+                className={`oriori-service-card ${item.subscription ? "is-featured" : ""}`}
                 onClick={() => { setActiveItemId(item.id); trackViewItem(item); }}
               >
                 <img src={item.image} alt="" />
@@ -379,11 +379,11 @@ export default function ProductsPage({ lang }) {
                   </span>
                 )}
                 {item.category === "subscription" && SUBSCRIPTIONS_PAUSED && (
-                  <span className="product-soldout-badge">{loc(SUBSCRIPTIONS_PAUSED_TEXT, lang)}</span>
+                  <span className="product-soldout-badge">{loc(SUBSCRIPTIONS_PAUSED_SHORT_TEXT, lang)}</span>
                 )}
                 <div className="oriori-service-copy">
                   <h3>{item.title?.[lang]}</h3>
-                  <p>{item.summary?.[lang]}</p>
+                  <p className="oriori-service-summary">{item.summary?.[lang]}</p>
                   {item.weight && <p className="product-card-weight">{loc(item.weight, lang)}</p>}
                   {item.price && <p className="product-card-price">{item.price}</p>}
                   {item.subscription && (
