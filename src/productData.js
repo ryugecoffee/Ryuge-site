@@ -21,7 +21,7 @@ export const DETAIL_TEXT = {
     coldAmounts: (leaf, l) => `茶葉 ${leaf}g・水 ${l}L`,
     coldTime: (hours) => `冷蔵庫で${hours}時間`,
     howToBrew: "淹れ方", quantity: "数量", addToCart: "カートに入れる", back: "戻る", close: "閉じる",
-    promoNote: "プロモーション豆：お一人様2袋まで",
+    promoNote: "この豆は、お一人様2袋までのご購入となります（これまでのご注文を含みます）。",
   },
   en: {
     beanDetails: "About the beans", productDetails: "Product details", flavor: "Flavor notes",
@@ -38,7 +38,7 @@ export const DETAIL_TEXT = {
     coldAmounts: (leaf, l) => `${leaf} g of tea, ${l} L of water`,
     coldTime: (hours) => `${hours} hours in the fridge`,
     howToBrew: "How to Brew", quantity: "Quantity", addToCart: "Add to cart", back: "Back", close: "Close",
-    promoNote: "Promotional beans: up to 2 bags per customer",
+    promoNote: "This coffee is limited to 2 bags per customer, including previous orders.",
   },
   es: {
     beanDetails: "Sobre el grano", productDetails: "Detalles del producto", flavor: "Notas de sabor",
@@ -55,7 +55,7 @@ export const DETAIL_TEXT = {
     coldAmounts: (leaf, l) => `${leaf} g de té, ${l} L de agua`,
     coldTime: (hours) => `${hours} horas en la nevera`,
     howToBrew: "Preparación", quantity: "Cantidad", addToCart: "Añadir al carrito", back: "Volver", close: "Cerrar",
-    promoNote: "Granos promocionales: máx. 2 bolsas por cliente",
+    promoNote: "Este café está limitado a 2 bolsas por cliente, incluidos pedidos anteriores.",
   },
 };
 
@@ -71,6 +71,8 @@ export const SUBSCRIPTIONS_PAUSED_TEXT = {
   en: "New sign-ups are currently paused",
   es: "Las nuevas suscripciones están en pausa por ahora",
 };
+// The short form for the 折々 card badge (the detail shows the full sentence).
+export const SUBSCRIPTIONS_PAUSED_SHORT_TEXT = { ja: "受付休止中", en: "Paused", es: "En pausa" };
 
 // 珈琲の定期便 (CEO, 2026-11-18): one subscription, the customer chooses how many deliveries a month. Every text shown
 // for it is here, so wording can be changed without touching the page. Prices: tax and shipping included, one price
@@ -300,7 +302,7 @@ export const PRODUCT_DATA = {
       requiresInventory: true, // = server/catalog.js requiresInventory: "近日公開" until inventory is on
       notice: MADE_TO_ORDER,
       promo: true, // promotional bean: at most 2 bags per customer (server/catalog.js promo)
-      promotion: { active: true, label: { ja: "プロモ・お一人様2袋まで", en: "Promo · max 2 per customer", es: "Promo · máx. 2 por cliente" } },
+      promotion: { active: true, label: { ja: "季節のおすすめ", en: "Seasonal pick", es: "Selección de temporada" } },
       isSoldOut: false,
     },
     {
