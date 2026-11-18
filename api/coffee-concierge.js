@@ -68,7 +68,7 @@ function buildCatalog() {
   // Hidden products (e.g. the hojicha bag, CEO 2026-11-17) are not offered.
   (PRODUCT_DATA.bag || []).filter((p) => !p.hidden).forEach((p) => push(p, "袋シリーズ"));
   lines.push(SUBSCRIPTIONS_PAUSED
-    ? "- [定期便 折々] 現在、新規受付を休止中（珈琲袋定期便・豆の定期便・禅の仕立て便）。申込みは案内しない。"
+    ? "- [定期便 折々] 現在、新規受付を休止中（珈琲の定期便）。申込みは案内しない。"
     : "- [定期便 折々] 定期便の詳細・販売条件はストア内の商品詳細をご案内してください。");
 
   // まだ購入不可(comingSoon)の商品は「近日公開」であることを明示した上で別枠で伝える

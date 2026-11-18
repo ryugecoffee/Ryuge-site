@@ -30,9 +30,13 @@ test("the subscription checkout API refuses every new subscription before Stripe
 });
 
 test("the store shows the notice and no sign-up button; checkout does not send a subscription left in a cart", () => {
-  const products = read("src", "pages", "ProductsPage.jsx");
-  assert.match(products, /SUBSCRIPTIONS_PAUSED \? \(/);
-  assert.match(products, /className="modal-cta-link is-disabled" disabled/);
+  // 珈琲の定期便 (2026-11-18): the detail is src/components/CoffeeSubscriptionDetail.jsx; its sign-up button is always
+  // disabled there (paused, and checkout is not wired to this subscription yet).
+  const detail = read("src", "components", "CoffeeSubscriptionDetail.jsx");
+  assert.match(detail, /const closedText = SUBSCRIPTIONS_PAUSED \? loc\(SUBSCRIPTIONS_PAUSED_TEXT, lang\)/);
+  assert.match(detail, /<button type="button" className="modal-cta-link is-disabled" disabled>\{closedText\}<\/button>/);
+  assert.doesNotMatch(detail, /setItem|fetch\(|onSubmit/, "nothing in the detail starts a sign-up");
+  assert.match(read("src", "pages", "ProductsPage.jsx"), /<CoffeeSubscriptionDetail lang=\{lang\} \/>/);
   assert.match(read("src", "productData.js"), /ja: "現在、新規受付を休止しています"/);
   const checkout = read("src", "pages", "CheckoutPage.jsx");
   assert.match(checkout, /const isBlocked {3}= subscriptionPaused \|\|/);

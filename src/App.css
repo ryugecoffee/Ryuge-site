@@ -3986,3 +3986,163 @@ html[lang="es"] .story-body {
   line-height: 1.8;
   color: rgba(245, 241, 232, 0.86);
 }
+
+/* ============================================================
+   2026-11-18 — Tea (木函) cards: photo, then an information frame below it (as the coffee cards).
+   Own class names, so the coffee (閻魔) cards are not touched.
+============================================================ */
+.products-woodbox-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 28px 32px;
+}
+
+.woodbox-product-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(245, 241, 232, 0.1);
+  border-radius: 5px;
+  background: #101010;
+  cursor: pointer;
+}
+
+.woodbox-card-photo {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+
+.woodbox-card-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.92);
+}
+
+.woodbox-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 20px 22px;
+}
+
+.woodbox-card-info h3 {
+  margin: 0;
+  color: #f0ece6;
+  font-size: clamp(16px, 1.4vw, 19px);
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0.03em;
+}
+
+.woodbox-card-price {
+  margin: 0;
+  color: #eee9e3;
+  font-size: 18px;
+  letter-spacing: 0.03em;
+}
+
+.woodbox-card-summary {
+  margin: 0;
+  color: #c4bfb8;
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+@media (max-width: 768px) {
+  .products-woodbox-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    padding: 0 16px 24px;
+  }
+  .woodbox-card-info { padding: 14px 16px 18px; }
+  .woodbox-card-info h3 { font-size: 16px; }
+  .woodbox-card-price { font-size: 16px; }
+}
+
+/* ============================================================
+   2026-11-18 — 折々: the cards centred, one width and one gap (PC and phone).
+============================================================ */
+.oriori-services-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+  max-width: 1040px;
+  margin: 8px auto 0;
+  padding: 0 24px;
+}
+
+.oriori-services-grid > .oriori-service-card {
+  flex: 0 1 300px;
+  min-width: 0;
+  border: 1px solid rgba(245, 241, 232, 0.1);
+  border-radius: 5px;
+}
+
+.oriori-services-grid .oriori-service-copy {
+  padding: 16px 16px 18px;
+}
+
+@media (max-width: 768px) {
+  .oriori-services-grid {
+    gap: 16px;
+    padding: 0;
+  }
+  .oriori-services-grid > .oriori-service-card {
+    flex: 0 1 100%;
+    max-width: 340px;
+  }
+}
+
+/* ============================================================
+   2026-11-18 — 珈琲の定期便 (detail): deliveries per month, monthly price and amount, preference comment.
+============================================================ */
+.coffee-sub { gap: 0; }
+.coffee-sub-frequency { margin: 22px 0 0; padding: 0; border: 0; width: 100%; }
+.coffee-sub-frequency legend { margin-bottom: 10px; font-size: 12px; letter-spacing: 0.08em; color: rgba(255, 255, 255, 0.55); }
+.coffee-sub-frequency-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.coffee-sub-frequency-option {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; padding: 10px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 4px; background: transparent;
+  color: rgba(255, 255, 255, 0.6); cursor: pointer; font: inherit;
+}
+.coffee-sub-frequency-option span { font-size: 14px; letter-spacing: 0.04em; }
+.coffee-sub-frequency-option small { font-size: 11px; color: rgba(255, 255, 255, 0.45); }
+.coffee-sub-frequency-option.active { border-color: rgba(255, 255, 255, 0.7); background: rgba(255, 255, 255, 0.08); color: #fff; }
+.coffee-sub-summary { width: 100%; margin: 18px 0 0; padding: 14px 0; border-top: 1px solid rgba(255, 255, 255, 0.12); border-bottom: 1px solid rgba(255, 255, 255, 0.12); }
+.coffee-sub-summary > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 6px 0; }
+.coffee-sub-summary dt { font-size: 12px; color: rgba(255, 255, 255, 0.55); letter-spacing: 0.06em; }
+.coffee-sub-summary dd { margin: 0; text-align: right; color: rgba(255, 255, 255, 0.9); font-size: 13px; }
+.coffee-sub-summary dd strong { font-size: 20px; font-weight: 500; letter-spacing: 0.03em; }
+.coffee-sub-summary dd small { display: block; font-size: 11px; color: rgba(255, 255, 255, 0.45); }
+.coffee-sub-note, .coffee-sub-pending { margin: 14px 0 0; font-size: 12px; line-height: 1.8; color: rgba(255, 255, 255, 0.62); }
+.coffee-sub-pending { color: rgba(255, 255, 255, 0.5); }
+.coffee-sub-terms { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; padding: 0; list-style: none; }
+.coffee-sub-terms li { padding: 4px 9px; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 999px; font-size: 11px; color: rgba(255, 255, 255, 0.75); }
+.coffee-sub-preference { width: 100%; margin-top: 20px; }
+.coffee-sub-preference label { display: block; margin-bottom: 8px; font-size: 13px; color: rgba(255, 255, 255, 0.85); }
+.coffee-sub-preference textarea {
+  box-sizing: border-box; width: 100%; min-height: 96px; padding: 10px 12px; resize: vertical;
+  border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; background: rgba(255, 255, 255, 0.04);
+  color: #fff; font: inherit; font-size: 13px; line-height: 1.7;
+}
+.coffee-sub-preference textarea:disabled { opacity: 0.55; cursor: not-allowed; }
+.coffee-sub-preference-count { margin-top: 4px; text-align: right; font-size: 11px; color: rgba(255, 255, 255, 0.4); }
+.coffee-sub-preference-issue { margin: 6px 0 0; font-size: 12px; color: #e7a08f; }
+.coffee-sub-preference-notes { margin: 8px 0 0; padding-left: 1.1em; font-size: 11px; line-height: 1.7; color: rgba(255, 255, 255, 0.5); }
+.coffee-sub-closed { margin-top: 18px; }
+.coffee-sub-manage { width: 100%; margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.12); }
+.coffee-sub-manage h4 { margin: 0 0 8px; font-size: 13px; font-weight: 400; color: rgba(255, 255, 255, 0.8); }
+.coffee-sub-manage ul { margin: 0; padding: 0; list-style: none; }
+.coffee-sub-manage li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; font-size: 12px; color: rgba(255, 255, 255, 0.7); }
+.coffee-sub-manage li small { color: rgba(255, 255, 255, 0.4); text-align: right; }
+@media (max-width: 480px) {
+  .coffee-sub-frequency-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
