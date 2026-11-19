@@ -26,6 +26,7 @@ function fakeFirestore() {
     const key = `${name}/${id}`;
     return { key, get: async () => snap(key), set: async (v, o) => { store.set(key, o?.merge ? merge(store.get(key), v) : structuredClone(v)); },
       update: async (v) => { store.set(key, merge(store.get(key), v)); },
+      delete: async () => { store.delete(key); },
       create: async (v) => { if (store.has(key)) throw new Error("ALREADY_EXISTS"); store.set(key, structuredClone(v)); } };
   };
   const query = (name, filters) => ({
@@ -36,7 +37,7 @@ function fakeFirestore() {
   });
   return {
     store,
-    collection: (name) => ({ doc: (id) => doc(name, id), where: (fld, op, v) => query(name, [[fld, op, v]]), limit: () => query(name, []), get: () => query(name, []).get() }),
+    collection: (name) => ({ doc: (id) => doc(name, id), add: async (v) => { const id = `auto${store.size}${Math.random().toString(16).slice(2, 8)}`; store.set(`${name}/${id}`, structuredClone(v)); return { id }; }, where: (fld, op, v) => query(name, [[fld, op, v]]), limit: () => query(name, []), get: () => query(name, []).get() }),
     async runTransaction(cb) {
       const run = lock.then(async () => {
         const writes = [];
@@ -346,7 +347,7 @@ test("late payment: the delivery is listed by its ship-by date (within 3 working
   assert.deepEqual(stockOf(db, "enma-jimma"), { ready: 4, held: 0, sold: 1 });
 });
 
-// ---- HTTP: off by default, the shop's token, a fixed actor, one notice per shortage ---------------------------------
+// ---- HTTP: off by default, staff sign-in by a mailed link, the server checks the session for every request ----------
 async function serve(router) {
   const app = express();
   app.use(express.json());
@@ -356,46 +357,86 @@ async function serve(router) {
   const base = `http://127.0.0.1:${server.address().port}${f.PATH}`;
   return { base, close: () => new Promise((r) => { server.closeAllConnections(); server.close(r); }) };
 }
-const TOKEN = "t".repeat(40);
+const STAFF_ENV = { COFFEE_SUBSCRIPTION_FULFILLMENT_ENABLED: "true", SHOP_STAFF_EMAILS: "Shop@Example.test, second@example.test", SITE_URL: "https://shop.example" };
 
-test("HTTP: 404 while off, 403 without the token, prepare and notices through the router", async () => {
-  const off = await serve(f.createRouter({ getDb: () => fakeFirestore(), env: {} }));
-  assert.equal((await fetch(`${off.base}/work`)).status, 404);
-  await off.close();
-  const short = await serve(f.createRouter({ getDb: () => fakeFirestore(), env: { COFFEE_SUBSCRIPTION_FULFILLMENT_TOKEN: "short" } }));
-  assert.equal((await fetch(`${short.base}/work`, { headers: { "x-fulfillment-admin-token": "short" } })).status, 404, "a weak token keeps it off");
-  await short.close();
+test("HTTP: off unless enabled with listed staff; the old shared token gives nothing", async () => {
+  for (const env of [{}, { COFFEE_SUBSCRIPTION_FULFILLMENT_ENABLED: "true" }, { SHOP_STAFF_EMAILS: "shop@example.test" },
+    { COFFEE_SUBSCRIPTION_FULFILLMENT_TOKEN: "t".repeat(40) }]) {
+    const app = await serve(f.createRouter({ getDb: () => fakeFirestore(), env }));
+    assert.equal((await fetch(`${app.base}/work`, { headers: { "x-fulfillment-admin-token": "t".repeat(40) } })).status, 404, JSON.stringify(env));
+    assert.equal((await fetch(`${app.base}/auth/login`, { method: "POST" })).status, 404);
+    await app.close();
+  }
+});
 
+test("HTTP: staff sign in by a mailed link; every request (the address above all) needs a live server-side session", async () => {
   const db = fakeFirestore();
   seedStock(db, { "enma-kindiio": 0 });
   await signUp(db, "sub_http001");
   const notices = [];
-  const app = await serve(f.createRouter({ getDb: () => db, env: { COFFEE_SUBSCRIPTION_FULFILLMENT_TOKEN: TOKEN }, clock: () => jstAt(2026, 11, 11),
-    notify: async (n) => { notices.push(n); }, log: { error: () => {} } }));
+  const mails = [];
+  let now = jstAt(2026, 11, 11);
+  const env = { ...STAFF_ENV };
+  const app = await serve(f.createRouter({ getDb: () => db, env, clock: () => now, notify: async (n) => { notices.push(n); },
+    sendMail: async (m) => { mails.push(m); }, log: { error: () => {} } }));
+  const json = { "content-type": "application/json" };
+  const post = (path, body, token) => fetch(`${app.base}${path}`, { method: "POST", headers: { ...json, ...(token ? { authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(body) });
+  const get = (path, token) => fetch(`${app.base}${path}`, { headers: token ? { authorization: `Bearer ${token}` } : {} });
   try {
-    assert.equal((await fetch(`${app.base}/work`)).status, 403);
-    assert.equal((await fetch(`${app.base}/work`, { headers: { "x-fulfillment-admin-token": "x".repeat(40) } })).status, 403);
-    const post = (path, body) => fetch(`${app.base}${path}`, { method: "POST", headers: { "content-type": "application/json", "x-fulfillment-admin-token": TOKEN }, body: JSON.stringify(body) });
+    // Not signed in: nothing, the label least of all.
+    for (const path of ["/work", "/label/sub_http001_first"]) assert.equal((await get(path)).status, 401);
+    assert.equal((await get("/work", "x".repeat(43))).status, 401);
+    assert.equal((await post("/prepare", { shipmentId: "sub_http001_first", skus: ["enma-jimma", "enma-karamo"], requestId: "req-http-000000" })).status, 401);
+    // An address that is not listed gets the same answer and no mail.
+    assert.deepEqual(await (await post("/auth/login", { email: "someone@example.test" })).json(), { ok: true });
+    assert.equal(mails.length, 0);
+    assert.deepEqual(await (await post("/auth/login", { email: " shop@example.TEST " })).json(), { ok: true });
+    assert.equal(mails.length, 1);
+    assert.equal(mails[0].to, "shop@example.test");
+    const loginToken = /#login=([A-Za-z0-9_-]+)/.exec(mails[0].text)[1];
+    assert.ok(mails[0].text.includes("https://shop.example/admin/subscription-shipping#login="));
+    assert.ok(![...db.store.keys()].some((k) => k.includes(loginToken)), "only the hash of the link is stored");
+    const session = await (await post("/auth/session", { token: loginToken })).json();
+    assert.ok(session.sessionToken);
+    assert.equal((await post("/auth/session", { token: loginToken })).status, 401, "the link works once");
+    const token = session.sessionToken;
+    assert.ok(!JSON.stringify([...db.store.entries()]).includes("shop@example.test"), "no staff address stored");
+
     const body = { shipmentId: "sub_http001_first", skus: ["enma-jimma", "enma-kindiio"], requestId: "req-http-000001", actor: "ceo:spoofed" };
-    const r1 = await post("/prepare", body);
+    const r1 = await post("/prepare", body, token);
     assert.equal(r1.status, 200);
     const j1 = await r1.json();
     assert.deepEqual([j1.status, j1.notify], ["held", undefined]);
-    await post("/prepare", body);
+    await post("/prepare", body, token);
     assert.equal(notices.length, 1, "one notice; the resent request does not mail again");
     assert.deepEqual(notices[0], { type: "out_of_stock", shipmentId: "sub_http001_first", ref: "SUB-TTP001", shortSkus: ["enma-kindiio"] });
-    const r2 = await post("/prepare", { ...body, skus: ["enma-jimma", "enma-karamo"], requestId: "req-http-000002" });
+    const r2 = await post("/prepare", { ...body, skus: ["enma-jimma", "enma-karamo"], requestId: "req-http-000002" }, token);
     assert.equal((await r2.json()).status, "preparing");
-    assert.equal(db.store.get(`${records.SHIPMENTS}/sub_http001_first`).preparedBy, "shop:fulfillment-token", "the actor is never taken from the body");
-    const bad = await post("/hold", { shipmentId: "sub_http001_first", requestId: "req-http-000003", reason: "anything" });
+    assert.match(db.store.get(`${records.SHIPMENTS}/sub_http001_first`).preparedBy, /^shop-staff:[0-9a-f]{12}$/, "the actor comes from the session, never the body");
+    const bad = await post("/hold", { shipmentId: "sub_http001_first", requestId: "req-http-000003", reason: "anything" }, token);
     assert.deepEqual([bad.status, (await bad.json()).error], [400, "INVALID_REASON"]);
-    const label = await fetch(`${app.base}/label/sub_http001_first`, { headers: { "x-fulfillment-admin-token": TOKEN } });
+    const label = await get("/label/sub_http001_first", token);
     assert.equal((await label.json()).shipTo.prefecture, "神奈川県");
     assert.equal(label.headers.get("cache-control"), "no-store");
-    const ship = await post("/ship", { shipmentId: "sub_http001_first", requestId: "req-http-000004", trackingNumber: "1111-2222-3333" });
+    const views = [...db.store.entries()].filter(([k]) => k.startsWith(f.LABEL_VIEWS + "/")).map(([, v]) => v);
+    assert.equal(views.length, 1, "the view is recorded");
+    assert.ok(!JSON.stringify(views).includes("鎌倉"), "without the address");
+    const ship = await post("/ship", { shipmentId: "sub_http001_first", requestId: "req-http-000004", trackingNumber: "1111-2222-3333" }, token);
     assert.equal((await ship.json()).status, "shipped");
-    const work = await (await fetch(`${app.base}/work?from=2026-11-01&to=2026-11-30`, { headers: { "x-fulfillment-admin-token": TOKEN } })).json();
-    assert.equal(work.deliveries.find((d) => d.shipmentId === "sub_http001_first").trackingNumber, "1111-2222-3333");
+
+    // The session ends: after its time, when the address is removed from the list, or when signed out.
+    now += 2 * 60 * 60 * 1000 + 1;
+    assert.equal((await get("/work", token)).status, 401);
+    now = jstAt(2026, 11, 11);
+    env.SHOP_STAFF_EMAILS = "second@example.test";
+    assert.equal((await get("/work", token)).status, 401, "removing the address ends its sessions");
+    env.SHOP_STAFF_EMAILS = STAFF_ENV.SHOP_STAFF_EMAILS;
+    assert.equal((await get("/work", token)).status, 200);
+    await fetch(`${app.base}/auth/session`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
+    assert.equal((await get("/work", token)).status, 401, "signed out on the server");
+    // Mails per address are limited.
+    for (let i = 0; i < 4; i++) await post("/auth/login", { email: "second@example.test" });
+    assert.equal(mails.filter((m) => m.to === "second@example.test").length, 3);
   } finally {
     await app.close();
   }

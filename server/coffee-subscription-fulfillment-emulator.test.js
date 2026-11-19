@@ -119,3 +119,19 @@ test("the work list's queries run on real Firestore (single-field queries only, 
   assert.deepEqual(row.blockers, []);
   assert.ok(!JSON.stringify(row).includes("@example.com"));
 });
+
+test("staff sign-in on real Firestore: one link gives one session even when opened twice at once", { skip }, async () => {
+  const staffAuth = require("./shop-staff-auth");
+  const tag = crypto.randomUUID().slice(0, 8);
+  const config = staffAuth.configFrom({ COFFEE_SUBSCRIPTION_FULFILLMENT_ENABLED: "true", SHOP_STAFF_EMAILS: `staff-${tag}@example.test` });
+  const mails = [];
+  await staffAuth.requestLogin({ db, config, sendMail: async (m) => mails.push(m), email: `staff-${tag}@example.test`, linkPath: "/admin/subscription-shipping", now: NOW });
+  const token = /#login=([A-Za-z0-9_-]+)/.exec(mails[0].text)[1];
+  const tries = await Promise.allSettled(Array.from({ length: 5 }, () => staffAuth.startSession({ db, config, token, now: NOW })));
+  assert.equal(tries.filter((t) => t.status === "fulfilled").length, 1);
+  const session = tries.find((t) => t.status === "fulfilled").value;
+  const who = await staffAuth.authenticate({ db, config, header: `Bearer ${session.sessionToken}`, now: NOW });
+  assert.match(who.actor, /^shop-staff:[0-9a-f]{12}$/);
+  await staffAuth.endSession({ db, header: `Bearer ${session.sessionToken}` });
+  await assert.rejects(staffAuth.authenticate({ db, config, header: `Bearer ${session.sessionToken}`, now: NOW }), { code: "SESSION_EXPIRED" });
+});

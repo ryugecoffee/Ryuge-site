@@ -87,10 +87,11 @@ app.post(coffeeSubscriptionCheckout.PATH, coffeeSubscriptionCheckout.createHandl
 app.use(coffeeSubscriptionAccount.PATH, coffeeSubscriptionAccount.createRouter({ getDb: () => db, getStripe: () => stripe,
   sendMail: (message) => transporter.sendMail({ from: `"Ryuge Coffee" <${process.env.EMAIL_USER}>`, ...message }) }));
 // 珈琲の定期便 ④, the shop's preparing and shipping (server/coffee-subscription-fulfillment.js): 404 unless
-// COFFEE_SUBSCRIPTION_FULFILLMENT_TOKEN (32+ characters) is set; the caller sends it in X-Fulfillment-Admin-Token.
-// Stock shortages and stock inconsistencies are mailed to the shop (contract number and beans only).
+// COFFEE_SUBSCRIPTION_FULFILLMENT_ENABLED=true and SHOP_STAFF_EMAILS lists the staff, who sign in by a mailed link
+// (server/shop-staff-auth.js). Stock shortages and inconsistencies are mailed to the shop (contract number and beans only).
 app.use(coffeeSubscriptionFulfillment.PATH, coffeeSubscriptionFulfillment.createRouter({ getDb: () => db,
-  notify: (notice) => sendFulfillmentNotice(notice) }));
+  notify: (notice) => sendFulfillmentNotice(notice),
+  sendMail: (message) => transporter.sendMail({ from: `"Ryuge Coffee" <${process.env.EMAIL_USER}>`, ...message }) }));
 
 console.log("FIREBASE_PROJECT_ID exists:", !!process.env.FIREBASE_PROJECT_ID);
 console.log("FIREBASE_CLIENT_EMAIL exists:", !!process.env.FIREBASE_CLIENT_EMAIL);
