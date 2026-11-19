@@ -117,3 +117,38 @@ test("cancellation and refund wording is the same everywhere the customer reads 
   }
   assert.doesNotMatch(places.refundPolicy, /既に決済が完了している注文についてはキャンセルできません/, "the old contradicting sentence is gone");
 });
+
+test("two different deadlines are never mixed: change/skip by the 25th of the previous month; cancel before 9:00 JST on the 1st", () => {
+  const fsx = require("node:fs");
+  const pathx = require("node:path");
+  const readx = (...p) => fsx.readFileSync(pathx.join(__dirname, "..", ...p), "utf8");
+  const plan = require("./coffee-subscription-plan");
+  const { submitTerms } = require("./coffee-subscription-checkout");
+  const { welcomeMail } = require("./coffee-subscription-mail");
+  const terms = readx("src", "lib", "coffeeSubscriptionTerms.js");
+  const places = {
+    confirmation: terms.replace(/\$\{CHANGE_DEADLINE_DAY\}/g, "25").replace(/\$\{CHANGE_DEADLINE_DAY \+ 1\}/g, "26"),
+    legal: readx("src", "pages", "LegalNotice.jsx").replace(/\$\{CHANGE_DEADLINE_DAY\}/g, "25"),
+    refundPolicy: readx("src", "pages", "RefundPolicy.jsx"),
+    stripePage: submitTerms("2027-01", 2),
+    mail: welcomeMail({ to: "a@example.com", contract: { frequency: 2, startMonth: "2027-01" }, siteUrl: "https://ryuge.biz" }).text,
+  };
+  for (const [name, text] of Object.entries(places)) {
+    for (const sentence of text.split(/[。\n]/)) {
+      // The 25th belongs to changes and skips only, never to cancelling.
+      if (/前月25日/.test(sentence)) assert.match(sentence, /変更|スキップ/, `${name}: "${sentence}"`);
+      if (/前月25日/.test(sentence)) assert.doesNotMatch(sentence, /解約/, `${name}: "${sentence}"`);
+      // A cancellation cut-off is always the 9:00 charge on the 1st.
+      if (/解約/.test(sentence) && /(まで|より前)/.test(sentence) && !/変更|スキップ/.test(sentence)) {
+        assert.match(sentence, /1日.*9時|9時.*1日/, `${name}: "${sentence}"`);
+      }
+    }
+  }
+  // The code behind the words: a change asked on the 25th applies next month, on the 26th the month after.
+  const jst = (y, m, d, h) => Date.UTC(y, m - 1, d, h - 9);
+  assert.equal(plan.firstChangeableMonth(jst(2026, 11, 25, 23)), "2026-12");
+  assert.equal(plan.firstChangeableMonth(jst(2026, 11, 26, 0)), "2027-01");
+  // Cancelling before 9:00 on the 1st: that month is not charged; after it is paid: from the next month (the paid month ships).
+  assert.equal(plan.cancellationFor(jst(2026, 12, 1, 8), null).firstUnchargedMonth, "2026-12");
+  assert.equal(plan.cancellationFor(jst(2026, 12, 10, 12), { status: "paid" }).firstUnchargedMonth, "2027-01");
+});
