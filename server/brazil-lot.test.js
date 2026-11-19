@@ -59,6 +59,7 @@ test("final prices and roasts: the server charges exactly what the store shows",
     assert.equal(p.promo === true, CATALOG[p.id].promo === true, `${p.id} promo`);
   }
   // The amount charged follows the catalogue: 1 regular + 2 promo + 1 Jimma, Tokyo.
+  // 4 bags go by Yu-Pack at the regional fee (Tokyo ¥250, server/domestic-shipping.js).
   const quote = quoteOrder([{ id: REGULAR, quantity: 1 }, { id: ZEN, quantity: 2 }, { id: "enma-jimma", quantity: 1 }], { prefecture: "東京都" });
   assert.equal(quote.total, 1300 + 2000 + 1500 + 250);
 });

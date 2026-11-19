@@ -38,6 +38,10 @@ const OPS = "coffeeSubscriptionFulfillmentOps";
 const LABEL_VIEWS = "coffeeSubscriptionLabelViews";
 const PAGE_PATH = "/admin/subscription-shipping";
 const BAGS_PER_DELIVERY = 2;
+// Every delivery (100 g × 2 = 200 g) goes by レターパックライト for now (CEO 2026-11-19; クリックポスト later, once its
+// packing is measured); shipping is in the monthly price. The tracking number is the レターパック one. Each parcel is
+// checked against the size limits (34 × 24.8 cm, ≤ 3 cm thick) before posting.
+const SHIPPING_METHOD = "letterpack_light";
 const ENDED = ["canceled", "incomplete_expired"];
 // Contract reviews that stop every delivery of the contract until the CEO has decided.
 const BLOCKING_CONTRACT_REVIEWS = ["DUPLICATE_SUBSCRIPTION", "UNEXPECTED_FIRST_AMOUNT"];
@@ -209,7 +213,8 @@ async function shipShipment(db, { shipmentId, requestId, actor, trackingNumber =
       return summaryOf(shipmentId, "preparing", { review: "INVENTORY_INCONSISTENCY", notify: true });
     }
     writeStock(tx, stock, "ship");
-    tx.update(ref, { status: "shipped", shippedAt: new Date(now), shippedBy: actor, trackingNumber: tracking, updatedBy: actor, updatedAt: new Date(now) });
+    tx.update(ref, { status: "shipped", shippedAt: new Date(now), shippedBy: actor, shippingMethod: SHIPPING_METHOD, trackingNumber: tracking,
+      updatedBy: actor, updatedAt: new Date(now) });
     return summaryOf(shipmentId, "shipped", { beans: shipment.beans });
   });
 }
@@ -313,7 +318,8 @@ async function workList(db, { from, to } = {}, { now = Date.now(), catalog = CAT
       shipmentId: s.id, ref: contractRef(s.subscriptionId), kind: s.kind, month: s.month, seq: s.seq ?? null, date, byDate: !s.plannedDate && Boolean(s.shipBy),
       overdue: s.status !== "shipped" && date !== null && date < today, paidLate: s.paidLate === true, status: s.status,
       holdReason: s.holdReason || null, shortSkus: s.shortSkus || null, review: s.needsReview ? s.reviewReason || null : null,
-      blockers: blocked, grams: s.grams || plan.GRAMS_PER_DELIVERY, beans: s.beans || null, trackingNumber: s.trackingNumber || null,
+      blockers: blocked, grams: s.grams || plan.GRAMS_PER_DELIVERY, beans: s.beans || null, shippingMethod: s.shippingMethod || SHIPPING_METHOD,
+      trackingNumber: s.trackingNumber || null,
       previousBeans: previous ? previous.beans.map((b) => b.sku) : [], repeatedBeans: repeated,
       preference: c?.preference?.text || "", prefecture: c?.shipping?.prefecture || "", livemode: c?.livemode === true,
     };
@@ -335,7 +341,8 @@ async function shippingLabel(db, shipmentId) {
   if (!snap.exists) fail("UNKNOWN_SHIPMENT", 404);
   const s = snap.data();
   if (!["preparing", "shipped"].includes(s.status) || !s.shipTo) fail("NOT_PREPARED", 409);
-  return { shipmentId, ref: contractRef(s.subscriptionId), beans: s.beans || [], grams: s.grams || plan.GRAMS_PER_DELIVERY, shipTo: s.shipTo };
+  return { shipmentId, ref: contractRef(s.subscriptionId), beans: s.beans || [], grams: s.grams || plan.GRAMS_PER_DELIVERY,
+    shippingMethod: s.shippingMethod || SHIPPING_METHOD, shipTo: s.shipTo };
 }
 
 // ---- Router (signed-in staff only; the actor is the server's record of the session, never taken from the request) ----
@@ -387,5 +394,5 @@ function createRouter({ getDb, notify = async () => {}, sendMail = async () => {
   return router;
 }
 
-module.exports = { PATH, PAGE_PATH, OPS, LABEL_VIEWS, BAGS_PER_DELIVERY, HOLD_REASONS, OPEN_STATES, FulfillmentError, beanOf, beanSkus, validBeans, blockers, readRelease,
+module.exports = { PATH, PAGE_PATH, OPS, LABEL_VIEWS, SHIPPING_METHOD, BAGS_PER_DELIVERY, HOLD_REASONS, OPEN_STATES, FulfillmentError, beanOf, beanSkus, validBeans, blockers, readRelease,
   prepareShipment, shipShipment, holdShipment, resumeShipment, workList, stockView, shippingLabel, enabled, createRouter };
