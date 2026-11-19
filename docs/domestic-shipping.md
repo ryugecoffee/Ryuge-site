@@ -61,12 +61,33 @@ with an 80 box. Check each bean's price per kg against these.
 定期便 per delivery (レターパックライト ¥430, Stripe 3.6 %): monthly ¥3,000 for 1 delivery → ¥1,231 per bag may go
 to the beans; ¥11,200 for 4 deliveries (¥2,800 each) → ¥1,134 per bag.
 
+## Packing specification (CEO, 2026-11-19)
+
+| Item | Value | Status |
+|---|---|---|
+| Empty 100 g bag | 11.6 g | **measured** |
+| Coffee + bag | 100 g + 11.6 g = 111.6 g | measured parts (sum) |
+| One bag with label etc. | about 115 g | **estimate** |
+| Two bags | about 230 g | **estimate** |
+| Shipping box (planned) | outside 310 × 220 × 25 mm | **planned size, not measured with beans inside** |
+| Box and cushioning weight | — | **not measured** |
+| Two bags packed (box + cushioning + 230 g) | — | **not measured** |
+
+Checks against the limits from these sizes (the parcel itself still to be checked before posting):
+- レターパックライト (now): envelope 340 × 248 mm, ≤ 30 mm thick, ≤ 4 kg. The box (310 × 220 × 25 mm) is smaller than the
+  envelope on paper; whether it slides in and the envelope still closes within 30 mm is **not checked yet**. Weight: far
+  below 4 kg (about 230 g of coffee plus an unmeasured box).
+- クリックポスト (later): longest side 31 cm ≤ 34; 31 + 22 + 2.5 = 55.5 cm ≤ 60; 2.5 cm thick (guide 3 cm); ≤ 2 kg. Meets
+  the published limits on paper; posting into a mailbox **not checked yet**.
+- The catalogue keeps 120 g per bag (`weightG`, used only for international rates): heavier than the 115 g estimate, so
+  international fees are never under-charged. Not changed.
+
 ## Packing to check (not measured yet)
 - **レターパックライト, 2 bags (now): not measured** (no envelope at hand on 2026-11-19). Before posting, each parcel is
   checked: fits 34 × 24.8 cm, ≤ 3 cm thick (the envelope closes flat), ≤ 4 kg. Thicker: never forced — レターパックプラス
   (¥600, no thickness limit) or another method, at the shop's cost; the customer's fee does not change.
 - Click Post, 2 bags (later): thickness ≤ 3 cm (the shop's own measurement), longest side ≤ 34 cm, length + width + thickness ≤
-  60 cm, ≤ 2 kg (2 × 120 g + mailer), at least 14 × 9 cm, fits a mailbox slot.
+  60 cm, ≤ 2 kg (about 230 g of coffee + the box), at least 14 × 9 cm, fits a mailbox slot.
 - 3–6 bags in a 60 box and 7–15 in an 80 box: estimates. If they do not fit: the next box size (cost above), two parcels
   (複数口 −¥60 each), or, for 3–4 bags, レターパックプラス (¥600 nationwide, A4, hand delivery) — cheaper than any 60 box.
 - 16+ bags: contact us until measured (`MAX_BAGS`).
