@@ -1,5 +1,5 @@
 import { trackBeginCheckout } from "../lib/analytics";
-import { SUBSCRIPTIONS_PAUSED, SUBSCRIPTIONS_PAUSED_TEXT } from "../productData";
+import { OLD_SUBSCRIPTION_PLANS_CLOSED, SUBSCRIPTIONS_PAUSED, SUBSCRIPTIONS_PAUSED_TEXT } from "../productData";
 import { PAYMENT_API_BASE, stripePublishableKey } from "../lib/paymentEnv";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useCart } from "../CartContext";
@@ -397,7 +397,8 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
 
   const quoteReady  = quote.status === "ok" && quote.key === quoteKey;
   const quoteError  = quote.status === "error" ? quote : null;
-  const subscriptionPaused = hasSubscription && SUBSCRIPTIONS_PAUSED;
+  // Subscriptions left in a cart are the earlier plans (closed for good); 珈琲の定期便 has its own sign-up page.
+  const subscriptionPaused = hasSubscription && (OLD_SUBSCRIPTION_PLANS_CLOSED || SUBSCRIPTIONS_PAUSED);
   const isBlocked   = subscriptionPaused || (isInternational && hasSubscription) || (!hasSubscription && Boolean(quoteError));
   const canPay      = !hasSubscription && quoteReady;
 
@@ -435,7 +436,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
     try {
       // ── 定期便 ──────────────────────────────────────
       if (hasSubscription) {
-        if (SUBSCRIPTIONS_PAUSED) {
+        if (OLD_SUBSCRIPTION_PLANS_CLOSED || SUBSCRIPTIONS_PAUSED) {
           setError(SUBSCRIPTIONS_PAUSED_TEXT[lang] || SUBSCRIPTIONS_PAUSED_TEXT.ja);
           setLoading(false);
           return;

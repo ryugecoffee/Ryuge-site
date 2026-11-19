@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { SUBSCRIPTIONS_PAUSED } from "../src/productData.js";
+import { OLD_SUBSCRIPTION_PLANS_CLOSED, SUBSCRIPTIONS_PAUSED } from "../src/productData.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -22,8 +22,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // New subscriptions are paused (src/productData.js): refused before Stripe is called, however this URL is reached.
-  if (SUBSCRIPTIONS_PAUSED) {
+  // The earlier plans are closed for good, and new sign-ups may be paused (src/productData.js): refused before Stripe is
+  // called, however this URL is reached. 珈琲の定期便 does not use this API (server/coffee-subscription-checkout.js).
+  if (OLD_SUBSCRIPTION_PLANS_CLOSED || SUBSCRIPTIONS_PAUSED) {
     return res.status(403).json({ error: "SUBSCRIPTIONS_PAUSED" });
   }
 
