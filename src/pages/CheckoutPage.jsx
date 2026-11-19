@@ -12,7 +12,7 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import {
-  CONTACT_EMAIL, INTERNATIONAL_COUNTRY_CODES, OTHER_COUNTRY, POLICY_TEXT, QUOTE_MESSAGES, SERVICE_LABELS, contactHref,
+  CONTACT_EMAIL, DOMESTIC_METHOD_LABELS, INTERNATIONAL_COUNTRY_CODES, OTHER_COUNTRY, POLICY_TEXT, QUOTE_MESSAGES, SERVICE_LABELS, contactHref,
 } from "../lib/shippingPolicy";
 
 // Production builds use the live key; any other build only a Stripe test key (see paymentEnv).
@@ -649,6 +649,14 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           </span>
         </div>
 
+        {!isInternational && !hasSubscription && quoteReady && quote.shippingDetail?.method && (
+          <p data-testid="domestic-method" style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)", lineHeight: 1.8, marginTop: "8px", marginBottom: 0 }}>
+            {(() => {
+              const labels = DOMESTIC_METHOD_LABELS[lang] || DOMESTIC_METHOD_LABELS.ja;
+              return labels[quote.shippingDetail.method] || "";
+            })()}
+          </p>
+        )}
         {!isInternational && !hasSubscription && (
           <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.42)", lineHeight: 1.8, marginTop: "8px", marginBottom: 0 }}>
             {policy.domesticShipping}

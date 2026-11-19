@@ -563,7 +563,9 @@ function quoteErrorResponse(res, error) {
 }
 
 function publicQuote(quote) {
-  const detail = quote.shippingDetail.domestic ? { domestic: true }
+  // Domestic: the method shown with the fee (letterpack_light / yupack / regional); never anything personal.
+  const detail = quote.shippingDetail.domestic
+    ? { domestic: true, method: quote.shippingDetail.method }
     : { service: quote.shippingDetail.service, actual: quote.shippingDetail.actual, subsidy: quote.shippingDetail.subsidy };
   return {
     items: quote.items.map(({ id, quantity, price }) => ({ id, quantity, price })),
@@ -635,7 +637,7 @@ app.post("/create-payment-intent", async (req, res) => {
           items: itemsMetadata(quote.items),
           subtotal: String(quote.subtotal),
           shipping: String(quote.shipping),
-          ...(detail.domestic ? {} : {
+          ...(detail.domestic ? { shippingMethod: detail.method } : {
             shippingService: detail.service, shippingActual: String(detail.actual),
             shippingSubsidy: String(detail.subsidy), packedWeightG: String(detail.weightG), shippingRates: detail.ratesVersion,
           }),

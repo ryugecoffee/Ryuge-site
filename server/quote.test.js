@@ -1,6 +1,6 @@
 "use strict";
 
-// 2026-11-17 CEO shipping policy: domestic fee per order by prefecture; international by country and packed weight
+// 2026-11-17 CEO shipping policy (domestic part replaced 2026-11-19, see server/domestic-shipping.test.js): international by country and packed weight
 // with a 30% subsidy capped at 1,000 yen; international orders 2-6 bags of beans (max 600 g); 7+ bags -> contact.
 const test = require("node:test");
 const assert = require("node:assert/strict");
@@ -21,23 +21,26 @@ const fails = (fn, code, contact) => assert.throws(fn, (error) => {
   return true;
 });
 
-test("domestic: one fee per order by prefecture, never per item", () => {
-  assert.equal(domesticShipping("神奈川県"), 250);
-  assert.equal(domesticShipping("東京都"), 250);
-  assert.equal(domesticShipping("高知県"), 250, "Shikoku");
-  assert.equal(domesticShipping("北海道"), 500);
-  assert.equal(domesticShipping("福岡県"), 500);
-  assert.equal(domesticShipping("鹿児島県"), 500);
-  assert.equal(domesticShipping("沖縄県"), 550);
-  fails(() => domesticShipping(""), "PREFECTURE_REQUIRED");
-  fails(() => domesticShipping("Kanagawa"), "PREFECTURE_REQUIRED");
-  const one = quoteOrder([beans("enma-karamo", 1)], { prefecture: "北海道" });
-  const many = quoteOrder([beans("enma-karamo", 5), beans("enma-kindiio", 4)], { prefecture: "北海道" });
-  assert.equal(one.shipping, 500);
-  assert.equal(many.shipping, 500, "9 bags: still one fee");
-  assert.equal(many.total, 5 * 1800 + 4 * 2050 + 500);
-  // The domestic order has no 2-6 bag rule.
-  assert.equal(quoteOrder([beans("enma-karamo", 12)], { prefecture: "沖縄県" }).shipping, 550);
+test("domestic (2026-11-19): beans 1–2 bags by Letter Pack Light ¥250 everywhere; 3–15 by Yu-Pack at the regional fee; other products unchanged", () => {
+  for (const pref of ["神奈川県", "東京都", "高知県", "北海道", "福岡県", "鹿児島県", "沖縄県"]) {
+    assert.equal(domesticShipping([{ quantity: 1, flatMail: true }], pref).shipping, 250, pref);
+    assert.equal(quoteOrder([beans("enma-karamo", 1), beans("enma-kindiio", 1)], { prefecture: pref }).shipping, 250, `2 bags to ${pref}`);
+  }
+  fails(() => domesticShipping([{ quantity: 1, flatMail: true }], ""), "PREFECTURE_REQUIRED");
+  fails(() => domesticShipping([{ quantity: 1, flatMail: true }], "Kanagawa"), "PREFECTURE_REQUIRED");
+  const two = quoteOrder([beans("enma-karamo", 2)], { prefecture: "北海道" });
+  assert.equal(two.total, 2 * 1800 + 250, "one fee per order, never per item");
+  assert.deepEqual([two.shippingDetail.method, two.shippingDetail.bags], ["letterpack_light", 2]);
+  const three = quoteOrder([beans("enma-karamo", 3)], { prefecture: "北海道" });
+  assert.deepEqual([three.shipping, three.shippingDetail.method], [500, "yupack"]);
+  assert.equal(quoteOrder([beans("enma-karamo", 2), beans("enma-kindiio", 1)], { prefecture: "沖縄県" }).shipping, 550);
+  assert.equal(quoteOrder([beans("enma-karamo", 9)], { prefecture: "東京都" }).shipping, 250);
+  fails(() => quoteOrder([beans("enma-karamo", 16)], { prefecture: "東京都" }), "DOMESTIC_CONTACT_LARGE_ORDER", true);
+  // Other products (drip bags, tea): the regional fee, unchanged.
+  assert.equal(quoteOrder([beans("enma-coffee-bag", 1)], { prefecture: "北海道" }).shipping, 500);
+  assert.equal(quoteOrder([beans("enma-karamo", 1), beans("enma-coffee-bag", 1)], { prefecture: "沖縄県" }).shipping, 550);
+  assert.equal(quoteOrder([beans("woodbox-tea-bag", 1)], { prefecture: "東京都" }).shipping, 250);
+  assert.equal(quoteOrder([beans("enma-karamo", 20), beans("enma-coffee-bag", 1)], { prefecture: "沖縄県" }).shipping, 550, "mixed orders: as before");
 });
 
 test("international: subsidy is 30% of the real rate, capped at 1,000 yen, rounded down to the yen", () => {

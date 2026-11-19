@@ -58,8 +58,8 @@ test("conditions not decided yet are announced later, never stated as fixed; shi
     assert.doesNotMatch(text, /定期便は送料無料|Subscriptions ship free|envío gratis/, file.join("/"));
     assert.match(text, /定期便は全国一律・送料込み|one price nationwide/, file.join("/"));
   }
-  // One-off orders keep their regional fees.
-  assert.match(read("src", "App.jsx"), /本州・四国 ¥250 \/ 北海道・九州 ¥500 \/ 沖縄 ¥550/);
+  // One-off orders (2026-11-19): 1–2 bags of beans ¥250 everywhere by Letter Pack Light, 3+ at the regional fee.
+  assert.match(read("src", "App.jsx"), /コーヒー豆1〜2袋は全国一律 ¥250（レターパックライト）・3袋以上は本州・四国 ¥250／北海道・九州 ¥500／沖縄 ¥550/);
 });
 
 test("preference comment: optional, at most 300 characters, cleaned, and refuses personal or payment details", async () => {
