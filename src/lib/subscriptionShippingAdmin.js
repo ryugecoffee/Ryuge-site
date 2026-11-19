@@ -52,7 +52,7 @@ export const beanName = (sku) => NAMES[sku] || sku;
 
 export const STATUS_TEXT = { planned: "発送予定", preparing: "発送準備中", shipped: "発送済み", held: "保留", needs_review: "要確認（遅延入金）",
   cancelled_before_shipping: "発送取りやめ", delivered: "お届け済み" };
-export const METHOD_TEXT = { clickpost: "クリックポスト" };
+export const METHOD_TEXT = { letterpack_light: "レターパックライト", clickpost: "クリックポスト" };
 export const HOLD_TEXT = { OUT_OF_STOCK: "在庫不足", CUSTOMER_REQUEST: "お客様のご依頼", ADDRESS_CHECK: "住所の確認", PAYMENT_CHECK: "決済の確認", OTHER: "その他" };
 export const BLOCKER_TEXT = {
   CANCELLED: "発送取りやめ済み", SHIPMENT_NEEDS_REVIEW: "遅延入金の要確認（CEO確認後に「予定に戻す」）", UNKNOWN_SUBSCRIPTION: "契約が見つかりません",

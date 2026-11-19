@@ -5,7 +5,7 @@
 // customer is charged exactly what was shown, and nothing from the browser but product ids, quantities, destination
 // country/prefecture and coupon code is used.
 //
-// Domestic: one shipping fee per order, server/domestic-shipping.js (2026-11-19: 100 g bean bags 1–2 → クリックポスト
+// Domestic: one shipping fee per order, server/domestic-shipping.js (2026-11-19: 100 g bean bags 1–2 → レターパックライト
 // 250 yen nationwide; 3–15 → ゆうパック at the earlier regional fee; 16+ → contact; other products → the regional fee).
 // International: only countries in INTERNATIONAL_COUNTRIES (shipping and import conditions confirmed); Japan Post
 // tracked rate for the packed weight, minus RYUGE's subsidy: min(30% of the rate, 1,000 yen), rounded down to the yen.

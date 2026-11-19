@@ -152,7 +152,7 @@ function Delivery({ d, beans, onChanged, onSignedOut }) {
       {d.status === "preparing" && (
         <div className="ship-actions">
           {label ? <Label label={label} onClose={() => setLabel(null)} /> : <button className="subm-secondary" type="button" disabled={state.busy} onClick={showLabel}>宛名を表示</button>}
-          <label className="subm-field"><span className="subm-label">クリックポストの追跡番号（任意）</span>
+          <label className="subm-field"><span className="subm-label">追跡番号（任意）</span>
             <input inputMode="numeric" value={tracking} onChange={(e) => setTracking(e.target.value)} placeholder="1234-5678-9012" />
           </label>
           <button className="subm-primary" type="button" disabled={state.busy || blocked} onClick={ship}>発送済みにする</button>

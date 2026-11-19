@@ -21,16 +21,16 @@ const fails = (fn, code, contact) => assert.throws(fn, (error) => {
   return true;
 });
 
-test("domestic (2026-11-19): beans 1–2 bags by Click Post ¥250 everywhere; 3–15 by Yu-Pack at the regional fee; other products unchanged", () => {
+test("domestic (2026-11-19): beans 1–2 bags by Letter Pack Light ¥250 everywhere; 3–15 by Yu-Pack at the regional fee; other products unchanged", () => {
   for (const pref of ["神奈川県", "東京都", "高知県", "北海道", "福岡県", "鹿児島県", "沖縄県"]) {
-    assert.equal(domesticShipping([{ quantity: 1, clickpost: true }], pref).shipping, 250, pref);
+    assert.equal(domesticShipping([{ quantity: 1, flatMail: true }], pref).shipping, 250, pref);
     assert.equal(quoteOrder([beans("enma-karamo", 1), beans("enma-kindiio", 1)], { prefecture: pref }).shipping, 250, `2 bags to ${pref}`);
   }
-  fails(() => domesticShipping([{ quantity: 1, clickpost: true }], ""), "PREFECTURE_REQUIRED");
-  fails(() => domesticShipping([{ quantity: 1, clickpost: true }], "Kanagawa"), "PREFECTURE_REQUIRED");
+  fails(() => domesticShipping([{ quantity: 1, flatMail: true }], ""), "PREFECTURE_REQUIRED");
+  fails(() => domesticShipping([{ quantity: 1, flatMail: true }], "Kanagawa"), "PREFECTURE_REQUIRED");
   const two = quoteOrder([beans("enma-karamo", 2)], { prefecture: "北海道" });
   assert.equal(two.total, 2 * 1800 + 250, "one fee per order, never per item");
-  assert.deepEqual([two.shippingDetail.method, two.shippingDetail.bags], ["clickpost", 2]);
+  assert.deepEqual([two.shippingDetail.method, two.shippingDetail.bags], ["letterpack_light", 2]);
   const three = quoteOrder([beans("enma-karamo", 3)], { prefecture: "北海道" });
   assert.deepEqual([three.shipping, three.shippingDetail.method], [500, "yupack"]);
   assert.equal(quoteOrder([beans("enma-karamo", 2), beans("enma-kindiio", 1)], { prefecture: "沖縄県" }).shipping, 550);

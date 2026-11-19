@@ -22,9 +22,9 @@ import { updatePageMeta, injectProductJsonLd } from "./lib/seo";
 import ScrollToTop from "./components/ScrollToTop";
 
 const BANNER_TEXT = {
-  ja: "国内送料：コーヒー豆1〜2袋は全国一律 ¥250（クリックポスト）・3袋以上は本州・四国 ¥250／北海道・九州 ¥500／沖縄 ¥550 ・ 定期便は全国一律・送料込み",
-  en: "Shipping in Japan: 1–2 bags of beans ¥250 anywhere (Click Post) · 3+ bags Honshu/Shikoku ¥250 / Hokkaido/Kyushu ¥500 / Okinawa ¥550 · Subscriptions: shipping included",
-  es: "Envío en Japón: 1–2 bolsas de café ¥250 a todo Japón (Click Post) · 3+ bolsas Honshu/Shikoku ¥250 / Hokkaido/Kyushu ¥500 / Okinawa ¥550 · Suscripciones: envío incluido",
+  ja: "国内送料：コーヒー豆1〜2袋は全国一律 ¥250（レターパックライト）・3袋以上は本州・四国 ¥250／北海道・九州 ¥500／沖縄 ¥550 ・ 定期便は全国一律・送料込み",
+  en: "Shipping in Japan: 1–2 bags of beans ¥250 anywhere (Letter Pack Light) · 3+ bags Honshu/Shikoku ¥250 / Hokkaido/Kyushu ¥500 / Okinawa ¥550 · Subscriptions: shipping included",
+  es: "Envío en Japón: 1–2 bolsas de café ¥250 a todo Japón (Letter Pack Light) · 3+ bolsas Honshu/Shikoku ¥250 / Hokkaido/Kyushu ¥500 / Okinawa ¥550 · Suscripciones: envío incluido",
 };
 
 const BANNER_KEY = "shipping-banner-closed-at";

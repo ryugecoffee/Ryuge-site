@@ -38,9 +38,10 @@ const OPS = "coffeeSubscriptionFulfillmentOps";
 const LABEL_VIEWS = "coffeeSubscriptionLabelViews";
 const PAGE_PATH = "/admin/subscription-shipping";
 const BAGS_PER_DELIVERY = 2;
-// Every delivery (100 g × 2 = 200 g, about 24 × 20 × 2.5 cm) goes by クリックポスト (CEO 2026-11-19); shipping is in the
-// monthly price. The tracking number is the Click Post one.
-const SHIPPING_METHOD = "clickpost";
+// Every delivery (100 g × 2 = 200 g) goes by レターパックライト for now (CEO 2026-11-19; クリックポスト later, once its
+// packing is measured); shipping is in the monthly price. The tracking number is the レターパック one. Each parcel is
+// checked against the size limits (34 × 24.8 cm, ≤ 3 cm thick) before posting.
+const SHIPPING_METHOD = "letterpack_light";
 const ENDED = ["canceled", "incomplete_expired"];
 // Contract reviews that stop every delivery of the contract until the CEO has decided.
 const BLOCKING_CONTRACT_REVIEWS = ["DUPLICATE_SUBSCRIPTION", "UNEXPECTED_FIRST_AMOUNT"];

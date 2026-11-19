@@ -112,8 +112,8 @@ test("prepare reserves one bag of each bean; ship takes them; nothing moves twic
   const shipId = rid();
   const shipped = await f.shipShipment(db, { shipmentId: id, requestId: shipId, actor: ACTOR, trackingNumber: "1234-5678-9012" }, { now });
   assert.equal(shipped.status, "shipped");
-  assert.deepEqual([db.store.get(`${records.SHIPMENTS}/${id}`).shippingMethod, db.store.get(`${records.SHIPMENTS}/${id}`).trackingNumber], ["clickpost", "1234-5678-9012"],
-    "every delivery goes by Click Post, with its tracking number");
+  assert.deepEqual([db.store.get(`${records.SHIPMENTS}/${id}`).shippingMethod, db.store.get(`${records.SHIPMENTS}/${id}`).trackingNumber], ["letterpack_light", "1234-5678-9012"],
+    "every delivery goes by Letter Pack Light, with its tracking number");
   assert.deepEqual(stockOf(db, "enma-jimma"), { ready: 4, held: 0, sold: 1 });
   assert.deepEqual(stockOf(db, "enma-amarelo-bourbon"), { ready: 4, held: 0, sold: 1 });
   assert.deepEqual(lotOf(db, "brazil-amarelo-bourbon"), { ready: 7, held: 0, sold: 1 });

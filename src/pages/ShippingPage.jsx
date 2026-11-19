@@ -11,15 +11,15 @@ const TEXT = {
     sections: [
       {
         title: "国内送料（1回のご注文につき1回）",
-        body: "コーヒー豆（100g）1〜2袋：クリックポストで全国一律250円（北海道・九州・沖縄も250円）\n3〜15袋：ゆうパックで、本州・四国250円／北海道・九州500円／沖縄550円\n16袋以上：お問い合わせください\n\nお届け先の都道府県とご注文の袋数から自動で計算し、お支払い前の合計に含めて表示します。商品ごとには加算しません。\nコーヒー豆以外の商品（一煎袋・ティーバッグなど）を含むご注文は、本州・四国250円／北海道・九州500円／沖縄550円です。",
+        body: "コーヒー豆（100g）1〜2袋：レターパックライトで全国一律250円（北海道・九州・沖縄も250円）\n3〜15袋：ゆうパックで、本州・四国250円／北海道・九州500円／沖縄550円\n16袋以上：お問い合わせください\n\nお届け先の都道府県とご注文の袋数から自動で計算し、お支払い前の合計に含めて表示します。商品ごとには加算しません。\nコーヒー豆以外の商品（一煎袋・ティーバッグなど）を含むご注文は、本州・四国250円／北海道・九州500円／沖縄550円です。",
       },
       {
         title: "国内の配送方法",
-        body: "1〜2袋：クリックポスト（郵便受けへのお届け・追跡あり・日時指定不可）\n3〜15袋：ゆうパック（対面でのお届け・追跡あり）\n16袋以上のご注文はお問い合わせください。",
+        body: "1〜2袋：レターパックライト（郵便受けへのお届け・追跡あり・日時指定不可）\n3〜15袋：ゆうパック（対面でのお届け・追跡あり）\n16袋以上のご注文はお問い合わせください。",
       },
       {
         title: "定期便は全国一律・送料込み",
-        body: "定期便（毎回100g×2袋＝200g）はクリックポストでお届けします。月額料金に送料が含まれ、地域による追加の送料はかかりません（国内のみ）。",
+        body: "定期便（毎回100g×2袋＝200g）はレターパックライトでお届けします。月額料金に送料が含まれ、地域による追加の送料はかかりません（国内のみ）。",
       },
       {
         title: "海外へのお届け",
@@ -47,15 +47,15 @@ const TEXT = {
     sections: [
       {
         title: "Shipping in Japan (once per order)",
-        body: "Coffee beans (100 g), 1–2 bags: Click Post, ¥250 anywhere in Japan (Hokkaido, Kyushu and Okinawa included)\n3–15 bags: Yu-Pack, Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550\n16 bags or more: please contact us\n\nCalculated from the delivery prefecture and the number of bags, and shown in the total before payment. Not charged per item.\nOrders with items other than coffee beans (drip bags, tea bags, etc.): Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550.",
+        body: "Coffee beans (100 g), 1–2 bags: Letter Pack Light, ¥250 anywhere in Japan (Hokkaido, Kyushu and Okinawa included)\n3–15 bags: Yu-Pack, Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550\n16 bags or more: please contact us\n\nCalculated from the delivery prefecture and the number of bags, and shown in the total before payment. Not charged per item.\nOrders with items other than coffee beans (drip bags, tea bags, etc.): Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550.",
       },
       {
         title: "Delivery method in Japan",
-        body: "1–2 bags: Click Post (delivered to your mailbox, tracked, no delivery time)\n3 bags or more: Yu-Pack (handed to you, tracked)\nFor 16 bags or more, please contact us.",
+        body: "1–2 bags: Letter Pack Light (delivered to your mailbox, tracked, no delivery time)\n3 bags or more: Yu-Pack (handed to you, tracked)\nFor 16 bags or more, please contact us.",
       },
       {
         title: "Subscriptions: one price nationwide, shipping included",
-        body: "Subscription deliveries (100 g × 2 bags = 200 g each time) are sent by Click Post. Shipping is included in the monthly price, with no extra charge by region (Japan only).",
+        body: "Subscription deliveries (100 g × 2 bags = 200 g each time) are sent by Letter Pack Light. Shipping is included in the monthly price, with no extra charge by region (Japan only).",
       },
       {
         title: "International delivery",
@@ -83,15 +83,15 @@ const TEXT = {
     sections: [
       {
         title: "Envío en Japón (una vez por pedido)",
-        body: "Café en grano (100 g), 1–2 bolsas: Click Post, ¥250 a todo Japón (también Hokkaido, Kyushu y Okinawa)\n3–15 bolsas: Yu-Pack, Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550\n16 bolsas o más: contáctanos\n\nSe calcula según la prefectura de entrega y el número de bolsas, y se muestra en el total antes del pago. No se cobra por artículo.\nPedidos con artículos que no son café en grano (bolsas de goteo, té, etc.): Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550.",
+        body: "Café en grano (100 g), 1–2 bolsas: Letter Pack Light, ¥250 a todo Japón (también Hokkaido, Kyushu y Okinawa)\n3–15 bolsas: Yu-Pack, Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550\n16 bolsas o más: contáctanos\n\nSe calcula según la prefectura de entrega y el número de bolsas, y se muestra en el total antes del pago. No se cobra por artículo.\nPedidos con artículos que no son café en grano (bolsas de goteo, té, etc.): Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550.",
       },
       {
         title: "Método de envío en Japón",
-        body: "1–2 bolsas: Click Post (entrega en el buzón, con seguimiento, sin horario)\n3 bolsas o más: Yu-Pack (entrega en mano, con seguimiento)\nPara 16 bolsas o más, contáctanos.",
+        body: "1–2 bolsas: Letter Pack Light (entrega en el buzón, con seguimiento, sin horario)\n3 bolsas o más: Yu-Pack (entrega en mano, con seguimiento)\nPara 16 bolsas o más, contáctanos.",
       },
       {
         title: "Suscripciones: precio único en todo Japón, envío incluido",
-        body: "Los envíos de la suscripción (100 g × 2 bolsas = 200 g cada vez) se envían por Click Post. El envío está incluido en el precio mensual, sin cargo adicional por región (solo Japón).",
+        body: "Los envíos de la suscripción (100 g × 2 bolsas = 200 g cada vez) se envían por Letter Pack Light. El envío está incluido en el precio mensual, sin cargo adicional por región (solo Japón).",
       },
       {
         title: "Envío internacional",

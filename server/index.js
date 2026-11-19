@@ -563,7 +563,7 @@ function quoteErrorResponse(res, error) {
 }
 
 function publicQuote(quote) {
-  // Domestic: the method shown with the fee (clickpost / yupack / regional); never anything personal.
+  // Domestic: the method shown with the fee (letterpack_light / yupack / regional); never anything personal.
   const detail = quote.shippingDetail.domestic
     ? { domestic: true, method: quote.shippingDetail.method }
     : { service: quote.shippingDetail.service, actual: quote.shippingDetail.actual, subsidy: quote.shippingDetail.subsidy };

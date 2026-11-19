@@ -2,8 +2,11 @@
 
 // Domestic shipping (CEO decision 2026-11-19, final). One fee per order, decided here only (server/quote.js uses it for
 // the price shown and for the payment itself).
-//  - Coffee beans in 100 g bags (catalog `clickpost: true`), 1–2 bags: クリックポスト, 250 yen everywhere in Japan
-//    (Hokkaido, Kyushu and Okinawa included). Japan Post charges 240 yen (2026-10-01 rates).
+//  - Coffee beans in 100 g bags (catalog `flatMail: true`), 1–2 bags: flat mail, 250 yen everywhere in Japan (Hokkaido,
+//    Kyushu and Okinawa included). For now レターパックライト (CEO 2026-11-19: Japan Post 430 yen; 34 × 24.8 cm, ≤ 3 cm
+//    thick, ≤ 4 kg; the shop pays the 180 yen difference). クリックポスト (240 yen) later, once its thin packing is
+//    measured: change FLAT_MAIL only. Packing not measured yet: each parcel is checked before posting; a thicker one is
+//    not forced (レターパックプラス or another way instead).
 //  - The same beans, 3–15 bags: sent by ゆうパック; the customer pays the earlier regional fee (Honshu/Shikoku 250,
 //    Hokkaido/Kyushu 500, Okinawa 550) and the shop pays the rest of Japan Post's rate. The fee never depends on the box.
 //  - 16 bags or more: contact us (no payment): their box has not been measured.
@@ -19,7 +22,7 @@ const PREFECTURES = [
   "香川県", "愛媛県", "高知県", "福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県",
 ];
 
-const CLICKPOST = Object.freeze({ fee: 250, japanPostCost: 240, maxBags: 2 });
+const FLAT_MAIL = Object.freeze({ method: "letterpack_light", fee: 250, japanPostCost: 430, maxBags: 2 });
 
 // ゆうパック base rates from 神奈川県 (Japan Post, rates of 2026-10-01; post.japanpost.jp/service/domestic/charge/list/
 // yu-pack/14.html, checked against Japan Post's rate API for all 47 prefectures on 2026-11-19). What the shop pays, by
@@ -72,15 +75,15 @@ function regionalFee(prefecture) {
   return HOKKAIDO_KYUSHU.has(prefecture) ? LEGACY_FEES.hokkaidoKyushu : LEGACY_FEES.standard;
 }
 
-// items: priced items ({ quantity, clickpost }) -> { shipping, detail } or throws DomesticShippingError.
+// items: priced items ({ quantity, flatMail }) -> { shipping, detail } or throws DomesticShippingError.
 function domesticShipping(items, prefecture) {
   const p = validPrefecture(prefecture);
   if (!Array.isArray(items) || !items.length) throw new Error("INVALID_ITEMS"); // priceItems() already refuses an empty cart
-  if (items.some((item) => item.clickpost !== true)) return { shipping: regionalFee(p), detail: { domestic: true, prefecture: p, method: "regional" } };
+  if (items.some((item) => item.flatMail !== true)) return { shipping: regionalFee(p), detail: { domestic: true, prefecture: p, method: "regional" } };
   const bags = items.reduce((sum, item) => sum + item.quantity, 0);
-  if (bags <= CLICKPOST.maxBags) return { shipping: CLICKPOST.fee, detail: { domestic: true, prefecture: p, method: "clickpost", bags } };
+  if (bags <= FLAT_MAIL.maxBags) return { shipping: FLAT_MAIL.fee, detail: { domestic: true, prefecture: p, method: FLAT_MAIL.method, bags } };
   if (bags > MAX_BAGS) throw new DomesticShippingError("DOMESTIC_CONTACT_LARGE_ORDER", { contact: true });
   return { shipping: regionalFee(p), detail: { domestic: true, prefecture: p, method: "yupack", bags } };
 }
 
-module.exports = { PREFECTURES, CLICKPOST, YUPACK_COST, MAX_BAGS, ZONE_OF, LEGACY_FEES, DomesticShippingError, domesticShipping, regionalFee };
+module.exports = { PREFECTURES, FLAT_MAIL, YUPACK_COST, MAX_BAGS, ZONE_OF, LEGACY_FEES, DomesticShippingError, domesticShipping, regionalFee };

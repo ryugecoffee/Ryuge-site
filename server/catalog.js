@@ -11,7 +11,8 @@
 // requiresInventory: sold only while inventory is on (a sales cap must hold; with inventory off it is not purchasable).
 // lot: products roasted from the same purchase of green beans share inventoryLots/{lot} (what can really be roasted);
 // each product keeps its own sales cap in inventory/{sku}. An order must fit both (server/inventory.js).
-// clickpost: a flat 100 g bag of beans: 1–2 of them go by クリックポスト, 3+ by ゆうパック (server/domestic-shipping.js).
+// flatMail: a flat 100 g bag of beans: 1–2 of them go by flat mail (レターパックライト for now), 3+ by ゆうパック
+// (server/domestic-shipping.js).
 // managedStock: true = sold from counted, packed bags (inventory/{sku}); with inventory on, checkout reserves them and
 // refuses past zero. Others are not stock-gated. Must equal INVENTORY_MANAGED_SKUS in src/pages/ProductsPage.jsx.
 const { validItems } = require("./inventory");
@@ -20,13 +21,13 @@ const CATALOG = Object.freeze({
   // CEO final prices (2026-11-17). The Brazil Amarelo Bourbon is sold as two products from the same green beans: the
   // promotional "Zen dark roast" (¥1,000, 2 per customer) and the regular medium-dark roast (¥1,300). They have their
   // own sales caps, orders and promo rules, and share one lot so together they never sell more than can be roasted.
-  "enma-zen-dark-roast": { price: 1000, weightG: 120, kind: "beans", contentG: 100, clickpost: true, availableForSale: true, managedStock: true, requiresInventory: true, promo: true, lot: "brazil-amarelo-bourbon" },
-  "enma-amarelo-bourbon": { price: 1300, weightG: 120, kind: "beans", contentG: 100, clickpost: true, availableForSale: true, managedStock: true, requiresInventory: true, lot: "brazil-amarelo-bourbon" },
-  "enma-jimma": { price: 1500, weightG: 120, kind: "beans", contentG: 100, clickpost: true, availableForSale: true, managedStock: true, requiresInventory: true },
-  "enma-quequesques": { price: 1500, weightG: 120, kind: "beans", contentG: 100, clickpost: true, availableForSale: true, managedStock: true, requiresInventory: true },
-  "enma-andes-blue": { price: 1500, weightG: 120, kind: "beans", contentG: 100, clickpost: true, availableForSale: true, managedStock: true, requiresInventory: true },
-  "enma-karamo": { price: 1800, weightG: 120, kind: "beans", contentG: 100, clickpost: true, availableForSale: true, managedStock: true },
-  "enma-kindiio": { price: 2050, weightG: 120, kind: "beans", contentG: 100, clickpost: true, availableForSale: true, managedStock: true },
+  "enma-zen-dark-roast": { price: 1000, weightG: 120, kind: "beans", contentG: 100, flatMail: true, availableForSale: true, managedStock: true, requiresInventory: true, promo: true, lot: "brazil-amarelo-bourbon" },
+  "enma-amarelo-bourbon": { price: 1300, weightG: 120, kind: "beans", contentG: 100, flatMail: true, availableForSale: true, managedStock: true, requiresInventory: true, lot: "brazil-amarelo-bourbon" },
+  "enma-jimma": { price: 1500, weightG: 120, kind: "beans", contentG: 100, flatMail: true, availableForSale: true, managedStock: true, requiresInventory: true },
+  "enma-quequesques": { price: 1500, weightG: 120, kind: "beans", contentG: 100, flatMail: true, availableForSale: true, managedStock: true, requiresInventory: true },
+  "enma-andes-blue": { price: 1500, weightG: 120, kind: "beans", contentG: 100, flatMail: true, availableForSale: true, managedStock: true, requiresInventory: true },
+  "enma-karamo": { price: 1800, weightG: 120, kind: "beans", contentG: 100, flatMail: true, availableForSale: true, managedStock: true },
+  "enma-kindiio": { price: 2050, weightG: 120, kind: "beans", contentG: 100, flatMail: true, availableForSale: true, managedStock: true },
   // CEO 2026-11-17: counted stock (20 packs of 8). Managed, but not requiresInventory: still sold while inventory is off.
   "enma-coffee-bag": { price: 2400, weightG: 100, kind: "bag", contentG: 100, availableForSale: true, managedStock: true },
   "woodbox-tea-bag": { price: 2800, weightG: 120, kind: "tea", contentG: 100, availableForSale: true },
@@ -44,7 +45,7 @@ function priceItems(items, catalog = CATALOG) {
     if (!product) throw new Error("UNKNOWN_PRODUCT");
     if (!product.availableForSale) throw new Error("PRODUCT_NOT_AVAILABLE");
     return { id, quantity, price: product.price, weightG: product.weightG, kind: product.kind, contentG: product.contentG, promo: product.promo === true,
-      requiresInventory: product.requiresInventory === true, clickpost: product.clickpost === true };
+      requiresInventory: product.requiresInventory === true, flatMail: product.flatMail === true };
   });
 }
 
