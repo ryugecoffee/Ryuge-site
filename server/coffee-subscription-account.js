@@ -268,7 +268,7 @@ async function changeAddress({ db, stripe, auth, address, now }) {
   }
   const shipments = await db.collection(records.SHIPMENTS).where("subscriptionId", "==", auth.subscriptionId).get();
   const states = shipments.docs.map((d) => d.data().status);
-  return { version, appliesTo: states.filter((s) => s === "planned" || s === "needs_review").length,
+  return { version, appliesTo: states.filter((s) => s === "planned" || s === "needs_review" || s === "held").length,
     unchanged: states.filter((s) => FIXED_SHIPMENT_STATES.includes(s)).length };
 }
 

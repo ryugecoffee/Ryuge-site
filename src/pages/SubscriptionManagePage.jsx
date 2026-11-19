@@ -10,7 +10,7 @@ import { MONTHLY_PRICES, PREFECTURES, accountApi, dateLabel, errorText, monthLab
 const STATUS_TEXT = { trialing: "お申し込み済み（月額のお支払い開始前）", active: "ご利用中", past_due: "お支払いを確認中", unpaid: "お支払いが確認できていません",
   canceled: "終了", incomplete_record: "確認中" };
 const CHARGE_TEXT = { paid: "お支払い済み", not_charged: "請求なし", payment_failed: "お支払い未完了" };
-const SHIPMENT_TEXT = { planned: "発送予定", needs_review: "確認中", preparing: "発送準備中", shipped: "発送済み", delivered: "お届け済み", cancelled_before_shipping: "発送取りやめ" };
+const SHIPMENT_TEXT = { planned: "発送予定", needs_review: "確認中", held: "確認中", preparing: "発送準備中", shipped: "発送済み", delivered: "お届け済み", cancelled_before_shipping: "発送取りやめ" };
 
 // One request id per form until it succeeds: pressing twice, or retrying after a network error, is applied once.
 function useRequestId() {

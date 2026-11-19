@@ -50,6 +50,41 @@ Verification against Stripe test mode: `server/coffee-subscription-stripe-e2e.js
   `factorySubscriptionContactViews/{requestId}` (contract and time, no details). Nothing is logged but error codes.
 - Refund operations are unaffected: still refused unless `FACTORY_REFUND_OPS_ENABLED=true`.
 
+## ④ Preparing and shipping, stock (off: `COFFEE_SUBSCRIPTION_FULFILLMENT_TOKEN` unset)
+Code: `server/coffee-subscription-fulfillment.js`, at `/internal/coffee-subscription/fulfillment` (the shop's token, 32+
+characters, in `X-Fulfillment-Admin-Token`; 404 while unset). The actor recorded is fixed by the server.
+- Each delivery: 100 g × 2 **different** beans (two products roasted from the same green beans count as one), chosen
+  by the shop. Beans = 100 g products of `server/catalog.js` with `kind: "beans"` and `managedStock: true`.
+- States: `planned` (発送予定, created only from a paid invoice) → `preparing` (発送準備中) → `shipped` (発送済み);
+  `held` (保留: out of stock or put on hold by the shop; the customer's page shows 確認中); `needs_review` (late payment
+  that cannot be planned safely); `cancelled_before_shipping`.
+- **Stock in three separate steps**, on the same `inventory/{sku}` and `inventoryLots/{lot}` counters as single orders,
+  in the same transactions (a bag is never sold twice; the store shows it sold out once reserved):
+  1. `POST /prepare {shipmentId, skus:[a,b], requestId}`: one bag of each reserved (held + 1); the address is copied
+     onto the delivery (a later address change does not move it).
+  2. `POST /ship {shipmentId, requestId, trackingNumber?}`: ready − 1, held − 1, sold + 1 — the only point where stock is
+     really taken.
+  3. `POST /hold {shipmentId, requestId, reason}` / `POST /resume {shipmentId, requestId}`: from preparing the reserved
+     bags go back (held − 1). `resume` also returns a held or reviewed (`needs_review`) delivery to `planned`.
+- Never prepared or shipped (checked again at shipping): the month not paid by the invoice that created the delivery
+  (failed, unpaid, replaced), a skipped month, a month from the cancellation on, a duplicate contract, a contract with
+  an unexpected first amount, a contract ended outside the customer's cancellation (Stripe Dashboard, final payment
+  failure: the CEO decides), a delivery under review or cancelled.
+- **Not enough stock**: nothing is reserved, charged or shipped; the delivery becomes `held` (`OUT_OF_STOCK`) and the shop
+  is mailed (contract number, delivery and beans only). **Stock and delivery disagree at shipping**: nothing is taken;
+  the delivery is flagged `INVENTORY_INCONSISTENCY` and the shop is mailed.
+- Each operation has a request id (`coffeeSubscriptionFulfillmentOps/{requestId}`): sent again → the first answer, no
+  change; reused for another operation → refused. Shipped is final. Stripe events only create deliveries (once), never
+  touch stock.
+- The customer cancels while the first delivery is being prepared: it is stopped, its bags go back to stock, ¥3,000 is
+  proposed for refund (CEO approval, as before).
+- `GET /work?from=YYYY-MM-DD&to=YYYY-MM-DD` (default: today + 14 days): deliveries due in the range and every open one
+  before it (late, held, being prepared, under review), with the due date (closed days already moved), overdue and late
+  payment marks, why it cannot ship, the customer's preference, the beans sent last time (and a warning when the same
+  bean is chosen again), and stock: bags available, bags needed, `short`. No name, email, phone or street address.
+- `GET /label/{shipmentId}`: the address copied at preparation, for the label (only preparing or shipped).
+- Single orders, their reservations (`inventoryReservations`) and the stock registration are unchanged.
+
 ## Operating rules (CEO, 2026-11-18)
 - Billing: the 1st of each month at 09:00 JST (00:00 UTC; Stripe counts months in UTC, so 00:00 JST would slide to
   the last day of the previous month after a 30-day month). Stripe makes the invoice as a draft and charges it about an
@@ -88,6 +123,8 @@ Verification against Stripe test mode: `server/coffee-subscription-stripe-e2e.js
 7. The customer portal configuration created in live mode (`account.PORTAL_CONFIGURATION`) and its id set as
    `STRIPE_PORTAL_CONFIGURATION_ID`; then `COFFEE_SUBSCRIPTION_MANAGE_ENABLED=true` (CEO approval).
 8. A link to `/subscription/manage` where customers will find it (the confirmation mail and the store), once open.
+9. ④: `COFFEE_SUBSCRIPTION_FULFILLMENT_TOKEN` set on the payment server (CEO approval), the shipping method, box and cost
+   confirmed, and the stock of the subscription beans registered.
 
 ## Verified (Stripe test mode with test clocks + Firestore emulator, 57/57)
 First payment only ¥3,000; monthly start (1st–15th → next month, 16th– → the month after) at 09:00 JST on the 1st;

@@ -19,6 +19,7 @@ const factoryRefundApi = require("./factory-refund-api");
 const coffeeSubscription = require("./coffee-subscription-records");
 const coffeeSubscriptionCheckout = require("./coffee-subscription-checkout");
 const coffeeSubscriptionAccount = require("./coffee-subscription-account");
+const coffeeSubscriptionFulfillment = require("./coffee-subscription-fulfillment");
 const { createRateLimiter, clientKey } = require("./rate-limit");
 
 const app = express();
@@ -85,6 +86,11 @@ app.post(coffeeSubscriptionCheckout.PATH, coffeeSubscriptionCheckout.createHandl
 // (separate from sign-ups). Mails go through the shop's existing mail account.
 app.use(coffeeSubscriptionAccount.PATH, coffeeSubscriptionAccount.createRouter({ getDb: () => db, getStripe: () => stripe,
   sendMail: (message) => transporter.sendMail({ from: `"Ryuge Coffee" <${process.env.EMAIL_USER}>`, ...message }) }));
+// 珈琲の定期便 ④, the shop's preparing and shipping (server/coffee-subscription-fulfillment.js): 404 unless
+// COFFEE_SUBSCRIPTION_FULFILLMENT_TOKEN (32+ characters) is set; the caller sends it in X-Fulfillment-Admin-Token.
+// Stock shortages and stock inconsistencies are mailed to the shop (contract number and beans only).
+app.use(coffeeSubscriptionFulfillment.PATH, coffeeSubscriptionFulfillment.createRouter({ getDb: () => db,
+  notify: (notice) => sendFulfillmentNotice(notice) }));
 
 console.log("FIREBASE_PROJECT_ID exists:", !!process.env.FIREBASE_PROJECT_ID);
 console.log("FIREBASE_CLIENT_EMAIL exists:", !!process.env.FIREBASE_CLIENT_EMAIL);
@@ -386,6 +392,25 @@ ${itemLines}
 ${shippingLine}
 ${totalLine}
 `.trim(),
+  });
+}
+
+// 定期便の発送で在庫が足りない・在庫と発送記録が合わないときの店舗への通知（契約番号と豆だけ。個人情報は入れない）
+async function sendFulfillmentNotice({ type, ref, shipmentId, shortSkus = [] }) {
+  const adminAddresses = "ryugecoffee@gmail.com, ryuka2452533@icloud.com";
+  const inconsistent = type === "inventory_inconsistency";
+  await transporter.sendMail({
+    from: `"Ryuge Coffee" <${process.env.EMAIL_USER}>`,
+    to: adminAddresses,
+    subject: inconsistent ? `【定期便・要確認】在庫と発送記録が一致しません（${ref}）` : `【定期便・在庫不足】発送を保留しました（${ref}）`,
+    text: `${inconsistent
+      ? "発送済みにする前に、在庫と発送記録が一致しないことを検知しました。在庫は変更していません。確認してください。"
+      : "選んだ豆の在庫が足りないため、この発送を「保留」にしました。在庫・決済・発送は進めていません。"}
+
+契約番号：${ref}
+発送：${shipmentId}
+${shortSkus.length ? `在庫が足りない豆：${shortSkus.join("、")}\n` : ""}
+${inconsistent ? "在庫の記録を確認してから、発送を再開してください。" : "別の豆を選ぶか、在庫を登録してから、もう一度「発送準備」を行ってください。"}`.trim(),
   });
 }
 
