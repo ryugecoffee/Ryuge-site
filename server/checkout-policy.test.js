@@ -37,7 +37,8 @@ test("countries: Japan, the enabled countries and 'other (contact us)'; the list
 
 test("every refusal from the server has a message in Japanese, English and Spanish; contact cases show the email", async () => {
   const { QUOTE_MESSAGES, CONTACT_EMAIL, POLICY_TEXT } = await import(path.join(__dirname, "..", "src", "lib", "shippingPolicy.js"));
-  const codes = [...quoteSource.matchAll(/new QuoteError\("([A-Z_]+)"/g)].map((m) => m[1]);
+  const domesticSource = read("server", "domestic-shipping.js");
+  const codes = [...quoteSource.matchAll(/new QuoteError\("([A-Z_]+)"/g), ...domesticSource.matchAll(/new DomesticShippingError\("([A-Z_]+)"/g)].map((m) => m[1]);
   assert.ok(codes.length >= 6);
   for (const lang of ["ja", "en", "es"]) {
     for (const code of [...codes, "QUOTE_UNAVAILABLE", "AMOUNT_CHANGED", "OUT_OF_STOCK"]) {
@@ -55,9 +56,9 @@ test("no free-shipping promise is left in the cart or the shipping page", () => 
   const layout = read("src", "components", "SiteLayout.jsx");
   const shippingPage = read("src", "pages", "ShippingPage.jsx");
   assert.doesNotMatch(layout, /送料無料|free shipping|FREE_SHIPPING/i);
-  assert.match(shippingPage, /本州・四国：250円/);
-  assert.match(shippingPage, /北海道・九州：500円/);
-  assert.match(shippingPage, /沖縄：550円/);
+  assert.match(shippingPage, /コーヒー豆（100g）1〜2袋：クリックポストで全国一律250円（北海道・九州・沖縄も250円）/);
+  assert.match(shippingPage, /3袋以上：ゆうパック/);
+  assert.match(shippingPage, /<YupackTable lang=\{lang\} \/>/, "the Yu-Pack table is shown from the shared constants");
   assert.doesNotMatch(shippingPage, /¥200|2個以上のご注文：送料無料/);
 });
 

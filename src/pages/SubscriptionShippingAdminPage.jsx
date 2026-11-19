@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  BLOCKER_TEXT, HOLD_TEXT, STATUS_TEXT, addDays, beanName, dayLabel, errorText, jstToday, newRequestId, shipmentLabel, shippingApi, staffSession,
+  BLOCKER_TEXT, HOLD_TEXT, METHOD_TEXT, STATUS_TEXT, addDays, beanName, dayLabel, errorText, jstToday, newRequestId, shipmentLabel, shippingApi, staffSession,
 } from "../lib/subscriptionShippingAdmin";
 
 // 珈琲の定期便 ④: the shop's shipping page. Pick two different beans → 発送準備 (one bag of each reserved) → 発送済み
@@ -63,7 +63,7 @@ function Label({ label, onClose }) {
   return (
     <div className="ship-label" role="region" aria-label="宛名">
       <p className="subm-text">〒{s.postalCode}<br />{s.prefecture}{s.city}{s.line1}{s.line2 ? ` ${s.line2}` : ""}<br />{s.name} 様<br />{s.phone}</p>
-      <p className="subm-note">{label.beans.map((b) => beanName(b.sku)).join("・")}（各100g）</p>
+      <p className="subm-note">{METHOD_TEXT[label.shippingMethod] || label.shippingMethod}・{label.beans.map((b) => beanName(b.sku)).join("・")}（各100g）</p>
       <button className="subm-secondary" type="button" onClick={onClose}>宛名を閉じる</button>
     </div>
   );
@@ -126,7 +126,8 @@ function Delivery({ d, beans, onChanged, onSignedOut }) {
         <div><dt>お好み</dt><dd className="ship-pref">{d.preference || "（なし）"}</dd></div>
         <div><dt>前回の豆</dt><dd>{d.previousBeans.length ? d.previousBeans.map(beanName).join("・") : "（初めて）"}</dd></div>
         {d.beans && <div><dt>選んだ豆</dt><dd>{d.beans.map((b) => beanName(b.sku)).join("・")}</dd></div>}
-        {d.trackingNumber && <div><dt>追跡番号</dt><dd>{d.trackingNumber}</dd></div>}
+        <div><dt>配送方法</dt><dd>{METHOD_TEXT[d.shippingMethod] || d.shippingMethod}</dd></div>
+        {d.status === "shipped" && <div><dt>追跡番号</dt><dd>{d.trackingNumber || "（未入力）"}</dd></div>}
         {d.holdReason && <div><dt>保留の理由</dt><dd>{HOLD_TEXT[d.holdReason] || d.holdReason}{d.shortSkus?.length ? `（${d.shortSkus.map(beanName).join("・")}）` : ""}</dd></div>}
         {d.review && <div><dt>要確認</dt><dd>{d.review === "INVENTORY_INCONSISTENCY" ? "在庫と発送記録の不一致" : d.review}</dd></div>}
       </dl>
@@ -151,7 +152,7 @@ function Delivery({ d, beans, onChanged, onSignedOut }) {
       {d.status === "preparing" && (
         <div className="ship-actions">
           {label ? <Label label={label} onClose={() => setLabel(null)} /> : <button className="subm-secondary" type="button" disabled={state.busy} onClick={showLabel}>宛名を表示</button>}
-          <label className="subm-field"><span className="subm-label">追跡番号（任意）</span>
+          <label className="subm-field"><span className="subm-label">クリックポストの追跡番号（任意）</span>
             <input inputMode="numeric" value={tracking} onChange={(e) => setTracking(e.target.value)} placeholder="1234-5678-9012" />
           </label>
           <button className="subm-primary" type="button" disabled={state.busy || blocked} onClick={ship}>発送済みにする</button>
