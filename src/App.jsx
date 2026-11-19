@@ -128,7 +128,7 @@ export default function App() {
             {/* 珈琲の定期便 (Japanese only, not linked while sign-ups are paused; noindex) */}
             <Route path="/subscription/apply" element={<SubscriptionApplyPage />} />
             <Route path="/subscription/manage" element={<SubscriptionManagePage />} />
-            {/* 定期便の発送管理（店舗用・トークンで保護、検索対象外） */}
+            {/* 定期便の発送管理（店舗スタッフのメールログインで保護、検索対象外） */}
             <Route path="/admin/subscription-shipping" element={<SubscriptionShippingAdminPage />} />
           </Route>
 
