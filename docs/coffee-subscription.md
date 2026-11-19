@@ -50,9 +50,16 @@ Verification against Stripe test mode: `server/coffee-subscription-stripe-e2e.js
   `factorySubscriptionContactViews/{requestId}` (contract and time, no details). Nothing is logged but error codes.
 - Refund operations are unaffected: still refused unless `FACTORY_REFUND_OPS_ENABLED=true`.
 
-## ④ Preparing and shipping, stock (off: `COFFEE_SUBSCRIPTION_FULFILLMENT_TOKEN` unset)
-Code: `server/coffee-subscription-fulfillment.js`, at `/internal/coffee-subscription/fulfillment` (the shop's token, 32+
-characters, in `X-Fulfillment-Admin-Token`; 404 while unset). The actor recorded is fixed by the server.
+## ④ Preparing and shipping, stock (off: `COFFEE_SUBSCRIPTION_FULFILLMENT_ENABLED` unset)
+Code: `server/coffee-subscription-fulfillment.js`, at `/internal/coffee-subscription/fulfillment` (404 unless
+`COFFEE_SUBSCRIPTION_FULFILLMENT_ENABLED=true` and `SHOP_STAFF_EMAILS` lists at least one staff address).
+- Staff sign-in (`server/shop-staff-auth.js`; Ryuge-site has no staff accounts, and a shared token kept in a browser can
+  be copied and never expires): a link mailed to a listed address (15 minutes, once), then a 2-hour session. Only hashes
+  of the link and the session are stored, and a key of the address (never the address). Every request, the address
+  (label) above all, is checked on the server: a live session whose address is still listed. Removing an address from
+  `SHOP_STAFF_EMAILS` ends its sessions; signing out deletes the session. The recorded actor is the session's
+  (`shop-staff:<key>`), never taken from the request. Each label view is recorded (`coffeeSubscriptionLabelViews`:
+  delivery, staff key, time; not the address).
 - Each delivery: 100 g × 2 **different** beans (two products roasted from the same green beans count as one), chosen
   by the shop. Beans = 100 g products of `server/catalog.js` with `kind: "beans"` and `managedStock: true`.
 - States: `planned` (発送予定, created only from a paid invoice) → `preparing` (発送準備中) → `shipped` (発送済み);

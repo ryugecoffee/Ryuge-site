@@ -9,6 +9,7 @@ on:
       - 'server/coffee-subscription-fulfillment.js'
       - 'src/lib/subscriptionShippingAdmin.js'
       - 'src/pages/SubscriptionShippingAdminPage.jsx'
+      - 'server/shop-staff-auth.js'
       - 'server/coffee-subscription-fulfillment.test.js'
       - 'server/coffee-subscription-fulfillment-emulator.test.js'
       - 'server/catalog.js'
@@ -111,7 +112,7 @@ jobs:
           server/coffee-subscription-plan.js server/coffee-subscription-records.js server/coffee-subscription-checkout.js
           server/coffee-subscription-stripe.js server/coffee-subscription-stripe-e2e.js server/coffee-subscription-calendar.js
           server/coffee-subscription-preference.js server/coffee-subscription-account.js server/factory-subscription-read.js
-          server/coffee-subscription-fulfillment.js
+          server/coffee-subscription-fulfillment.js server/shop-staff-auth.js
           src/lib/coffeeSubscriptionAccount.js src/lib/coffeeSubscriptionTerms.js src/pages/SubscriptionApplyPage.jsx src/pages/SubscriptionManagePage.jsx
           src/lib/subscriptionShippingAdmin.js src/pages/SubscriptionShippingAdminPage.jsx
           server/*.test.js

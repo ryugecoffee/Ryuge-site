@@ -1,7 +1,8 @@
 "use strict";
 
 // 珈琲の定期便 ④: the shop prepares and ships each delivery (100 g × 2 different beans = 200 g) from the same counted
-// stock as single orders. Off unless COFFEE_SUBSCRIPTION_FULFILLMENT_TOKEN is set (32+ characters) on the payment server.
+// stock as single orders. Off unless COFFEE_SUBSCRIPTION_FULFILLMENT_ENABLED=true and SHOP_STAFF_EMAILS lists the staff
+// (server/shop-staff-auth.js: a mailed sign-in link and a server-side session, checked on every request).
 //
 // A delivery (coffeeSubscriptionShipments/{id}, created only from a paid invoice by coffee-subscription-records.js):
 //   planned ──prepare──▶ preparing ──ship──▶ shipped
@@ -30,9 +31,12 @@ const plan = require("./coffee-subscription-plan");
 const records = require("./coffee-subscription-records");
 const { CATALOG } = require("./catalog");
 const { createRateLimiter, clientKey } = require("./rate-limit");
+const staffAuth = require("./shop-staff-auth");
 
 const PATH = "/internal/coffee-subscription/fulfillment";
 const OPS = "coffeeSubscriptionFulfillmentOps";
+const LABEL_VIEWS = "coffeeSubscriptionLabelViews";
+const PAGE_PATH = "/admin/subscription-shipping";
 const BAGS_PER_DELIVERY = 2;
 const ENDED = ["canceled", "incomplete_expired"];
 // Contract reviews that stop every delivery of the contract until the CEO has decided.
@@ -334,27 +338,24 @@ async function shippingLabel(db, shipmentId) {
   return { shipmentId, ref: contractRef(s.subscriptionId), beans: s.beans || [], grams: s.grams || plan.GRAMS_PER_DELIVERY, shipTo: s.shipTo };
 }
 
-// ---- Router (token of the shop; the actor is fixed here, never taken from the request) -----------------------------
-const enabled = (env) => String(env.COFFEE_SUBSCRIPTION_FULFILLMENT_TOKEN || "").length >= 32;
+// ---- Router (signed-in staff only; the actor is the server's record of the session, never taken from the request) ----
+const enabled = (env) => staffAuth.configFrom(env).enabled;
 
-function createRouter({ getDb, notify = async () => {}, env = process.env, clock = Date.now, log = console,
-  limiter = createRateLimiter({ limit: 60, windowMs: 60 * 1000 }) } = {}) {
+function createRouter({ getDb, notify = async () => {}, sendMail = async () => {}, env = process.env, clock = Date.now, log = console,
+  limiter = createRateLimiter({ limit: 60, windowMs: 60 * 1000 }), loginLimiter } = {}) {
   const router = express.Router();
-  const digest = (v) => crypto.createHash("sha256").update(String(v)).digest();
   router.use((req, res, next) => {
     res.setHeader("Cache-Control", "no-store");
     if (!enabled(env)) return res.status(404).end();
     if (!limiter(clientKey(req).key)) return res.status(429).json({ error: "RATE_LIMITED" });
-    const supplied = req.headers["x-fulfillment-admin-token"];
-    if (typeof supplied !== "string" || !crypto.timingSafeEqual(digest(env.COFFEE_SUBSCRIPTION_FULFILLMENT_TOKEN), digest(supplied))) {
-      return res.status(403).json({ error: "FORBIDDEN" });
-    }
     return next();
   });
-  const actor = "shop:fulfillment-token";
+  const auth = staffAuth.createAuth({ getDb, sendMail, env, clock, log, linkPath: PAGE_PATH, ...(loginLimiter ? { loginLimiter } : {}) });
+  router.use(auth.router);
+  router.use(auth.guard);
   const handle = (fn) => async (req, res) => {
     try {
-      const result = await fn(req.body || {}, req);
+      const result = await fn(req.body || {}, req, req.staff.actor);
       if (result?.notify && result.applied !== false) {
         // The shop is told (contract number, delivery and beans only; no personal details). A failed mail never undoes
         // the hold: the work list shows it too.
@@ -372,13 +373,19 @@ function createRouter({ getDb, notify = async () => {}, env = process.env, clock
     }
   };
   router.get("/work", handle((_b, req) => workList(getDb(), { from: req.query.from, to: req.query.to }, { now: clock() })));
-  router.get("/label/:shipmentId", handle((_b, req) => shippingLabel(getDb(), req.params.shipmentId)));
-  router.post("/prepare", handle((b) => prepareShipment(getDb(), { shipmentId: b.shipmentId, skus: b.skus, requestId: b.requestId, actor }, { now: clock() })));
-  router.post("/ship", handle((b) => shipShipment(getDb(), { shipmentId: b.shipmentId, requestId: b.requestId, trackingNumber: b.trackingNumber, actor }, { now: clock() })));
-  router.post("/hold", handle((b) => holdShipment(getDb(), { shipmentId: b.shipmentId, requestId: b.requestId, reason: b.reason, actor }, { now: clock() })));
-  router.post("/resume", handle((b) => resumeShipment(getDb(), { shipmentId: b.shipmentId, requestId: b.requestId, actor }, { now: clock() })));
+  // The address: only for a signed-in staff member (checked above, on the server), only for a delivery being prepared or
+  // shipped. Who looked at which delivery, and when, is recorded (never the address itself).
+  router.get("/label/:shipmentId", handle(async (_b, req, actor) => {
+    const label = await shippingLabel(getDb(), req.params.shipmentId);
+    await getDb().collection(LABEL_VIEWS).add({ shipmentId: label.shipmentId, ref: label.ref, by: actor, at: new Date(clock()) });
+    return label;
+  }));
+  router.post("/prepare", handle((b, _r, actor) => prepareShipment(getDb(), { shipmentId: b.shipmentId, skus: b.skus, requestId: b.requestId, actor }, { now: clock() })));
+  router.post("/ship", handle((b, _r, actor) => shipShipment(getDb(), { shipmentId: b.shipmentId, requestId: b.requestId, trackingNumber: b.trackingNumber, actor }, { now: clock() })));
+  router.post("/hold", handle((b, _r, actor) => holdShipment(getDb(), { shipmentId: b.shipmentId, requestId: b.requestId, reason: b.reason, actor }, { now: clock() })));
+  router.post("/resume", handle((b, _r, actor) => resumeShipment(getDb(), { shipmentId: b.shipmentId, requestId: b.requestId, actor }, { now: clock() })));
   return router;
 }
 
-module.exports = { PATH, OPS, BAGS_PER_DELIVERY, HOLD_REASONS, OPEN_STATES, FulfillmentError, beanOf, beanSkus, validBeans, blockers, readRelease,
+module.exports = { PATH, PAGE_PATH, OPS, LABEL_VIEWS, BAGS_PER_DELIVERY, HOLD_REASONS, OPEN_STATES, FulfillmentError, beanOf, beanSkus, validBeans, blockers, readRelease,
   prepareShipment, shipShipment, holdShipment, resumeShipment, workList, stockView, shippingLabel, enabled, createRouter };
