@@ -26,7 +26,7 @@ test("the subscription checkout API refuses every new subscription before Stripe
     assert.deepEqual(body, { error: "SUBSCRIPTIONS_PAUSED" });
   }
   const source = read("api", "create-subscription-checkout.js");
-  assert.ok(source.indexOf("if (SUBSCRIPTIONS_PAUSED)") < source.indexOf("stripe.checkout.sessions.create"), "refused before any Stripe call");
+  assert.ok(source.indexOf("if (OLD_SUBSCRIPTION_PLANS_CLOSED || SUBSCRIPTIONS_PAUSED)") < source.indexOf("stripe.checkout.sessions.create"), "refused before any Stripe call");
 });
 
 test("the store shows the notice and no sign-up button; checkout does not send a subscription left in a cart", () => {
@@ -40,7 +40,7 @@ test("the store shows the notice and no sign-up button; checkout does not send a
   assert.match(read("src", "productData.js"), /ja: "現在、新規受付を休止しています"/);
   const checkout = read("src", "pages", "CheckoutPage.jsx");
   assert.match(checkout, /const isBlocked {3}= subscriptionPaused \|\|/);
-  assert.ok(checkout.indexOf("if (SUBSCRIPTIONS_PAUSED) {") < checkout.indexOf('fetch("/api/create-subscription-checkout"'));
+  assert.ok(checkout.indexOf("if (OLD_SUBSCRIPTION_PLANS_CLOSED || SUBSCRIPTIONS_PAUSED) {") < checkout.indexOf('fetch("/api/create-subscription-checkout"'));
   const concierge = read("api", "coffee-concierge.js");
   assert.match(concierge, /新規受付を休止中/);
   assert.doesNotMatch(concierge, /定期便もさりげなく案内する/);
@@ -49,4 +49,13 @@ test("the store shows the notice and no sign-up button; checkout does not send a
 test("one-time sales are untouched: beans and the coffee bag stay on sale", () => {
   const { CATALOG } = require("./catalog");
   for (const id of ["enma-karamo", "enma-kindiio", "enma-coffee-bag"]) assert.equal(CATALOG[id].availableForSale, true, id);
+});
+
+test("reopening 珈琲の定期便 never reopens the earlier plans: they have their own permanent switch", async () => {
+  const { OLD_SUBSCRIPTION_PLANS_CLOSED } = await import(path.join(root, "src", "productData.js"));
+  assert.equal(OLD_SUBSCRIPTION_PLANS_CLOSED, true);
+  // The old API and the cart path test OLD_SUBSCRIPTION_PLANS_CLOSED on its own (an OR with the pause), so they stay closed
+  // with SUBSCRIPTIONS_PAUSED = false.
+  assert.match(read("api", "create-subscription-checkout.js"), /if \(OLD_SUBSCRIPTION_PLANS_CLOSED \|\| SUBSCRIPTIONS_PAUSED\)/);
+  assert.match(read("src", "pages", "CheckoutPage.jsx"), /hasSubscription && \(OLD_SUBSCRIPTION_PLANS_CLOSED \|\| SUBSCRIPTIONS_PAUSED\)/);
 });

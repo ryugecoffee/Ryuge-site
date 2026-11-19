@@ -1,3 +1,42 @@
+import { Link } from "react-router-dom";
+import { SUBSCRIPTIONS_PAUSED } from "../productData";
+import { CHANGE_DEADLINE_DAY, FIRST_PRICE, MONTHLY_PRICES, SHIPPING_DAYS, yen } from "../lib/coffeeSubscriptionAccount";
+
+// 定期購入（珈琲の定期便）の表記（2026-11-19 案）: the same conditions as the final confirmation screen
+// (src/lib/coffeeSubscriptionTerms.js) and the confirmation mail (server/coffee-subscription-mail.js). Provisional until
+// a specialist has checked it (LEGAL_TEXT_REVIEWED); prices and dates come from the same constants as the screen.
+const plans = [1, 2, 3, 4].map((n) => `月${n}回 ${yen(MONTHLY_PRICES[n])}（毎月 ${SHIPPING_DAYS[n].map((d) => `${d}日`).join("・")} 発送）`).join("／");
+const SUBSCRIPTION_ROWS = {
+  ja: [
+    ["商品・分量", "当店おまかせの珈琲豆 2種類（100g × 2袋 = 1回200g）を、お選びの回数（月1〜4回）お届けします。"],
+    ["販売価格（税込・送料込み）", `初回 ${yen(FIRST_PRICE)}（200g・1回分）。2回目以降は月額で、${plans}。日割りの精算はありません。`],
+    ["支払時期・方法", "クレジットカード（Stripe）。初回分はお申し込み時に、2回目以降は毎月1日（日本時間9時頃）に自動でお支払いいただきます。"],
+    ["引渡時期", "初回：お支払い完了後、3営業日以内に発送します。2回目以降：毎月の上記の日に発送します（土日祝・休業日は翌営業日）。"],
+    ["契約期間", "期間の定めはありません。最低継続回数もありません。"],
+    ["変更・スキップ", `配送回数の変更と月単位のスキップは、管理ページから前月${CHANGE_DEADLINE_DAY}日までのお手続きで翌月分から反映します。`],
+    ["解約の方法", "管理ページ（ご登録のメールアドレスでログイン）からいつでも解約できます。次のご請求日の前に解約された場合、以降のご請求はありません。"],
+    ["返品・返金", "お支払い済みの月の分はお届けします（日割りの返金はありません）。初回の200gを発送する前に解約された場合、初回分は原則として返金します。商品に欠陥がある場合は、到着後7日以内にご連絡ください。"],
+  ],
+  en: [
+    ["Product", "Two coffees chosen by us (100 g × 2 bags = 200 g per delivery), 1–4 deliveries a month as chosen."],
+    ["Price (tax and shipping included)", `First delivery ${yen(FIRST_PRICE)}. Then monthly: ${[1, 2, 3, 4].map((n) => `${n}×/month ${yen(MONTHLY_PRICES[n])}`).join(", ")}. No pro-rating.`],
+    ["Payment", "Credit card (Stripe): the first delivery at sign-up, then automatically on the 1st of each month."],
+    ["Delivery", "First: within 3 business days of payment. Then on fixed days each month (next business day if closed)."],
+    ["Term and cancellation", `No fixed term or minimum. Change or skip by the ${CHANGE_DEADLINE_DAY}th of the previous month; cancel any time on your subscription page.`],
+    ["Refunds", "Paid months are delivered (no pro-rated refunds). If cancelled before the first 200 g is shipped, the first payment is refunded in principle."],
+  ],
+  es: [
+    ["Producto", "Dos cafés elegidos por nosotros (100 g × 2 bolsas = 200 g por envío), de 1 a 4 envíos al mes."],
+    ["Precio (impuestos y envío incluidos)", `Primer envío ${yen(FIRST_PRICE)}. Después mensual: ${[1, 2, 3, 4].map((n) => `${n}/mes ${yen(MONTHLY_PRICES[n])}`).join(", ")}. Sin prorrateo.`],
+    ["Pago", "Tarjeta de crédito (Stripe): el primer envío al suscribirse y después el día 1 de cada mes."],
+    ["Entrega", "Primero: en 3 días hábiles tras el pago. Después en días fijos cada mes (siguiente día hábil si es festivo)."],
+    ["Duración y cancelación", `Sin plazo ni mínimo. Cambios u omisiones antes del día ${CHANGE_DEADLINE_DAY} del mes anterior; cancelación en cualquier momento en tu página.`],
+    ["Reembolsos", "Los meses pagados se envían (sin reembolso prorrateado). Si cancelas antes del primer envío de 200 g, se reembolsa el primer pago en principio."],
+  ],
+};
+const SUBSCRIPTION_TITLE = { ja: "定期購入（珈琲の定期便）について", en: "Subscription (Coffee subscription)", es: "Suscripción de café" };
+const SUBSCRIPTION_PAUSED_NOTE = { ja: "※ 現在、新規のお申し込みは休止しています。", en: "New sign-ups are currently paused.", es: "Las nuevas suscripciones están en pausa." };
+
 export default function LegalNotice({ lang = "ja" }) {
   const TEXT = {
     ja: {
@@ -14,12 +53,12 @@ export default function LegalNotice({ lang = "ja" }) {
       price: "販売価格",
       priceValue: "各商品ページに記載",
       extra: "商品代金以外の必要料金",
-      extraValue: "送料（地域および商品により異なります）",
+      extraValue: "送料（1回のご注文につき1回。金額は「配送・送料について」のページに記載）。定期便は月額料金に送料を含みます。",
       payment: "支払方法",
       paymentValue:
         "クレジットカード決済（Square / Stripe）※商品や注文内容により異なります",
       timing: "支払時期",
-      timingValue: "ご注文時にお支払いが確定します",
+      timingValue: "ご注文時にお支払いが確定します（定期便は下記のとおり）",
       delivery: "商品の引渡時期",
       deliveryValue: "通常、ご注文から3〜7日以内に発送いたします",
       returns: "返品・交換について",
@@ -53,7 +92,7 @@ export default function LegalNotice({ lang = "ja" }) {
       price: "Price",
       priceValue: "Listed on each product page",
       extra: "Additional Fees",
-      extraValue: "Shipping fees vary by region and product",
+      extraValue: "Shipping, once per order (see Shipping & Delivery). Included in the subscription price.",
       payment: "Payment Method",
       paymentValue:
         "Credit card payment (Square / Stripe) depending on the order",
@@ -92,7 +131,7 @@ export default function LegalNotice({ lang = "ja" }) {
       price: "Precio",
       priceValue: "Indicado en cada producto",
       extra: "Costes adicionales",
-      extraValue: "El envío varía según región",
+      extraValue: "Envío, una vez por pedido (ver Envío y Entrega). Incluido en el precio de la suscripción.",
       payment: "Método de pago",
       paymentValue:
         "Pago con tarjeta de crédito (Square / Stripe) según el pedido",
@@ -143,6 +182,13 @@ export default function LegalNotice({ lang = "ja" }) {
       <p><strong>{t.cancel}</strong><br />{t.cancelValue}</p>
 
       <p><strong>{t.note}</strong><br />{t.noteValue}</p>
+
+      <h2>{SUBSCRIPTION_TITLE[lang] || SUBSCRIPTION_TITLE.ja}</h2>
+      {SUBSCRIPTIONS_PAUSED && <p>{SUBSCRIPTION_PAUSED_NOTE[lang] || SUBSCRIPTION_PAUSED_NOTE.ja}</p>}
+      {(SUBSCRIPTION_ROWS[lang] || SUBSCRIPTION_ROWS.ja).map(([label, value]) => (
+        <p key={label}><strong>{label}</strong><br />{value}</p>
+      ))}
+      <p><Link to="/shipping" className="text-link">配送・送料について / Shipping</Link>・<Link to="/subscription/manage" className="text-link">定期便の管理ページ / Subscription page</Link></p>
     </div>
   );
 }
