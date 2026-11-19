@@ -1,16 +1,17 @@
 // 珈琲の定期便 ④: the shop's shipping page (/admin/subscription-shipping). It only calls the payment server
-// (server/coffee-subscription-fulfillment.js), which checks the shop's token and decides everything. The token is kept in
-// this tab only (sessionStorage), never in the URL or in localStorage.
+// (server/coffee-subscription-fulfillment.js), which checks the staff member's session on every request. Staff sign in
+// by a link mailed to their listed address; the 2-hour session is kept in this tab only (sessionStorage), never in the
+// URL or in localStorage, and signing out ends it on the server.
 import { PAYMENT_API_BASE } from "./paymentEnv.js";
 import { PRODUCT_DATA } from "../productData.js";
 
-const TOKEN_KEY = "ryuge-shipping-admin-token";
+const SESSION_KEY = "ryuge-shipping-staff-session";
 const BASE = `${PAYMENT_API_BASE}/internal/coffee-subscription/fulfillment`;
 
-export const adminToken = {
-  get() { try { return sessionStorage.getItem(TOKEN_KEY) || ""; } catch { return ""; } },
-  set(value) { try { sessionStorage.setItem(TOKEN_KEY, value); } catch { /* private mode: kept until reload */ } },
-  clear() { try { sessionStorage.removeItem(TOKEN_KEY); } catch { /* nothing kept */ } },
+export const staffSession = {
+  get() { try { const v = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null"); return v && Date.parse(v.expiresAt) > Date.now() ? v : null; } catch { return null; } },
+  set(value) { try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(value)); } catch { /* private mode: kept until reload */ } },
+  clear() { try { sessionStorage.removeItem(SESSION_KEY); } catch { /* nothing kept */ } },
 };
 
 export function newRequestId() {
@@ -18,27 +19,31 @@ export function newRequestId() {
   return `r-${Date.now().toString(16)}-${Math.random().toString(16).slice(2, 14)}`;
 }
 
-async function request(method, path, body, token) {
+async function request(method, path, body) {
+  const token = staffSession.get()?.sessionToken;
   let res;
   try {
     res = await fetch(`${BASE}${path}`, { method, cache: "no-store",
-      headers: { "Content-Type": "application/json", "X-Fulfillment-Admin-Token": token },
+      headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: body ? JSON.stringify(body) : undefined });
   } catch {
     return { status: 0, body: { error: "NETWORK" } };
   }
   let data = null;
   try { data = await res.json(); } catch { data = null; }
-  return { status: res.status, body: data || { error: res.status === 404 ? "UNAVAILABLE" : res.status === 403 ? "FORBIDDEN" : "FAILED" } };
+  return { status: res.status, body: data || { error: res.status === 404 ? "UNAVAILABLE" : "FAILED" } };
 }
 
 export const shippingApi = {
-  work: (token, from, to) => request("GET", `/work?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`, null, token),
-  label: (token, shipmentId) => request("GET", `/label/${encodeURIComponent(shipmentId)}`, null, token),
-  prepare: (token, body) => request("POST", "/prepare", body, token),
-  ship: (token, body) => request("POST", "/ship", body, token),
-  hold: (token, body) => request("POST", "/hold", body, token),
-  resume: (token, body) => request("POST", "/resume", body, token),
+  login: (email) => request("POST", "/auth/login", { email }),
+  startSession: (token) => request("POST", "/auth/session", { token }),
+  signOut: () => request("DELETE", "/auth/session"),
+  work: (from, to) => request("GET", `/work?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
+  label: (shipmentId) => request("GET", `/label/${encodeURIComponent(shipmentId)}`),
+  prepare: (body) => request("POST", "/prepare", body),
+  ship: (body) => request("POST", "/ship", body),
+  hold: (body) => request("POST", "/hold", body),
+  resume: (body) => request("POST", "/resume", body),
 };
 
 // Product names for bean ids (the store's own titles).
@@ -55,8 +60,12 @@ export const BLOCKER_TEXT = {
   UNKNOWN_SHIPMENT_KIND: "発送の種類が不明です", UNKNOWN_SHIPMENT: "発送が見つかりません",
 };
 export const ERROR_TEXT = {
-  UNAVAILABLE: "発送管理は現在オフです（決済サーバーに発送管理用のトークンが設定されていません）。",
-  FORBIDDEN: "トークンが違います。",
+  UNAVAILABLE: "発送管理は現在オフです。",
+  EMAIL_REQUIRED: "メールアドレスを正しく入力してください。",
+  SIGN_IN_REQUIRED: "ログインしてください。", SESSION_EXPIRED: "ログインの有効期限（2時間）が過ぎたか、ログアウトされました。もう一度ログインしてください。",
+  LOGIN_LINK_INVALID: "ログインリンクが正しくありません。もう一度メールを送信してください。",
+  LOGIN_LINK_USED: "このログインリンクはすでに使われています。もう一度メールを送信してください。",
+  LOGIN_LINK_EXPIRED: "ログインリンクの有効期限（15分）が過ぎました。もう一度メールを送信してください。",
   NETWORK: "通信できませんでした。もう一度お試しください（同じ操作は二重に処理されません）。",
   FAILED: "処理できませんでした。時間をおいてもう一度お試しください。",
   RATE_LIMITED: "操作が続いたため、1分ほど待ってからお試しください。",

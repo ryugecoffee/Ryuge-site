@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  BLOCKER_TEXT, HOLD_TEXT, STATUS_TEXT, addDays, adminToken, beanName, dayLabel, errorText, jstToday, newRequestId, shipmentLabel, shippingApi,
+  BLOCKER_TEXT, HOLD_TEXT, STATUS_TEXT, addDays, beanName, dayLabel, errorText, jstToday, newRequestId, shipmentLabel, shippingApi, staffSession,
 } from "../lib/subscriptionShippingAdmin";
 
 // 珈琲の定期便 ④: the shop's shipping page. Pick two different beans → 発送準備 (one bag of each reserved) → 発送済み
@@ -16,17 +16,28 @@ function useRequestIds() {
   };
 }
 
-function TokenForm({ onSet, message }) {
-  const [value, setValue] = useState("");
+function SignIn({ message }) {
+  const [email, setEmail] = useState("");
+  const [state, setState] = useState({ busy: false, sent: false, message: "" });
+  async function submit(event) {
+    event.preventDefault();
+    setState({ busy: true, sent: false, message: "" });
+    const r = await shippingApi.login(email);
+    setState(r.status === 200 ? { busy: false, sent: true, message: "" } : { busy: false, sent: false, message: errorText(r.body.error) });
+  }
   return (
-    <form className="subm-card" onSubmit={(e) => { e.preventDefault(); if (value.trim()) onSet(value.trim()); }}>
+    <form className="subm-card" onSubmit={submit}>
       <h2>発送管理にログイン</h2>
-      <p className="subm-text">発送管理用のトークンを入力してください。このタブを閉じると消えます。</p>
-      {message && <p className="subm-alert" role="alert">{message}</p>}
-      <label className="subm-field"><span className="subm-label">トークン</span>
-        <input type="password" autoComplete="off" value={value} onChange={(e) => setValue(e.target.value)} />
-      </label>
-      <button className="subm-primary" type="submit" disabled={!value.trim()}>表示する</button>
+      <p className="subm-text">登録された店舗スタッフのメールアドレスを入力してください。ログイン用のリンクをお送りします（15分間有効・1回限り）。ログイン後は2時間有効で、このタブを閉じると消えます。</p>
+      {(state.message || message) && <p className="subm-alert" role="alert">{state.message || message}</p>}
+      {state.sent ? <p className="subm-ok" role="status">登録されたアドレスの場合、ログイン用のリンクをお送りしました。メールをご確認ください。</p> : (
+        <>
+          <label className="subm-field"><span className="subm-label">メールアドレス</span>
+            <input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </label>
+          <button className="subm-primary" type="submit" disabled={state.busy || !email.trim()}>ログインリンクを送る</button>
+        </>
+      )}
     </form>
   );
 }
@@ -58,7 +69,7 @@ function Label({ label, onClose }) {
   );
 }
 
-function Delivery({ d, beans, token, onChanged }) {
+function Delivery({ d, beans, onChanged, onSignedOut }) {
   const ids = useRequestIds();
   const usable = beans.filter((b) => b.available > 0);
   const [pick, setPick] = useState({ a: "", b: "" });
@@ -81,20 +92,20 @@ function Delivery({ d, beans, token, onChanged }) {
       onChanged();
       return;
     }
-    if (r.status === 401 || r.status === 403) adminToken.clear();
+    if (r.status === 401) { onSignedOut(errorText(r.body.error)); return; }
     const detail = Array.isArray(r.body.detail) ? `（${r.body.detail.map((c) => BLOCKER_TEXT[c] || c).join("、")}）` : "";
     setState({ busy: false, message: errorText(r.body.error) + detail, ok: "" });
   }
-  const prepare = () => run("prepare", (requestId) => shippingApi.prepare(token, { shipmentId: d.shipmentId, skus: [pick.a, pick.b], requestId }), "発送準備中にしました。");
+  const prepare = () => run("prepare", (requestId) => shippingApi.prepare({ shipmentId: d.shipmentId, skus: [pick.a, pick.b], requestId }), "発送準備中にしました。");
   const ship = () => {
     if (!window.confirm(`${d.ref}（${shipmentLabel(d)}）を発送済みにします。在庫が減ります。よろしいですか？`)) return;
-    run("ship", (requestId) => shippingApi.ship(token, { shipmentId: d.shipmentId, requestId, trackingNumber: tracking.trim() || null }), "発送済みにしました。");
+    run("ship", (requestId) => shippingApi.ship({ shipmentId: d.shipmentId, requestId, trackingNumber: tracking.trim() || null }), "発送済みにしました。");
   };
-  const hold = () => run("hold", (requestId) => shippingApi.hold(token, { shipmentId: d.shipmentId, requestId, reason }), "保留にしました。");
-  const resume = () => run("resume", (requestId) => shippingApi.resume(token, { shipmentId: d.shipmentId, requestId }), "発送予定に戻しました。");
+  const hold = () => run("hold", (requestId) => shippingApi.hold({ shipmentId: d.shipmentId, requestId, reason }), "保留にしました。");
+  const resume = () => run("resume", (requestId) => shippingApi.resume({ shipmentId: d.shipmentId, requestId }), "発送予定に戻しました。");
   async function showLabel() {
     setState({ busy: true, message: "", ok: "" });
-    const r = await shippingApi.label(token, d.shipmentId);
+    const r = await shippingApi.label(d.shipmentId);
     setState({ busy: false, message: r.status === 200 ? "" : errorText(r.body.error), ok: "" });
     if (r.status === 200) setLabel(r.body);
   }
@@ -174,7 +185,7 @@ function Delivery({ d, beans, token, onChanged }) {
 const FILTERS = { todo: "対応が必要", all: "すべて", shipped: "発送済み" };
 
 export default function SubscriptionShippingAdminPage() {
-  const [token, setToken] = useState(adminToken.get());
+  const [signedIn, setSignedIn] = useState(() => Boolean(staffSession.get()));
   const [range, setRange] = useState(() => ({ from: jstToday(), to: addDays(jstToday(), 14) }));
   const [filter, setFilter] = useState("todo");
   const [work, setWork] = useState(null);
@@ -188,33 +199,54 @@ export default function SubscriptionShippingAdminPage() {
     return () => meta.remove();
   }, []);
 
+  const signedOut = useCallback((text) => { staffSession.clear(); setSignedIn(false); setWork(null); setMessage(text || ""); }, []);
   const apply = useCallback((r) => {
     setLoading(false);
     if (r.status === 200) { setWork(r.body); setMessage(""); return; }
-    if (r.status === 403) { adminToken.clear(); setToken(""); }
+    if (r.status === 401) { signedOut(errorText(r.body.error)); return; }
     setWork(null);
     setMessage(errorText(r.body.error));
-  }, []);
+  }, [signedOut]);
   const load = useCallback(() => {
-    if (!token) return;
+    if (!signedIn) return;
     setLoading(true);
-    shippingApi.work(token, range.from, range.to).then(apply);
-  }, [token, range, apply]);
-  // First view after the token is entered, for the default range (another range is applied with 更新).
-  useEffect(() => {
-    if (!token) return undefined;
-    let alive = true;
-    shippingApi.work(token, jstToday(), addDays(jstToday(), 14)).then((r) => { if (alive) apply(r); });
-    return () => { alive = false; };
-  }, [token, apply]);
+    shippingApi.work(range.from, range.to).then(apply);
+  }, [signedIn, range, apply]);
 
-  if (!token) {
+  // A sign-in link: #login=<token> (kept out of server logs and referrers), exchanged once for a session.
+  useEffect(() => {
+    const exchange = () => {
+      const token = new URLSearchParams(window.location.hash.slice(1)).get("login");
+      if (!token) return;
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+      shippingApi.startSession(token).then((r) => {
+        if (r.status === 200) { staffSession.set(r.body); setMessage(""); setSignedIn(true); } else signedOut(errorText(r.body.error));
+      });
+    };
+    exchange();
+    window.addEventListener("hashchange", exchange);
+    return () => window.removeEventListener("hashchange", exchange);
+  }, [signedOut]);
+  // First view after signing in, for the default range (another range is applied with 更新).
+  useEffect(() => {
+    if (!signedIn) return undefined;
+    let alive = true;
+    shippingApi.work(jstToday(), addDays(jstToday(), 14)).then((r) => { if (alive) apply(r); });
+    return () => { alive = false; };
+  }, [signedIn, apply]);
+
+  async function signOut() {
+    await shippingApi.signOut();
+    signedOut("");
+  }
+
+  if (!signedIn) {
     return (
       <div className="legal-page-shell">
         <main className="legal-main">
           <div className="legal-document subm ship-admin">
             <h1>定期便 発送管理</h1>
-            <TokenForm message={message} onSet={(v) => { adminToken.set(v); setToken(v); }} />
+            <SignIn message={message} />
           </div>
         </main>
       </div>
@@ -231,7 +263,7 @@ export default function SubscriptionShippingAdminPage() {
         <label className="subm-field"><span className="subm-label">から</span><input type="date" value={range.from} onChange={(e) => setRange({ ...range, from: e.target.value })} /></label>
         <label className="subm-field"><span className="subm-label">まで</span><input type="date" value={range.to} onChange={(e) => setRange({ ...range, to: e.target.value })} /></label>
         <button className="subm-secondary" type="submit" disabled={loading}>{loading ? "読み込み中…" : "更新"}</button>
-        <button className="subm-secondary" type="button" onClick={() => { adminToken.clear(); setToken(""); setWork(null); }}>ログアウト</button>
+        <button className="subm-secondary" type="button" onClick={signOut}>ログアウト</button>
       </form>
       {message && <p className="subm-alert" role="alert">{message}</p>}
       {work && (
@@ -244,7 +276,7 @@ export default function SubscriptionShippingAdminPage() {
             </div>
             {shown.length === 0 ? <p className="subm-text">この期間に対象の発送はありません。</p> : (
               <ul className="ship-list">
-                {shown.map((d) => <Delivery key={d.shipmentId} d={d} beans={work.stock.beans} token={token} onChanged={load} />)}
+                {shown.map((d) => <Delivery key={d.shipmentId} d={d} beans={work.stock.beans} onChanged={load} onSignedOut={signedOut} />)}
               </ul>
             )}
           </section>
