@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
-import { DOMESTIC } from "../lib/shippingPolicy";
 
 // Shipping policy (CEO, 2026-11-17; domestic 2026-11-19). Amounts are charged as calculated by the payment server
-// (server/quote.js, server/domestic-shipping.js); the Yu-Pack table below is the same table (src/lib/shippingPolicy.js).
+// (server/quote.js, server/domestic-shipping.js).
 const TEXT = {
   ja: {
     eyebrow: "配送・送料",
@@ -12,12 +11,11 @@ const TEXT = {
     sections: [
       {
         title: "国内送料（1回のご注文につき1回）",
-        body: "コーヒー豆（100g）1〜2袋：クリックポストで全国一律250円（北海道・九州・沖縄も250円）\n3袋以上：ゆうパックで、お届け先の地域と箱のサイズによる送料（下の表）\n\nお届け先の都道府県とご注文の袋数から自動で計算し、お支払い前の合計に含めて表示します。商品ごとには加算しません。\nコーヒー豆以外の商品（一煎袋・ティーバッグなど）を含むご注文は、本州・四国250円／北海道・九州500円／沖縄550円です。",
-        yupack: true,
+        body: "コーヒー豆（100g）1〜2袋：クリックポストで全国一律250円（北海道・九州・沖縄も250円）\n3〜15袋：ゆうパックで、本州・四国250円／北海道・九州500円／沖縄550円\n16袋以上：お問い合わせください\n\nお届け先の都道府県とご注文の袋数から自動で計算し、お支払い前の合計に含めて表示します。商品ごとには加算しません。\nコーヒー豆以外の商品（一煎袋・ティーバッグなど）を含むご注文は、本州・四国250円／北海道・九州500円／沖縄550円です。",
       },
       {
         title: "国内の配送方法",
-        body: "1〜2袋：クリックポスト（郵便受けへのお届け・追跡あり・日時指定不可）\n3袋以上：ゆうパック（対面でのお届け・追跡あり）\n16袋以上のご注文はお問い合わせください。",
+        body: "1〜2袋：クリックポスト（郵便受けへのお届け・追跡あり・日時指定不可）\n3〜15袋：ゆうパック（対面でのお届け・追跡あり）\n16袋以上のご注文はお問い合わせください。",
       },
       {
         title: "定期便は全国一律・送料込み",
@@ -49,8 +47,7 @@ const TEXT = {
     sections: [
       {
         title: "Shipping in Japan (once per order)",
-        body: "Coffee beans (100 g), 1–2 bags: Click Post, ¥250 anywhere in Japan (Hokkaido, Kyushu and Okinawa included)\n3 bags or more: Yu-Pack, by destination region and box size (table below)\n\nCalculated from the delivery prefecture and the number of bags, and shown in the total before payment. Not charged per item.\nOrders with items other than coffee beans (drip bags, tea bags, etc.): Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550.",
-        yupack: true,
+        body: "Coffee beans (100 g), 1–2 bags: Click Post, ¥250 anywhere in Japan (Hokkaido, Kyushu and Okinawa included)\n3–15 bags: Yu-Pack, Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550\n16 bags or more: please contact us\n\nCalculated from the delivery prefecture and the number of bags, and shown in the total before payment. Not charged per item.\nOrders with items other than coffee beans (drip bags, tea bags, etc.): Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550.",
       },
       {
         title: "Delivery method in Japan",
@@ -86,8 +83,7 @@ const TEXT = {
     sections: [
       {
         title: "Envío en Japón (una vez por pedido)",
-        body: "Café en grano (100 g), 1–2 bolsas: Click Post, ¥250 a todo Japón (también Hokkaido, Kyushu y Okinawa)\n3 bolsas o más: Yu-Pack, según la región de destino y el tamaño de la caja (tabla abajo)\n\nSe calcula según la prefectura de entrega y el número de bolsas, y se muestra en el total antes del pago. No se cobra por artículo.\nPedidos con artículos que no son café en grano (bolsas de goteo, té, etc.): Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550.",
-        yupack: true,
+        body: "Café en grano (100 g), 1–2 bolsas: Click Post, ¥250 a todo Japón (también Hokkaido, Kyushu y Okinawa)\n3–15 bolsas: Yu-Pack, Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550\n16 bolsas o más: contáctanos\n\nSe calcula según la prefectura de entrega y el número de bolsas, y se muestra en el total antes del pago. No se cobra por artículo.\nPedidos con artículos que no son café en grano (bolsas de goteo, té, etc.): Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550.",
       },
       {
         title: "Método de envío en Japón",
@@ -116,32 +112,6 @@ const TEXT = {
   },
 };
 
-const TABLE_TEXT = {
-  ja: { caption: "ゆうパック送料（3袋以上・神奈川県から発送）", region: "お届け先", size: (n, bags) => `${n}サイズ（${bags}）`, bags: (from, to) => `${from}〜${to}袋` },
-  en: { caption: "Yu-Pack shipping (3 bags or more, sent from Kanagawa)", region: "Destination", size: (n, bags) => `Size ${n} (${bags})`, bags: (from, to) => `${from}–${to} bags` },
-  es: { caption: "Envío Yu-Pack (3 bolsas o más, desde Kanagawa)", region: "Destino", size: (n, bags) => `Tamaño ${n} (${bags})`, bags: (from, to) => `${from}–${to} bolsas` },
-};
-
-function YupackTable({ lang }) {
-  const t = TABLE_TEXT[lang] || TABLE_TEXT.ja;
-  const sizes = DOMESTIC.yupackSizes.map((s, i) => ({ ...s, from: i === 0 ? DOMESTIC.clickpostMaxBags + 1 : DOMESTIC.yupackSizes[i - 1].maxBags + 1 }));
-  return (
-    <div className="shipping-table-wrap">
-      <table className="shipping-table">
-        <caption>{t.caption}</caption>
-        <thead>
-          <tr><th scope="col">{t.region}</th>{sizes.map((s) => <th key={s.size} scope="col">{t.size(s.size, t.bags(s.from, s.maxBags))}</th>)}</tr>
-        </thead>
-        <tbody>
-          {DOMESTIC.yupackZones.map((z) => (
-            <tr key={z.key}><th scope="row">{z.label[lang] || z.label.ja}</th>{sizes.map((s) => <td key={s.size}>{`¥${z.rates[s.size].toLocaleString()}`}</td>)}</tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 export default function ShippingPage({ lang }) {
   const t = TEXT[lang] || TEXT.ja;
 
@@ -158,7 +128,6 @@ export default function ShippingPage({ lang }) {
               <section key={section.title}>
                 <h2>{section.title}</h2>
                 <p className="pre-line">{section.body}</p>
-                {section.yupack && <YupackTable lang={lang} />}
               </section>
             ))}
           </div>

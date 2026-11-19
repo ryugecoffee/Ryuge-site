@@ -21,7 +21,7 @@ const fails = (fn, code, contact) => assert.throws(fn, (error) => {
   return true;
 });
 
-test("domestic (2026-11-19): beans 1–2 bags by Click Post ¥250 everywhere; 3+ by Yu-Pack (refused until confirmed); other products as before", () => {
+test("domestic (2026-11-19): beans 1–2 bags by Click Post ¥250 everywhere; 3–15 by Yu-Pack at the regional fee; other products unchanged", () => {
   for (const pref of ["神奈川県", "東京都", "高知県", "北海道", "福岡県", "鹿児島県", "沖縄県"]) {
     assert.equal(domesticShipping([{ quantity: 1, clickpost: true }], pref).shipping, 250, pref);
     assert.equal(quoteOrder([beans("enma-karamo", 1), beans("enma-kindiio", 1)], { prefecture: pref }).shipping, 250, `2 bags to ${pref}`);
@@ -31,14 +31,16 @@ test("domestic (2026-11-19): beans 1–2 bags by Click Post ¥250 everywhere; 3+
   const two = quoteOrder([beans("enma-karamo", 2)], { prefecture: "北海道" });
   assert.equal(two.total, 2 * 1800 + 250, "one fee per order, never per item");
   assert.deepEqual([two.shippingDetail.method, two.shippingDetail.bags], ["clickpost", 2]);
-  // 3 bags or more: Yu-Pack. Until the CEO confirms the table, no payment is possible (contact us).
-  fails(() => quoteOrder([beans("enma-karamo", 3)], { prefecture: "東京都" }), "YUPACK_RATE_PENDING", true);
-  fails(() => quoteOrder([beans("enma-karamo", 2), beans("enma-kindiio", 1)], { prefecture: "沖縄県" }), "YUPACK_RATE_PENDING", true);
-  // Other products (drip bags, tea): the earlier regional fee, for now.
+  const three = quoteOrder([beans("enma-karamo", 3)], { prefecture: "北海道" });
+  assert.deepEqual([three.shipping, three.shippingDetail.method], [500, "yupack"]);
+  assert.equal(quoteOrder([beans("enma-karamo", 2), beans("enma-kindiio", 1)], { prefecture: "沖縄県" }).shipping, 550);
+  assert.equal(quoteOrder([beans("enma-karamo", 9)], { prefecture: "東京都" }).shipping, 250);
+  fails(() => quoteOrder([beans("enma-karamo", 16)], { prefecture: "東京都" }), "DOMESTIC_CONTACT_LARGE_ORDER", true);
+  // Other products (drip bags, tea): the regional fee, unchanged.
   assert.equal(quoteOrder([beans("enma-coffee-bag", 1)], { prefecture: "北海道" }).shipping, 500);
   assert.equal(quoteOrder([beans("enma-karamo", 1), beans("enma-coffee-bag", 1)], { prefecture: "沖縄県" }).shipping, 550);
   assert.equal(quoteOrder([beans("woodbox-tea-bag", 1)], { prefecture: "東京都" }).shipping, 250);
-  assert.equal(quoteOrder([beans("enma-karamo", 12), beans("enma-coffee-bag", 1)], { prefecture: "沖縄県" }).shipping, 550, "mixed orders: no bag rule yet");
+  assert.equal(quoteOrder([beans("enma-karamo", 20), beans("enma-coffee-bag", 1)], { prefecture: "沖縄県" }).shipping, 550, "mixed orders: as before");
 });
 
 test("international: subsidy is 30% of the real rate, capped at 1,000 yen, rounded down to the yen", () => {

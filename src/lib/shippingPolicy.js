@@ -3,30 +3,21 @@
 // in server/international-rates.js (a server test checks it).
 export const CONTACT_EMAIL = "ryugecoffee@gmail.com";
 
-// Domestic shipping as shown to customers (2026-11-19). Must equal server/domestic-shipping.js (a server test checks it).
-// Coffee beans 100 g, 1–2 bags: クリックポスト 250 yen nationwide. 3+ bags: ゆうパック from Kanagawa by destination and box
-// size (Japan Post base rates of 2026-10-01). Orders with other products: the earlier regional fee.
+// Domestic shipping as shown to customers (2026-11-19, final). Must equal server/domestic-shipping.js (a server test checks
+// it). Coffee beans 100 g, 1–2 bags: クリックポスト 250 yen nationwide. 3–15 bags: ゆうパック at the regional fee (Honshu/
+// Shikoku 250, Hokkaido/Kyushu 500, Okinawa 550). 16+: contact us. Orders with other products: the regional fee.
 export const DOMESTIC = {
   clickpostFee: 250,
   clickpostMaxBags: 2,
-  yupackSizes: [{ size: 60, maxBags: 6 }, { size: 80, maxBags: 15 }],
-  yupackZones: [
-    { key: "kanagawa", label: { ja: "神奈川県", en: "Kanagawa", es: "Kanagawa" }, rates: { 60: 840, 80: 1150 } },
-    { key: "kanto_tohoku_shinetsu_hokuriku_tokai", label: { ja: "東北・関東・信越・北陸・東海", en: "Tohoku, Kanto, Shinetsu, Hokuriku, Tokai", es: "Tohoku, Kanto, Shinetsu, Hokuriku, Tokai" }, rates: { 60: 970, 80: 1320 } },
-    { key: "kinki", label: { ja: "近畿", en: "Kinki", es: "Kinki" }, rates: { 60: 1090, 80: 1440 } },
-    { key: "chugoku_shikoku", label: { ja: "中国・四国", en: "Chugoku, Shikoku", es: "Chugoku, Shikoku" }, rates: { 60: 1270, 80: 1580 } },
-    { key: "kyushu", label: { ja: "九州", en: "Kyushu", es: "Kyushu" }, rates: { 60: 1550, 80: 1880 } },
-    { key: "hokkaido", label: { ja: "北海道", en: "Hokkaido", es: "Hokkaido" }, rates: { 60: 1550, 80: 1880 } },
-    { key: "okinawa", label: { ja: "沖縄", en: "Okinawa", es: "Okinawa" }, rates: { 60: 1600, 80: 1990 } },
-  ],
+  maxBags: 15,
   regional: { standard: 250, hokkaidoKyushu: 500, okinawa: 550 },
 };
 
 // The method shown next to the domestic fee (the server's shippingDetail.method / size).
 export const DOMESTIC_METHOD_LABELS = {
-  ja: { clickpost: "クリックポスト（ポスト投函・追跡あり）", yupack: (size) => `ゆうパック ${size}サイズ（対面・追跡あり）`, regional: "コーヒー豆以外の商品を含むご注文の送料" },
-  en: { clickpost: "Click Post (mailbox delivery, tracked)", yupack: (size) => `Yu-Pack size ${size} (hand delivery, tracked)`, regional: "Shipping for orders with items other than coffee beans" },
-  es: { clickpost: "Click Post (entrega en buzón, con seguimiento)", yupack: (size) => `Yu-Pack tamaño ${size} (entrega en mano, con seguimiento)`, regional: "Envío para pedidos con artículos que no son café en grano" },
+  ja: { clickpost: "クリックポスト（ポスト投函・追跡あり）", yupack: "ゆうパック（対面でのお届け・追跡あり）", regional: "コーヒー豆以外の商品を含むご注文の送料" },
+  en: { clickpost: "Click Post (mailbox delivery, tracked)", yupack: "Yu-Pack (handed to you, tracked)", regional: "Shipping for orders with items other than coffee beans" },
+  es: { clickpost: "Click Post (entrega en buzón, con seguimiento)", yupack: "Yu-Pack (entrega en mano, con seguimiento)", regional: "Envío para pedidos con artículos que no son café en grano" },
 };
 export const INTERNATIONAL_COUNTRY_CODES = ["TW", "HK", "SG"];
 export const OTHER_COUNTRY = "OTHER";
@@ -45,7 +36,6 @@ export const SERVICE_LABELS = {
 export const QUOTE_MESSAGES = {
   ja: {
     PREFECTURE_REQUIRED: "都道府県を選択してください。",
-    YUPACK_RATE_PENDING: "3袋以上のご注文の送料（ゆうパック）は準備中です。2袋までにしていただくか、お問い合わせください。",
     DOMESTIC_CONTACT_LARGE_ORDER: "16袋以上のご注文はお問い合わせください。",
     COUNTRY_NOT_AVAILABLE: "現在、この国・地域へのお届けは承っておりません。ご希望の場合はお問い合わせください。",
     INTL_MIN_BAGS: "海外へのお届けは2袋（100g×2）からのご注文となります。",
@@ -62,7 +52,6 @@ export const QUOTE_MESSAGES = {
   },
   en: {
     PREFECTURE_REQUIRED: "Please choose a prefecture.",
-    YUPACK_RATE_PENDING: "Shipping for 3 bags or more (Yu-Pack) is being prepared. Please order up to 2 bags or contact us.",
     DOMESTIC_CONTACT_LARGE_ORDER: "For orders of 16 bags or more, please contact us.",
     COUNTRY_NOT_AVAILABLE: "We do not currently ship to this country or region. Please contact us if you would like to order.",
     INTL_MIN_BAGS: "International orders start from 2 bags (100 g × 2).",
@@ -79,7 +68,6 @@ export const QUOTE_MESSAGES = {
   },
   es: {
     PREFECTURE_REQUIRED: "Elige una prefectura.",
-    YUPACK_RATE_PENDING: "El envío para 3 bolsas o más (Yu-Pack) está en preparación. Pide hasta 2 bolsas o contáctanos.",
     DOMESTIC_CONTACT_LARGE_ORDER: "Para pedidos de 16 bolsas o más, contáctanos.",
     COUNTRY_NOT_AVAILABLE: "Actualmente no enviamos a este país o región. Contáctanos si deseas hacer un pedido.",
     INTL_MIN_BAGS: "Los pedidos internacionales son a partir de 2 bolsas (100 g × 2).",
@@ -98,7 +86,7 @@ export const QUOTE_MESSAGES = {
 
 export const POLICY_TEXT = {
   ja: {
-    domesticShipping: "国内送料（1回のご注文につき1回）：コーヒー豆100g 1〜2袋はクリックポストで全国一律250円（北海道・九州・沖縄も同額）。3袋以上はゆうパックで、お届け先と箱のサイズによります。",
+    domesticShipping: "国内送料（1回のご注文につき1回）：コーヒー豆100g 1〜2袋はクリックポストで全国一律250円（北海道・九州・沖縄も同額）。3袋以上はゆうパックで、本州・四国250円／北海道・九州500円／沖縄550円。",
     subsidy: (actual, subsidy) => `実際の送料 ¥${actual.toLocaleString()} のうち ¥${subsidy.toLocaleString()} をRYUGE Coffeeが負担しています（送料の30%・上限1,000円）。`,
     duties: "関税・輸入税・現地の手数料は、お客様（受取人）のご負担となります。お届け時に請求される場合があります。",
     intlLimits: "海外へのお届け：コーヒー豆 2〜6袋（100g×2〜6、1注文600gまで）。7袋以上はお問い合わせください。",
@@ -106,7 +94,7 @@ export const POLICY_TEXT = {
     contactLink: "お問い合わせ（メール）",
   },
   en: {
-    domesticShipping: "Shipping in Japan (once per order): 1–2 bags of coffee beans (100 g) by Click Post, ¥250 anywhere in Japan (Hokkaido, Kyushu and Okinawa too). 3 bags or more by Yu-Pack, by destination and box size.",
+    domesticShipping: "Shipping in Japan (once per order): 1–2 bags of coffee beans (100 g) by Click Post, ¥250 anywhere in Japan (Hokkaido, Kyushu and Okinawa too). 3 bags or more by Yu-Pack: Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550.",
     subsidy: (actual, subsidy) => `Of the actual ¥${actual.toLocaleString()} shipping, RYUGE Coffee covers ¥${subsidy.toLocaleString()} (30% of shipping, up to ¥1,000).`,
     duties: "Import duties, taxes and local fees are paid by the customer (recipient) and may be charged on delivery.",
     intlLimits: "International orders: 2–6 bags of coffee beans (100 g × 2–6, up to 600 g per order). For 7 bags or more, please contact us.",
@@ -114,7 +102,7 @@ export const POLICY_TEXT = {
     contactLink: "Contact us (email)",
   },
   es: {
-    domesticShipping: "Envío en Japón (una vez por pedido): 1–2 bolsas de café en grano (100 g) por Click Post, ¥250 a todo Japón (también Hokkaido, Kyushu y Okinawa). 3 bolsas o más por Yu-Pack, según destino y tamaño de caja.",
+    domesticShipping: "Envío en Japón (una vez por pedido): 1–2 bolsas de café en grano (100 g) por Click Post, ¥250 a todo Japón (también Hokkaido, Kyushu y Okinawa). 3 bolsas o más por Yu-Pack: Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550.",
     subsidy: (actual, subsidy) => `Del envío real de ¥${actual.toLocaleString()}, RYUGE Coffee cubre ¥${subsidy.toLocaleString()} (30% del envío, hasta ¥1,000).`,
     duties: "Los aranceles, impuestos de importación y tasas locales corren por cuenta del cliente (destinatario) y pueden cobrarse en la entrega.",
     intlLimits: "Pedidos internacionales: 2–6 bolsas de café en grano (100 g × 2–6, hasta 600 g por pedido). Para 7 bolsas o más, contáctanos.",

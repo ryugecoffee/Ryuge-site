@@ -4258,11 +4258,3 @@ html[lang="es"] .story-body {
 .ship-admin .ship-stock li { display: flex; justify-content: space-between; gap: 12px; }
 .legal-document.ship-admin { width: min(980px, calc(100% - 32px)); }
 .coffee-sub-manage-link { display: inline-block; margin-top: 10px; font-size: 13px; }
-
-/* Shipping page: the Yu-Pack table (2026-11-19) */
-.shipping-table-wrap { margin-top: 14px; overflow-x: auto; }
-.shipping-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; color: rgba(255, 255, 255, 0.82); }
-.shipping-table caption { text-align: left; padding-bottom: 8px; font-size: 0.82rem; color: rgba(255, 255, 255, 0.6); }
-.shipping-table th, .shipping-table td { padding: 8px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); text-align: right; white-space: nowrap; }
-.shipping-table th[scope="row"], .shipping-table thead th:first-child { text-align: left; white-space: normal; }
-.shipping-table th[scope="row"], .shipping-table thead th:first-child { min-width: 8.5em; }

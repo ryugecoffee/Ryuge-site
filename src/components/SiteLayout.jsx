@@ -83,7 +83,7 @@ export default function SiteLayout({ lang, setLang }) {
                     <span className="cart-total-amount">¥{cartTotal.toLocaleString()}</span>
                   </div>
                   <p className="cart-total-note">
-                    {lang === "ja" ? "税込価格。送料は決済画面で計算します（1回のご注文につき1回。コーヒー豆1〜2袋は全国一律250円、3袋以上はゆうパック）。" : lang === "es" ? "Precios con impuestos incluidos. El envío se calcula en el pago (una vez por pedido; 1–2 bolsas de café ¥250 a todo Japón, 3 o más por Yu-Pack)." : "Prices include tax. Shipping is calculated at checkout (once per order; 1–2 bags of beans ¥250 anywhere in Japan, 3+ by Yu-Pack)."}
+                    {lang === "ja" ? "税込価格。送料は決済画面で計算します（1回のご注文につき1回。コーヒー豆1〜2袋は全国一律250円、3袋以上は本州・四国250円／北海道・九州500円／沖縄550円）。" : lang === "es" ? "Precios con impuestos incluidos. El envío se calcula en el pago (una vez por pedido; 1–2 bolsas de café ¥250 a todo Japón; 3 o más: ¥250 / ¥500 Hokkaido y Kyushu / ¥550 Okinawa)." : "Prices include tax. Shipping is calculated at checkout (once per order; 1–2 bags of beans ¥250 anywhere in Japan; 3+: ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550)."}
                   </p>
 
                   <button className="cart-checkout-button" onClick={() => { setIsCartOpen(false); navigate("/checkout"); }}>

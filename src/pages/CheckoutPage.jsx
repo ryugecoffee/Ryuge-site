@@ -652,7 +652,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           <p data-testid="domestic-method" style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)", lineHeight: 1.8, marginTop: "8px", marginBottom: 0 }}>
             {(() => {
               const labels = DOMESTIC_METHOD_LABELS[lang] || DOMESTIC_METHOD_LABELS.ja;
-              return quote.shippingDetail.method === "yupack" ? labels.yupack(quote.shippingDetail.size) : labels[quote.shippingDetail.method] || "";
+              return labels[quote.shippingDetail.method] || "";
             })()}
           </p>
         )}

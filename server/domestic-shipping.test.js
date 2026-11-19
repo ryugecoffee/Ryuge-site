@@ -1,7 +1,8 @@
 "use strict";
 
-// 2026-11-19 CEO decision: domestic shipping by Click Post (1–2 bags of beans, ¥250 nationwide) and Yu-Pack (3+ bags,
-// Japan Post base rates from Kanagawa of 2026-10-01). The storefront's numbers must equal the server's.
+// 2026-11-19 CEO decision (final): 100 g bean bags 1–2 → Click Post ¥250 nationwide; 3–15 → Yu-Pack at the earlier
+// regional fee (Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550; the shop pays the rest); 16+ → contact;
+// other products and international unchanged. The storefront's numbers must equal the server's.
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const path = require("node:path");
@@ -10,68 +11,57 @@ const D = require("./domestic-shipping");
 const { quoteOrder, QuoteError } = require("./quote");
 const { CATALOG } = require("./catalog");
 
-const confirmed = { yupack: { ...D.YUPACK, confirmed: true } };
 const bag = (quantity) => ({ quantity, clickpost: true });
 const code = (fn) => { try { fn(); return null; } catch (e) { return [e.code, e.contact]; } };
+const HOKKAIDO_KYUSHU = ["北海道", "福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県"];
+const regional = (p) => (p === "沖縄県" ? 550 : HOKKAIDO_KYUSHU.includes(p) ? 500 : 250);
 
-test("boundaries: 1 and 2 bags Click Post ¥250 in every prefecture; 3 bags Yu-Pack 60; 6 → 60; 7 → 80; 15 → 80; 16 → contact", () => {
+test("all 47 prefectures at every boundary: 1, 2 → ¥250 Click Post; 3, 6, 7, 15 → regional fee by Yu-Pack; 16 → contact", () => {
+  assert.equal(D.PREFECTURES.length, 47);
   for (const p of D.PREFECTURES) {
     for (const n of [1, 2]) assert.deepEqual([D.domesticShipping([bag(n)], p).shipping, D.domesticShipping([bag(n)], p).detail.method], [250, "clickpost"], `${p} ${n}`);
+    for (const n of [3, 6, 7, 15]) assert.deepEqual([D.domesticShipping([bag(n)], p).shipping, D.domesticShipping([bag(n)], p).detail.method], [regional(p), "yupack"], `${p} ${n}`);
+    assert.deepEqual(code(() => D.domesticShipping([bag(16)], p)), ["DOMESTIC_CONTACT_LARGE_ORDER", true], p);
   }
-  const at = (n, p) => D.domesticShipping([bag(n)], p, confirmed);
-  assert.deepEqual([at(3, "東京都").shipping, at(3, "東京都").detail.size], [970, 60]);
-  assert.deepEqual([at(6, "東京都").shipping, at(6, "東京都").detail.size], [970, 60]);
-  assert.deepEqual([at(7, "東京都").shipping, at(7, "東京都").detail.size], [1320, 80]);
-  assert.deepEqual([at(15, "東京都").shipping, at(15, "東京都").detail.size], [1320, 80]);
-  assert.deepEqual(code(() => at(16, "東京都")), ["DOMESTIC_CONTACT_LARGE_ORDER", true]);
   // Bags of several products count together; still one fee per order.
-  assert.equal(D.domesticShipping([bag(1), bag(1), bag(1)], "大阪府", confirmed).shipping, 1090);
+  assert.equal(D.domesticShipping([bag(1), bag(1), bag(1)], "沖縄県").shipping, 550);
+  assert.equal(D.domesticShipping([bag(1), bag(1)], "沖縄県").shipping, 250);
 });
 
-test("Yu-Pack from Kanagawa: Japan Post's zones and 2026-10-01 base rates (60 / 80)", () => {
-  const expect = { "神奈川県": [840, 1150], "東京都": [970, 1320], "青森県": [970, 1320], "新潟県": [970, 1320], "石川県": [970, 1320], "愛知県": [970, 1320],
-    "大阪府": [1090, 1440], "広島県": [1270, 1580], "高知県": [1270, 1580], "福岡県": [1550, 1880], "鹿児島県": [1550, 1880], "北海道": [1550, 1880], "沖縄県": [1600, 1990] };
-  for (const [p, [r60, r80]] of Object.entries(expect)) {
-    assert.equal(D.domesticShipping([bag(3)], p, confirmed).shipping, r60, `${p} 60`);
-    assert.equal(D.domesticShipping([bag(10)], p, confirmed).shipping, r80, `${p} 80`);
-  }
-  assert.equal(Object.keys(D.ZONE_OF).length, 47, "every prefecture has a zone");
-  assert.deepEqual([...new Set(Object.values(D.ZONE_OF))].sort(), Object.keys(D.YUPACK.rates).sort());
+test("the shop's Yu-Pack cost table covers every prefecture (reference only, never charged)", () => {
+  assert.equal(Object.keys(D.ZONE_OF).length, 47);
+  assert.deepEqual([...new Set(Object.values(D.ZONE_OF))].sort(), Object.keys(D.YUPACK_COST.rates).sort());
+  assert.deepEqual(D.YUPACK_COST.rates.okinawa, { 60: 1600, 80: 1990, 100: 2480 });
+  // The customer's fee never depends on the box or the Japan Post rate.
+  for (const p of D.PREFECTURES) assert.ok(D.domesticShipping([bag(3)], p).shipping <= 550);
 });
 
-test("never charged from an unconfirmed or incomplete table; tampered or unknown input refused", () => {
-  assert.equal(D.YUPACK.confirmed, false, "the CEO confirms the table before 3+ bags can be paid");
-  assert.deepEqual(code(() => D.domesticShipping([bag(3)], "東京都")), ["YUPACK_RATE_PENDING", true]);
-  const broken = { yupack: { ...D.YUPACK, confirmed: true, rates: { ...D.YUPACK.rates, kinki: { 60: 0, 80: null } } } };
-  assert.deepEqual(code(() => D.domesticShipping([bag(3)], "大阪府", broken)), ["SHIPPING_RATE_UNAVAILABLE", true]);
+test("tampered or unknown input refused; the browser's price, shipping and category are never read", () => {
   assert.deepEqual(code(() => D.domesticShipping([bag(1)], "Tokyo")), ["PREFECTURE_REQUIRED", false]);
   assert.throws(() => D.domesticShipping([], "東京都"), /INVALID_ITEMS/);
-  // The browser's own shipping, price or category is never read: only ids, quantities and the prefecture.
   const q = quoteOrder([{ id: "enma-jimma", quantity: 1, price: 1, shipping: 0, category: "subscription", clickpost: false }], { prefecture: "沖縄県", shipping: 0 });
   assert.deepEqual([q.shipping, q.subtotal, q.shippingDetail.method], [250, 1500, "clickpost"]);
-  assert.throws(() => quoteOrder([{ id: "enma-jimma", quantity: 3 }], { prefecture: "沖縄県" }), (e) => e instanceof QuoteError && e.code === "YUPACK_RATE_PENDING" && e.contact === true);
+  const old = quoteOrder([{ id: "enma-jimma", quantity: 3, price: 1, shipping: 9999 }], { prefecture: "沖縄県" });
+  assert.deepEqual([old.shipping, old.total], [550, 4500 + 550]);
+  assert.throws(() => quoteOrder([{ id: "enma-jimma", quantity: 16 }], { prefecture: "沖縄県" }), (e) => e instanceof QuoteError && e.code === "DOMESTIC_CONTACT_LARGE_ORDER" && e.contact === true);
+  assert.throws(() => quoteOrder([{ id: "enma-jimma", quantity: 2.5 }], { prefecture: "東京都" }), /INVALID_ITEMS/);
+  assert.throws(() => quoteOrder([{ id: "enma-zen-dark-roast", quantity: 3 }], { prefecture: "東京都" }), /PROMO_LIMIT/, "promo limit unchanged");
 });
 
 test("which products go by Click Post: exactly the 100 g bean bags of the catalogue", () => {
   const flat = Object.entries(CATALOG).filter(([, p]) => p.clickpost).map(([id]) => id).sort();
   assert.deepEqual(flat, ["enma-amarelo-bourbon", "enma-andes-blue", "enma-jimma", "enma-karamo", "enma-kindiio", "enma-quequesques", "enma-zen-dark-roast"]);
   for (const id of flat) assert.deepEqual([CATALOG[id].kind, CATALOG[id].contentG], ["beans", 100], id);
-  // Two bags side by side (about 24 × 20 × 2.5 cm, 240 g) fit Click Post: longest side ≤ 34, three sides ≤ 60, ≤ 2 kg.
-  const packed = { long: 24, short: 20, thick: 2.5, grams: 2 * CATALOG["enma-jimma"].weightG };
-  assert.ok(packed.long <= 34 && packed.long + packed.short + packed.thick <= 60 && packed.thick <= 3 && packed.grams <= 2000);
 });
 
 test("international shipping unchanged: the same quote for the same order", () => {
   const q = quoteOrder([{ id: "enma-karamo", quantity: 2 }], { countryCode: "TW" });
   assert.equal(q.shippingDetail.service, "airpacket");
   assert.equal(q.shippingDetail.weightG, 390);
+  assert.equal(quoteOrder([{ id: "enma-karamo", quantity: 6 }], { countryCode: "SG" }).shippingDetail.service, "airpacket");
 });
 
 test("the storefront shows the server's numbers (src/lib/shippingPolicy.js DOMESTIC)", async () => {
   const { DOMESTIC } = await import(pathToFileURL(path.join(__dirname, "..", "src", "lib", "shippingPolicy.js")).href);
-  assert.equal(DOMESTIC.clickpostFee, D.CLICKPOST.fee);
-  assert.equal(DOMESTIC.clickpostMaxBags, D.CLICKPOST.maxBags);
-  assert.deepEqual(DOMESTIC.yupackSizes, D.YUPACK.sizes.map((s) => ({ ...s })));
-  assert.deepEqual(Object.fromEntries(DOMESTIC.yupackZones.map((z) => [z.key, z.rates])), JSON.parse(JSON.stringify(D.YUPACK.rates)));
-  assert.deepEqual(DOMESTIC.regional, { ...D.LEGACY_FEES });
+  assert.deepEqual(DOMESTIC, { clickpostFee: D.CLICKPOST.fee, clickpostMaxBags: D.CLICKPOST.maxBags, maxBags: D.MAX_BAGS, regional: { ...D.LEGACY_FEES } });
 });

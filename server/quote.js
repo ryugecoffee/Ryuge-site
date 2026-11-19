@@ -6,7 +6,7 @@
 // country/prefecture and coupon code is used.
 //
 // Domestic: one shipping fee per order, server/domestic-shipping.js (2026-11-19: 100 g bean bags 1–2 → クリックポスト
-// 250 yen nationwide; 3+ → ゆうパック by destination and box size; other products → the earlier regional fee).
+// 250 yen nationwide; 3–15 → ゆうパック at the earlier regional fee; 16+ → contact; other products → the regional fee).
 // International: only countries in INTERNATIONAL_COUNTRIES (shipping and import conditions confirmed); Japan Post
 // tracked rate for the packed weight, minus RYUGE's subsidy: min(30% of the rate, 1,000 yen), rounded down to the yen.
 // No rate -> no payment (the customer is asked to contact us). Duties, import taxes and local fees are the buyer's.
@@ -39,9 +39,9 @@ class QuoteError extends Error {
   }
 }
 
-function domesticShipping(items, prefecture, options) {
+function domesticShipping(items, prefecture) {
   try {
-    return DOMESTIC.domesticShipping(items, prefecture, options);
+    return DOMESTIC.domesticShipping(items, prefecture);
   } catch (error) {
     if (error instanceof DOMESTIC.DomesticShippingError) throw new QuoteError(error.code, { contact: error.contact });
     throw error;
@@ -90,7 +90,7 @@ function applyCoupon(subtotal, shipping, couponCode) {
 }
 
 // -> { items, subtotal, shipping, total, shippingDetail, countryCode, prefecture, coupon } or throws QuoteError.
-function quoteOrder(cartItems, { countryCode = "JP", prefecture = "", couponCode = "", now = Date.now(), domesticOptions } = {}, international = INTERNATIONAL) {
+function quoteOrder(cartItems, { countryCode = "JP", prefecture = "", couponCode = "", now = Date.now() } = {}, international = INTERNATIONAL) {
   let items;
   try {
     items = priceItems(cartItems);
@@ -103,7 +103,7 @@ function quoteOrder(cartItems, { countryCode = "JP", prefecture = "", couponCode
   let shipping;
   let shippingDetail;
   if (country === "JP") {
-    ({ shipping, detail: shippingDetail } = domesticShipping(items, String(prefecture || ""), domesticOptions));
+    ({ shipping, detail: shippingDetail } = domesticShipping(items, String(prefecture || "")));
   } else {
     ({ shipping, detail: shippingDetail } = internationalShipping(items, country, international, now));
   }

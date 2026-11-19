@@ -57,8 +57,7 @@ test("no free-shipping promise is left in the cart or the shipping page", () => 
   const shippingPage = read("src", "pages", "ShippingPage.jsx");
   assert.doesNotMatch(layout, /送料無料|free shipping|FREE_SHIPPING/i);
   assert.match(shippingPage, /コーヒー豆（100g）1〜2袋：クリックポストで全国一律250円（北海道・九州・沖縄も250円）/);
-  assert.match(shippingPage, /3袋以上：ゆうパック/);
-  assert.match(shippingPage, /<YupackTable lang=\{lang\} \/>/, "the Yu-Pack table is shown from the shared constants");
+  assert.match(shippingPage, /3〜15袋：ゆうパックで、本州・四国250円／北海道・九州500円／沖縄550円/);
   assert.doesNotMatch(shippingPage, /¥200|2個以上のご注文：送料無料/);
 });
 

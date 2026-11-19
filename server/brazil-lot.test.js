@@ -8,8 +8,6 @@ const path = require("node:path");
 const { CATALOG, priceItems, itemsMetadata, managedItems, lotOf, lotItems } = require("./catalog");
 const { reserve, attachPaymentIntent, finish, availability, releaseWithoutPayment } = require("./inventory");
 const { quoteOrder } = require("./quote");
-const { YUPACK } = require("./domestic-shipping");
-const YUPACK_CONFIRMED = { yupack: { ...YUPACK, confirmed: true } };
 const { parseItemsMetadata } = require("./orders");
 
 function fakeFirestore(initial = {}) {
@@ -61,16 +59,16 @@ test("final prices and roasts: the server charges exactly what the store shows",
     assert.equal(p.promo === true, CATALOG[p.id].promo === true, `${p.id} promo`);
   }
   // The amount charged follows the catalogue: 1 regular + 2 promo + 1 Jimma, Tokyo.
-  // 4 bags go by Yu-Pack 60 (Tokyo ¥970) once the table is confirmed (server/domestic-shipping.js).
-  const quote = quoteOrder([{ id: REGULAR, quantity: 1 }, { id: ZEN, quantity: 2 }, { id: "enma-jimma", quantity: 1 }], { prefecture: "東京都", domesticOptions: YUPACK_CONFIRMED });
-  assert.equal(quote.total, 1300 + 2000 + 1500 + 970);
+  // 4 bags go by Yu-Pack at the regional fee (Tokyo ¥250, server/domestic-shipping.js).
+  const quote = quoteOrder([{ id: REGULAR, quantity: 1 }, { id: ZEN, quantity: 2 }, { id: "enma-jimma", quantity: 1 }], { prefecture: "東京都" });
+  assert.equal(quote.total, 1300 + 2000 + 1500 + 250);
 });
 
 test("two SKUs: only the promotional Brazil is limited to 2, and an order records which one was bought", () => {
   assert.equal(CATALOG[ZEN].promo, true);
   assert.notEqual(CATALOG[REGULAR].promo, true);
   assert.throws(() => quoteOrder([{ id: ZEN, quantity: 3 }], { prefecture: "東京都" }), /PROMO_LIMIT/);
-  assert.equal(quoteOrder([{ id: REGULAR, quantity: 3 }], { prefecture: "東京都", domesticOptions: YUPACK_CONFIRMED }).total, 3900 + 970, "the regular one is not a promo");
+  assert.equal(quoteOrder([{ id: REGULAR, quantity: 3 }], { prefecture: "東京都" }).total, 3900 + 250, "the regular one is not a promo");
   const items = priceItems([{ id: ZEN, quantity: 2 }, { id: REGULAR, quantity: 1 }]);
   assert.deepEqual(parseItemsMetadata(itemsMetadata(items)), [
     { id: ZEN, quantity: 2, unitPrice: 1000 }, { id: REGULAR, quantity: 1, unitPrice: 1300 },
