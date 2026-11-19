@@ -50,9 +50,22 @@ smaller one does not fit.
 The tightest case is 3 bags to Kyushu, Hokkaido or Okinawa: no loss while one bag costs at most about ¥667 (¥520 if it
 needs an 80 box). Without the seasonal bags (3 × ¥1,300) the ceiling rises by about ¥200 per bag.
 
+Bean cost could not be found (2026-11-19): nothing in the code or docs, and the shop's Google Drive has no purchase
+prices for these beans. So no order is called profitable here; only the break-even above. In green-bean terms (assuming
+18 % roasting loss, i.e. about 122 g of green beans per 100 g bag, and ¥50 for the bag and label — both assumptions),
+3 bags to Kyushu/Hokkaido/Okinawa break even at about ¥5,000 per kg of green beans with a 60 box, about ¥3,850 per kg
+with an 80 box. Check each bean's price per kg against these.
+
 ## Packing to check (not measured yet)
 - Click Post, 2 bags: thickness ≤ 3 cm (the shop's own measurement), longest side ≤ 34 cm, length + width + thickness ≤
   60 cm, ≤ 2 kg (2 × 120 g + mailer), at least 14 × 9 cm, fits a mailbox slot.
 - 3–6 bags in a 60 box and 7–15 in an 80 box: estimates. If they do not fit: the next box size (cost above), two parcels
   (複数口 −¥60 each), or, for 3–4 bags, レターパックプラス (¥600 nationwide, A4, hand delivery) — cheaper than any 60 box.
 - 16+ bags: contact us until measured (`MAX_BAGS`).
+
+**Not measured yet (2026-11-19): 6 bags in a 60 box, 15 bags in an 80 box.** Safe operation until they are:
+1. The customer is never charged again or differently: the fee was fixed at payment (regional fee), whatever box is used.
+2. Pack in whatever box the bags really fit; if it is larger, the shop pays the difference (see the ceilings above).
+3. If an order does not fit one box, send it as two parcels (複数口 −¥60 each) rather than squeezing it.
+4. To limit the risk until measured, `MAX_BAGS` can be lowered (e.g. to 6): larger orders are then asked to contact us
+   before payment. One constant in `server/domestic-shipping.js` and `src/lib/shippingPolicy.js` (a test keeps them equal).
