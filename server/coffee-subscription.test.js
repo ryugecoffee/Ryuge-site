@@ -96,3 +96,24 @@ test("the page: frequency switches price and amount; change, skip and cancel are
   assert.match(page, /className="woodbox-card-photo"[\s\S]*?className="woodbox-card-info"/);
   assert.match(page, /className="products-enma-static-card enma-product-card"/);
 });
+
+test("cancellation and refund wording is the same everywhere the customer reads it (2026-11-19)", () => {
+  const fsx = require("node:fs");
+  const pathx = require("node:path");
+  const readx = (...p) => fsx.readFileSync(pathx.join(__dirname, "..", ...p), "utf8");
+  const { submitTerms } = require("./coffee-subscription-checkout");
+  const { welcomeMail } = require("./coffee-subscription-mail");
+  const places = {
+    confirmation: readx("src", "lib", "coffeeSubscriptionTerms.js"),
+    legal: readx("src", "pages", "LegalNotice.jsx"),
+    refundPolicy: readx("src", "pages", "RefundPolicy.jsx"),
+    stripePage: submitTerms("2027-01", 2),
+    mail: welcomeMail({ to: "a@example.com", contract: { frequency: 2, startMonth: "2027-01" }, siteUrl: "https://ryuge.biz" }).text,
+  };
+  for (const [name, text] of Object.entries(places)) {
+    assert.match(text, /毎月1日(の|9時の)ご請求(（日本時間9時）)?より前/, `${name}: the cancellation cut-off`);
+    assert.match(text, /初回(の)?200g(を|の)?発送(する)?前/, `${name}: the first delivery not yet shipped`);
+    assert.match(text, /原則として返金/, `${name}: refunded in principle`);
+  }
+  assert.doesNotMatch(places.refundPolicy, /既に決済が完了している注文についてはキャンセルできません/, "the old contradicting sentence is gone");
+});

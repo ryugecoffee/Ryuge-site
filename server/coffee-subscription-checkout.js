@@ -74,7 +74,8 @@ function submitTerms(startMonth, frequency) {
   const [y, m] = startMonth.split("-").map(Number);
   return `定期購入のお申し込みです。本日のお支払いは初回200gの${plan.FIRST_DELIVERY_PRICE.toLocaleString("ja-JP")}円です。`
     + `${y}年${m}月1日から毎月1日に月額${plan.MONTHLY_PRICES[frequency].toLocaleString("ja-JP")}円（税込・全国一律送料込み・月${frequency}回）を自動でお支払いいただきます。`
-    + "契約期間の定めや最低継続回数はありません。頻度の変更・スキップは前月25日まで、解約はいつでも管理ページから行えます（日割りはありません）。";
+    + "契約期間の定めや最低継続回数はありません。頻度の変更・スキップは前月25日まで、解約はいつでも管理ページから行えます"
+    + "（毎月1日9時のご請求より前の解約で、その月以降のご請求はありません。日割りはありません。初回200gの発送前の解約は、初回分を原則として返金します）。";
 }
 
 async function createCheckout({ db, stripe, config, input, now = Date.now(), waitMs = WAIT_FOR_OTHER_MS }) {

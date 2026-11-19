@@ -184,7 +184,7 @@ function CancelSection({ me, reload, setNotice }) {
       <h2 id="cancel-h">解約</h2>
       {!preview ? (
         <>
-          <p className="subm-text">いつでも解約できます。次のご請求の前であれば、以降のご請求はありません。</p>
+          <p className="subm-text">いつでも解約できます。毎月1日のご請求（日本時間9時）より前であれば、その月以降のご請求はありません。</p>
           <button type="button" className="subm-secondary danger" onClick={open} disabled={busy}>解約の内容を確認する</button>
         </>
       ) : (

@@ -15,9 +15,10 @@ export default function RefundPolicy({ lang }) {
 ■ 返金方法
 返金は、ご購入時の決済方法に応じて対応いたします。
 
-■ 定期購入のキャンセル
-定期購入の解約は、次回決済日前までにお手続きください。
-既に決済が完了している注文についてはキャンセルできません。
+■ 定期購入（珈琲の定期便）の解約
+管理ページからいつでも解約できます。毎月1日のご請求（日本時間9時）より前に解約されると、その月以降のご請求はありません。
+お支払い済みの月の分はお届けし、日割りの返金はありません。
+初回の200gを発送する前に解約された場合、初回分は原則として返金します。
 
 ■ お問い合わせ
 ryugecoffee@gmail.com
@@ -40,8 +41,9 @@ We will review the issue and provide a replacement or refund if applicable.
 Refunds will be issued using the original payment method.
 
 ■ Subscription Cancellation
-Subscriptions must be canceled before the next billing date.
-Orders that have already been processed cannot be canceled.
+Cancel any time on your subscription page. Cancelled before 9:00 JST on the 1st, that month and later months are not charged.
+Paid months are delivered, with no pro-rated refunds.
+If cancelled before the first 200 g is shipped, the first payment is refunded in principle.
 
 ■ Contact
 ryugecoffee@gmail.com
@@ -64,8 +66,9 @@ Revisaremos el caso y ofreceremos un reemplazo o reembolso si corresponde.
 Los reembolsos se realizarán utilizando el método de pago original.
 
 ■ Cancelación de suscripciones
-Las suscripciones deben cancelarse antes de la próxima fecha de facturación.
-Los pedidos ya procesados no pueden cancelarse.
+Puedes cancelar en cualquier momento en tu página de suscripción. Si cancelas antes de las 9:00 (hora de Japón) del día 1, ese mes y los siguientes no se cobran.
+Los meses pagados se envían, sin reembolsos prorrateados.
+Si cancelas antes del envío de los primeros 200 g, el primer pago se reembolsa en principio.
 
 ■ Contacto
 ryugecoffee@gmail.com

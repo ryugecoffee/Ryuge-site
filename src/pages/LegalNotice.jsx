@@ -14,7 +14,7 @@ const SUBSCRIPTION_ROWS = {
     ["引渡時期", "初回：お支払い完了後、3営業日以内に発送します。2回目以降：毎月の上記の日に発送します（土日祝・休業日は翌営業日）。"],
     ["契約期間", "期間の定めはありません。最低継続回数もありません。"],
     ["変更・スキップ", `配送回数の変更と月単位のスキップは、管理ページから前月${CHANGE_DEADLINE_DAY}日までのお手続きで翌月分から反映します。`],
-    ["解約の方法", "管理ページ（ご登録のメールアドレスでログイン）からいつでも解約できます。次のご請求日の前に解約された場合、以降のご請求はありません。"],
+    ["解約の方法", "管理ページ（ご登録のメールアドレスでログイン）からいつでも解約できます。毎月1日のご請求（日本時間9時）より前に解約されると、その月以降のご請求はありません。"],
     ["返品・返金", "お支払い済みの月の分はお届けします（日割りの返金はありません）。初回の200gを発送する前に解約された場合、初回分は原則として返金します。商品に欠陥がある場合は、到着後7日以内にご連絡ください。"],
   ],
   en: [
@@ -22,7 +22,7 @@ const SUBSCRIPTION_ROWS = {
     ["Price (tax and shipping included)", `First delivery ${yen(FIRST_PRICE)}. Then monthly: ${[1, 2, 3, 4].map((n) => `${n}×/month ${yen(MONTHLY_PRICES[n])}`).join(", ")}. No pro-rating.`],
     ["Payment", "Credit card (Stripe): the first delivery at sign-up, then automatically on the 1st of each month."],
     ["Delivery", "First: within 3 business days of payment. Then on fixed days each month (next business day if closed)."],
-    ["Term and cancellation", `No fixed term or minimum. Change or skip by the ${CHANGE_DEADLINE_DAY}th of the previous month; cancel any time on your subscription page.`],
+    ["Term and cancellation", `No fixed term or minimum. Change or skip by the ${CHANGE_DEADLINE_DAY}th of the previous month; cancel any time on your subscription page (before 9:00 JST on the 1st, that month is not charged).`],
     ["Refunds", "Paid months are delivered (no pro-rated refunds). If cancelled before the first 200 g is shipped, the first payment is refunded in principle."],
   ],
   es: [
@@ -30,7 +30,7 @@ const SUBSCRIPTION_ROWS = {
     ["Precio (impuestos y envío incluidos)", `Primer envío ${yen(FIRST_PRICE)}. Después mensual: ${[1, 2, 3, 4].map((n) => `${n}/mes ${yen(MONTHLY_PRICES[n])}`).join(", ")}. Sin prorrateo.`],
     ["Pago", "Tarjeta de crédito (Stripe): el primer envío al suscribirse y después el día 1 de cada mes."],
     ["Entrega", "Primero: en 3 días hábiles tras el pago. Después en días fijos cada mes (siguiente día hábil si es festivo)."],
-    ["Duración y cancelación", `Sin plazo ni mínimo. Cambios u omisiones antes del día ${CHANGE_DEADLINE_DAY} del mes anterior; cancelación en cualquier momento en tu página.`],
+    ["Duración y cancelación", `Sin plazo ni mínimo. Cambios u omisiones antes del día ${CHANGE_DEADLINE_DAY} del mes anterior; cancelación en cualquier momento en tu página (antes de las 9:00 JST del día 1, ese mes no se cobra).`],
     ["Reembolsos", "Los meses pagados se envían (sin reembolso prorrateado). Si cancelas antes del primer envío de 200 g, se reembolsa el primer pago en principio."],
   ],
 };
