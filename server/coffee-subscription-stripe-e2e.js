@@ -23,6 +23,7 @@ const checkout = require("./coffee-subscription-checkout");
 const ops = require("./coffee-subscription-stripe");
 const account = require("./coffee-subscription-account");
 const factoryApi = require("./factory-refund-api");
+const fulfillment = require("./coffee-subscription-fulfillment");
 const express = require("express");
 const { CALENDAR } = require("./coffee-subscription-calendar");
 
@@ -562,6 +563,81 @@ async function scenarioG(config) {
   }
 }
 
+// ---- Scenario H (④): preparing and shipping from counted stock after real Stripe payments ----------------------
+// Test beans with stock records of this run only (emulator), so nothing is shared with other runs or real products.
+async function scenarioH(config) {
+  const beanA = `e2e-bean-a-${RUN}`;
+  const beanB = `e2e-bean-b-${RUN}`;
+  const catalog = { [beanA]: { kind: "beans", managedStock: true, contentG: 100, price: 1 }, [beanB]: { kind: "beans", managedStock: true, contentG: 100, price: 1 } };
+  await db.collection("inventory").doc(beanA).set({ ready: 3, held: 0, sold: 0 });
+  await db.collection("inventory").doc(beanB).set({ ready: 10, held: 0, sold: 0 });
+  const stockOf = async (sku) => { const v = (await db.collection("inventory").doc(sku).get()).data(); return `${v.ready}/${v.held}/${v.sold}`; };
+  const actor = "shop:e2e";
+  let n = 0;
+  const req = () => `req-e2e-${RUN}-${++n}`;
+  const clock = await newClock(jst(2026, 11, 3, 10), "H");
+  const h1 = await signUp(config, clock, { frequency: 2, email: `h1-${RUN}@example.com` });
+  const h2 = await signUp(config, clock, { frequency: 1, email: `h2-${RUN}@example.com` });
+  const h3 = await signUp(config, clock, { frequency: 1, email: `h3-${RUN}@example.com` });
+  await settle(config);
+  const now = () => clock.frozen_time * 1000;
+
+  // First delivery: paid ¥3,000 → planned → prepared (reserved) → shipped (taken), once.
+  const p1 = await fulfillment.prepareShipment(db, { shipmentId: `${h1.sub.id}_first`, skus: [beanA, beanB], requestId: req(), actor }, { now: now(), catalog });
+  check("④", "H1: the paid first delivery is prepared: one bag of each bean reserved", p1.status === "preparing" && await stockOf(beanA) === "3/1/0", `${p1.status} A=${await stockOf(beanA)}`);
+  const shipReq = req();
+  await fulfillment.shipShipment(db, { shipmentId: `${h1.sub.id}_first`, requestId: shipReq, actor, trackingNumber: "0000-1111-2222" }, { now: now() });
+  await Promise.all([fulfillment.shipShipment(db, { shipmentId: `${h1.sub.id}_first`, requestId: shipReq, actor, trackingNumber: "0000-1111-2222" }, { now: now() }),
+    fulfillment.shipShipment(db, { shipmentId: `${h1.sub.id}_first`, requestId: req(), actor }, { now: now() })]);
+  check("④", "H1: shipped once although sent three times (stock A 2 left, 1 sold)", await stockOf(beanA) === "2/0/1" && await stockOf(beanB) === "9/0/1",
+    `A=${await stockOf(beanA)} B=${await stockOf(beanB)}`);
+
+  // Cancelled while its first delivery is being prepared: the bags go back, ¥3,000 is only proposed (CEO approval).
+  await fulfillment.prepareShipment(db, { shipmentId: `${h3.sub.id}_first`, skus: [beanA, beanB], requestId: req(), actor }, { now: now(), catalog });
+  const cancel = await ops.cancelSubscription({ db, stripe, subscriptionId: h3.sub.id, now: now() });
+  const h3first = (await db.collection(records.SHIPMENTS).doc(`${h3.sub.id}_first`).get()).data();
+  check("④", "H3: cancelled while preparing → delivery stopped, bags back in stock, refund only proposed",
+    h3first.status === "cancelled_before_shipping" && await stockOf(beanA) === "2/0/1" && cancel.refundProposal?.status === "awaiting_ceo_approval",
+    `${h3first.status} A=${await stockOf(beanA)} refund=${cancel.refundProposal?.status}`);
+  let refused = null;
+  try { await fulfillment.shipShipment(db, { shipmentId: `${h3.sub.id}_first`, requestId: req(), actor }, { now: now() }); } catch (e) { refused = e.code; }
+  check("④", "H3: the cancelled delivery cannot be shipped", refused === "INVALID_STATE", String(refused));
+
+  // December: h1 pays (2 deliveries), h2's card fails (no deliveries, nothing can be prepared).
+  const failing = await stripe.paymentMethods.attach("pm_card_chargeCustomerFail", { customer: h2.customer.id });
+  await stripe.customers.update(h2.customer.id, { invoice_settings: { default_payment_method: failing.id } });
+  await advance(clock, jst(2026, 12, 1, 10, 30));
+  clock.frozen_time = Math.floor(jst(2026, 12, 1, 10, 30) / 1000);
+  await settle(config);
+  const h1dec = (await shipmentsOf(h1.sub.id)).filter((s) => s.month === "2026-12");
+  const h2dec = (await shipmentsOf(h2.sub.id)).filter((s) => s.kind === "monthly");
+  check("④", "H1/H2: after the 1st, the paid contract has 2 planned deliveries, the failed one none",
+    h1dec.length === 2 && h1dec.every((s) => s.status === "planned") && h2dec.length === 0, `h1=${h1dec.map((s) => s.plannedDate).join(",")} h2=${h2dec.length}`);
+  let unpaid = null;
+  try { await fulfillment.prepareShipment(db, { shipmentId: `${h2.sub.id}_2026-12_1`, skus: [beanA, beanB], requestId: req(), actor }, { now: now(), catalog }); } catch (e) { unpaid = e.code; }
+  check("④", "H2: an unpaid month cannot be prepared (no delivery exists)", unpaid === "UNKNOWN_SHIPMENT", String(unpaid));
+  const list = await fulfillment.workList(db, { from: "2026-12-01", to: "2026-12-31" }, { now: now(), catalog });
+  const row = list.deliveries.find((d) => d.shipmentId === `${h1.sub.id}_2026-12_1`);
+  check("④", "work list: the delivery with the customer's preference and the beans sent last time, no personal details",
+    row && row.preference === "深煎りが好き" && row.previousBeans.join() === [beanA, beanB].join() && !JSON.stringify(list).includes("example.com") && !JSON.stringify(list).includes("テスト 花子"),
+    row ? `${row.date} pref=${row.preference} prev=${row.previousBeans.length}` : "missing");
+
+  // Stock runs out: two bags of A left after one more delivery; the next one is held and nothing moves.
+  await fulfillment.prepareShipment(db, { shipmentId: `${h1.sub.id}_2026-12_1`, skus: [beanA, beanB], requestId: req(), actor }, { now: now(), catalog });
+  await fulfillment.shipShipment(db, { shipmentId: `${h1.sub.id}_2026-12_1`, requestId: req(), actor }, { now: now() });
+  await db.collection("inventory").doc(beanA).update({ ready: 0, sold: 2 }); // the last bag sold in the shop meanwhile
+  const held = await fulfillment.prepareShipment(db, { shipmentId: `${h1.sub.id}_2026-12_2`, skus: [beanA, beanB], requestId: req(), actor }, { now: now(), catalog });
+  check("④", "out of stock → the delivery is held (OUT_OF_STOCK), no bag reserved, the shop is to be told",
+    held.status === "held" && held.notify === true && await stockOf(beanB) === "8/0/2", `${held.status} B=${await stockOf(beanB)}`);
+
+  // Every Stripe event of h1 again, twice, at once: deliveries and stock unchanged.
+  const before = JSON.stringify([await shipmentsOf(h1.sub.id), await stockOf(beanA), await stockOf(beanB)].map((x) => (Array.isArray(x) ? x.map((s) => `${s.id}:${s.status}`) : x)));
+  const mine = delivered.filter((ev) => JSON.stringify(ev.data.object).includes(h1.sub.id) || JSON.stringify(ev.data.object).includes(h1.customer.id));
+  await Promise.all([...mine, ...mine].map((ev) => records.handleEvent(db, ev, config)));
+  const after = JSON.stringify([await shipmentsOf(h1.sub.id), await stockOf(beanA), await stockOf(beanB)].map((x) => (Array.isArray(x) ? x.map((s) => `${s.id}:${s.status}`) : x)));
+  check("④", `H1: its ${mine.length} Stripe events again, twice at once → deliveries and stock unchanged`, before === after, after);
+}
+
 // ---- Item 7: webhooks again, at once, and in reverse order ---------------------------------------------------
 async function snapshot(store) {
   const out = {};
@@ -619,8 +695,8 @@ async function cleanup() {
   const started = Date.now();
   try {
     // Separate test clocks, run side by side.
-    const all = { A: scenarioA, B: scenarioB, C: scenarioC, D: scenarioD, E: scenarioE, F: scenarioF, G: scenarioG };
-    const only = String(process.env.E2E_ONLY || "ABCDEFG").split("").filter((k) => all[k]);
+    const all = { A: scenarioA, B: scenarioB, C: scenarioC, D: scenarioD, E: scenarioE, F: scenarioF, G: scenarioG, H: scenarioH };
+    const only = String(process.env.E2E_ONLY || "ABCDEFGH").split("").filter((k) => all[k]);
     const outcomes = await Promise.allSettled(only.map((k) => all[k](config)));
     outcomes.forEach((o, i) => { if (o.status === "rejected") check("run", `scenario ${only[i]} finished`, false, o.reason?.stack?.split("\n").slice(0, 3).join(" | ")); });
     await settle(config);

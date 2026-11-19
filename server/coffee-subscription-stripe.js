@@ -14,6 +14,10 @@
 
 const plan = require("./coffee-subscription-plan");
 const { SUBS, SHIPMENTS } = require("./coffee-subscription-records");
+const fulfillment = require("./coffee-subscription-fulfillment");
+
+// A first delivery that has not left yet (④: planned, held, or being prepared with its bags reserved).
+const NOT_SHIPPED = ["planned", "held", "preparing"];
 
 class PlanChangeError extends Error {
   constructor(code, status = 400) { super(code); this.code = code; this.status = status; }
@@ -122,7 +126,7 @@ async function cancellationPreview({ db, stripe, subscriptionId, now = Date.now(
   const invoice = ended ? null : await currentMonthInvoice(stripe, subscriptionId, now);
   const decision = plan.cancellationFor(now, invoice);
   const first = await db.collection(SHIPMENTS).doc(`${subscriptionId}_first`).get();
-  const firstNotShipped = first.exists && first.data().status === "planned";
+  const firstNotShipped = first.exists && NOT_SHIPPED.includes(first.data().status);
   return { ended, decision, key: decisionKey(decision), firstNotShipped, refundProposalAmount: firstNotShipped ? plan.FIRST_DELIVERY_PRICE : 0 };
 }
 
@@ -149,12 +153,16 @@ async function cancelSubscription({ db, stripe, subscriptionId, now = Date.now()
     if (!snap.exists) throw new PlanChangeError("NOT_FOUND", 404);
     const contract = snap.data();
     if (contract.cancelRequestedAt) return { ...decision, duplicate: true, refundProposal: contract.refundProposal || null };
+    const firstOpen = first.exists && NOT_SHIPPED.includes(first.data().status);
+    // Bags reserved for a first delivery being prepared go back to stock (read before any write).
+    const releaseBags = firstOpen ? await fulfillment.readRelease(tx, db, first.data()) : () => {};
     const patch = { cancelRequestedAt: new Date(now), cancelDecision: decision.action, firstUnchargedMonth: decision.firstUnchargedMonth,
       cancelAt: decision.cancelAt ? new Date(decision.cancelAt * 1000) : new Date(now), updatedAt: new Date(now) };
     let refundProposal = null;
-    if (first.exists && first.data().status === "planned") {
+    if (firstOpen) {
       // The first 200 g was paid but not shipped yet: not shipped, and ¥3,000 proposed for refund (CEO approval).
-      tx.update(firstRef, { status: "cancelled_before_shipping", updatedAt: new Date(now) });
+      releaseBags();
+      tx.update(firstRef, { status: "cancelled_before_shipping", beans: null, updatedAt: new Date(now) });
       refundProposal = { reason: "CANCELLED_BEFORE_FIRST_SHIPMENT", amount: plan.FIRST_DELIVERY_PRICE, invoiceId: first.data().invoiceId || null,
         status: "awaiting_ceo_approval", createdAt: new Date(now) };
       Object.assign(patch, { refundProposal, needsReview: true, reviewReason: "REFUND_PROPOSAL" });
