@@ -24,6 +24,7 @@ const ops = require("./coffee-subscription-stripe");
 const account = require("./coffee-subscription-account");
 const factoryApi = require("./factory-refund-api");
 const fulfillment = require("./coffee-subscription-fulfillment");
+const mailer = require("./coffee-subscription-mail");
 const express = require("express");
 const { CALENDAR } = require("./coffee-subscription-calendar");
 
@@ -89,6 +90,8 @@ async function advance(clock, atMs) {
 // ---- Events → the webhook handler -------------------------------------------------------------------------------
 const TYPES = records.EVENT_TYPES;
 const delivered = []; // every event given to the handler, for the replay checks
+const welcomes = []; // confirmation mails the webhook would send (captured, never sent)
+const afterEvent = (ev) => mailer.sendWelcomeIfReady({ db, event: ev, siteUrl: "https://example.com", sendMail: async (m) => { welcomes.push(m); } });
 const seen = new Set();
 const watched = new Set(); // customer and Checkout session ids of this run
 let pumping = Promise.resolve();
@@ -104,7 +107,7 @@ async function pumpOnce(config) {
     fresh.push(ev);
   }
   fresh.sort((a, b) => a.created - b.created);
-  for (const ev of fresh) { delivered.push(ev); await records.handleEvent(db, ev, config); }
+  for (const ev of fresh) { delivered.push(ev); await records.handleEvent(db, ev, config); await afterEvent(ev); }
   return fresh.length;
 }
 async function settle(config) { await sleep(2500); await pump(config); await sleep(1500); await pump(config); }
@@ -128,6 +131,7 @@ async function signUp(config, clock, { frequency, email, pm = "pm_card_visa", re
   const ev = { id: `evt_e2e_${sub.id}`, type: "checkout.session.completed", created: clock.frozen_time, data: { object: session } };
   delivered.push(ev);
   await records.handleEvent(db, ev, config);
+  await afterEvent(ev);
   return { sub, customer, params };
 }
 
@@ -636,6 +640,11 @@ async function scenarioH(config) {
   await Promise.all([...mine, ...mine].map((ev) => records.handleEvent(db, ev, config)));
   const after = JSON.stringify([await shipmentsOf(h1.sub.id), await stockOf(beanA), await stockOf(beanB)].map((x) => (Array.isArray(x) ? x.map((s) => `${s.id}:${s.status}`) : x)));
   check("④", `H1: its ${mine.length} Stripe events again, twice at once → deliveries and stock unchanged`, before === after, after);
+  // The confirmation mail: one per sign-up, to that subscription's email, with the link to the customer's page.
+  await Promise.all([...mine, ...mine].map(afterEvent));
+  const per = [h1, h2, h3].map((h) => welcomes.filter((m) => m.to === h.customer.email || m.to === `${["h1", "h2", "h3"][[h1, h2, h3].indexOf(h)]}-${RUN}@example.com`));
+  check("mail", "one confirmation mail per sign-up (resent events included), with the link to the customer's page",
+    per.every((list) => list.length === 1 && list[0].text.includes("https://example.com/subscription/manage")), per.map((l) => l.length).join(","));
 }
 
 // ---- Item 7: webhooks again, at once, and in reverse order ---------------------------------------------------

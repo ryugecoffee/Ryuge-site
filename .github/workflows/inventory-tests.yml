@@ -10,6 +10,11 @@ on:
       - 'src/lib/subscriptionShippingAdmin.js'
       - 'src/pages/SubscriptionShippingAdminPage.jsx'
       - 'server/shop-staff-auth.js'
+      - 'server/coffee-subscription-mail.js'
+      - 'server/coffee-subscription-mail.test.js'
+      - 'src/components/CoffeeSubscriptionDetail.jsx'
+      - 'src/components/SiteFooter.jsx'
+      - 'src/pages/SubscriptionApplyPage.jsx'
       - 'server/coffee-subscription-fulfillment.test.js'
       - 'server/coffee-subscription-fulfillment-emulator.test.js'
       - 'server/catalog.js'
@@ -112,14 +117,15 @@ jobs:
           server/coffee-subscription-plan.js server/coffee-subscription-records.js server/coffee-subscription-checkout.js
           server/coffee-subscription-stripe.js server/coffee-subscription-stripe-e2e.js server/coffee-subscription-calendar.js
           server/coffee-subscription-preference.js server/coffee-subscription-account.js server/factory-subscription-read.js
-          server/coffee-subscription-fulfillment.js server/shop-staff-auth.js
+          server/coffee-subscription-fulfillment.js server/shop-staff-auth.js server/coffee-subscription-mail.js
+          src/components/CoffeeSubscriptionDetail.jsx src/components/SiteFooter.jsx
           src/lib/coffeeSubscriptionAccount.js src/lib/coffeeSubscriptionTerms.js src/pages/SubscriptionApplyPage.jsx src/pages/SubscriptionManagePage.jsx
           src/lib/subscriptionShippingAdmin.js src/pages/SubscriptionShippingAdminPage.jsx
           server/*.test.js
       - name: Build site preview
         run: npm run build
       - name: Unit tests
-        run: node --test server/catalog.test.js server/orders.test.js server/inventory-launch.test.js server/quote.test.js server/checkout-policy.test.js server/promo.test.js server/brazil-lot.test.js server/initial-stock.test.js server/refunds.test.js server/factory-refund-api.test.js server/subscriptions-paused.test.js server/coffee-subscription.test.js server/store-cards.test.js server/coffee-subscription-backend.test.js server/coffee-subscription-account.test.js server/factory-subscription-read.test.js server/product-detail.test.js server/inventory.test.js server/inventory-scenarios.test.js server/inventory-adjustments.test.js server/firestore-preview-checkout.test.js server/factory-inventory-api.test.js server/rate-limit.test.js server/coffee-subscription-fulfillment.test.js
+        run: node --test server/catalog.test.js server/orders.test.js server/inventory-launch.test.js server/quote.test.js server/checkout-policy.test.js server/promo.test.js server/brazil-lot.test.js server/initial-stock.test.js server/refunds.test.js server/factory-refund-api.test.js server/subscriptions-paused.test.js server/coffee-subscription.test.js server/store-cards.test.js server/coffee-subscription-backend.test.js server/coffee-subscription-account.test.js server/factory-subscription-read.test.js server/product-detail.test.js server/inventory.test.js server/inventory-scenarios.test.js server/inventory-adjustments.test.js server/firestore-preview-checkout.test.js server/factory-inventory-api.test.js server/rate-limit.test.js server/coffee-subscription-fulfillment.test.js server/coffee-subscription-mail.test.js
       - name: Set up Java for Firestore emulator
         uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:

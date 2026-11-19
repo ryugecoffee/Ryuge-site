@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { SUBSCRIPTIONS_PAUSED, SUBSCRIPTIONS_PAUSED_TEXT } from "../productData";
 import { PREFERENCE_ISSUE_TEXT, PREFERENCE_MAX_LENGTH, normalizePreference, preferenceIssues } from "../lib/subscriptionPreference";
 import { FIRST_PRICE, MONTHLY_PRICES, errorText, monthLabel, signUp, startMonthFor, yen } from "../lib/coffeeSubscriptionAccount";
@@ -11,9 +11,11 @@ import { FREQUENCIES, LEGAL_TEXT_REVIEWED, confirmationRows } from "../lib/coffe
 // The rows are in src/lib/coffeeSubscriptionTerms.js (provisional wording until LEGAL_TEXT_REVIEWED).
 // Sign-ups stay closed while SUBSCRIPTIONS_PAUSED (the server's sign-up switch is also off).
 export default function SubscriptionApplyPage() {
-  const [frequency, setFrequency] = useState(1);
+  // What the customer chose on the store (deliveries, preference), carried in the page state, never in the URL.
+  const carried = useLocation().state || {};
+  const [frequency, setFrequency] = useState(() => ([1, 2, 3, 4].includes(carried.frequency) ? carried.frequency : 1));
   const [email, setEmail] = useState("");
-  const [preference, setPreference] = useState("");
+  const [preference, setPreference] = useState(() => (typeof carried.preference === "string" ? carried.preference.slice(0, PREFERENCE_MAX_LENGTH) : ""));
   const [agreed, setAgreed] = useState(false);
   const [startMonth, setStartMonth] = useState(() => startMonthFor());
   const [state, setState] = useState({ busy: false, message: "", changed: false });

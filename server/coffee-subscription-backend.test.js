@@ -318,7 +318,9 @@ test("the server's preference rules match the store's", async () => {
 
 test("wiring: subscription events go to the new handlers; existing order and refund handling unchanged; sign-up route off by default", () => {
   const index = fs.readFileSync(path.join(__dirname, "index.js"), "utf8");
-  assert.match(index, /\} else if \(coffeeSubscription\.EVENT_TYPES\.includes\(event\.type\)\) \{\n\s*await coffeeSubscription\.handleEvent\(db, event, coffeeSubscriptionCheckout\.configFrom\(\)\);/);
+  assert.match(index, /\} else if \(coffeeSubscription\.EVENT_TYPES\.includes\(event\.type\)\) \{\n\s*const subscriptionConfig = coffeeSubscriptionCheckout\.configFrom\(\);\n\s*await coffeeSubscription\.handleEvent\(db, event, subscriptionConfig\);/);
+  // The confirmation mail comes after the event is recorded, in the same branch (only 珈琲の定期便 sign-ups).
+  assert.match(index, /await coffeeSubscription\.handleEvent\(db, event, subscriptionConfig\);[\s\S]{0,200}await coffeeSubscriptionMail\.sendWelcomeIfReady\(\{ db, event,/);
   assert.ok(index.indexOf('event.type === "payment_intent.succeeded"') < index.indexOf("coffeeSubscription.EVENT_TYPES.includes"), "existing events first");
   assert.match(index, /app\.post\(coffeeSubscriptionCheckout\.PATH, coffeeSubscriptionCheckout\.createHandler/);
   assert.deepEqual(records.EVENT_TYPES.sort(), ["checkout.session.completed", "checkout.session.expired", "customer.subscription.deleted", "customer.subscription.updated", "invoice.paid", "invoice.payment_failed"]);

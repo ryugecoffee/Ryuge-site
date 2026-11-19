@@ -1,14 +1,15 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { COFFEE_SUBSCRIPTION as SUB, SUBSCRIPTIONS_PAUSED, SUBSCRIPTIONS_PAUSED_TEXT, loc, subscriptionFrequency } from "../productData";
 import { PREFERENCE_ISSUE_TEXT, PREFERENCE_MAX_LENGTH, normalizePreference, preferenceIssues } from "../lib/subscriptionPreference";
 
 const yen = (n) => `¥${Number(n).toLocaleString("ja-JP")}`;
 
 // 珈琲の定期便: choose deliveries per month and see the monthly price and amount; leave a coffee preference.
-// All wording comes from COFFEE_SUBSCRIPTION (src/productData.js). Signing up stays closed: the button is disabled while
-// SUBSCRIPTIONS_PAUSED, and also afterwards until checkout is wired to this subscription (api/create-subscription-
-// checkout.js still knows only the old plans). Changing deliveries, skipping and cancelling are shown as information,
-// not as working buttons.
+// All wording comes from COFFEE_SUBSCRIPTION (src/productData.js). While SUBSCRIPTIONS_PAUSED the button is disabled and
+// the changes after signing up are shown as information only. Once sign-ups reopen, the button leads to the final
+// confirmation screen (/subscription/apply, with the chosen deliveries and preference carried in the page state, not the
+// URL), and subscribers find their own page (/subscription/manage) here.
 export default function CoffeeSubscriptionDetail({ lang }) {
   const [frequencyId, setFrequencyId] = useState(SUB.defaultFrequency);
   const [preference, setPreference] = useState("");
@@ -71,7 +72,8 @@ export default function CoffeeSubscriptionDetail({ lang }) {
       <ul className="coffee-sub-billing">
         {list(SUB.billing).map((rule) => <li key={rule}>{rule}</li>)}
       </ul>
-      <p className="coffee-sub-pending">{loc(SUB.pendingNote, lang)}</p>
+      {/* "Announced when sign-ups reopen": only while they are paused (then the confirmation screen states it all). */}
+      {SUBSCRIPTIONS_PAUSED && <p className="coffee-sub-pending">{loc(SUB.pendingNote, lang)}</p>}
 
       <div className="coffee-sub-preference">
         <label htmlFor="coffee-sub-preference-input">{loc(SUB.preference.label, lang)}</label>
@@ -91,16 +93,26 @@ export default function CoffeeSubscriptionDetail({ lang }) {
         </ul>
       </div>
 
-      <p className="product-detail-notice coffee-sub-closed">{closedText}</p>
-      <button type="button" className="modal-cta-link is-disabled" disabled>{closedText}</button>
+      {SUBSCRIPTIONS_PAUSED ? (
+        <>
+          <p className="product-detail-notice coffee-sub-closed">{closedText}</p>
+          <button type="button" className="modal-cta-link is-disabled" disabled>{closedText}</button>
+        </>
+      ) : (
+        <Link className="modal-cta-link" to="/subscription/apply"
+          state={{ frequency: selected.deliveriesPerMonth, preference: issues.length ? "" : normalizePreference(preference) }}>
+          {loc(SUB.manage.apply, lang)}
+        </Link>
+      )}
 
       <section className="coffee-sub-manage" aria-label={loc(SUB.manage.title, lang)}>
         <h4>{loc(SUB.manage.title, lang)}</h4>
         <ul>
           {list(SUB.manage.items).map((item) => (
-            <li key={item}><span>{item}</span><small>{loc(SUB.manage.unavailable, lang)}</small></li>
+            <li key={item}><span>{item}</span><small>{loc(SUBSCRIPTIONS_PAUSED ? SUB.manage.unavailable : SUB.manage.available, lang)}</small></li>
           ))}
         </ul>
+        {!SUBSCRIPTIONS_PAUSED && <Link className="text-link coffee-sub-manage-link" to="/subscription/manage">{loc(SUB.manage.link, lang)}</Link>}
       </section>
     </div>
   );

@@ -137,3 +137,22 @@ test("③ Factory reads on real Firestore: list/get/schedule queries; one contac
   const audit = (await db.collection(read.VIEWS).doc(view.requestId).get()).data();
   assert.ok(!JSON.stringify(audit).includes("エミュ 花子") && !JSON.stringify(audit).includes("0750000000"));
 });
+
+test("the welcome mail on real transactions: the same sign-up events many times at once → one mail", { skip }, async () => {
+  const mailer = require("./coffee-subscription-mail");
+  const sub = "sub_emu_mail_" + crypto.randomUUID().slice(0, 8);
+  const meta = { kind: records.KIND, frequency: "1", startMonth: "2026-12" };
+  const session = { id: "cs_" + sub, mode: "subscription", subscription: sub, customer: "cus_m", livemode: false,
+    customer_details: { email: `${sub}@example.com`, name: "M" }, metadata: meta };
+  const first = { id: "in_first_" + sub, customer: "cus_m", billing_reason: "subscription_create", amount_paid: 3000, livemode: false,
+    status_transitions: { paid_at: plan.billingStartUnix("2026-12") - 86400 * 10 }, parent: { subscription_details: { subscription: sub, metadata: meta } },
+    lines: { data: [{ type: "subscription", pricing: { price_details: { price: "price_m1" } }, period: { start: plan.billingStartUnix("2026-12"), end: plan.billingStartUnix("2027-01") } }] } };
+  const sent = [];
+  const deliver = async (event) => {
+    await records.handleEvent(db, event, CONFIG);
+    return mailer.sendWelcomeIfReady({ db, event, siteUrl: "https://ryuge.biz", sendMail: async (m) => { sent.push(m.to); } });
+  };
+  const evs = [{ type: "checkout.session.completed", data: { object: session } }, { type: "invoice.paid", data: { object: first } }];
+  await Promise.all([...evs, ...evs, ...evs, ...evs].map(deliver));
+  assert.deepEqual(sent, [`${sub}@example.com`]);
+});
