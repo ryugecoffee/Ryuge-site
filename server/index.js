@@ -19,6 +19,7 @@ const factoryRefundApi = require("./factory-refund-api");
 const coffeeSubscription = require("./coffee-subscription-records");
 const coffeeSubscriptionCheckout = require("./coffee-subscription-checkout");
 const coffeeSubscriptionAccount = require("./coffee-subscription-account");
+const coffeeSubscriptionMail = require("./coffee-subscription-mail");
 const coffeeSubscriptionFulfillment = require("./coffee-subscription-fulfillment");
 const { createRateLimiter, clientKey } = require("./rate-limit");
 
@@ -60,7 +61,11 @@ app.post("/stripe-inventory-webhook", express.raw({ type: "application/json" }),
       const paymentIntentId = typeof object?.payment_intent === "string" ? object.payment_intent : object?.payment_intent?.id;
       await refunds.syncRefunds(db, stripe, paymentIntentId);
     } else if (coffeeSubscription.EVENT_TYPES.includes(event.type)) {
-      await coffeeSubscription.handleEvent(db, event, coffeeSubscriptionCheckout.configFrom());
+      const subscriptionConfig = coffeeSubscriptionCheckout.configFrom();
+      await coffeeSubscription.handleEvent(db, event, subscriptionConfig);
+      // The confirmation mail with the link to the customer's page, once the sign-up is complete (sent once).
+      await coffeeSubscriptionMail.sendWelcomeIfReady({ db, event, siteUrl: subscriptionConfig.siteUrl,
+        sendMail: (message) => transporter.sendMail({ from: `"Ryuge Coffee" <${process.env.EMAIL_USER}>`, ...message }) });
     }
     return res.json({ received: true });
   } catch (error) {

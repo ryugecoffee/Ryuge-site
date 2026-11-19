@@ -163,6 +163,10 @@ export const COFFEE_SUBSCRIPTION = {
       es: ["Cambiar envíos al mes", "Omitir un envío", "Cancelar"],
     },
     unavailable: { ja: "受付再開時にご案内します（準備中）", en: "Available when sign-ups reopen (in preparation)", es: "Disponible al reabrir las suscripciones (en preparación)" },
+    // While sign-ups are open: each item is done on the subscriber's own page (/subscription/manage).
+    available: { ja: "管理ページから", en: "On your subscription page", es: "En tu página de suscripción" },
+    link: { ja: "ご契約中の方：定期便の管理ページ", en: "Subscribers: your subscription page", es: "Suscriptores: tu página de suscripción" },
+    apply: { ja: "お申し込み内容の確認へ進む", en: "Review and sign up", es: "Revisar y suscribirse" },
   },
 };
 

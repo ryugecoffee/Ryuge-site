@@ -134,7 +134,13 @@ Code: `server/coffee-subscription-fulfillment.js`, at `/internal/coffee-subscrip
    (`src/lib/coffeeSubscriptionTerms.js`).
 7. The customer portal configuration created in live mode (`account.PORTAL_CONFIGURATION`) and its id set as
    `STRIPE_PORTAL_CONFIGURATION_ID`; then `COFFEE_SUBSCRIPTION_MANAGE_ENABLED=true` (CEO approval).
-8. A link to `/subscription/manage` where customers will find it (the confirmation mail and the store), once open.
+8. ~~A link to `/subscription/manage` where customers will find it~~ (done 2026-11-19, shown once sign-ups reopen):
+   the confirmation mail (`server/coffee-subscription-mail.js`: once per sign-up, after both the Checkout page and the
+   paid first delivery are recorded; never for a duplicate subscription; plan, start, first delivery, the link, the
+   change deadline; no address), the subscription detail on the store (button to the confirmation screen with the chosen
+   deliveries and preference carried in the page state, not the URL; link to the customer's page) and the footer
+   ("珈琲の定期便の管理ページ"; the Stripe billing link stays, labelled for the earlier plans). While
+   `SUBSCRIPTIONS_PAUSED`, the store shows exactly what it showed before.
 9. ④: `COFFEE_SUBSCRIPTION_FULFILLMENT_TOKEN` set on the payment server (CEO approval), the shipping method, box and cost
    confirmed, and the stock of the subscription beans registered.
 

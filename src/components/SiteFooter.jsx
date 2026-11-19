@@ -1,6 +1,7 @@
 // src/components/SiteFooter.jsx
 import { Link } from "react-router-dom";
 import AccessSection from "../pages/AccessSection";
+import { SUBSCRIPTIONS_PAUSED } from "../productData";
 
 export default function SiteFooter({ lang }) {
   const TEXT = {
@@ -17,6 +18,8 @@ export default function SiteFooter({ lang }) {
       legal: "特定商取引法に基づく表記",
       shipping: "送料について",
       manage: "定期購入の確認・解約はこちら",
+      coffeeSubscription: "珈琲の定期便の管理ページ",
+      oldPlans: "以前の定期購入プランの確認・解約",
       refund: "返品・返金ポリシー",
       access: "アクセス",
     },
@@ -33,6 +36,8 @@ export default function SiteFooter({ lang }) {
       legal: "Legal Notice",
       shipping: "Shipping Info",
       manage: "Manage or cancel subscription",
+      coffeeSubscription: "Coffee subscription: your page",
+      oldPlans: "Earlier subscription plans: manage or cancel",
       refund: "Refund Policy",
       access: "Access",
     },
@@ -49,6 +54,8 @@ export default function SiteFooter({ lang }) {
       legal: "Aviso Legal",
       shipping: "Información de Envío",
       manage: "Gestionar o cancelar suscripción",
+      coffeeSubscription: "Suscripción de café: tu página",
+      oldPlans: "Planes anteriores: gestionar o cancelar",
       refund: "Política de Reembolsos",
       access: "Acceso",
     },
@@ -82,7 +89,9 @@ export default function SiteFooter({ lang }) {
             <Link to="/legal">{t.legal}</Link>
             <Link to="/shipping">{t.shipping}</Link>
             <Link to="/refund">{t.refund}</Link>
-            <a href={stripeUrl} target="_blank" rel="noreferrer">{t.manage}</a>
+            {/* 珈琲の定期便 is managed on its own page; the Stripe link stays for the earlier plans' subscribers. */}
+            {!SUBSCRIPTIONS_PAUSED && <Link to="/subscription/manage">{t.coffeeSubscription}</Link>}
+            <a href={stripeUrl} target="_blank" rel="noreferrer">{SUBSCRIPTIONS_PAUSED ? t.manage : t.oldPlans}</a>
           </div>
         </div>
 
