@@ -90,6 +90,11 @@ Code: `server/coffee-subscription-fulfillment.js`, at `/internal/coffee-subscrip
   payment marks, why it cannot ship, the customer's preference, the beans sent last time (and a warning when the same
   bean is chosen again), and stock: bags available, bags needed, `short`. No name, email, phone or street address.
 - `GET /label/{shipmentId}`: the address copied at preparation, for the label (only preparing or shipped).
+- The shop's page: `/admin/subscription-shipping` (not linked, `noindex`, `robots.txt` Disallow `/admin`). Staff sign in
+  with their listed address (the mailed link above); the session is kept in that browser tab only (sessionStorage) and
+  "ログアウト" ends it on the server. It lists the work above, lets the shop pick two beans (the stock left is shown next
+  to each), prepare, show the label, enter the tracking number, mark shipped, hold, or put back; every action carries a
+  request id kept until it succeeds (a double click or a retry is applied once).
 - Single orders, their reservations (`inventoryReservations`) and the stock registration are unchanged.
 
 ## Operating rules (CEO, 2026-11-18)

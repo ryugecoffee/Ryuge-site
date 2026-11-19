@@ -15,6 +15,7 @@ import { Analytics } from "@vercel/analytics/react";
 import AccessSection from "./pages/AccessSection";
 import SubscriptionApplyPage from "./pages/SubscriptionApplyPage";
 import SubscriptionManagePage from "./pages/SubscriptionManagePage";
+import SubscriptionShippingAdminPage from "./pages/SubscriptionShippingAdminPage";
 import { pageview } from "./lib/analytics";
 import { updatePageMeta, injectProductJsonLd } from "./lib/seo";
 
@@ -127,6 +128,8 @@ export default function App() {
             {/* 珈琲の定期便 (Japanese only, not linked while sign-ups are paused; noindex) */}
             <Route path="/subscription/apply" element={<SubscriptionApplyPage />} />
             <Route path="/subscription/manage" element={<SubscriptionManagePage />} />
+            {/* 定期便の発送管理（店舗スタッフのメールログインで保護、検索対象外） */}
+            <Route path="/admin/subscription-shipping" element={<SubscriptionShippingAdminPage />} />
           </Route>
 
           <Route path="/checkout" element={<CheckoutPage lang={lang} />} />
