@@ -4230,3 +4230,30 @@ html[lang="es"] .story-body {
   .subm-list li { grid-template-columns: 1fr auto; }
   .subm-list li span:last-child { grid-column: 1 / -1; color: rgba(255, 255, 255, 0.55); }
 }
+
+/* 珈琲の定期便 ④: the shop's shipping page (/admin/subscription-shipping) */
+.ship-admin { max-width: 980px; }
+.ship-toolbar { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 10px; align-items: end; }
+.ship-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.ship-item { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.14); }
+.ship-item.status-preparing { border-color: rgba(140, 180, 230, 0.5); }
+.ship-item.status-held, .ship-item.status-needs_review { border-color: rgba(230, 180, 90, 0.5); }
+.ship-item.status-shipped { opacity: 0.75; }
+.ship-item.overdue { box-shadow: inset 3px 0 0 #d9826f; }
+.ship-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+.ship-status { font-size: 0.82rem; color: rgba(255, 255, 255, 0.75); }
+.ship-flag { font-size: 0.72rem; padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(217, 130, 111, 0.6); color: #f0b4a6; }
+.ship-flag.test { border-color: rgba(255, 255, 255, 0.3); color: rgba(255, 255, 255, 0.6); }
+.ship-pref { white-space: pre-wrap; text-align: left !important; max-width: 70%; }
+.ship-actions { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
+.ship-actions .subm-secondary, .ship-actions .subm-primary { align-self: end; }
+.ship-hold { grid-template-columns: 1fr auto; }
+.ship-label { grid-column: 1 / -1; padding: 12px 14px; border-radius: 6px; background: rgba(255, 255, 255, 0.06); }
+.ship-stock li { grid-template-columns: 1fr auto; }
+.ship-filter { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 640px) {
+  .ship-toolbar, .ship-actions, .ship-hold { grid-template-columns: 1fr; }
+  .ship-pref { max-width: 100%; }
+}
+.ship-admin .ship-stock li { display: flex; justify-content: space-between; gap: 12px; }
+.legal-document.ship-admin { width: min(980px, calc(100% - 32px)); }

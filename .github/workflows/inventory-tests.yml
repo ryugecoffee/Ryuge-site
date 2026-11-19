@@ -7,6 +7,8 @@ on:
     paths:
       - 'server/inventory.js'
       - 'server/coffee-subscription-fulfillment.js'
+      - 'src/lib/subscriptionShippingAdmin.js'
+      - 'src/pages/SubscriptionShippingAdminPage.jsx'
       - 'server/coffee-subscription-fulfillment.test.js'
       - 'server/coffee-subscription-fulfillment-emulator.test.js'
       - 'server/catalog.js'
@@ -111,6 +113,7 @@ jobs:
           server/coffee-subscription-preference.js server/coffee-subscription-account.js server/factory-subscription-read.js
           server/coffee-subscription-fulfillment.js
           src/lib/coffeeSubscriptionAccount.js src/lib/coffeeSubscriptionTerms.js src/pages/SubscriptionApplyPage.jsx src/pages/SubscriptionManagePage.jsx
+          src/lib/subscriptionShippingAdmin.js src/pages/SubscriptionShippingAdminPage.jsx
           server/*.test.js
       - name: Build site preview
         run: npm run build

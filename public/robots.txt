@@ -4,5 +4,6 @@ Disallow: /checkout
 Disallow: /checkout/complete
 Disallow: /inventory
 Disallow: /wholesale
+Disallow: /admin
 
 Sitemap: https://ryuge.biz/sitemap.xml
