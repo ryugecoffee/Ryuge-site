@@ -170,7 +170,11 @@ async function cancelSubscription({ db, stripe, subscriptionId, now = Date.now()
     const [snap, first] = [await tx.get(ref), await tx.get(firstRef)];
     if (!snap.exists) throw new PlanChangeError("NOT_FOUND", 404);
     const contract = snap.data();
-    if (contract.cancelRequestedAt) {
+    // Already cancelled (e.g. on the customer's page after 09:00), but an email asking for it arrived before the
+    // charge: the paid month is still treated as never charged (once). Otherwise a repeat changes nothing.
+    const lateAfterCancel = Boolean(contract.cancelRequestedAt && late && !contract.monthRefundProposal
+      && String(contract.firstUnchargedMonth || "9999-99") > late.month);
+    if (contract.cancelRequestedAt && !lateAfterCancel) {
       return { ...decision, duplicate: true, firstUnchargedMonth: contract.firstUnchargedMonth || decision.firstUnchargedMonth,
         refundProposal: contract.refundProposal || null, monthRefundProposal: contract.monthRefundProposal || null };
     }
@@ -186,9 +190,10 @@ async function cancelSubscription({ db, stripe, subscriptionId, now = Date.now()
     }
     // Bags reserved for the deliveries being stopped go back to stock (all read before any write, one write per bean).
     const releaseBags = await fulfillment.readRelease(tx, db, ...(firstOpen ? [first.data()] : []), ...lateShipments.filter((x) => x.stop).map((x) => x.data));
-    const patch = { cancelRequestedAt: new Date(now), cancelDecision: decision.action, firstUnchargedMonth: late ? late.month : decision.firstUnchargedMonth,
-      cancelAt: decision.cancelAt ? new Date(decision.cancelAt * 1000) : new Date(now), cancelVia: via,
-      ...(requestedAt != null ? { cancelRequestReceivedAt: new Date(requestedAt) } : {}), updatedAt: new Date(now) };
+    const patch = lateAfterCancel ? { firstUnchargedMonth: late.month, cancelRequestReceivedAt: new Date(requestedAt), updatedAt: new Date(now) }
+      : { cancelRequestedAt: new Date(now), cancelDecision: decision.action, firstUnchargedMonth: late ? late.month : decision.firstUnchargedMonth,
+        cancelAt: decision.cancelAt ? new Date(decision.cancelAt * 1000) : new Date(now), cancelVia: via,
+        ...(requestedAt != null ? { cancelRequestReceivedAt: new Date(requestedAt) } : {}), updatedAt: new Date(now) };
     let monthRefundProposal = null;
     if (late) {
       for (const x of lateShipments) if (x.stop) tx.update(x.ref, { status: "cancelled_before_shipping", beans: null, updatedAt: new Date(now) });

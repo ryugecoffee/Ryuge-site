@@ -272,3 +272,29 @@ test("email cancellation: the first delivery and this month's both being prepare
   assert.deepEqual(await stock(a), { ready: 5, held: 0, sold: 0 }, "one bag back for each delivery, not one in all");
   assert.deepEqual(await stock(b), { ready: 5, held: 0, sold: 0 });
 });
+
+test("email cancellation: the customer cancelled on their page after 09:00, but their email arrived before → that month still refunded once", { skip }, async () => {
+  const ec = require("./coffee-subscription-email-cancel");
+  const ops = require("./coffee-subscription-stripe");
+  const tag = crypto.randomUUID().slice(0, 8);
+  const catalog = testCatalog(tag);
+  const [a, b] = Object.keys(catalog);
+  await db.collection("inventory").doc(a).set({ ready: 5, held: 0, sold: 0 });
+  await db.collection("inventory").doc(b).set({ ready: 5, held: 0, sold: 0 });
+  const sub = `sub_emumail4${tag}`;
+  await signedUpAndDecemberPaid(sub, catalog, [a, b]);
+  const stripe = fakeStripe(sub);
+  // On the page on 2 December: from January (December was paid).
+  assert.equal((await ops.cancelSubscription({ db, stripe, subscriptionId: sub, now: DEC_2 })).firstUnchargedMonth, "2027-01");
+  const body = { email: `${sub}@example.com`, method: "registered_address", receivedAt: "2026-12-01T08:50:00+09:00" };
+  const p = await ec.preview({ db, stripe, body, now: DEC_2 + 3600e3 });
+  assert.equal(p.alreadyCancelled, false);
+  const send = (requestId) => ec.confirm({ db, stripe, body: { ...body, key: p.key, requestId }, actor: ACTOR, now: DEC_2 + 3600e3, env: {} });
+  const r = await send(`req-${tag}-late-1`);
+  assert.equal(r.monthRefund.amount, plan.MONTHLY_PRICES[2]);
+  assert.equal((await send(`req-${tag}-late-2`)).alreadyCancelled, true, "a second request changes nothing");
+  const contract = (await db.collection(records.SUBS).doc(sub).get()).data();
+  assert.equal(contract.firstUnchargedMonth, "2026-12");
+  assert.equal(contract.cancelVia, "customer_page", "the original cancellation is kept");
+  assert.equal((await db.collection(records.SHIPMENTS).doc(`${sub}_2026-12_1`).get()).data().status, "cancelled_before_shipping");
+});

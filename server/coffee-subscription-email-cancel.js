@@ -75,7 +75,9 @@ async function preview({ db, stripe, body, now }) {
   const input = parse(body, now);
   const { id, contract } = await verifiedContract(db, input);
   const p = await ops.cancellationPreview({ db, stripe, subscriptionId: id, now, requestedAt: input.receivedAt });
-  return { ref: contractRef(id), alreadyCancelled: Boolean(contract.cancelRequestedAt), ended: p.ended, action: p.decision.action,
+  // Already cancelled: nothing changes, unless the email makes a paid month refundable (cancelSubscription).
+  const alreadyCancelled = Boolean(contract.cancelRequestedAt) && !(p.late && !contract.monthRefundProposal);
+  return { ref: contractRef(id), alreadyCancelled, ended: p.ended, action: p.decision.action,
     endsAt: p.decision.cancelAt ? p.decision.cancelAt * 1000 : now, firstUnchargedMonth: p.late ? p.late.month : p.decision.firstUnchargedMonth,
     monthRefund: p.late ? { month: p.late.month, amount: p.late.amount } : null, firstRefund: p.refundProposalAmount, key: p.key };
 }
