@@ -1,8 +1,11 @@
-// 珈琲の定期便: what the final confirmation screen states (特定商取引法 第12条の6, 定期購入). Provisional wording
-// (CEO, 2026-11-18): to be checked by a specialist before sign-ups reopen; set LEGAL_TEXT_REVIEWED to true then.
+// 珈琲の定期便: what the final confirmation screen states (特定商取引法 第12条の6, 定期購入).
+// Internal final review (2026-11-20): checked the CAA's six display topics, current terms and checkout copy,
+// and public subscription policies from PostCoffee, Tokyo Coffee and Blue Bottle Coffee.
+// This flag records the shop's internal wording review; it does not certify legal compliance.
+// Enrollment remains independently OFF in src/productData.js and on the payment server.
 import { CHANGE_DEADLINE_DAY, FIRST_PRICE, MONTHLY_PRICES, SHIPPING_DAYS, monthLabel, yen } from "./coffeeSubscriptionAccount.js";
 
-export const LEGAL_TEXT_REVIEWED = false;
+export const LEGAL_TEXT_REVIEWED = true;
 
 export const FREQUENCIES = [1, 2, 3, 4];
 
