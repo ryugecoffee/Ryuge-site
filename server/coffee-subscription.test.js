@@ -97,51 +97,49 @@ test("the page: frequency switches price and amount; change, skip and cancel are
   assert.match(page, /className="products-enma-static-card enma-product-card"/);
 });
 
-test("cancellation and refund wording is the same everywhere the customer reads it (2026-11-19)", () => {
+// What the customer reads, rendered: the store's final confirmation screen (all four plans), the legal notice (its
+// subscription rows draw on the same TERMS_JA), the refund policy, Stripe's page and the confirmation mail.
+async function customerTexts() {
   const fsx = require("node:fs");
   const pathx = require("node:path");
+  const { pathToFileURL } = require("node:url");
   const readx = (...p) => fsx.readFileSync(pathx.join(__dirname, "..", ...p), "utf8");
   const { submitTerms } = require("./coffee-subscription-checkout");
   const { welcomeMail } = require("./coffee-subscription-mail");
-  const places = {
-    confirmation: readx("src", "lib", "coffeeSubscriptionTerms.js"),
-    legal: readx("src", "pages", "LegalNotice.jsx"),
+  const T = await import(pathToFileURL(pathx.join(__dirname, "..", "src", "lib", "coffeeSubscriptionTerms.js")).href);
+  const legal = readx("src", "pages", "LegalNotice.jsx");
+  return {
+    confirmation: [1, 2, 3, 4].map((f) => T.confirmationRows(f, "2027-01").map(([k, v]) => `${k}：${v}`).join("\n")).join("\n"),
+    legal: legal.replace(/\$\{TERMS_JA\.(\w+)\}/g, (_, k) => T.TERMS_JA[k]).replace(/" \+ TERMS_JA\.(\w+)\]/g, (_, k) => `${T.TERMS_JA[k]}"]`)
+      .replace(/\$\{CHANGE_DEADLINE_DAY\}/g, "25"),
     refundPolicy: readx("src", "pages", "RefundPolicy.jsx"),
-    stripePage: submitTerms("2027-01", 2),
+    stripePage: [1, 2, 3, 4].map((f) => submitTerms("2027-01", f)).join("\n"),
     mail: welcomeMail({ to: "a@example.com", contract: { frequency: 2, startMonth: "2027-01" }, siteUrl: "https://ryuge.biz" }).text,
   };
+}
+
+test("cancellation and refund wording is the same everywhere the customer reads it (2026-11-19)", async () => {
+  const places = await customerTexts();
   for (const [name, text] of Object.entries(places)) {
     assert.match(text, /毎月1日(の|9時の)ご請求(（日本時間9時）)?より前/, `${name}: the cancellation cut-off`);
     assert.match(text, /初回(の)?200g(を|の)?発送(する)?前/, `${name}: the first delivery not yet shipped`);
-    assert.match(text, /原則として返金/, `${name}: refunded in principle`);
+    assert.match(text, /初回分3,000円を全額.*返金します（解約から7営業日以内に手続きします）/, `${name}: the first payment refunded in full within 7 business days`);
+    assert.match(text, /解約手数料・違約金はありません/, `${name}: no cancellation fee`);
+    assert.doesNotMatch(text, /原則として返金/, `${name}: no "in principle" refund left`);
   }
   assert.doesNotMatch(places.refundPolicy, /既に決済が完了している注文についてはキャンセルできません/, "the old contradicting sentence is gone");
 });
 
-test("two different deadlines are never mixed: change/skip by the 25th of the previous month; cancel before 9:00 JST on the 1st", () => {
-  const fsx = require("node:fs");
-  const pathx = require("node:path");
-  const readx = (...p) => fsx.readFileSync(pathx.join(__dirname, "..", ...p), "utf8");
+test("two different deadlines are never mixed: change/skip by the 25th of the previous month; cancel before 9:00 JST on the 1st", async () => {
   const plan = require("./coffee-subscription-plan");
-  const { submitTerms } = require("./coffee-subscription-checkout");
-  const { welcomeMail } = require("./coffee-subscription-mail");
-  const terms = readx("src", "lib", "coffeeSubscriptionTerms.js");
-  const places = {
-    confirmation: terms.replace(/\$\{CHANGE_DEADLINE_DAY\}/g, "25").replace(/\$\{CHANGE_DEADLINE_DAY \+ 1\}/g, "26"),
-    legal: readx("src", "pages", "LegalNotice.jsx").replace(/\$\{CHANGE_DEADLINE_DAY\}/g, "25"),
-    refundPolicy: readx("src", "pages", "RefundPolicy.jsx"),
-    stripePage: submitTerms("2027-01", 2),
-    mail: welcomeMail({ to: "a@example.com", contract: { frequency: 2, startMonth: "2027-01" }, siteUrl: "https://ryuge.biz" }).text,
-  };
+  const places = await customerTexts();
   for (const [name, text] of Object.entries(places)) {
     for (const sentence of text.split(/[。\n]/)) {
       // The 25th belongs to changes and skips only, never to cancelling.
       if (/前月25日/.test(sentence)) assert.match(sentence, /変更|スキップ/, `${name}: "${sentence}"`);
       if (/前月25日/.test(sentence)) assert.doesNotMatch(sentence, /解約/, `${name}: "${sentence}"`);
-      // A cancellation cut-off is always the 9:00 charge on the 1st.
-      if (/解約/.test(sentence) && /(まで|より前)/.test(sentence) && !/変更|スキップ/.test(sentence)) {
-        assert.match(sentence, /1日.*9時|9時.*1日/, `${name}: "${sentence}"`);
-      }
+      // A cancellation cut-off ("…より前に解約" / "解約は…まで") is always the 9:00 charge on the 1st.
+      if (/(より前に解約|解約.*までに|解約の期限)/.test(sentence)) assert.match(sentence, /1日.*9時|9時.*1日/, `${name}: "${sentence}"`);
     }
   }
   // The code behind the words: a change asked on the 25th applies next month, on the 26th the month after.
@@ -151,4 +149,58 @@ test("two different deadlines are never mixed: change/skip by the 25th of the pr
   // Cancelling before 9:00 on the 1st: that month is not charged; after it is paid: from the next month (the paid month ships).
   assert.equal(plan.cancellationFor(jst(2026, 12, 1, 8), null).firstUnchargedMonth, "2026-12");
   assert.equal(plan.cancellationFor(jst(2026, 12, 10, 12), { status: "paid" }).firstUnchargedMonth, "2027-01");
+});
+
+test("final confirmation items (特定商取引法 第12条の6) on the store's screen and next to Stripe's pay button, the same words", async () => {
+  const pathx = require("node:path");
+  const { pathToFileURL } = require("node:url");
+  const plan = require("./coffee-subscription-plan");
+  const { submitTerms } = require("./coffee-subscription-checkout");
+  const { welcomeMail } = require("./coffee-subscription-mail");
+  const T = await import(pathToFileURL(pathx.join(__dirname, "..", "src", "lib", "coffeeSubscriptionTerms.js")).href);
+  // The sentences are the same on the store's screens and on Stripe's page / in the mails.
+  assert.deepEqual({ ...T.TERMS_JA }, { ...plan.TERMS_JA });
+  assert.equal(T.REFUND_BUSINESS_DAYS, plan.REFUND_BUSINESS_DAYS);
+  for (const f of [1, 2, 3, 4]) {
+    const rows = Object.fromEntries(T.confirmationRows(f, "2027-01"));
+    for (const label of ["商品・分量", "初回のお支払い", "2回目以降のお支払い", "2回目のご請求日", "お支払い方法", "発送の時期", "契約期間", "1年間の参考", "変更・スキップ", "解約", "返品", "お届け地域"]) {
+      assert.ok(rows[label], `${f}: ${label}`);
+    }
+    assert.equal(rows["返品"], plan.TERMS_JA.returns);
+    assert.match(rows["契約期間"], /期間の定めのない定期購入です（解約されるまで毎月続きます）/);
+    // The year from the first monthly charge: first payment + 12 monthly charges; the same figure on Stripe's page.
+    const a = plan.annualReference(f, "2027-01");
+    assert.equal(a.total, 3000 + plan.MONTHLY_PRICES[f] * 12);
+    assert.equal(a.deliveries, 1 + 12 * f);
+    assert.equal(rows["1年間の参考"], plan.annualReferenceText(f, "2027-01"));
+    assert.ok(rows["1年間の参考"].includes(`合計 ${a.total.toLocaleString("ja-JP")}円`) && rows["1年間の参考"].includes("2027年1月〜2027年12月"));
+    const stripe = submitTerms("2027-01", f);
+    assert.ok(stripe.length <= 1200, `Stripe's limit: ${stripe.length}`);
+    for (const part of [`月${f}回`, "100g×2袋", "3,000円", `月額${plan.MONTHLY_PRICES[f].toLocaleString("ja-JP")}円`, "毎月1日", "3営業日以内に発送",
+      plan.TERMS_JA.term, plan.annualReferenceText(f, "2027-01"), "前月25日", "毎月1日9時のご請求より前", plan.TERMS_JA.noFee, plan.TERMS_JA.refund, plan.TERMS_JA.returns]) {
+      assert.ok(stripe.includes(part), `Stripe page, ${f}: ${part}`);
+    }
+    const mail = welcomeMail({ to: "a@example.com", contract: { frequency: f, startMonth: "2027-01" }, siteUrl: "https://ryuge.biz" }).text;
+    for (const part of [plan.TERMS_JA.term, plan.TERMS_JA.noFee, plan.TERMS_JA.refund, plan.TERMS_JA.returns, plan.annualReferenceText(f, "2027-01")]) {
+      assert.ok(mail.includes(part), `mail, ${f}: ${part.slice(0, 20)}`);
+    }
+  }
+  assert.equal(T.LEGAL_TEXT_REVIEWED, false, "drafts until reviewed");
+});
+
+test("the 9:00 JST cut-off on the 1st against Stripe's invoice: before it nothing is charged; after payment, from the next month", () => {
+  const plan = require("./coffee-subscription-plan");
+  const at = (h, m = 0, s = 0) => Date.UTC(2026, 11, 1, h - 9, m, s); // 2026-12-01, JST
+  // 08:59:59: no December invoice exists yet → ends at 09:00, December never invoiced.
+  const before = plan.cancellationFor(at(8, 59, 59), null);
+  assert.deepEqual([before.action, before.cancelAt, before.firstUnchargedMonth], ["CANCEL_AT", plan.billingStartUnix("2026-12"), "2026-12"]);
+  assert.equal(plan.billingStartUnix("2026-12"), at(9) / 1000, "the subscription renews at exactly 09:00 JST");
+  // 09:00–about 10:00: December is a draft (not charged yet) → ends now, the draft is never charged.
+  assert.deepEqual([plan.cancellationFor(at(9, 0, 1), { status: "draft" }).action, plan.cancellationFor(at(9, 30), { status: "draft" }).firstUnchargedMonth], ["CANCEL_NOW", "2026-12"]);
+  // Finalized but unpaid (a failed card, Stripe retrying): the invoice is voided, December not charged or shipped.
+  const open = plan.cancellationFor(at(10, 30), { status: "open", id: "in_x" });
+  assert.deepEqual([open.action, open.voidInvoice, open.firstUnchargedMonth], ["VOID_AND_CANCEL_NOW", "in_x", "2026-12"]);
+  // Paid: December ships, nothing from January.
+  const paid = plan.cancellationFor(at(10, 30), { status: "paid" });
+  assert.deepEqual([paid.action, paid.cancelAt, paid.firstUnchargedMonth, paid.lastChargedMonth], ["CANCEL_AT", plan.billingStartUnix("2027-01"), "2027-01", "2026-12"]);
 });

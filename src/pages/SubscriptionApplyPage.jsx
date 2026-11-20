@@ -55,7 +55,7 @@ export default function SubscriptionApplyPage() {
         <form className="legal-document subm" onSubmit={submit}>
           <p className="legal-eyebrow">Coffee Subscription</p>
           <h1>珈琲の定期便 お申し込み内容の確認</h1>
-          <p className="legal-lead">定期購入のお申し込みです。以下の内容をご確認のうえ、決済画面へお進みください。</p>
+          <p className="legal-lead">定期購入のお申し込みです。以下の内容をご確認のうえ、決済画面へお進みください。決済画面（Stripe）でお届け先とカードを入力し、「申し込む」を押した時点でお申し込みが確定します。</p>
           {!LEGAL_TEXT_REVIEWED && <p className="subm-note">※ 表示内容は確認中の暫定版です。</p>}
           {closed && <p className="subm-alert" role="status">{SUBSCRIPTIONS_PAUSED_TEXT.ja}</p>}
 
@@ -95,7 +95,7 @@ export default function SubscriptionApplyPage() {
           </label>
           {state.message && <p className={state.changed ? "subm-alert" : "subm-error"} role="alert">{state.message}</p>}
           <button type="submit" className="subm-primary" disabled={closed || !agreed || issues.length > 0 || state.busy}>
-            {closed ? "現在、お申し込みを休止しています" : state.busy ? "決済画面を準備しています…" : "定期便を申し込む（決済画面へ）"}
+            {closed ? "現在、お申し込みを休止しています" : state.busy ? "決済画面を準備しています…" : "決済画面へ進む（まだ確定しません）"}
           </button>
           <p className="subm-note">お支払いは Stripe の決済画面で行います。決済画面でも、ご請求の内容が表示されます。</p>
           <p className="subm-note"><Link to="/legal" className="text-link">特定商取引法に基づく表記</Link>・<Link to="/refund" className="text-link">返品・返金について</Link>・<Link to="/subscription/manage" className="text-link">定期便の管理ページ</Link></p>

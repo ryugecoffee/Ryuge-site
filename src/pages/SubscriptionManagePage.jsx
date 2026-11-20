@@ -159,7 +159,7 @@ function CancelSection({ me, reload, setNotice }) {
     return (
       <section className="subm-card"><h2>解約</h2>
         <p className="subm-text">解約を受け付けました。{me.cancellation.firstUnchargedMonth ? `${monthLabel(me.cancellation.firstUnchargedMonth)}以降のご請求はありません。` : ""}</p>
-        {me.cancellation.refundProposal && <p className="subm-text">初回分（{yen(me.cancellation.refundProposal.amount)}）の返金は、確認のうえご連絡いたします。</p>}
+        {me.cancellation.refundProposal && <p className="subm-text">初回の200gは発送を取りやめました。初回分（{yen(me.cancellation.refundProposal.amount)}）は全額、お支払いのカードへ返金します（解約から7営業日以内に手続きします）。</p>}
       </section>
     );
   }
@@ -184,7 +184,7 @@ function CancelSection({ me, reload, setNotice }) {
       <h2 id="cancel-h">解約</h2>
       {!preview ? (
         <>
-          <p className="subm-text">いつでも解約できます。毎月1日のご請求（日本時間9時）より前であれば、その月以降のご請求はありません。</p>
+          <p className="subm-text">いつでも解約できます。毎月1日のご請求（日本時間9時）より前であれば、その月以降のご請求はありません。解約手数料・違約金はありません。</p>
           <button type="button" className="subm-secondary danger" onClick={open} disabled={busy}>解約の内容を確認する</button>
         </>
       ) : (
@@ -192,7 +192,7 @@ function CancelSection({ me, reload, setNotice }) {
           <p className="subm-text"><strong>{endText(preview)}</strong></p>
           <p className="subm-text">{monthLabel(preview.firstUnchargedMonth)}以降のご請求はありません。{preview.lastPaidMonth ? `お支払い済みの${monthLabel(preview.lastPaidMonth)}分のお届けは、予定どおり発送します。` : ""}</p>
           {preview.action === "VOID_AND_CANCEL_NOW" && <p className="subm-text">お支払いが完了していない今月分のご請求は取り消します（今月分は発送しません）。</p>}
-          {preview.firstNotShipped && <p className="subm-text">初回の200gはまだ発送前のため発送を取りやめ、初回分（{yen(preview.refundProposalAmount)}）は確認のうえ返金いたします。</p>}
+          {preview.firstNotShipped && <p className="subm-text">初回の200gはまだ発送前のため発送を取りやめ、初回分（{yen(preview.refundProposalAmount)}）を全額、お支払いのカードへ返金します（解約から7営業日以内に手続きします）。</p>}
           <div className="subm-actions">
             <button type="button" className="subm-primary danger" onClick={confirm} disabled={busy}>{busy ? "手続きしています…" : "解約する"}</button>
             <button type="button" className="subm-secondary" onClick={() => setPreview(null)} disabled={busy}>やめる</button>

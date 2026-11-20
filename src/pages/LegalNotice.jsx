@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { SUBSCRIPTIONS_PAUSED } from "../productData";
 import { CHANGE_DEADLINE_DAY, FIRST_PRICE, MONTHLY_PRICES, SHIPPING_DAYS, yen } from "../lib/coffeeSubscriptionAccount";
+import { TERMS_JA } from "../lib/coffeeSubscriptionTerms";
 
 // 定期購入（珈琲の定期便）の表記（2026-11-19 案）: the same conditions as the final confirmation screen
 // (src/lib/coffeeSubscriptionTerms.js) and the confirmation mail (server/coffee-subscription-mail.js). Provisional until
@@ -12,26 +13,26 @@ const SUBSCRIPTION_ROWS = {
     ["販売価格（税込・送料込み）", `初回 ${yen(FIRST_PRICE)}（200g・1回分）。2回目以降は月額で、${plans}。日割りの精算はありません。`],
     ["支払時期・方法", "クレジットカード（Stripe）。初回分はお申し込み時に、2回目以降は毎月1日（日本時間9時頃）に自動でお支払いいただきます。"],
     ["引渡時期", "初回：お支払い完了後、3営業日以内に発送します。2回目以降：毎月の上記の日に発送します（土日祝・休業日は翌営業日）。"],
-    ["契約期間", "期間の定めはありません。最低継続回数もありません。"],
+    ["契約期間", `${TERMS_JA.term}1年間の参考（お申し込み時の初回＋月額12か月）：${[1, 2, 3, 4].map((n) => `月${n}回 ${yen(FIRST_PRICE + MONTHLY_PRICES[n] * 12)}（${1 + n * 12}回・${((1 + n * 12) * 200).toLocaleString("ja-JP")}g）`).join("／")}。スキップや回数変更をされた場合は変わります。`],
     ["変更・スキップ", `配送回数の変更と月単位のスキップは、管理ページから前月${CHANGE_DEADLINE_DAY}日までのお手続きで翌月分から反映します。`],
-    ["解約の方法", "管理ページ（ご登録のメールアドレスでログイン）からいつでも解約できます。毎月1日のご請求（日本時間9時）より前に解約されると、その月以降のご請求はありません。"],
-    ["返品・返金", "お支払い済みの月の分はお届けします（日割りの返金はありません）。初回の200gを発送する前に解約された場合、初回分は原則として返金します。商品に欠陥がある場合は、到着後7日以内にご連絡ください。"],
+    ["解約の方法", "管理ページ（ご登録のメールアドレスでログイン）からいつでも解約できます。毎月1日のご請求（日本時間9時）より前に解約されると、その月以降のご請求はありません。" + TERMS_JA.noFee],
+    ["返品・返金", `${TERMS_JA.returns}お支払い済みの月の分はお届けします（日割りの返金はありません）。${TERMS_JA.refund}`],
   ],
   en: [
     ["Product", "Two coffees chosen by us (100 g × 2 bags = 200 g per delivery), 1–4 deliveries a month as chosen."],
     ["Price (tax and shipping included)", `First delivery ${yen(FIRST_PRICE)}. Then monthly: ${[1, 2, 3, 4].map((n) => `${n}×/month ${yen(MONTHLY_PRICES[n])}`).join(", ")}. No pro-rating.`],
     ["Payment", "Credit card (Stripe): the first delivery at sign-up, then automatically on the 1st of each month."],
     ["Delivery", "First: within 3 business days of payment. Then on fixed days each month (next business day if closed)."],
-    ["Term and cancellation", `No fixed term or minimum. Change or skip by the ${CHANGE_DEADLINE_DAY}th of the previous month; cancel any time on your subscription page (before 9:00 JST on the 1st, that month is not charged).`],
-    ["Refunds", "Paid months are delivered (no pro-rated refunds). If cancelled before the first 200 g is shipped, the first payment is refunded in principle."],
+    ["Term and cancellation", `No fixed term or minimum: it continues every month until cancelled. Change or skip by the ${CHANGE_DEADLINE_DAY}th of the previous month; cancel any time on your subscription page (before 9:00 JST on the 1st, that month is not charged). No cancellation fee.`],
+    ["Refunds", `Paid months are delivered (no pro-rated refunds). If cancelled before the first 200 g is shipped, the first ${yen(FIRST_PRICE)} is refunded in full to your card within 7 business days. Food: no returns for change of mind; damaged or wrong items, contact us within 7 days of delivery.`],
   ],
   es: [
     ["Producto", "Dos cafés elegidos por nosotros (100 g × 2 bolsas = 200 g por envío), de 1 a 4 envíos al mes."],
     ["Precio (impuestos y envío incluidos)", `Primer envío ${yen(FIRST_PRICE)}. Después mensual: ${[1, 2, 3, 4].map((n) => `${n}/mes ${yen(MONTHLY_PRICES[n])}`).join(", ")}. Sin prorrateo.`],
     ["Pago", "Tarjeta de crédito (Stripe): el primer envío al suscribirse y después el día 1 de cada mes."],
     ["Entrega", "Primero: en 3 días hábiles tras el pago. Después en días fijos cada mes (siguiente día hábil si es festivo)."],
-    ["Duración y cancelación", `Sin plazo ni mínimo. Cambios u omisiones antes del día ${CHANGE_DEADLINE_DAY} del mes anterior; cancelación en cualquier momento en tu página (antes de las 9:00 JST del día 1, ese mes no se cobra).`],
-    ["Reembolsos", "Los meses pagados se envían (sin reembolso prorrateado). Si cancelas antes del primer envío de 200 g, se reembolsa el primer pago en principio."],
+    ["Duración y cancelación", `Sin plazo ni mínimo: continúa cada mes hasta que canceles. Cambios u omisiones antes del día ${CHANGE_DEADLINE_DAY} del mes anterior; cancelación en cualquier momento en tu página (antes de las 9:00 JST del día 1, ese mes no se cobra). Sin cargo por cancelación.`],
+    ["Reembolsos", `Los meses pagados se envían (sin reembolso prorrateado). Si cancelas antes del primer envío de 200 g, se reembolsa el primer pago (${yen(FIRST_PRICE)}) completo a tu tarjeta en 7 días hábiles. Alimentos: sin devoluciones por cambio de opinión; productos dañados o incorrectos, contáctanos en 7 días.`],
   ],
 };
 const SUBSCRIPTION_TITLE = { ja: "定期購入（珈琲の定期便）について", en: "Subscription (Coffee subscription)", es: "Suscripción de café" };

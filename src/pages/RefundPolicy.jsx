@@ -16,9 +16,9 @@ export default function RefundPolicy({ lang }) {
 返金は、ご購入時の決済方法に応じて対応いたします。
 
 ■ 定期購入（珈琲の定期便）の解約
-管理ページからいつでも解約できます。毎月1日のご請求（日本時間9時）より前に解約されると、その月以降のご請求はありません。
+管理ページからいつでも解約できます。毎月1日のご請求（日本時間9時）より前に解約されると、その月以降のご請求はありません。解約手数料・違約金はありません。
 お支払い済みの月の分はお届けし、日割りの返金はありません。
-初回の200gを発送する前に解約された場合、初回分は原則として返金します。
+初回の200gを発送する前に解約された場合は、初回分3,000円を全額、お支払いに使われたカードへ返金します（解約から7営業日以内に手続きします）。発送後の解約では、初回分の返金はありません。
 
 ■ お問い合わせ
 ryugecoffee@gmail.com
@@ -42,8 +42,8 @@ Refunds will be issued using the original payment method.
 
 ■ Subscription Cancellation
 Cancel any time on your subscription page. Cancelled before 9:00 JST on the 1st, that month and later months are not charged.
-Paid months are delivered, with no pro-rated refunds.
-If cancelled before the first 200 g is shipped, the first payment is refunded in principle.
+No cancellation fee. Paid months are delivered, with no pro-rated refunds.
+If cancelled before the first 200 g is shipped, the first ¥3,000 is refunded in full to your card within 7 business days of cancelling.
 
 ■ Contact
 ryugecoffee@gmail.com
@@ -67,8 +67,8 @@ Los reembolsos se realizarán utilizando el método de pago original.
 
 ■ Cancelación de suscripciones
 Puedes cancelar en cualquier momento en tu página de suscripción. Si cancelas antes de las 9:00 (hora de Japón) del día 1, ese mes y los siguientes no se cobran.
-Los meses pagados se envían, sin reembolsos prorrateados.
-Si cancelas antes del envío de los primeros 200 g, el primer pago se reembolsa en principio.
+Sin cargo por cancelación. Los meses pagados se envían, sin reembolsos prorrateados.
+Si cancelas antes del envío de los primeros 200 g, el primer pago de ¥3,000 se reembolsa completo a tu tarjeta en 7 días hábiles.
 
 ■ Contacto
 ryugecoffee@gmail.com
