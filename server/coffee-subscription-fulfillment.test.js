@@ -387,6 +387,8 @@ test("HTTP: staff sign in by a mailed link; every request (the address above all
   try {
     // Not signed in: nothing, the label least of all.
     for (const path of ["/work", "/label/sub_http001_first"]) assert.equal((await get(path)).status, 401);
+    // A cancellation asked by email is entered only by signed-in staff.
+    for (const path of ["/email-cancel/preview", "/email-cancel"]) assert.equal((await post(path, { email: "a@example.com" })).status, 401);
     assert.equal((await get("/work", "x".repeat(43))).status, 401);
     assert.equal((await post("/prepare", { shipmentId: "sub_http001_first", skus: ["enma-jimma", "enma-karamo"], requestId: "req-http-000000" })).status, 401);
     // An address that is not listed gets the same answer and no mail.

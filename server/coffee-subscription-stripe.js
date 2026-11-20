@@ -13,7 +13,7 @@
 // Verified against Stripe test mode with test clocks (2026-11-18): server/coffee-subscription-stripe-e2e.js.
 
 const plan = require("./coffee-subscription-plan");
-const { SUBS, SHIPMENTS } = require("./coffee-subscription-records");
+const { SUBS, SHIPMENTS, retryOnContention } = require("./coffee-subscription-records");
 const fulfillment = require("./coffee-subscription-fulfillment");
 
 // A first delivery that has not left yet (④: planned, held, or being prepared with its bags reserved).
@@ -119,23 +119,40 @@ async function currentMonthInvoice(stripe, subscriptionId, now) {
 
 // What a cancellation asked now would do, for the customer to confirm first: the decision and a key that changes when
 // the decision would (e.g. the clock passing 09:00 on the 1st, or this month's invoice being paid meanwhile).
-const decisionKey = (d) => [d.action, d.cancelAt || "", d.voidInvoice || "", d.firstUnchargedMonth || ""].join("|");
-async function cancellationPreview({ db, stripe, subscriptionId, now = Date.now() }) {
+const decisionKey = (d, late = null) => [d.action, d.cancelAt || "", d.voidInvoice || "", d.firstUnchargedMonth || "",
+  late ? `${late.month}:${late.amount}` : ""].join("|");
+
+// A cancellation asked by email (coffee-subscription-email-cancel.js) counts from when the email arrived. If it arrived
+// before 09:00 on the 1st but the shop entered it after this month's invoice was paid, this month is treated as never
+// charged: its deliveries are not shipped, and its amount is proposed for refund (by hand, after the CEO's check).
+// Only this month: an email older than last month's charge is refused (REQUEST_TOO_OLD) and left to the CEO.
+function lateCharge({ requestedAt, now, invoice }) {
+  if (requestedAt == null) return null;
+  const month = plan.monthOf(now);
+  const billing = plan.billingStartUnix(month) * 1000;
+  if (!(requestedAt < billing && now >= billing && invoice?.status === "paid")) return null;
+  if (requestedAt < plan.billingStartUnix(plan.addMonths(month, -1)) * 1000) throw new PlanChangeError("REQUEST_TOO_OLD", 409);
+  return { month, amount: Number(invoice.amount_paid || 0), invoiceId: invoice.id };
+}
+
+async function cancellationPreview({ db, stripe, subscriptionId, now = Date.now(), requestedAt = null }) {
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const ended = ENDED.includes(subscription.status);
   const invoice = ended ? null : await currentMonthInvoice(stripe, subscriptionId, now);
   const decision = plan.cancellationFor(now, invoice);
+  const late = ended ? null : lateCharge({ requestedAt, now, invoice });
   const first = await db.collection(SHIPMENTS).doc(`${subscriptionId}_first`).get();
   const firstNotShipped = first.exists && NOT_SHIPPED.includes(first.data().status);
-  return { ended, decision, key: decisionKey(decision), firstNotShipped, refundProposalAmount: firstNotShipped ? plan.FIRST_DELIVERY_PRICE : 0 };
+  return { ended, decision, late, key: decisionKey(decision, late), firstNotShipped, refundProposalAmount: firstNotShipped ? plan.FIRST_DELIVERY_PRICE : 0 };
 }
 
-async function cancelSubscription({ db, stripe, subscriptionId, now = Date.now(), expectKey = null }) {
+async function cancelSubscription({ db, stripe, subscriptionId, now = Date.now(), expectKey = null, requestedAt = null, via = "customer_page" }) {
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const invoice = ENDED.includes(subscription.status) ? null : await currentMonthInvoice(stripe, subscriptionId, now);
   const decision = plan.cancellationFor(now, invoice);
-  // The customer confirmed a preview: if what would happen has changed since, nothing is done (shown again).
-  if (expectKey && expectKey !== decisionKey(decision) && !ENDED.includes(subscription.status)) throw new PlanChangeError("CANCEL_CHANGED", 409);
+  const late = ENDED.includes(subscription.status) ? null : lateCharge({ requestedAt, now, invoice });
+  // The customer (or the shop, for an email) confirmed a preview: if what would happen has changed since, nothing is done.
+  if (expectKey && expectKey !== decisionKey(decision, late) && !ENDED.includes(subscription.status)) throw new PlanChangeError("CANCEL_CHANGED", 409);
   if (!ENDED.includes(subscription.status)) {
     // A schedule would keep (or restart) the plan; the cancellation replaces it.
     if (idOf(subscription.schedule)) await stripe.subscriptionSchedules.release(idOf(subscription.schedule));
@@ -146,31 +163,57 @@ async function cancelSubscription({ db, stripe, subscriptionId, now = Date.now()
       if (decision.action === "VOID_AND_CANCEL_NOW") await stripe.invoices.voidInvoice(decision.voidInvoice);
     }
   }
-  return db.runTransaction(async (tx) => {
+  // Contention (nothing committed) is run again here; a repeat finds cancelRequestedAt and changes nothing.
+  return retryOnContention(() => db.runTransaction(async (tx) => {
     const ref = db.collection(SUBS).doc(subscriptionId);
     const firstRef = db.collection(SHIPMENTS).doc(`${subscriptionId}_first`);
     const [snap, first] = [await tx.get(ref), await tx.get(firstRef)];
     if (!snap.exists) throw new PlanChangeError("NOT_FOUND", 404);
     const contract = snap.data();
-    if (contract.cancelRequestedAt) return { ...decision, duplicate: true, refundProposal: contract.refundProposal || null };
+    // Already cancelled (e.g. on the customer's page after 09:00), but an email asking for it arrived before the
+    // charge: the paid month is still treated as never charged (once). Otherwise a repeat changes nothing.
+    const lateAfterCancel = Boolean(contract.cancelRequestedAt && late && !contract.monthRefundProposal
+      && String(contract.firstUnchargedMonth || "9999-99") > late.month);
+    if (contract.cancelRequestedAt && !lateAfterCancel) {
+      return { ...decision, duplicate: true, firstUnchargedMonth: contract.firstUnchargedMonth || decision.firstUnchargedMonth,
+        refundProposal: contract.refundProposal || null, monthRefundProposal: contract.monthRefundProposal || null };
+    }
     const firstOpen = first.exists && NOT_SHIPPED.includes(first.data().status);
-    // Bags reserved for a first delivery being prepared go back to stock (read before any write).
-    const releaseBags = firstOpen ? await fulfillment.readRelease(tx, db, first.data()) : () => {};
-    const patch = { cancelRequestedAt: new Date(now), cancelDecision: decision.action, firstUnchargedMonth: decision.firstUnchargedMonth,
-      cancelAt: decision.cancelAt ? new Date(decision.cancelAt * 1000) : new Date(now), updatedAt: new Date(now) };
+    // A late-entered email cancellation: this month's deliveries not shipped yet are stopped too.
+    const lateShipments = [];
+    if (late) {
+      const all = await tx.get(db.collection(SHIPMENTS).where("subscriptionId", "==", subscriptionId));
+      for (const d of all.docs) {
+        const s = d.data();
+        if (s.kind === "monthly" && s.month === late.month) lateShipments.push({ ref: d.ref, data: s, stop: [...NOT_SHIPPED, "needs_review"].includes(s.status) });
+      }
+    }
+    // Bags reserved for the deliveries being stopped go back to stock (all read before any write, one write per bean).
+    const releaseBags = await fulfillment.readRelease(tx, db, ...(firstOpen ? [first.data()] : []), ...lateShipments.filter((x) => x.stop).map((x) => x.data));
+    const patch = lateAfterCancel ? { firstUnchargedMonth: late.month, cancelRequestReceivedAt: new Date(requestedAt), updatedAt: new Date(now) }
+      : { cancelRequestedAt: new Date(now), cancelDecision: decision.action, firstUnchargedMonth: late ? late.month : decision.firstUnchargedMonth,
+        cancelAt: decision.cancelAt ? new Date(decision.cancelAt * 1000) : new Date(now), cancelVia: via,
+        ...(requestedAt != null ? { cancelRequestReceivedAt: new Date(requestedAt) } : {}), updatedAt: new Date(now) };
+    let monthRefundProposal = null;
+    if (late) {
+      for (const x of lateShipments) if (x.stop) tx.update(x.ref, { status: "cancelled_before_shipping", beans: null, updatedAt: new Date(now) });
+      monthRefundProposal = { reason: "EMAIL_CANCEL_BEFORE_CHARGE", month: late.month, amount: late.amount, invoiceId: late.invoiceId,
+        shippedBefore: lateShipments.filter((x) => ["shipped", "delivered"].includes(x.data.status)).length, status: "awaiting_ceo_approval", createdAt: new Date(now) };
+      Object.assign(patch, { monthRefundProposal, needsReview: true, reviewReason: "REFUND_PROPOSAL" });
+    }
     let refundProposal = null;
+    releaseBags();
     if (firstOpen) {
       // The first 200 g was paid but not shipped yet: not shipped, and ¥3,000 proposed for refund (CEO approval).
-      releaseBags();
       tx.update(firstRef, { status: "cancelled_before_shipping", beans: null, updatedAt: new Date(now) });
       refundProposal = { reason: "CANCELLED_BEFORE_FIRST_SHIPMENT", amount: plan.FIRST_DELIVERY_PRICE, invoiceId: first.data().invoiceId || null,
         status: "awaiting_ceo_approval", createdAt: new Date(now) };
       Object.assign(patch, { refundProposal, needsReview: true, reviewReason: "REFUND_PROPOSAL" });
     }
     tx.update(ref, patch);
-    return { ...decision, refundProposal };
-  });
+    return { ...decision, firstUnchargedMonth: patch.firstUnchargedMonth, refundProposal, monthRefundProposal };
+  }));
 }
 
-module.exports = { PlanChangeError, buildSchedulePhases, syncSchedule, requestPlanChange, cancelSubscription, cancellationPreview, decisionKey,
+module.exports = { PlanChangeError, buildSchedulePhases, syncSchedule, requestPlanChange, cancelSubscription, cancellationPreview, decisionKey, lateCharge,
   currentMonthInvoice, ENDED };

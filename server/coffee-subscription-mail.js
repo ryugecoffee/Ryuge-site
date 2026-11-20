@@ -39,11 +39,19 @@ function welcomeMail({ to, contract, siteUrl }) {
     `・月額：${yen(plan.MONTHLY_PRICES[frequency])}（税込・全国一律送料込み）。毎月1日にご登録のカードへ請求します。`,
     `・月額のお支払い開始：${monthText(contract.startMonth)}1日`,
     `・2回目以降の発送：毎月 ${days}（土日祝・休業日は翌営業日）`,
+    `・${plan.TERMS_JA.term}`,
+    `・${plan.annualReferenceText(frequency, contract.startMonth)}`,
     "",
     "■ 管理ページ（お届け予定の確認、回数の変更、スキップ、お届け先・カードの変更、解約）",
     `${siteUrl}/subscription/manage`,
     "ご登録のメールアドレスを入力すると、ログイン用のリンクをお送りします。",
     `回数の変更・スキップは、前月${plan.CHANGE_DEADLINE_DAY}日までに管理ページから行ってください。`,
+    "解約は管理ページからいつでもできます。毎月1日のご請求（日本時間9時）より前に解約されると、その月以降のご請求はありません。" + plan.TERMS_JA.noFee,
+    "お支払い済みの月の分はお届けします（日割りの返金はありません）。" + plan.TERMS_JA.refund,
+    plan.TERMS_JA.emailCancel,
+    "",
+    "■ 返品について",
+    plan.TERMS_JA.returns,
     "",
     `ご不明な点は ${CONTACT} までお問い合わせください。`,
     "",
@@ -57,7 +65,7 @@ async function sendWelcomeIfReady({ db, event, sendMail, siteUrl, now = Date.now
   const subscriptionId = subscriptionOfEvent(event);
   if (!subscriptionId) return { sent: false, reason: "NOT_A_SIGN_UP" };
   const ref = db.collection(MAILS).doc(`${subscriptionId}_welcome`);
-  const ready = await db.runTransaction(async (tx) => {
+  const ready = await records.retryOnContention(() => db.runTransaction(async (tx) => {
     const [mail, contractSnap, first] = [await tx.get(ref), await tx.get(db.collection(records.SUBS).doc(subscriptionId)),
       await tx.get(db.collection(records.SHIPMENTS).doc(`${subscriptionId}_first`))];
     if (mail.exists) return { reason: "ALREADY" };
@@ -69,7 +77,7 @@ async function sendWelcomeIfReady({ db, event, sendMail, siteUrl, now = Date.now
     if (!first.exists) return { reason: "WAITING_FOR_PAYMENT" };
     tx.create(ref, { subscriptionId, kind: "welcome", status: "sending", createdAt: new Date(now) });
     return { contract };
-  });
+  }));
   if (!ready.contract) return { sent: false, reason: ready.reason };
   try {
     await sendMail(welcomeMail({ to: records.normalizeEmail(ready.contract.email), contract: ready.contract, siteUrl }));

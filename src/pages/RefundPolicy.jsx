@@ -15,9 +15,11 @@ export default function RefundPolicy({ lang }) {
 ■ 返金方法
 返金は、ご購入時の決済方法に応じて対応いたします。
 
-■ 定期購入のキャンセル
-定期購入の解約は、次回決済日前までにお手続きください。
-既に決済が完了している注文についてはキャンセルできません。
+■ 定期購入（珈琲の定期便）の解約
+管理ページからいつでも解約できます。毎月1日のご請求（日本時間9時）より前に解約されると、その月以降のご請求はありません。解約手数料・違約金はありません。
+管理ページにログインできない場合は、ryugecoffee@gmail.com へ件名「定期便の解約希望」でご連絡いただいても解約できます。ご本人確認のため、ご登録のメールアドレスからのご連絡は送信元を確認します。送信元を確認できない場合や、別のアドレスからのご連絡の場合は、ご登録のメールアドレス・郵便番号・電話番号の下4桁をお尋ねします（送信元を確認できない場合のお尋ねは、ご登録のメールアドレス宛てにお送りします）。毎月1日9時のご請求より前に届いたご連絡は、その月のご請求より前の解約として扱います（当店の手続きが遅れてその月のご請求が発生した場合は、その月分を全額返金し、まだ発送していない分は発送しません。すでに発送した分のお支払い・返品は不要です）。
+お支払い済みの月の分はお届けし、日割りの返金はありません。
+初回の200gを発送する前に解約された場合は、初回分3,000円を全額、お支払いに使われたカードへ返金します（解約から7営業日以内に手続きします）。発送後の解約では、初回分の返金はありません。
 
 ■ お問い合わせ
 ryugecoffee@gmail.com
@@ -40,8 +42,10 @@ We will review the issue and provide a replacement or refund if applicable.
 Refunds will be issued using the original payment method.
 
 ■ Subscription Cancellation
-Subscriptions must be canceled before the next billing date.
-Orders that have already been processed cannot be canceled.
+Cancel any time on your subscription page. Cancelled before 9:00 JST on the 1st, that month and later months are not charged.
+If you cannot sign in, email ryugecoffee@gmail.com ("定期便の解約希望"); we check the sender of a message from your registered address; if it cannot be confirmed, or you write from another address, we ask for your registered email, postal code and the last 4 digits of your phone (for an unconfirmed sender, we ask at your registered address). A request that arrives before 9:00 JST on the 1st counts as before that month's charge; if our handling is late and the month is charged, that month is refunded in full, deliveries not yet shipped are not sent, and anything already shipped needs no payment or return.
+No cancellation fee. Paid months are delivered, with no pro-rated refunds.
+If cancelled before the first 200 g is shipped, the first ¥3,000 is refunded in full to your card within 7 business days of cancelling.
 
 ■ Contact
 ryugecoffee@gmail.com
@@ -64,8 +68,10 @@ Revisaremos el caso y ofreceremos un reemplazo o reembolso si corresponde.
 Los reembolsos se realizarán utilizando el método de pago original.
 
 ■ Cancelación de suscripciones
-Las suscripciones deben cancelarse antes de la próxima fecha de facturación.
-Los pedidos ya procesados no pueden cancelarse.
+Puedes cancelar en cualquier momento en tu página de suscripción. Si cancelas antes de las 9:00 (hora de Japón) del día 1, ese mes y los siguientes no se cobran.
+Si no puedes iniciar sesión, escribe a ryugecoffee@gmail.com ("定期便の解約希望"); comprobamos el remitente de un mensaje desde tu correo registrado; si no se puede confirmar, o escribes desde otra dirección, te pedimos tu correo registrado, código postal y los 4 últimos dígitos de tu teléfono (si el remitente no se confirma, preguntamos en tu correo registrado). Una solicitud recibida antes de las 9:00 (hora de Japón) del día 1 cuenta como anterior al cobro de ese mes; si nuestra gestión se retrasa y se cobra ese mes, se reembolsa completo, lo no enviado no se envía y lo ya enviado no requiere pago ni devolución.
+Sin cargo por cancelación. Los meses pagados se envían, sin reembolsos prorrateados.
+Si cancelas antes del envío de los primeros 200 g, el primer pago de ¥3,000 se reembolsa completo a tu tarjeta en 7 días hábiles.
 
 ■ Contacto
 ryugecoffee@gmail.com

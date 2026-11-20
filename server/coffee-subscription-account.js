@@ -52,6 +52,8 @@ class AccountError extends Error {
 
 const hash = (value) => crypto.createHash("sha256").update(String(value)).digest("hex");
 const newToken = () => crypto.randomBytes(32).toString("base64url");
+const monthText = (m) => { const [y, mm] = String(m || "").split("-").map(Number); return y && mm ? `${y}年${mm}月` : String(m || ""); };
+const contractRef = (id) => `SUB-${String(id).replace(/^sub_/, "").slice(-6).toUpperCase()}`;
 const toMs = (v) => (v?.toMillis ? v.toMillis() : v instanceof Date ? v.getTime() : Number(v || 0));
 
 function configFrom(env = process.env) {
@@ -382,7 +384,15 @@ function createRouter({ getDb, getStripe, sendMail, env = process.env, clock = D
     } });
     if (!result.repeated) {
       await mail({ to: auth.contract.email, subject: "【龍華珈琲】定期便の解約を受け付けました",
-        text: `定期便の解約を受け付けました。${result.firstUnchargedMonth} 以降のご請求はありません。${result.refundProposal ? "\n初回分（3,000円）の返金は、確認のうえご連絡いたします。" : ""}\n\n龍華珈琲 / Ryuge Coffee` });
+        text: `定期便の解約を受け付けました。${monthText(result.firstUnchargedMonth)}以降のご請求はありません。${result.refundProposal
+          ? `\n初回の200gは発送前のため発送を取りやめ、初回分${result.refundProposal.amount.toLocaleString("ja-JP")}円を全額、お支払いのカードへ返金します（${plan.REFUND_BUSINESS_DAYS}営業日以内に手続きします）。` : ""}\n\n龍華珈琲 / Ryuge Coffee` });
+      // The shop is told at once, so the refund (by hand, after the CEO's check) is made within the stated days. Contract
+      // number and amount only.
+      if (result.refundProposal) {
+        const staff = String(env.SHOP_STAFF_EMAILS || "").split(",").map((e) => e.trim()).filter((e) => /^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/.test(e));
+        if (staff.length) await mail({ to: staff.join(", "), subject: `【定期便・返金の確認】初回発送前の解約（${contractRef(auth.subscriptionId)}）`,
+          text: `初回の200gを発送する前に解約されました。発送は取りやめ済みです（準備中だった場合は在庫も戻しています）。\n\n契約番号：${contractRef(auth.subscriptionId)}\n返金の提案：初回分 ${result.refundProposal.amount.toLocaleString("ja-JP")}円（CEO承認待ち）\n\nお客様には「${plan.REFUND_BUSINESS_DAYS}営業日以内に返金の手続き」とお伝えしています。CEOの確認後、Stripeで返金してください（自動では返金されません）。` });
+      }
     }
     return result;
   }));

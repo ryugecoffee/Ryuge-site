@@ -390,3 +390,42 @@ test("records: a late month's deliveries follow the plan; a crowded one is held 
     cancellation_details: { reason: "payment_failed" }, items: { data: [{ price: { id: "price_m2" } }] } }), CONFIG);
   assert.deepEqual([db.store.get(`${records.SUBS}/${SUB}`).status, db.store.get(`${records.SUBS}/${SUB}`).endedReason], ["canceled", "payment_failed"]);
 });
+
+test("contention: an ABORTED transaction (nothing written) is run again here; other errors and the last attempt are not hidden", async () => {
+  let calls = 0;
+  const aborted = Object.assign(new Error("10 ABORTED: Transaction lock timeout."), { code: 10 });
+  assert.equal(await records.retryOnContention(async () => { calls += 1; if (calls < 3) throw aborted; return "ok"; }, { pauseMs: 1 }), "ok");
+  assert.equal(calls, 3);
+  calls = 0;
+  await assert.rejects(records.retryOnContention(async () => { calls += 1; throw aborted; }, { pauseMs: 1 }), /ABORTED/);
+  assert.equal(calls, 4, "gives up after four attempts (the webhook then answers 500)");
+  calls = 0;
+  await assert.rejects(records.retryOnContention(async () => { calls += 1; throw Object.assign(new Error("exists"), { code: 6 }); }, { pauseMs: 1 }), /exists/);
+  assert.equal(calls, 1, "ALREADY_EXISTS and every other error are never retried");
+  calls = 0;
+  const closed = Object.assign(new Error("3 INVALID_ARGUMENT: Transaction is invalid or closed."), { code: 3 });
+  assert.equal(await records.retryOnContention(async () => { calls += 1; if (calls < 2) throw closed; return "ok"; }, { pauseMs: 1 }), "ok");
+  calls = 0;
+  await assert.rejects(records.retryOnContention(async () => { calls += 1; throw Object.assign(new Error("3 INVALID_ARGUMENT: bad field"), { code: 3 }); }, { pauseMs: 1 }));
+  assert.equal(calls, 1, "other INVALID_ARGUMENT errors are bugs, not contention");
+});
+
+test("email cancellation words: a fully stopped month and a month partly shipped before the shop acted never contradict", () => {
+  const ec = require("./coffee-subscription-email-cancel");
+  const none = ec.monthRefundText({ month: "2026-12", amount: 5800, shippedBefore: 0 });
+  assert.match(none, /5,800円）は.*全額.*この月の発送は行いません。$/);
+  const one = ec.monthRefundText({ month: "2026-12", amount: 5800, shippedBefore: 1 });
+  assert.match(one, /全額をお支払いのカードへ返金します.*すでに発送した1回分はそのままお受け取りください（お支払い・返品は不要です）。まだ発送していない分は発送しません。$/);
+  assert.doesNotMatch(one, /この月の発送は行いません/);
+  // From the registered address only with all three sender checks (From address, SPF/DKIM/DMARC PASS, DKIM domain = From domain).
+  const at = Date.UTC(2026, 11, 2);
+  const base = { email: "a@example.com", method: "registered_address", receivedAt: "2026-12-01T08:00:00+09:00" };
+  const ok = { fromAddressMatches: true, spfDkimDmarcPass: true, dkimDomainAligned: true };
+  assert.equal(ec.parse({ ...base, senderCheck: ok }, at).method, "registered_address");
+  assert.throws(() => ec.parse(base, at), { code: "SENDER_CHECK_REQUIRED" });
+  for (const k of Object.keys(ok)) assert.throws(() => ec.parse({ ...base, senderCheck: { ...ok, [k]: false } }, at), { code: "SENDER_CHECK_REQUIRED" }, k);
+  assert.throws(() => ec.parse({ ...base, senderCheck: { ...ok, dkimDomainAligned: "true" } }, at), { code: "SENDER_CHECK_REQUIRED" });
+  assert.throws(() => ec.parse({ ...base, senderAuthenticated: true }, at), { code: "SENDER_CHECK_REQUIRED" }, "the old single check is not enough");
+  // The details check needs none of them.
+  assert.equal(ec.parse({ ...base, method: "details", postalCode: "100-0001", phoneLast4: "5678" }, at).method, "details");
+});

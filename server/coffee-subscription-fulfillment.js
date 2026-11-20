@@ -131,10 +131,23 @@ function writeStock(tx, stock, change) {
 
 // For coffee-subscription-stripe.js: a delivery being prepared when its contract is cancelled gives its bags back.
 // readRelease (inside the transaction, before any write) returns the write.
-async function readRelease(tx, db, shipment) {
-  if (shipment?.status !== "preparing" || !Array.isArray(shipment.beans) || !shipment.beans.length) return () => {};
-  const stock = await readStock(tx, db, shipment.beans);
-  return () => writeStock(tx, stock, "release");
+// Several deliveries at once (a cancellation can stop more than one) may hold the same bean: each stock record is read
+// once and given back one bag per delivery holding it, never one write per delivery over the same record.
+async function readRelease(tx, db, ...shipments) {
+  const counts = new Map();
+  for (const shipment of shipments) {
+    if (shipment?.status !== "preparing" || !Array.isArray(shipment.beans) || !shipment.beans.length) continue;
+    const refs = stockRefs(db, shipment.beans);
+    for (const ref of [...refs.skus, ...refs.lots]) {
+      const id = ref.path || ref.key; // Firestore's path (`key` in the unit tests' stand-in)
+      const entry = counts.get(id) || { ref, bags: 0 };
+      entry.bags += 1;
+      counts.set(id, entry);
+    }
+  }
+  const entries = [...counts.values()];
+  const snaps = await Promise.all(entries.map((e) => tx.get(e.ref)));
+  return () => entries.forEach((e, i) => tx.update(e.ref, { held: Math.max(0, integer(snaps[i].data()?.held) - e.bags) }));
 }
 
 const fingerprint = (parts) => crypto.createHash("sha256").update(JSON.stringify(parts)).digest("hex");
@@ -146,7 +159,8 @@ async function operate(db, { action, shipmentId, requestId, actor, beans = null,
   const print = fingerprint([action, shipmentId, beans ? beans.map((b) => b.sku) : null, tracking, reason]);
   const opRef = db.collection(OPS).doc(requestId);
   const ref = db.collection(records.SHIPMENTS).doc(shipmentId);
-  return db.runTransaction(async (tx) => {
+  // Contention (nothing committed) is run again here: the request record makes a repeat a replay (records.retryOnContention).
+  return records.retryOnContention(() => db.runTransaction(async (tx) => {
     const op = await tx.get(opRef);
     if (op.exists) {
       if (op.data().fingerprint !== print) fail("REQUEST_ID_CONFLICT", 409);
@@ -164,7 +178,7 @@ async function operate(db, { action, shipmentId, requestId, actor, beans = null,
       tx.create(opRef, { action, shipmentId, fingerprint: print, actor, result, at: new Date(now) });
     }
     return result;
-  });
+  }));
 }
 
 const summaryOf = (shipmentId, status, extra = {}) => ({ shipmentId, status, ...extra });
@@ -348,7 +362,7 @@ async function shippingLabel(db, shipmentId) {
 // ---- Router (signed-in staff only; the actor is the server's record of the session, never taken from the request) ----
 const enabled = (env) => staffAuth.configFrom(env).enabled;
 
-function createRouter({ getDb, notify = async () => {}, sendMail = async () => {}, env = process.env, clock = Date.now, log = console,
+function createRouter({ getDb, getStripe = () => null, notify = async () => {}, sendMail = async () => {}, env = process.env, clock = Date.now, log = console,
   limiter = createRateLimiter({ limit: 60, windowMs: 60 * 1000 }), loginLimiter } = {}) {
   const router = express.Router();
   router.use((req, res, next) => {
@@ -391,6 +405,9 @@ function createRouter({ getDb, notify = async () => {}, sendMail = async () => {
   router.post("/ship", handle((b, _r, actor) => shipShipment(getDb(), { shipmentId: b.shipmentId, requestId: b.requestId, trackingNumber: b.trackingNumber, actor }, { now: clock() })));
   router.post("/hold", handle((b, _r, actor) => holdShipment(getDb(), { shipmentId: b.shipmentId, requestId: b.requestId, reason: b.reason, actor }, { now: clock() })));
   router.post("/resume", handle((b, _r, actor) => resumeShipment(getDb(), { shipmentId: b.shipmentId, requestId: b.requestId, actor }, { now: clock() })));
+  // A cancellation the customer asked for by email (server/coffee-subscription-email-cancel.js; loaded here, after this
+  // module, because it builds on coffee-subscription-stripe.js, which uses this one).
+  require("./coffee-subscription-email-cancel").addRoutes(router, { getDb, getStripe, sendMail, env, clock, log });
   return router;
 }
 

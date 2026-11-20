@@ -209,7 +209,34 @@ function cancellationFor(now, currentMonthInvoice) {
     lastChargedMonth: status === "paid" ? month : previous };
 }
 
+// Customer-facing terms shared by the Stripe page and the mails (the store's screens use src/lib/coffeeSubscriptionTerms.js;
+// a test keeps the two the same). Drafts until reviewed (LEGAL_TEXT_REVIEWED).
+const REFUND_BUSINESS_DAYS = 7;
+const TERMS_JA = Object.freeze({
+  term: "期間の定めのない定期購入です（解約されるまで毎月続きます）。最低継続回数はありません。",
+  noFee: "解約手数料・違約金はありません。",
+  refund: `初回の200gを発送する前に解約された場合は、初回分${FIRST_DELIVERY_PRICE.toLocaleString("ja-JP")}円を全額、お支払いに使われたカードへ返金します（解約から${REFUND_BUSINESS_DAYS}営業日以内に手続きします）。発送後の解約では、初回分の返金はありません。`,
+  returns: "食品のため、お客様のご都合による返品・交換はお受けしていません。商品に破損・不足・誤りがあった場合は、到着後7日以内に ryugecoffee@gmail.com へご連絡ください。確認のうえ、交換または返金いたします。",
+  // Cancelling by email when the customer cannot sign in (server/coffee-subscription-email-cancel.js does what this says).
+  emailCancel: "管理ページにログインできない場合は、ryugecoffee@gmail.com へ件名「定期便の解約希望」でご連絡いただいても解約できます。ご本人確認のため、ご登録のメールアドレスからのご連絡は送信元を確認します。送信元を確認できない場合や、別のアドレスからのご連絡の場合は、ご登録のメールアドレス・郵便番号・電話番号の下4桁をお尋ねします（送信元を確認できない場合のお尋ねは、ご登録のメールアドレス宛てにお送りします）。毎月1日9時のご請求より前に届いたご連絡は、その月のご請求より前の解約として扱います（当店の手続きが遅れてその月のご請求が発生した場合は、その月分を全額返金し、まだ発送していない分は発送しません。すでに発送した分のお支払い・返品は不要です）。",
+  emailCancelShort: "ログインできない場合は ryugecoffee@gmail.com へのメールでも解約でき、1日9時より前に届いたご連絡はその月のご請求より前の解約として扱います。",
+});
+// One year from the first monthly charge: the first delivery + 12 monthly charges (a reference, not a commitment: skips
+// and changes alter it).
+function annualReference(frequency, startMonth) {
+  const f = validFrequency(frequency);
+  const endMonth = addMonths(startMonth, 11);
+  return { frequency: f, startMonth, endMonth, total: FIRST_DELIVERY_PRICE + MONTHLY_PRICES[f] * 12, deliveries: 1 + f * 12,
+    grams: GRAMS_PER_DELIVERY * (1 + f * 12) };
+}
+const monthJa = (m) => { const [y, mm] = String(m).split("-").map(Number); return `${y}年${mm}月`; };
+function annualReferenceText(frequency, startMonth) {
+  const a = annualReference(frequency, startMonth);
+  return `1年間の参考：お申し込み時の初回 ${FIRST_DELIVERY_PRICE.toLocaleString("ja-JP")}円と、${monthJa(a.startMonth)}〜${monthJa(a.endMonth)}の月額 ${MONTHLY_PRICES[a.frequency].toLocaleString("ja-JP")}円×12か月で、合計 ${a.total.toLocaleString("ja-JP")}円、お届けは合計${a.deliveries}回・${a.grams.toLocaleString("ja-JP")}gです（スキップや回数変更をされた場合は変わります。解約されるまで毎月続きます）。`;
+}
+
 module.exports = {
+  REFUND_BUSINESS_DAYS, TERMS_JA, annualReference, annualReferenceText,
   PlanError, MONTHLY_PRICES, FIRST_DELIVERY_PRICE, GRAMS_PER_DELIVERY, CHANGE_DEADLINE_DAY, START_NEXT_MONTH_UNTIL_DAY,
   SHIPPING_DAYS, validFrequency, jst, monthOf, addMonths, parseMonth, billingStartUnix, startMonthFor, firstChangeableMonth,
   isWorkingDay, shippingDates, workingDayAfter, dayOf, deliveryPlan, LATE_SHIP_WITHIN_WORKING_DAYS, monthPlan, schedulePhases, cancellationFor,

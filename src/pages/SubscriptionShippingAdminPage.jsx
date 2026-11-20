@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  BLOCKER_TEXT, HOLD_TEXT, METHOD_TEXT, STATUS_TEXT, addDays, beanName, dayLabel, errorText, jstToday, newRequestId, shipmentLabel, shippingApi, staffSession,
+  BLOCKER_TEXT, HOLD_TEXT, METHOD_TEXT, STATUS_TEXT, addDays, beanName, dayLabel, errorText, jstInputToIso, jstToday, monthLabel, newRequestId, shipmentLabel,
+  shippingApi, staffSession,
 } from "../lib/subscriptionShippingAdmin";
 
 // 珈琲の定期便 ④: the shop's shipping page. Pick two different beans → 発送準備 (one bag of each reserved) → 発送済み
@@ -183,6 +184,102 @@ function Delivery({ d, beans, onChanged, onSignedOut }) {
   );
 }
 
+// A cancellation the customer asked for by email (they could not sign in to their page). The server checks who it is
+// (the registered address, or the postal code and the last 4 digits of the phone) and counts it from when the email
+// arrived; it never shows the stored details. Refunds are only proposed here: the CEO makes them in Stripe.
+// The three checks of an email from the registered address (Gmail「メッセージのソースを表示」), all required by the server.
+const SENDER_CHECK_TEXT = {
+  fromAddressMatches: "From 行の < > 内のアドレス（表示名ではなく）が、上に入力したご登録のアドレスと完全に一致する",
+  spfDkimDmarcPass: "SPF・DKIM・DMARC がすべて PASS で、警告（なりすましの疑い等）が出ていない",
+  dkimDomainAligned: "DKIM の「ドメイン」（署名元）が、From アドレスの @ 以降と同じドメイン（またはそのサブドメイン）",
+};
+const NO_SENDER_CHECK = { fromAddressMatches: false, spfDkimDmarcPass: false, dkimDomainAligned: false };
+const EMPTY_REQUEST = { email: "", method: "registered_address", senderCheck: NO_SENDER_CHECK, postalCode: "", phoneLast4: "", receivedAt: "" };
+function EmailCancel({ onSignedOut }) {
+  const ids = useRequestIds();
+  const [form, setForm] = useState(EMPTY_REQUEST);
+  const [state, setState] = useState({ busy: false, preview: null, done: null, message: "" });
+  const body = () => ({ ...form, receivedAt: jstInputToIso(form.receivedAt) });
+  const edit = (patch) => { setForm({ ...form, ...patch }); setState({ busy: false, preview: null, done: null, message: "" }); };
+  const failed = (r) => {
+    if (r.status === 401) { onSignedOut(errorText(r.body.error)); return; }
+    setState((s) => ({ ...s, busy: false, preview: r.body.error === "CANCEL_CHANGED" ? null : s.preview, message: errorText(r.body.error) }));
+  };
+  async function check(event) {
+    event.preventDefault();
+    setState({ busy: true, preview: null, done: null, message: "" });
+    const r = await shippingApi.emailCancelPreview(body());
+    if (r.status === 200) setState({ busy: false, preview: r.body, done: null, message: "" }); else failed(r);
+  }
+  async function confirm() {
+    setState((s) => ({ ...s, busy: true, message: "" }));
+    const r = await shippingApi.emailCancel({ ...body(), key: state.preview.key, requestId: ids.get("email-cancel") });
+    if (r.status === 200) { ids.done("email-cancel"); setState({ busy: false, preview: null, done: r.body, message: "" }); } else failed(r);
+  }
+  const p = state.preview;
+  const d = state.done;
+  return (
+    <section className="subm-card" aria-label="メールでの解約依頼">
+      <h2>メールでの解約依頼</h2>
+      <p className="subm-note">管理ページにログインできないお客様から ryugecoffee@gmail.com に届いた解約のご依頼を処理します。返金はここでは行われません（CEO が確認して Stripe で行います）。</p>
+      <form onSubmit={check}>
+        <label className="subm-field"><span className="subm-label">ご登録のメールアドレス</span>
+          <input type="email" value={form.email} onChange={(e) => edit({ email: e.target.value })} />
+        </label>
+        <fieldset className="subm-field">
+          <legend className="subm-label">本人確認</legend>
+          <label><input type="radio" name="ec-method" checked={form.method === "registered_address"} onChange={() => edit({ method: "registered_address" })} /> 登録のアドレスから届いた</label>
+          <label><input type="radio" name="ec-method" checked={form.method === "details"} onChange={() => edit({ method: "details" })} /> 送信元を確認できない、または別のアドレスから届いた（郵便番号と電話番号の下4桁で確認）</label>
+        </fieldset>
+        {form.method === "registered_address" && (
+          <fieldset className="subm-field">
+            <legend className="subm-label">Gmail の「メッセージのソースを表示」で確認したこと（3つとも必要）</legend>
+            {Object.entries(SENDER_CHECK_TEXT).map(([k, text]) => (
+              <label key={k}><input type="checkbox" checked={form.senderCheck[k]} onChange={(e) => edit({ senderCheck: { ...form.senderCheck, [k]: e.target.checked } })} /> {text}</label>
+            ))}
+            <p className="subm-note">1つでも当てはまらない場合は、このメールに返信せず、登録のアドレス宛てに新しいメールを作成して郵便番号と電話番号の下4桁をお尋ねし、「送信元を確認できない…」で処理してください。</p>
+          </fieldset>
+        )}
+        {form.method === "details" && (
+          <>
+            <label className="subm-field"><span className="subm-label">郵便番号（お客様が書いたもの）</span>
+              <input inputMode="numeric" value={form.postalCode} onChange={(e) => edit({ postalCode: e.target.value })} /></label>
+            <label className="subm-field"><span className="subm-label">電話番号の下4桁（お客様が書いたもの）</span>
+              <input inputMode="numeric" maxLength={4} value={form.phoneLast4} onChange={(e) => edit({ phoneLast4: e.target.value })} /></label>
+          </>
+        )}
+        <label className="subm-field"><span className="subm-label">メールの受信日時（日本時間・Gmail の表示どおり）</span>
+          <input type="datetime-local" value={form.receivedAt} onChange={(e) => edit({ receivedAt: e.target.value })} />
+        </label>
+        <button className="subm-secondary" type="submit" disabled={state.busy || !form.email.trim() || !form.receivedAt || (form.method === "registered_address" && !Object.values(form.senderCheck).every(Boolean))}>内容を確認</button>
+      </form>
+      {state.message && <p className="subm-alert" role="alert">{state.message}</p>}
+      {p && (
+        <div role="region" aria-label="解約の内容">
+          <dl className="subm-facts">
+            <div><dt>契約番号</dt><dd>{p.ref}</dd></div>
+            <div><dt>ご請求</dt><dd>{p.alreadyCancelled ? "すでに解約済みです（お客様が管理ページで解約した等）。何も変わりません。" : `${monthLabel(p.firstUnchargedMonth)}以降は請求しません`}</dd></div>
+            {p.monthRefund && <div><dt>{monthLabel(p.monthRefund.month)}分</dt><dd>1日9時より前に届いたご依頼のため、{p.monthRefund.amount.toLocaleString("ja-JP")}円（全額）の返金を提案し、この月の未発送分を取りやめます{p.monthRefund.shippedBefore > 0 ? `。すでに発送済みの ${p.monthRefund.shippedBefore} 回分は、お客様にそのままお受け取りいただきます（お支払い・返品は不要）` : ""}</dd></div>}
+            {p.firstRefund > 0 && <div><dt>初回分</dt><dd>初回発送前のため、{p.firstRefund.toLocaleString("ja-JP")}円の返金を提案し、発送を取りやめます</dd></div>}
+          </dl>
+          <button className="subm-primary" type="button" disabled={state.busy} onClick={confirm}>{p.alreadyCancelled ? "記録する" : "解約する"}</button>
+        </div>
+      )}
+      {d && (
+        <div role="status">
+          <p className="subm-ok">{d.alreadyCancelled ? `${d.ref} はすでに解約済みでした。` : `${d.ref} を解約しました。登録のアドレスに確認メールを送りました。${d.firstRefund || d.monthRefund ? "返金の確認メールをスタッフに送りました（CEO が Stripe で返金します）。" : ""}`}</p>
+          {form.method === "details" && !d.alreadyCancelled && (
+            <>
+              <p className="subm-note">ご依頼のアドレスへの返信には、次の文面をお使いください。</p>
+              <pre className="subm-text">{d.customerText}</pre>
+            </>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
 const FILTERS = { todo: "対応が必要", all: "すべて", shipped: "発送済み" };
 
 export default function SubscriptionShippingAdminPage() {
@@ -283,6 +380,7 @@ export default function SubscriptionShippingAdminPage() {
           </section>
         </>
       )}
+      <EmailCancel onSignedOut={signedOut} />
     </div>
     </main>
     </div>

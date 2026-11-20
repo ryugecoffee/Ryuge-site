@@ -7,6 +7,7 @@ on:
     paths:
       - 'server/inventory.js'
       - 'server/coffee-subscription-fulfillment.js'
+      - 'server/coffee-subscription-email-cancel.js'
       - 'src/lib/subscriptionShippingAdmin.js'
       - 'src/pages/SubscriptionShippingAdminPage.jsx'
       - 'server/shop-staff-auth.js'
@@ -121,7 +122,7 @@ jobs:
           server/coffee-subscription-plan.js server/coffee-subscription-records.js server/coffee-subscription-checkout.js
           server/coffee-subscription-stripe.js server/coffee-subscription-stripe-e2e.js server/coffee-subscription-calendar.js
           server/coffee-subscription-preference.js server/coffee-subscription-account.js server/factory-subscription-read.js
-          server/coffee-subscription-fulfillment.js server/shop-staff-auth.js server/coffee-subscription-mail.js server/domestic-shipping.js src/pages/ShippingPage.jsx
+          server/coffee-subscription-fulfillment.js server/coffee-subscription-email-cancel.js server/shop-staff-auth.js server/coffee-subscription-mail.js server/domestic-shipping.js src/pages/ShippingPage.jsx
           src/components/CoffeeSubscriptionDetail.jsx src/components/SiteFooter.jsx
           src/lib/coffeeSubscriptionAccount.js src/lib/coffeeSubscriptionTerms.js src/pages/SubscriptionApplyPage.jsx src/pages/SubscriptionManagePage.jsx
           src/lib/subscriptionShippingAdmin.js src/pages/SubscriptionShippingAdminPage.jsx

@@ -252,7 +252,7 @@ test("address: validated; Firestore and the Stripe customer end the same, even f
 });
 
 test("cancel: preview first, confirmed with its key; a changed situation is shown again; the first-delivery refund only proposed", async () => {
-  const t = await setup();
+  const t = await setup({ env: { ...ENV, SHOP_STAFF_EMAILS: "shop@example.test, second@example.test" } });
   t.contract("sub_a", "a@example.com");
   const a = await t.signIn("a@example.com");
   const preview = (await t.call("GET", "/cancel", null, a)).body;
@@ -266,6 +266,17 @@ test("cancel: preview first, confirmed with its key; a changed situation is show
   assert.equal((await t.call("POST", "/cancel", { key: preview.key, requestId: id }, a)).body.repeated, true);
   assert.equal(t.stripe.calls.filter(([n]) => n === "subscriptions.update").length, 1);
   assert.ok(!t.stripe.calls.some(([n]) => n.includes("refund")), "no refund call");
+  // The customer is told the refund (full, within 7 business days); the shop is told at once, once, without personal details.
+  const customer = t.mails.filter((m) => m.to === "a@example.com" && /解約を受け付けました/.test(m.subject));
+  assert.equal(customer.length, 1);
+  assert.match(customer[0].text, /2026年12月以降のご請求はありません/);
+  assert.match(customer[0].text, /初回分3,000円を全額、お支払いのカードへ返金します（7営業日以内に手続きします）/);
+  const shop = t.mails.filter((m) => /返金の確認/.test(m.subject));
+  assert.equal(shop.length, 1, "one notice, the repeated request sends none");
+  assert.equal(shop[0].to, "shop@example.test, second@example.test");
+  assert.match(shop[0].text, /契約番号：SUB-[A-Z0-9]+/);
+  assert.match(shop[0].text, /自動では返金されません/);
+  assert.doesNotMatch(shop[0].text, /a@example\.com|example\.com/, "no customer details in the shop notice");
   assert.equal((await t.call("POST", "/plan", { action: "skip", month: "2027-01", requestId: rid(3) }, a)).body.error, "SUBSCRIPTION_ENDING");
   assert.ok((await t.call("GET", "/me", null, a)).body.cancellation.refundProposal);
   t.close();
@@ -335,7 +346,7 @@ test("the store's pages say what the server does: prices, shipping days, start m
     for (const m of fs.readFileSync(path.join(__dirname, file), "utf8").matchAll(/(?:AccountError|PlanChangeError|CheckoutError)\("([A-Z_]+)"/g)) codes.add(m[1]);
   }
   const internal = new Set(["SCHEDULE_GAP", "PLAN_CHANGING", "NOT_FOUND", "DISABLED", "BEFORE_START", "INVALID_ACTION", "INVALID_MONTH", "TOO_FAR_AHEAD", "REQUEST_ID_REQUIRED",
-    "REQUEST_ID_REUSED", "NO_CUSTOMER", "CANCEL_PREVIEW_REQUIRED"]);
+    "REQUEST_ID_REUSED", "NO_CUSTOMER", "CANCEL_PREVIEW_REQUIRED", "REQUEST_TOO_OLD" /* email cancellation, shop staff only */]);
   const missing = [...codes].filter((c) => !internal.has(c) && !lib.ERROR_TEXT[c]);
   assert.deepEqual(missing, []);
 });
