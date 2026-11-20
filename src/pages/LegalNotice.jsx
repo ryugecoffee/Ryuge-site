@@ -11,7 +11,7 @@ const SUBSCRIPTION_ROWS = {
   ja: [
     ["商品・分量", "当店おまかせの珈琲豆 2種類（100g × 2袋 = 1回200g）を、お選びの回数（月1〜4回）お届けします。"],
     ["販売価格（税込・送料込み）", `初回 ${yen(FIRST_PRICE)}（200g・1回分）。2回目以降は月額で、${plans}。日割りの精算はありません。`],
-    ["支払時期・方法", "クレジットカード（Stripe）。初回分はお申し込み時に、2回目以降は毎月1日（日本時間9時頃）に自動でお支払いいただきます。"],
+    ["支払時期・方法", "クレジットカード（Stripe）。初回分はお申し込み時に、2回目以降は毎月1日（日本時間9時頃）に自動でお支払いいただきます。月額のお支払いは、お申し込み日（日本時間）が1〜15日の場合は翌月1日から、16日以降の場合は翌々月1日から始まります（お申し込み画面とご確認メールに日付を表示します）。"],
     ["引渡時期", "初回：お支払い完了後、3営業日以内に発送します。2回目以降：毎月の上記の日に発送します（土日祝・休業日は翌営業日）。"],
     ["契約期間", `${TERMS_JA.term}1年間の参考（お申し込み時の初回＋月額12か月）：${[1, 2, 3, 4].map((n) => `月${n}回 ${yen(FIRST_PRICE + MONTHLY_PRICES[n] * 12)}（${1 + n * 12}回・${((1 + n * 12) * 200).toLocaleString("ja-JP")}g）`).join("／")}。スキップや回数変更をされた場合は変わります。`],
     ["変更・スキップ", `配送回数の変更と月単位のスキップは、管理ページから前月${CHANGE_DEADLINE_DAY}日までのお手続きで翌月分から反映します。`],
@@ -21,7 +21,7 @@ const SUBSCRIPTION_ROWS = {
   en: [
     ["Product", "Two coffees chosen by us (100 g × 2 bags = 200 g per delivery), 1–4 deliveries a month as chosen."],
     ["Price (tax and shipping included)", `First delivery ${yen(FIRST_PRICE)}. Then monthly: ${[1, 2, 3, 4].map((n) => `${n}×/month ${yen(MONTHLY_PRICES[n])}`).join(", ")}. No pro-rating.`],
-    ["Payment", "Credit card (Stripe): the first delivery at sign-up, then automatically on the 1st of each month."],
+    ["Payment", "Credit card (Stripe): the first delivery at sign-up, then automatically on the 1st of each month, starting on the 1st of the next month for a sign-up on the 1st–15th (JST), or of the month after for the 16th or later."],
     ["Delivery", "First: within 3 business days of payment. Then on fixed days each month (next business day if closed)."],
     ["Term and cancellation", `No fixed term or minimum: it continues every month until cancelled. Change or skip by the ${CHANGE_DEADLINE_DAY}th of the previous month; cancel any time on your subscription page (before 9:00 JST on the 1st, that month is not charged), or, if you cannot sign in, by email to ryugecoffee@gmail.com (sender or identity checked; a request received before 9:00 JST on the 1st counts as before that month's charge, and a month charged because of our delay is refunded in full: what has not shipped is not sent, and what already shipped needs no payment or return). No cancellation fee.`],
     ["Refunds", `Paid months are delivered (no pro-rated refunds). If cancelled before the first 200 g is shipped, the first ${yen(FIRST_PRICE)} is refunded in full to your card within 7 business days. Food: no returns for change of mind; damaged or wrong items, contact us within 7 days of delivery.`],
@@ -29,7 +29,7 @@ const SUBSCRIPTION_ROWS = {
   es: [
     ["Producto", "Dos cafés elegidos por nosotros (100 g × 2 bolsas = 200 g por envío), de 1 a 4 envíos al mes."],
     ["Precio (impuestos y envío incluidos)", `Primer envío ${yen(FIRST_PRICE)}. Después mensual: ${[1, 2, 3, 4].map((n) => `${n}/mes ${yen(MONTHLY_PRICES[n])}`).join(", ")}. Sin prorrateo.`],
-    ["Pago", "Tarjeta de crédito (Stripe): el primer envío al suscribirse y después el día 1 de cada mes."],
+    ["Pago", "Tarjeta de crédito (Stripe): el primer envío al suscribirse y después el día 1 de cada mes, a partir del día 1 del mes siguiente si te suscribes del 1 al 15 (hora de Japón), o del mes posterior si es el 16 o más tarde."],
     ["Entrega", "Primero: en 3 días hábiles tras el pago. Después en días fijos cada mes (siguiente día hábil si es festivo)."],
     ["Duración y cancelación", `Sin plazo ni mínimo: continúa cada mes hasta que canceles. Cambios u omisiones antes del día ${CHANGE_DEADLINE_DAY} del mes anterior; cancelación en cualquier momento en tu página (antes de las 9:00 JST del día 1, ese mes no se cobra) o, si no puedes iniciar sesión, por correo a ryugecoffee@gmail.com (con verificación del remitente o de identidad; una solicitud recibida antes de las 9:00 JST del día 1 cuenta como anterior al cobro, y un mes cobrado por nuestro retraso se reembolsa completo: lo no enviado no se envía y lo ya enviado no requiere pago ni devolución). Sin cargo por cancelación.`],
     ["Reembolsos", `Los meses pagados se envían (sin reembolso prorrateado). Si cancelas antes del primer envío de 200 g, se reembolsa el primer pago (${yen(FIRST_PRICE)}) completo a tu tarjeta en 7 días hábiles. Alimentos: sin devoluciones por cambio de opinión; productos dañados o incorrectos, contáctanos en 7 días.`],
