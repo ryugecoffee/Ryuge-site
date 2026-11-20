@@ -3,6 +3,7 @@ import { PAYMENT_API_BASE } from "./lib/paymentEnv";
 import { Routes, Route, useLocation } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import SiteLayout from "./components/SiteLayout";
+import CartExpiryNotice from "./components/CartExpiryNotice";
 import LegalNotice from "./pages/LegalNotice";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
@@ -113,6 +114,7 @@ export default function App() {
     <>
       <ScrollToTop />
         <ShippingBanner lang={lang} />
+        <CartExpiryNotice lang={lang} />
 
         <Routes>
           <Route path="/" element={<HomePage lang={lang} setLang={setLang} />} />
