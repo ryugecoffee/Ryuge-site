@@ -84,7 +84,7 @@ export const ERROR_TEXT = {
   // A cancellation asked by email (server/coffee-subscription-email-cancel.js).
   NOT_VERIFIED: "契約が見つからないか、本人確認の内容が一致しません。お客様に登録したメールアドレス・郵便番号・電話番号の下4桁をご確認いただいてください。",
   INVALID_METHOD: "本人確認の方法を選んでください。",
-  SENDER_CHECK_REQUIRED: "送信元の確認（SPF・DKIM・DMARC がすべて PASS）ができない場合は、「送信元を確認できない…」を選び、郵便番号と電話番号の下4桁で確認してください。", DETAILS_REQUIRED: "郵便番号（7桁）と電話番号の下4桁を入力してください。",
+  SENDER_CHECK_REQUIRED: "送信元の確認（From のアドレスの一致、SPF・DKIM・DMARC の PASS、DKIM のドメインと From のドメインの一致）が3つともできない場合は、「送信元を確認できない…」を選び、郵便番号と電話番号の下4桁で確認してください。", DETAILS_REQUIRED: "郵便番号（7桁）と電話番号の下4桁を入力してください。",
   INVALID_RECEIVED_AT: "メールの受信日時を入力してください（40日以内）。", PREVIEW_REQUIRED: "先に「内容を確認」を押してください。",
   CANCEL_CHANGED: "確認した後に条件が変わりました（請求の時刻を過ぎた等）。もう一度「内容を確認」を押してください。",
   REQUEST_TOO_OLD: "先月のご請求より前に届いたご依頼です。この画面では処理できません。CEOが個別に対応します。",

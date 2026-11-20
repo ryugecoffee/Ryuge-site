@@ -417,9 +417,15 @@ test("email cancellation words: a fully stopped month and a month partly shipped
   const one = ec.monthRefundText({ month: "2026-12", amount: 5800, shippedBefore: 1 });
   assert.match(one, /全額をお支払いのカードへ返金します.*すでに発送した1回分はそのままお受け取りください（お支払い・返品は不要です）。まだ発送していない分は発送しません。$/);
   assert.doesNotMatch(one, /この月の発送は行いません/);
-  // From the registered address only with the sender authenticated.
+  // From the registered address only with all three sender checks (From address, SPF/DKIM/DMARC PASS, DKIM domain = From domain).
   const at = Date.UTC(2026, 11, 2);
-  assert.throws(() => ec.parse({ email: "a@example.com", method: "registered_address", receivedAt: "2026-12-01T08:00:00+09:00" }, at), { code: "SENDER_CHECK_REQUIRED" });
-  assert.equal(ec.parse({ email: "a@example.com", method: "registered_address", senderAuthenticated: true, receivedAt: "2026-12-01T08:00:00+09:00" }, at).method, "registered_address");
-  assert.throws(() => ec.parse({ email: "a@example.com", method: "registered_address", senderAuthenticated: "true", receivedAt: "2026-12-01T08:00:00+09:00" }, at), { code: "SENDER_CHECK_REQUIRED" });
+  const base = { email: "a@example.com", method: "registered_address", receivedAt: "2026-12-01T08:00:00+09:00" };
+  const ok = { fromAddressMatches: true, spfDkimDmarcPass: true, dkimDomainAligned: true };
+  assert.equal(ec.parse({ ...base, senderCheck: ok }, at).method, "registered_address");
+  assert.throws(() => ec.parse(base, at), { code: "SENDER_CHECK_REQUIRED" });
+  for (const k of Object.keys(ok)) assert.throws(() => ec.parse({ ...base, senderCheck: { ...ok, [k]: false } }, at), { code: "SENDER_CHECK_REQUIRED" }, k);
+  assert.throws(() => ec.parse({ ...base, senderCheck: { ...ok, dkimDomainAligned: "true" } }, at), { code: "SENDER_CHECK_REQUIRED" });
+  assert.throws(() => ec.parse({ ...base, senderAuthenticated: true }, at), { code: "SENDER_CHECK_REQUIRED" }, "the old single check is not enough");
+  // The details check needs none of them.
+  assert.equal(ec.parse({ ...base, method: "details", postalCode: "100-0001", phoneLast4: "5678" }, at).method, "details");
 });

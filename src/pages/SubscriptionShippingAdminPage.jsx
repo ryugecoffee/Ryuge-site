@@ -187,7 +187,14 @@ function Delivery({ d, beans, onChanged, onSignedOut }) {
 // A cancellation the customer asked for by email (they could not sign in to their page). The server checks who it is
 // (the registered address, or the postal code and the last 4 digits of the phone) and counts it from when the email
 // arrived; it never shows the stored details. Refunds are only proposed here: the CEO makes them in Stripe.
-const EMPTY_REQUEST = { email: "", method: "registered_address", senderAuthenticated: false, postalCode: "", phoneLast4: "", receivedAt: "" };
+// The three checks of an email from the registered address (Gmail「メッセージのソースを表示」), all required by the server.
+const SENDER_CHECK_TEXT = {
+  fromAddressMatches: "From 行の < > 内のアドレス（表示名ではなく）が、上に入力したご登録のアドレスと完全に一致する",
+  spfDkimDmarcPass: "SPF・DKIM・DMARC がすべて PASS で、警告（なりすましの疑い等）が出ていない",
+  dkimDomainAligned: "DKIM の「ドメイン」（署名元）が、From アドレスの @ 以降と同じドメイン（またはそのサブドメイン）",
+};
+const NO_SENDER_CHECK = { fromAddressMatches: false, spfDkimDmarcPass: false, dkimDomainAligned: false };
+const EMPTY_REQUEST = { email: "", method: "registered_address", senderCheck: NO_SENDER_CHECK, postalCode: "", phoneLast4: "", receivedAt: "" };
 function EmailCancel({ onSignedOut }) {
   const ids = useRequestIds();
   const [form, setForm] = useState(EMPTY_REQUEST);
@@ -225,9 +232,13 @@ function EmailCancel({ onSignedOut }) {
           <label><input type="radio" name="ec-method" checked={form.method === "details"} onChange={() => edit({ method: "details" })} /> 送信元を確認できない、または別のアドレスから届いた（郵便番号と電話番号の下4桁で確認）</label>
         </fieldset>
         {form.method === "registered_address" && (
-          <label className="subm-field"><input type="checkbox" checked={form.senderAuthenticated} onChange={(e) => edit({ senderAuthenticated: e.target.checked })} />{" "}
-            Gmail の「メッセージのソースを表示」で SPF・DKIM・DMARC がすべて PASS で、警告（なりすましの疑い等）も出ていないことを確認した。
-            1つでも PASS でない・警告がある場合は、このメールに返信せず、登録のアドレス宛てに新しいメールを作成して郵便番号と電話番号の下4桁をお尋ねし、下の「送信元を確認できない…」で処理してください。</label>
+          <fieldset className="subm-field">
+            <legend className="subm-label">Gmail の「メッセージのソースを表示」で確認したこと（3つとも必要）</legend>
+            {Object.entries(SENDER_CHECK_TEXT).map(([k, text]) => (
+              <label key={k}><input type="checkbox" checked={form.senderCheck[k]} onChange={(e) => edit({ senderCheck: { ...form.senderCheck, [k]: e.target.checked } })} /> {text}</label>
+            ))}
+            <p className="subm-note">1つでも当てはまらない場合は、このメールに返信せず、登録のアドレス宛てに新しいメールを作成して郵便番号と電話番号の下4桁をお尋ねし、「送信元を確認できない…」で処理してください。</p>
+          </fieldset>
         )}
         {form.method === "details" && (
           <>
@@ -240,7 +251,7 @@ function EmailCancel({ onSignedOut }) {
         <label className="subm-field"><span className="subm-label">メールの受信日時（日本時間・Gmail の表示どおり）</span>
           <input type="datetime-local" value={form.receivedAt} onChange={(e) => edit({ receivedAt: e.target.value })} />
         </label>
-        <button className="subm-secondary" type="submit" disabled={state.busy || !form.email.trim() || !form.receivedAt || (form.method === "registered_address" && !form.senderAuthenticated)}>内容を確認</button>
+        <button className="subm-secondary" type="submit" disabled={state.busy || !form.email.trim() || !form.receivedAt || (form.method === "registered_address" && !Object.values(form.senderCheck).every(Boolean))}>内容を確認</button>
       </form>
       {state.message && <p className="subm-alert" role="alert">{state.message}</p>}
       {p && (

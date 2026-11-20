@@ -6,8 +6,9 @@
 // cancelSubscription: Stripe stops charging, the first delivery's refund proposal, stock back), counted from when the
 // email arrived:
 //  - who: the registered email address finds the contract. An email sent from that address counts only when the staff
-//    confirm its sender was authenticated (Gmail「メッセージのソースを表示」: SPF, DKIM and DMARC all PASS, no warning;
-//    senderAuthenticated, recorded). Otherwise (a doubtful sender, or another address) the postal code and the last 4
+//    confirm, in Gmail「メッセージのソースを表示」, all of SENDER_CHECKS: the address in the From line (inside < >, not
+//    the display name) is exactly the registered one; SPF, DKIM and DMARC all PASS with no warning; and the DKIM signing
+//    domain is the From address's domain (or a subdomain of it), so the authentication is for that From (recorded). Otherwise (a doubtful sender, or another address) the postal code and the last 4
 //    digits of the phone must match the contract; for a doubtful sender the shop asks for them by a new mail to the
 //    registered address, so only its real owner can answer. The answer is only "matches" or not: the stored details are
 //    never shown, and what was entered is never kept (only which check was used).
@@ -25,6 +26,8 @@ const REQUESTS = "coffeeSubscriptionEmailCancels";
 const METHODS = ["registered_address", "details"];
 const MAX_AGE_MS = 40 * 24 * 3600e3;
 const REQUEST_RE = /^[A-Za-z0-9_-]{12,100}$/;
+// What the staff confirm for an email from the registered address (all required).
+const SENDER_CHECKS = ["fromAddressMatches", "spfDkimDmarcPass", "dkimDomainAligned"];
 
 class EmailCancelError extends Error {
   constructor(code, status = 400) { super(code); this.code = code; this.status = status; }
@@ -46,8 +49,8 @@ function parse(body, now) {
   const postal = toDigits(body?.postalCode);
   const phone4 = toDigits(body?.phoneLast4);
   if (method === "details" && (postal.length !== 7 || phone4.length !== 4)) throw new EmailCancelError("DETAILS_REQUIRED");
-  // From the registered address: only with the sender authenticated (otherwise the details check is used).
-  if (method === "registered_address" && body?.senderAuthenticated !== true) throw new EmailCancelError("SENDER_CHECK_REQUIRED");
+  // From the registered address: only with every sender check confirmed (otherwise the details check is used).
+  if (method === "registered_address" && !SENDER_CHECKS.every((k) => body?.senderCheck?.[k] === true)) throw new EmailCancelError("SENDER_CHECK_REQUIRED");
   const receivedAt = Date.parse(String(body?.receivedAt || ""));
   if (!Number.isFinite(receivedAt) || receivedAt > now + 60_000 || receivedAt < now - MAX_AGE_MS) throw new EmailCancelError("INVALID_RECEIVED_AT");
   return { email, method, postal, phone4, receivedAt };
@@ -115,7 +118,7 @@ async function confirm({ db, stripe, body, actor, now, sendMail = async () => {}
     const snap = await tx.get(ref);
     if (snap.exists) return snap.data();
     tx.create(ref, { subscriptionId: id, ref: contractRef(id), method: input.method,
-      senderCheck: input.method === "registered_address" ? "spf_dkim_dmarc_pass" : null, receivedAt: new Date(input.receivedAt), by: actor,
+      senderCheck: input.method === "registered_address" ? SENDER_CHECKS : null, receivedAt: new Date(input.receivedAt), by: actor,
       status: "running", createdAt: new Date(now) });
     return null;
   }));
@@ -176,4 +179,4 @@ function addRoutes(router, { getDb, getStripe, sendMail, env, clock, log }) {
   router.post("/email-cancel", handle((a) => confirm({ ...a, sendMail, env, log })));
 }
 
-module.exports = { REQUESTS, EmailCancelError, parse, verifiedContract, customerText, monthRefundText, preview, confirm, addRoutes };
+module.exports = { REQUESTS, SENDER_CHECKS, EmailCancelError, parse, verifiedContract, customerText, monthRefundText, preview, confirm, addRoutes };
