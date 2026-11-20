@@ -44,7 +44,13 @@ export const shippingApi = {
   ship: (body) => request("POST", "/ship", body),
   hold: (body) => request("POST", "/hold", body),
   resume: (body) => request("POST", "/resume", body),
+  emailCancelPreview: (body) => request("POST", "/email-cancel/preview", body),
+  emailCancel: (body) => request("POST", "/email-cancel", body),
 };
+
+// The time the customer's email arrived, entered as Japan time (<input type="datetime-local">), sent with its offset.
+export const jstInputToIso = (value) => (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value) ? `${value}:00+09:00` : "");
+export const monthLabel = (m) => (m ? `${Number(String(m).slice(0, 4))}年${Number(String(m).slice(5))}月` : "—");
 
 // Product names for bean ids (the store's own titles).
 const NAMES = Object.fromEntries(Object.values(PRODUCT_DATA).flat().filter((p) => p && p.id).map((p) => [p.id, p.title?.ja || p.id]));
@@ -75,6 +81,13 @@ export const ERROR_TEXT = {
   INVALID_STATE: "この発送の状態では、その操作はできません。画面を更新してください。", NOT_SHIPPABLE: "この発送は送れません。",
   INVALID_TRACKING_NUMBER: "追跡番号は数字とハイフンで入力してください。", NOT_PREPARED: "発送準備中か発送済みの発送だけ、宛名を表示できます。",
   REQUEST_ID_CONFLICT: "操作が重なりました。画面を更新してください。", INVALID_RANGE: "期間が正しくありません。",
+  // A cancellation asked by email (server/coffee-subscription-email-cancel.js).
+  NOT_VERIFIED: "契約が見つからないか、本人確認の内容が一致しません。お客様に登録したメールアドレス・郵便番号・電話番号の下4桁をご確認いただいてください。",
+  INVALID_METHOD: "本人確認の方法を選んでください。", DETAILS_REQUIRED: "郵便番号（7桁）と電話番号の下4桁を入力してください。",
+  INVALID_RECEIVED_AT: "メールの受信日時を入力してください（40日以内）。", PREVIEW_REQUIRED: "先に「内容を確認」を押してください。",
+  CANCEL_CHANGED: "確認した後に条件が変わりました（請求の時刻を過ぎた等）。もう一度「内容を確認」を押してください。",
+  REQUEST_TOO_OLD: "先月のご請求より前に届いたご依頼です。この画面では処理できません。CEOが個別に対応します。",
+  REQUEST_IN_PROGRESS: "同じ解約を処理中です。少し待って画面を確認してください。", INVALID_REQUEST_ID: "画面を更新してからもう一度お試しください。",
 };
 export const errorText = (code) => ERROR_TEXT[code] || ERROR_TEXT.FAILED;
 

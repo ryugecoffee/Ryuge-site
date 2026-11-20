@@ -126,6 +126,9 @@ test("cancellation and refund wording is the same everywhere the customer reads 
     assert.match(text, /初回分3,000円を全額.*返金します（解約から7営業日以内に手続きします）/, `${name}: the first payment refunded in full within 7 business days`);
     assert.match(text, /解約手数料・違約金はありません/, `${name}: no cancellation fee`);
     assert.doesNotMatch(text, /原則として返金/, `${name}: no "in principle" refund left`);
+    // Cancelling by email when signing in is not possible (server/coffee-subscription-email-cancel.js does this).
+    assert.match(text, /ryugecoffee@gmail\.com へ(件名「定期便の解約希望」でご連絡いただいても|のメールでも)解約でき/, `${name}: cancelling by email`);
+    assert.match(text, /1日9時(のご請求)?より前に届いたご連絡は(、)?その月のご請求より前の解約として扱います/, `${name}: an email before 9:00 on the 1st counts`);
   }
   assert.doesNotMatch(places.refundPolicy, /既に決済が完了している注文についてはキャンセルできません/, "the old contradicting sentence is gone");
 });

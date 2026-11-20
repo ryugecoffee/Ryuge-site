@@ -83,7 +83,7 @@ function submitTerms(startMonth, frequency) {
     + plan.annualReferenceText(frequency, startMonth)
     + `配送回数の変更・スキップは前月${plan.CHANGE_DEADLINE_DAY}日までのお手続きで翌月分から反映します。`
     + "解約はいつでも管理ページから行えます。毎月1日9時のご請求より前に解約されると、その月以降のご請求はありません。"
-    + T.noFee + "お支払い済みの月の分はお届けし、日割りの返金はありません。" + T.refund + T.returns;
+    + T.emailCancelShort + T.noFee + "お支払い済みの月の分はお届けし、日割りの返金はありません。" + T.refund + T.returns;
 }
 
 async function createCheckout({ db, stripe, config, input, now = Date.now(), waitMs = WAIT_FOR_OTHER_MS }) {

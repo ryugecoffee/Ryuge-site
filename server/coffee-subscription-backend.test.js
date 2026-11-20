@@ -390,3 +390,22 @@ test("records: a late month's deliveries follow the plan; a crowded one is held 
     cancellation_details: { reason: "payment_failed" }, items: { data: [{ price: { id: "price_m2" } }] } }), CONFIG);
   assert.deepEqual([db.store.get(`${records.SUBS}/${SUB}`).status, db.store.get(`${records.SUBS}/${SUB}`).endedReason], ["canceled", "payment_failed"]);
 });
+
+test("contention: an ABORTED transaction (nothing written) is run again here; other errors and the last attempt are not hidden", async () => {
+  let calls = 0;
+  const aborted = Object.assign(new Error("10 ABORTED: Transaction lock timeout."), { code: 10 });
+  assert.equal(await records.retryOnContention(async () => { calls += 1; if (calls < 3) throw aborted; return "ok"; }, { pauseMs: 1 }), "ok");
+  assert.equal(calls, 3);
+  calls = 0;
+  await assert.rejects(records.retryOnContention(async () => { calls += 1; throw aborted; }, { pauseMs: 1 }), /ABORTED/);
+  assert.equal(calls, 4, "gives up after four attempts (the webhook then answers 500)");
+  calls = 0;
+  await assert.rejects(records.retryOnContention(async () => { calls += 1; throw Object.assign(new Error("exists"), { code: 6 }); }, { pauseMs: 1 }), /exists/);
+  assert.equal(calls, 1, "ALREADY_EXISTS and every other error are never retried");
+  calls = 0;
+  const closed = Object.assign(new Error("3 INVALID_ARGUMENT: Transaction is invalid or closed."), { code: 3 });
+  assert.equal(await records.retryOnContention(async () => { calls += 1; if (calls < 2) throw closed; return "ok"; }, { pauseMs: 1 }), "ok");
+  calls = 0;
+  await assert.rejects(records.retryOnContention(async () => { calls += 1; throw Object.assign(new Error("3 INVALID_ARGUMENT: bad field"), { code: 3 }); }, { pauseMs: 1 }));
+  assert.equal(calls, 1, "other INVALID_ARGUMENT errors are bugs, not contention");
+});

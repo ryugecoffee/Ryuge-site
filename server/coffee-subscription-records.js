@@ -32,6 +32,25 @@ const EMAILS = "coffeeSubscriptionEmails";
 const RUNNING = ["trialing", "active", "past_due", "unpaid", "incomplete", "incomplete_record"];
 
 const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
+
+// Several events about one subscription at the same moment (Stripe sends checkout.session.completed and invoice.paid
+// together, and may resend either) wait on the same documents. When Firestore gives up waiting, the transaction was
+// never committed and has written nothing: gRPC 10 ABORTED after the client's own retries, or 3 INVALID_ARGUMENT for a
+// transaction the database already dropped ("invalid or closed" on the emulator, "expired or no longer valid" on
+// Firestore). Running it again is safe: every handler reads what is already recorded and creates each record once
+// (fixed ids, tx.create). Retried here, a few times with a short random pause, so one delivery of an event is enough
+// and nothing depends on Stripe sending it again. Any other error is never retried.
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const notCommitted = (error) => error?.code === 10
+  || (error?.code === 3 && /transaction (is invalid or closed|has expired|.*no longer valid)/i.test(String(error?.message || "")));
+async function retryOnContention(run, { attempts = 4, pauseMs = 150 } = {}) {
+  for (let attempt = 1; ; attempt += 1) {
+    try { return await run(); } catch (error) {
+      if (!notCommitted(error) || attempt >= attempts) throw error;
+      await sleep(pauseMs * attempt + Math.floor(Math.random() * pauseMs));
+    }
+  }
+}
 const emailKey = (email) => crypto.createHash("sha256").update(normalizeEmail(email)).digest("hex");
 
 const idOf = (value) => (typeof value === "string" ? value : value?.id || null);
@@ -292,9 +311,9 @@ const HANDLERS = {
 async function handleEvent(db, event, config, now = Date.now()) {
   const handler = HANDLERS[event?.type];
   if (!handler) return { handled: false };
-  return handler(db, event.data.object, config, now);
+  return retryOnContention(() => handler(db, event.data.object, config, now));
 }
 
-module.exports = { KIND, SUBS, MONTHS, SHIPMENTS, EMAILS, RUNNING, normalizeEmail, emailKey, EVENT_TYPES: Object.keys(HANDLERS), handleEvent,
+module.exports = { KIND, SUBS, MONTHS, SHIPMENTS, EMAILS, RUNNING, normalizeEmail, emailKey, retryOnContention, EVENT_TYPES: Object.keys(HANDLERS), handleEvent,
   handleCheckoutCompleted, handleCheckoutExpired,
   handleInvoicePaid, handleInvoicePaymentFailed, handleSubscriptionChanged, invoiceSubscription, subscriptionLine };

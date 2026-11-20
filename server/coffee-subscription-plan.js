@@ -217,6 +217,9 @@ const TERMS_JA = Object.freeze({
   noFee: "解約手数料・違約金はありません。",
   refund: `初回の200gを発送する前に解約された場合は、初回分${FIRST_DELIVERY_PRICE.toLocaleString("ja-JP")}円を全額、お支払いに使われたカードへ返金します（解約から${REFUND_BUSINESS_DAYS}営業日以内に手続きします）。発送後の解約では、初回分の返金はありません。`,
   returns: "食品のため、お客様のご都合による返品・交換はお受けしていません。商品に破損・不足・誤りがあった場合は、到着後7日以内に ryugecoffee@gmail.com へご連絡ください。確認のうえ、交換または返金いたします。",
+  // Cancelling by email when the customer cannot sign in (server/coffee-subscription-email-cancel.js does what this says).
+  emailCancel: "管理ページにログインできない場合は、ryugecoffee@gmail.com へ件名「定期便の解約希望」でご連絡いただいても解約できます。ご登録のメールアドレスからのご連絡はそのまま、別のアドレスからの場合はご登録のメールアドレス・郵便番号・電話番号の下4桁でご本人を確認します。毎月1日9時のご請求より前に届いたご連絡は、その月のご請求より前の解約として扱います（当店の手続きが遅れてその月のご請求が発生した場合は、その月分を全額返金し、その月の発送は行いません）。",
+  emailCancelShort: "ログインできない場合は ryugecoffee@gmail.com へのメールでも解約でき、1日9時より前に届いたご連絡はその月のご請求より前の解約として扱います。",
 });
 // One year from the first monthly charge: the first delivery + 12 monthly charges (a reference, not a commitment: skips
 // and changes alter it).

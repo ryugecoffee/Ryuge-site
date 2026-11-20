@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { PREFERENCE_ISSUE_TEXT, PREFERENCE_MAX_LENGTH, normalizePreference, preferenceIssues } from "../lib/subscriptionPreference";
+import { TERMS_JA } from "../lib/coffeeSubscriptionTerms";
 import { MONTHLY_PRICES, PREFECTURES, accountApi, dateLabel, errorText, monthLabel, newRequestId, session, shortDate, yen } from "../lib/coffeeSubscriptionAccount";
 
 // 珈琲の定期便: the customer's own page. Sign-in by a link mailed to the subscription's email (15 minutes, once), then
@@ -42,6 +43,7 @@ function SignIn({ notice }) {
           <button type="submit" className="subm-primary" disabled={state.busy}>{state.busy ? "送信しています…" : "ログインリンクを送る"}</button>
         </>
       )}
+      <p className="subm-note">{TERMS_JA.emailCancel}</p>
     </form>
   );
 }

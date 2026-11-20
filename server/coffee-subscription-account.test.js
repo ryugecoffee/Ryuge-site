@@ -346,7 +346,7 @@ test("the store's pages say what the server does: prices, shipping days, start m
     for (const m of fs.readFileSync(path.join(__dirname, file), "utf8").matchAll(/(?:AccountError|PlanChangeError|CheckoutError)\("([A-Z_]+)"/g)) codes.add(m[1]);
   }
   const internal = new Set(["SCHEDULE_GAP", "PLAN_CHANGING", "NOT_FOUND", "DISABLED", "BEFORE_START", "INVALID_ACTION", "INVALID_MONTH", "TOO_FAR_AHEAD", "REQUEST_ID_REQUIRED",
-    "REQUEST_ID_REUSED", "NO_CUSTOMER", "CANCEL_PREVIEW_REQUIRED"]);
+    "REQUEST_ID_REUSED", "NO_CUSTOMER", "CANCEL_PREVIEW_REQUIRED", "REQUEST_TOO_OLD" /* email cancellation, shop staff only */]);
   const missing = [...codes].filter((c) => !internal.has(c) && !lib.ERROR_TEXT[c]);
   assert.deepEqual(missing, []);
 });

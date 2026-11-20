@@ -94,7 +94,8 @@ app.use(coffeeSubscriptionAccount.PATH, coffeeSubscriptionAccount.createRouter({
 // 珈琲の定期便 ④, the shop's preparing and shipping (server/coffee-subscription-fulfillment.js): 404 unless
 // COFFEE_SUBSCRIPTION_FULFILLMENT_ENABLED=true and SHOP_STAFF_EMAILS lists the staff, who sign in by a mailed link
 // (server/shop-staff-auth.js). Stock shortages and inconsistencies are mailed to the shop (contract number and beans only).
-app.use(coffeeSubscriptionFulfillment.PATH, coffeeSubscriptionFulfillment.createRouter({ getDb: () => db,
+// Cancellations asked by email are entered there too (server/coffee-subscription-email-cancel.js).
+app.use(coffeeSubscriptionFulfillment.PATH, coffeeSubscriptionFulfillment.createRouter({ getDb: () => db, getStripe: () => stripe,
   notify: (notice) => sendFulfillmentNotice(notice),
   sendMail: (message) => transporter.sendMail({ from: `"Ryuge Coffee" <${process.env.EMAIL_USER}>`, ...message }) }));
 

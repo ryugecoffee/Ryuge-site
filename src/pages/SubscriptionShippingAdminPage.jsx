@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  BLOCKER_TEXT, HOLD_TEXT, METHOD_TEXT, STATUS_TEXT, addDays, beanName, dayLabel, errorText, jstToday, newRequestId, shipmentLabel, shippingApi, staffSession,
+  BLOCKER_TEXT, HOLD_TEXT, METHOD_TEXT, STATUS_TEXT, addDays, beanName, dayLabel, errorText, jstInputToIso, jstToday, monthLabel, newRequestId, shipmentLabel,
+  shippingApi, staffSession,
 } from "../lib/subscriptionShippingAdmin";
 
 // 珈琲の定期便 ④: the shop's shipping page. Pick two different beans → 発送準備 (one bag of each reserved) → 発送済み
@@ -183,6 +184,86 @@ function Delivery({ d, beans, onChanged, onSignedOut }) {
   );
 }
 
+// A cancellation the customer asked for by email (they could not sign in to their page). The server checks who it is
+// (the registered address, or the postal code and the last 4 digits of the phone) and counts it from when the email
+// arrived; it never shows the stored details. Refunds are only proposed here: the CEO makes them in Stripe.
+const EMPTY_REQUEST = { email: "", method: "registered_address", postalCode: "", phoneLast4: "", receivedAt: "" };
+function EmailCancel({ onSignedOut }) {
+  const ids = useRequestIds();
+  const [form, setForm] = useState(EMPTY_REQUEST);
+  const [state, setState] = useState({ busy: false, preview: null, done: null, message: "" });
+  const body = () => ({ ...form, receivedAt: jstInputToIso(form.receivedAt) });
+  const edit = (patch) => { setForm({ ...form, ...patch }); setState({ busy: false, preview: null, done: null, message: "" }); };
+  const failed = (r) => {
+    if (r.status === 401) { onSignedOut(errorText(r.body.error)); return; }
+    setState((s) => ({ ...s, busy: false, preview: r.body.error === "CANCEL_CHANGED" ? null : s.preview, message: errorText(r.body.error) }));
+  };
+  async function check(event) {
+    event.preventDefault();
+    setState({ busy: true, preview: null, done: null, message: "" });
+    const r = await shippingApi.emailCancelPreview(body());
+    if (r.status === 200) setState({ busy: false, preview: r.body, done: null, message: "" }); else failed(r);
+  }
+  async function confirm() {
+    setState((s) => ({ ...s, busy: true, message: "" }));
+    const r = await shippingApi.emailCancel({ ...body(), key: state.preview.key, requestId: ids.get("email-cancel") });
+    if (r.status === 200) { ids.done("email-cancel"); setState({ busy: false, preview: null, done: r.body, message: "" }); } else failed(r);
+  }
+  const p = state.preview;
+  const d = state.done;
+  return (
+    <section className="subm-card" aria-label="メールでの解約依頼">
+      <h2>メールでの解約依頼</h2>
+      <p className="subm-note">管理ページにログインできないお客様から ryugecoffee@gmail.com に届いた解約のご依頼を処理します。登録のアドレスから届いた場合は、先に Gmail で差出人に警告（なりすましの疑い）がないことを確認してください。返金はここでは行われません（CEO が確認して Stripe で行います）。</p>
+      <form onSubmit={check}>
+        <label className="subm-field"><span className="subm-label">ご登録のメールアドレス</span>
+          <input type="email" value={form.email} onChange={(e) => edit({ email: e.target.value })} />
+        </label>
+        <fieldset className="subm-field">
+          <legend className="subm-label">本人確認</legend>
+          <label><input type="radio" name="ec-method" checked={form.method === "registered_address"} onChange={() => edit({ method: "registered_address" })} /> 登録のアドレスから届いた</label>
+          <label><input type="radio" name="ec-method" checked={form.method === "details"} onChange={() => edit({ method: "details" })} /> 別のアドレスから届いた（郵便番号と電話番号の下4桁で確認）</label>
+        </fieldset>
+        {form.method === "details" && (
+          <>
+            <label className="subm-field"><span className="subm-label">郵便番号（お客様が書いたもの）</span>
+              <input inputMode="numeric" value={form.postalCode} onChange={(e) => edit({ postalCode: e.target.value })} /></label>
+            <label className="subm-field"><span className="subm-label">電話番号の下4桁（お客様が書いたもの）</span>
+              <input inputMode="numeric" maxLength={4} value={form.phoneLast4} onChange={(e) => edit({ phoneLast4: e.target.value })} /></label>
+          </>
+        )}
+        <label className="subm-field"><span className="subm-label">メールの受信日時（日本時間・Gmail の表示どおり）</span>
+          <input type="datetime-local" value={form.receivedAt} onChange={(e) => edit({ receivedAt: e.target.value })} />
+        </label>
+        <button className="subm-secondary" type="submit" disabled={state.busy || !form.email.trim() || !form.receivedAt}>内容を確認</button>
+      </form>
+      {state.message && <p className="subm-alert" role="alert">{state.message}</p>}
+      {p && (
+        <div role="region" aria-label="解約の内容">
+          <dl className="subm-facts">
+            <div><dt>契約番号</dt><dd>{p.ref}</dd></div>
+            <div><dt>ご請求</dt><dd>{p.alreadyCancelled ? "すでに解約済みです（お客様が管理ページで解約した等）。何も変わりません。" : `${monthLabel(p.firstUnchargedMonth)}以降は請求しません`}</dd></div>
+            {p.monthRefund && <div><dt>{monthLabel(p.monthRefund.month)}分</dt><dd>1日9時より前に届いたご依頼のため、{p.monthRefund.amount.toLocaleString("ja-JP")}円の返金を提案し、この月の未発送分を取りやめます</dd></div>}
+            {p.firstRefund > 0 && <div><dt>初回分</dt><dd>初回発送前のため、{p.firstRefund.toLocaleString("ja-JP")}円の返金を提案し、発送を取りやめます</dd></div>}
+          </dl>
+          <button className="subm-primary" type="button" disabled={state.busy} onClick={confirm}>{p.alreadyCancelled ? "記録する" : "解約する"}</button>
+        </div>
+      )}
+      {d && (
+        <div role="status">
+          <p className="subm-ok">{d.alreadyCancelled ? `${d.ref} はすでに解約済みでした。` : `${d.ref} を解約しました。登録のアドレスに確認メールを送りました。${d.firstRefund || d.monthRefund ? "返金の確認メールをスタッフに送りました（CEO が Stripe で返金します）。" : ""}`}</p>
+          {form.method === "details" && !d.alreadyCancelled && (
+            <>
+              <p className="subm-note">ご依頼のアドレスへの返信には、次の文面をお使いください。</p>
+              <pre className="subm-text">{d.customerText}</pre>
+            </>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
 const FILTERS = { todo: "対応が必要", all: "すべて", shipped: "発送済み" };
 
 export default function SubscriptionShippingAdminPage() {
@@ -283,6 +364,7 @@ export default function SubscriptionShippingAdminPage() {
           </section>
         </>
       )}
+      <EmailCancel onSignedOut={signedOut} />
     </div>
     </main>
     </div>
