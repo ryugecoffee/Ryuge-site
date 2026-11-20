@@ -9,7 +9,8 @@
 //    not forced (レターパックプラス or another way instead).
 //  - The same beans, 3–15 bags: sent by ゆうパック; the customer pays the earlier regional fee (Honshu/Shikoku 250,
 //    Hokkaido/Kyushu 500, Okinawa 550) and the shop pays the rest of Japan Post's rate. The fee never depends on the box.
-//  - 16 bags or more: contact us (no payment): their box has not been measured.
+//  - 16 bags or more: contact us (no payment): their box has not been measured. Counted in every order, with other
+//    products too.
 //  - Orders with any other product (drip bags, tea, wooden boxes): the earlier regional fee, unchanged.
 // International shipping is not handled here and is unchanged (server/quote.js, server/international-rates.js).
 // src/lib/shippingPolicy.js shows the same numbers (a test checks they agree). YUPACK_COST is Japan Post's rate, kept only
@@ -79,10 +80,11 @@ function regionalFee(prefecture) {
 function domesticShipping(items, prefecture) {
   const p = validPrefecture(prefecture);
   if (!Array.isArray(items) || !items.length) throw new Error("INVALID_ITEMS"); // priceItems() already refuses an empty cart
-  if (items.some((item) => item.flatMail !== true)) return { shipping: regionalFee(p), detail: { domestic: true, prefecture: p, method: "regional" } };
-  const bags = items.reduce((sum, item) => sum + item.quantity, 0);
-  if (bags <= FLAT_MAIL.maxBags) return { shipping: FLAT_MAIL.fee, detail: { domestic: true, prefecture: p, method: FLAT_MAIL.method, bags } };
+  // 16 bags of beans or more: contact us, whatever else is in the order (a tea or 閻魔 珈琲袋 added never lifts the limit).
+  const bags = items.filter((item) => item.flatMail === true).reduce((sum, item) => sum + item.quantity, 0);
   if (bags > MAX_BAGS) throw new DomesticShippingError("DOMESTIC_CONTACT_LARGE_ORDER", { contact: true });
+  if (items.some((item) => item.flatMail !== true)) return { shipping: regionalFee(p), detail: { domestic: true, prefecture: p, method: "regional" } };
+  if (bags <= FLAT_MAIL.maxBags) return { shipping: FLAT_MAIL.fee, detail: { domestic: true, prefecture: p, method: FLAT_MAIL.method, bags } };
   return { shipping: regionalFee(p), detail: { domestic: true, prefecture: p, method: "yupack", bags } };
 }
 

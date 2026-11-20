@@ -40,7 +40,9 @@ test("domestic (2026-11-19): beans 1–2 bags by Letter Pack Light ¥250 everywh
   assert.equal(quoteOrder([beans("enma-coffee-bag", 1)], { prefecture: "北海道" }).shipping, 500);
   assert.equal(quoteOrder([beans("enma-karamo", 1), beans("enma-coffee-bag", 1)], { prefecture: "沖縄県" }).shipping, 550);
   assert.equal(quoteOrder([beans("woodbox-tea-bag", 1)], { prefecture: "東京都" }).shipping, 250);
-  assert.equal(quoteOrder([beans("enma-karamo", 20), beans("enma-coffee-bag", 1)], { prefecture: "沖縄県" }).shipping, 550, "mixed orders: as before");
+  // 16+ bags of beans: contact us, also when another product is in the order (CEO 2026-11-20; it used to pass here).
+  assert.throws(() => quoteOrder([beans("enma-karamo", 20), beans("enma-coffee-bag", 1)], { prefecture: "沖縄県" }), /DOMESTIC_CONTACT_LARGE_ORDER/);
+  assert.equal(quoteOrder([beans("enma-karamo", 15), beans("enma-coffee-bag", 1)], { prefecture: "沖縄県" }).shipping, 550, "mixed orders up to 15 bags: as before");
 });
 
 test("international: subsidy is 30% of the real rate, capped at 1,000 yen, rounded down to the yen", () => {

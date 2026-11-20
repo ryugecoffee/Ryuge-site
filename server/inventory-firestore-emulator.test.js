@@ -374,3 +374,23 @@ test("refunds: two approvals of one preview at once refund once; the apply and t
   assert.equal(order.amountRefunded, 3850);
   assert.deepEqual(order.refundLedger.external, {});
 });
+
+test("木函のお茶 (CEO 2026-11-20): 5 of each at most, even with orders at the same moment; no stock record → not sold", { skip }, async () => {
+  const scoped = { collection: (name) => firestore.collection("emulatorMokkanTest_" + name), runTransaction: (fn) => firestore.runTransaction(fn) };
+  const hoji = "mokkan-oku-yame-hojicha";
+  const genmai = "mokkan-oku-yame-genmaicha";
+  // Before the stock is registered: nothing can be sold.
+  await assert.rejects(inventory.reserve(scoped, [{ id: hoji, quantity: 1 }]), /OUT_OF_STOCK/);
+  await scoped.collection("inventory").doc(hoji).set({ ready: 5, held: 0, sold: 0 });
+  await scoped.collection("inventory").doc(genmai).set({ ready: 5, held: 0, sold: 0 });
+  // Six can never be held at once.
+  await assert.rejects(inventory.reserve(scoped, [{ id: hoji, quantity: 6 }]), /OUT_OF_STOCK/);
+  // Eight one-box orders at the same moment: exactly five go through.
+  const attempts = await Promise.allSettled(Array.from({ length: 8 }, () => inventory.reserve(scoped, [{ id: hoji, quantity: 1 }])));
+  assert.equal(attempts.filter((a) => a.status === "fulfilled").length, 5);
+  assert.ok(attempts.filter((a) => a.status === "rejected").every((a) => /OUT_OF_STOCK/.test(a.reason.message)));
+  assert.deepEqual((await scoped.collection("inventory").doc(hoji).get()).data(), { ready: 5, held: 5, sold: 0 });
+  // The genmaicha has its own five, untouched by the hojicha orders.
+  assert.ok(await inventory.reserve(scoped, [{ id: genmai, quantity: 5 }]));
+  await assert.rejects(inventory.reserve(scoped, [{ id: genmai, quantity: 1 }]), /OUT_OF_STOCK/);
+});

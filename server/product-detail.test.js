@@ -84,7 +84,7 @@ test("the coffee bag is listed with the Enma beans; the hojicha bag is hidden bu
   assert.match(concierge, /\(PRODUCT_DATA\.bag \|\| \[\]\)\.filter\(\(p\) => !p\.hidden\)/, "the concierge does not offer it");
 });
 
-test("Zen dark roast: notes shown as the roasting direction, not as a cupping result; teas stay coming soon", async () => {
+test("Zen dark roast: notes shown as the roasting direction, not as a cupping result; teas on sale, capped by inventory", async () => {
   const { PRODUCT_DATA, DETAIL_TEXT, loc } = await load();
   const zen = PRODUCT_DATA.enma.find((p) => p.id === "enma-zen-dark-roast");
   assert.deepEqual(zen.flavorNotes.ja, ["ナッツ", "ハチミツ", "チョコレート"]);
@@ -93,7 +93,7 @@ test("Zen dark roast: notes shown as the roasting direction, not as a cupping re
   for (const lang of LANGS) assert.ok(DETAIL_TEXT[lang].flavorDirection);
   for (const id of ["mokkan-oku-yame-hojicha", "mokkan-oku-yame-genmaicha"]) {
     const tea = PRODUCT_DATA.woodbox.find((p) => p.id === id);
-    assert.equal(tea.comingSoon, true, `${id} stays coming soon`);
+    assert.equal(tea.comingSoon, false, `${id} on sale (CEO 2026-11-20), capped by inventory`);
     for (const lang of LANGS) assert.ok(loc(tea.ingredients, lang) && loc(tea.origin, lang), `${id} ${lang}`);
   }
   assert.match(loc(PRODUCT_DATA.woodbox.find((p) => p.id === "mokkan-oku-yame-hojicha").summary, "ja"), /一番茶.*浅く焙じた/);
@@ -113,7 +113,7 @@ test("Mokkan teas: ingredients, variety, flavour, brewing and the farm as the CE
     assert.equal(t.producer, undefined, "the farm is not named until it is confirmed (CEO)");
     assert.equal(t.farm, undefined);
     assert.equal(t.flavorBasis, "tea");
-    assert.equal(t.comingSoon, true);
+    assert.equal(t.comingSoon, false);
     for (const lang of LANGS) {
       const text = JSON.stringify(t);
       assert.doesNotMatch(text, /原島|Harashima|矢部|Yabe|1930|創業|founded|fundad|RAVE|有機|organic|orgánic|JAS|受賞|award|premio|認証|certif/i, `${t.id} ${lang}: unconfirmed claims`);
@@ -129,4 +129,18 @@ test("Mokkan teas: ingredients, variety, flavour, brewing and the farm as the CE
   assert.deepEqual(brew(hoji, "ja"), ["茶葉 3〜5g・お湯 200ml（80℃）", "1煎目 30秒・2煎目 10秒・3煎目 60秒", "茶葉 10g・水 1L", "冷蔵庫で4〜8時間"]);
   assert.deepEqual(brew(hoji, "en"), ["3–5 g of tea, 200 ml of water at 80 °C", "1st infusion 30 s · 2nd infusion 10 s · 3rd infusion 60 s", "10 g of tea, 1 L of water", "4–8 hours in the fridge"]);
   assert.equal(brew(genmai, "es")[0], "3–5 g de té, 200 ml de agua a 70–80 °C");
+});
+
+test("木函のお茶: the CEO's own photos (IMG_5479 玄米茶, IMG_5480 ほうじ茶), with no location or camera data in the files", async () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const { PRODUCT_DATA } = await load();
+  const image = (id) => PRODUCT_DATA.woodbox.find((p) => p.id === id).image;
+  assert.equal(image("mokkan-oku-yame-genmaicha"), "/images/mokkan-oku-yame-genmaicha.jpg");
+  assert.equal(image("mokkan-oku-yame-hojicha"), "/images/mokkan-oku-yame-hojicha.jpg");
+  for (const id of ["mokkan-oku-yame-genmaicha", "mokkan-oku-yame-hojicha"]) {
+    const file = fs.readFileSync(path.join(__dirname, "..", "public", "images", `${id}.jpg`));
+    assert.deepEqual([file[0], file[1]], [0xff, 0xd8], `${id}: a JPEG`);
+    assert.equal(file.indexOf(Buffer.from("Exif\0\0")), -1, `${id}: no EXIF block (no GPS position, no camera data)`);
+  }
 });

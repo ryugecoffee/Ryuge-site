@@ -70,3 +70,44 @@ test("the storefront shows the server's numbers (src/lib/shippingPolicy.js DOMES
   const { DOMESTIC } = await import(pathToFileURL(path.join(__dirname, "..", "src", "lib", "shippingPolicy.js")).href);
   assert.deepEqual(DOMESTIC, { flatMailFee: D.FLAT_MAIL.fee, flatMailMaxBags: D.FLAT_MAIL.maxBags, maxBags: D.MAX_BAGS, regional: { ...D.LEGACY_FEES } });
 });
+
+test("木函のお茶・閻魔 珈琲袋 (over 3 cm thick): any order holding one is never Letter Pack Light; the regional fee, mixed carts included", () => {
+  const { priceItems } = require("./catalog");
+  const carts = [
+    [["mokkan-oku-yame-hojicha", 1]], [["mokkan-oku-yame-genmaicha", 5]], [["enma-coffee-bag", 1]],
+    [["enma-jimma", 1], ["mokkan-oku-yame-hojicha", 1]], [["enma-karamo", 2], ["enma-coffee-bag", 1]],
+    [["enma-jimma", 1], ["mokkan-oku-yame-genmaicha", 1], ["enma-coffee-bag", 1]], [["enma-jimma", 14], ["mokkan-oku-yame-hojicha", 1]],
+  ];
+  for (const cart of carts) {
+    const items = priceItems(cart.map(([id, quantity]) => ({ id, quantity })));
+    for (const p of D.PREFECTURES) {
+      const { shipping, detail } = D.domesticShipping(items, p);
+      assert.deepEqual([shipping, detail.method], [regional(p), "regional"], `${JSON.stringify(cart)} ${p}`);
+    }
+  }
+  assert.deepEqual([regional("東京都"), regional("高知県"), regional("北海道"), regional("福岡県"), regional("沖縄県")], [250, 250, 500, 500, 550]);
+  // The same beans alone still go by Letter Pack Light (unchanged).
+  assert.equal(D.domesticShipping(priceItems([{ id: "enma-jimma", quantity: 2 }]), "北海道").detail.method, "letterpack_light");
+  for (const id of ["mokkan-oku-yame-hojicha", "mokkan-oku-yame-genmaicha", "enma-coffee-bag"]) assert.notEqual(CATALOG[id].flatMail, true, id);
+  // 閻魔 珈琲袋: sale, price and stock settings unchanged (CEO 2026-11-20).
+  assert.deepEqual(CATALOG["enma-coffee-bag"], { price: 2400, weightG: 100, kind: "bag", contentG: 100, availableForSale: true, managedStock: true });
+});
+
+test("16 bags of beans or more: contact us even when a tea or 閻魔 珈琲袋 is in the same order; 15 still sells", () => {
+  const { priceItems } = require("./catalog");
+  const cart = (beans, other) => priceItems([{ id: "enma-jimma", quantity: beans }, ...other.map((id) => ({ id, quantity: 1 }))]);
+  for (const other of [["mokkan-oku-yame-hojicha"], ["enma-coffee-bag"], ["mokkan-oku-yame-genmaicha", "enma-coffee-bag"]]) {
+    for (const p of D.PREFECTURES) {
+      assert.deepEqual(code(() => D.domesticShipping(cart(16, other), p)), ["DOMESTIC_CONTACT_LARGE_ORDER", true], `${other} ${p}`);
+      assert.deepEqual([D.domesticShipping(cart(15, other), p).shipping, D.domesticShipping(cart(15, other), p).detail.method], [regional(p), "regional"]);
+    }
+  }
+  // Split over several beans, the bags still add up.
+  const split = priceItems([{ id: "enma-jimma", quantity: 8 }, { id: "enma-karamo", quantity: 8 }, { id: "enma-coffee-bag", quantity: 1 }]);
+  assert.deepEqual(code(() => D.domesticShipping(split, "東京都")), ["DOMESTIC_CONTACT_LARGE_ORDER", true]);
+  // Many teas or coffee bags alone are not bean bags: the regional fee (their own stock caps them).
+  assert.equal(D.domesticShipping(priceItems([{ id: "enma-coffee-bag", quantity: 20 }]), "沖縄県").shipping, 550);
+  // Through the quote the customer sees: the same refusal, before any payment.
+  assert.throws(() => quoteOrder([{ id: "enma-jimma", quantity: 16 }, { id: "mokkan-oku-yame-hojicha", quantity: 1 }], { prefecture: "東京都" }),
+    (e) => e instanceof QuoteError && e.code === "DOMESTIC_CONTACT_LARGE_ORDER" && e.contact === true);
+});

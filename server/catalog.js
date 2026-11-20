@@ -29,12 +29,18 @@ const CATALOG = Object.freeze({
   "enma-karamo": { price: 1800, weightG: 120, kind: "beans", contentG: 100, flatMail: true, availableForSale: true, managedStock: true },
   "enma-kindiio": { price: 2050, weightG: 120, kind: "beans", contentG: 100, flatMail: true, availableForSale: true, managedStock: true },
   // CEO 2026-11-17: counted stock (20 packs of 8). Managed, but not requiresInventory: still sold while inventory is off.
+  // 閻魔 珈琲袋 (8 drip bags; formerly called 珈琲バッグ（折々）). Over 3 cm thick: never Letter Pack Light (not flatMail);
+  // レターパックプラス if it fits, otherwise ゆうパック (docs/domestic-shipping.md).
   "enma-coffee-bag": { price: 2400, weightG: 100, kind: "bag", contentG: 100, availableForSale: true, managedStock: true },
   "woodbox-tea-bag": { price: 2800, weightG: 120, kind: "tea", contentG: 100, availableForSale: true },
   "woodbox-geisha": { price: 2600, weightG: 170, kind: "beans", contentG: 100, availableForSale: false },
   "woodbox-ecuador": { price: 3000, weightG: 170, kind: "beans", contentG: 100, availableForSale: false },
-  "mokkan-oku-yame-hojicha": { price: 2800, weightG: 100, kind: "tea", contentG: 100, availableForSale: false },
-  "mokkan-oku-yame-genmaicha": { price: 2800, weightG: 100, kind: "tea", contentG: 100, availableForSale: false },
+  // 木函のお茶 (CEO 2026-11-20): 5 of each, never more (inventory/{sku}; sold only while inventory is on). weightG: wooden
+  // box 81.2 g + tea 30 g + 5 g margin = 116.2 g → 120 g provisional (packing material not measured yet). Over 3 cm thick:
+  // never Letter Pack Light (not flatMail); the customer pays the regional fee, the shop sends it by レターパックプラス
+  // if it fits and closes properly, otherwise ゆうパック (checked before posting).
+  "mokkan-oku-yame-hojicha": { price: 2800, weightG: 120, kind: "tea", contentG: 30, availableForSale: true, managedStock: true, requiresInventory: true },
+  "mokkan-oku-yame-genmaicha": { price: 2800, weightG: 120, kind: "tea", contentG: 30, availableForSale: true, managedStock: true, requiresInventory: true },
 });
 
 // Browser cart -> priced items. Only id and quantity are taken from the browser.
