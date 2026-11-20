@@ -4258,3 +4258,34 @@ html[lang="es"] .story-body {
 .ship-admin .ship-stock li { display: flex; justify-content: space-between; gap: 12px; }
 .legal-document.ship-admin { width: min(980px, calc(100% - 32px)); }
 .coffee-sub-manage-link { display: inline-block; margin-top: 10px; font-size: 13px; }
+
+/* カートの保存期限の案内（src/components/CartExpiryNotice.jsx）。控えめに左下へ、豆えらび相談のボタンより上。 */
+.cart-expiry-notice {
+  position: fixed;
+  left: 16px;
+  bottom: 84px;
+  z-index: 150;
+  width: min(380px, calc(100vw - 32px));
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(12, 12, 12, 0.94);
+  color: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.cart-expiry-text { margin: 0; }
+.cart-expiry-note { margin: 6px 0 0; font-size: 11px; color: rgba(255, 255, 255, 0.5); }
+.cart-expiry-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.cart-expiry-extend, .cart-expiry-close {
+  min-height: 36px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 12px;
+  cursor: pointer;
+}
+.cart-expiry-extend { background: rgba(255, 255, 255, 0.9); color: #0a0a0a; border-color: transparent; }

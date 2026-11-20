@@ -86,6 +86,10 @@ export default function SiteLayout({ lang, setLang }) {
                     {lang === "ja" ? "税込価格。送料は決済画面で計算します（1回のご注文につき1回。コーヒー豆1〜2袋は全国一律250円、3袋以上は本州・四国250円／北海道・九州500円／沖縄550円）。" : lang === "es" ? "Precios con impuestos incluidos. El envío se calcula en el pago (una vez por pedido; 1–2 bolsas de café ¥250 a todo Japón; 3 o más: ¥250 / ¥500 Hokkaido y Kyushu / ¥550 Okinawa)." : "Prices include tax. Shipping is calculated at checkout (once per order; 1–2 bags of beans ¥250 anywhere in Japan; 3+: ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550)."}
                   </p>
 
+                  <p className="cart-total-note">
+                    {lang === "ja" ? "カートは最後の操作から30分保存されます（在庫の確保ではありません。在庫はお支払いの手続きの際に確認します）。" : lang === "es" ? "El carrito se guarda 30 minutos desde tu último cambio (no reserva existencias; se comprueban al pagar)." : "Your cart is kept for 30 minutes after your last change (this does not reserve stock; stock is checked when you pay)."}
+                  </p>
+
                   <button className="cart-checkout-button" onClick={() => { setIsCartOpen(false); navigate("/checkout"); }}>
                     {lang === "ja" ? "決済へ進む" : lang === "es" ? "Ir al pago" : "Proceed to Checkout"}
                   </button>
