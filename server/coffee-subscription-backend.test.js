@@ -409,3 +409,17 @@ test("contention: an ABORTED transaction (nothing written) is run again here; ot
   await assert.rejects(records.retryOnContention(async () => { calls += 1; throw Object.assign(new Error("3 INVALID_ARGUMENT: bad field"), { code: 3 }); }, { pauseMs: 1 }));
   assert.equal(calls, 1, "other INVALID_ARGUMENT errors are bugs, not contention");
 });
+
+test("email cancellation words: a fully stopped month and a month partly shipped before the shop acted never contradict", () => {
+  const ec = require("./coffee-subscription-email-cancel");
+  const none = ec.monthRefundText({ month: "2026-12", amount: 5800, shippedBefore: 0 });
+  assert.match(none, /5,800円）は.*全額.*この月の発送は行いません。$/);
+  const one = ec.monthRefundText({ month: "2026-12", amount: 5800, shippedBefore: 1 });
+  assert.match(one, /全額をお支払いのカードへ返金します.*すでに発送した1回分はそのままお受け取りください（お支払い・返品は不要です）。まだ発送していない分は発送しません。$/);
+  assert.doesNotMatch(one, /この月の発送は行いません/);
+  // From the registered address only with the sender authenticated.
+  const at = Date.UTC(2026, 11, 2);
+  assert.throws(() => ec.parse({ email: "a@example.com", method: "registered_address", receivedAt: "2026-12-01T08:00:00+09:00" }, at), { code: "SENDER_CHECK_REQUIRED" });
+  assert.equal(ec.parse({ email: "a@example.com", method: "registered_address", senderAuthenticated: true, receivedAt: "2026-12-01T08:00:00+09:00" }, at).method, "registered_address");
+  assert.throws(() => ec.parse({ email: "a@example.com", method: "registered_address", senderAuthenticated: "true", receivedAt: "2026-12-01T08:00:00+09:00" }, at), { code: "SENDER_CHECK_REQUIRED" });
+});

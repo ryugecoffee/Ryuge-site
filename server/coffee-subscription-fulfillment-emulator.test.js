@@ -183,13 +183,15 @@ test("email cancellation: arrived before 09:00 on the 1st, entered after the cha
   const base = { email: `${sub}@example.com`, receivedAt };
 
   // Who: the registered address finds the contract; from another address the postal code and phone must match.
-  await assert.rejects(ec.preview({ db, stripe, body: { ...base, email: `nobody-${tag}@example.com`, method: "registered_address" }, now: DEC_2 }), { code: "NOT_VERIFIED" });
+  await assert.rejects(ec.preview({ db, stripe, body: { ...base, email: `nobody-${tag}@example.com`, method: "registered_address", senderAuthenticated: true }, now: DEC_2 }), { code: "NOT_VERIFIED" });
+  // From the registered address only with the sender authenticated (SPF/DKIM/DMARC PASS); otherwise the details check.
+  await assert.rejects(ec.preview({ db, stripe, body: { ...base, method: "registered_address" }, now: DEC_2 }), { code: "SENDER_CHECK_REQUIRED" });
   await assert.rejects(ec.preview({ db, stripe, body: { ...base, method: "details", postalCode: "1000001", phoneLast4: "0000" }, now: DEC_2 }), { code: "NOT_VERIFIED" });
   await assert.rejects(ec.preview({ db, stripe, body: { ...base, method: "details", postalCode: "100-0001" }, now: DEC_2 }), { code: "DETAILS_REQUIRED" });
   const p = await ec.preview({ db, stripe, body: { ...base, method: "details", postalCode: "１００-０００１", phoneLast4: "5678" }, now: DEC_2 });
-  assert.deepEqual([p.firstUnchargedMonth, p.monthRefund, p.firstRefund], ["2026-12", { month: "2026-12", amount: plan.MONTHLY_PRICES[2] }, 0]);
+  assert.deepEqual([p.firstUnchargedMonth, p.monthRefund, p.firstRefund], ["2026-12", { month: "2026-12", amount: plan.MONTHLY_PRICES[2], shippedBefore: 0 }, 0]);
   // Older than last month's charge: not handled here (the CEO decides).
-  await assert.rejects(ec.preview({ db, stripe, body: { ...base, method: "registered_address", receivedAt: "2026-10-31T20:00:00+09:00" }, now: DEC_2 }), { code: "REQUEST_TOO_OLD" });
+  await assert.rejects(ec.preview({ db, stripe, body: { ...base, method: "registered_address", senderAuthenticated: true, receivedAt: "2026-10-31T20:00:00+09:00" }, now: DEC_2 }), { code: "REQUEST_TOO_OLD" });
 
   // The same request sent several times, a second staff request, and the 5 December delivery shipped, all at once.
   const mails = [];
@@ -241,7 +243,7 @@ test("email cancellation: arrived after 09:00 on the 1st → the paid month is d
   const sub = `sub_emumail2${tag}`;
   await signedUpAndDecemberPaid(sub, catalog, [a, b]);
   const stripe = fakeStripe(sub);
-  const body = { email: `${sub}@example.com`, method: "registered_address", receivedAt: "2026-12-01T09:30:00+09:00" };
+  const body = { email: `${sub}@example.com`, method: "registered_address", senderAuthenticated: true, receivedAt: "2026-12-01T09:30:00+09:00" };
   const p = await ec.preview({ db, stripe, body, now: DEC_2 });
   assert.deepEqual([p.firstUnchargedMonth, p.monthRefund], ["2027-01", null]);
   const mails = [];
@@ -265,7 +267,7 @@ test("email cancellation: the first delivery and this month's both being prepare
   await f.prepareShipment(db, { shipmentId: `${sub}_2026-12_1`, skus: [a, b], requestId: `req-${tag}-dec1`, actor: ACTOR }, { now: DEC_2, catalog });
   assert.deepEqual(await stock(a), { ready: 5, held: 2, sold: 0 });
   const stripe = fakeStripe(sub);
-  const body = { email: `${sub}@example.com`, method: "registered_address", receivedAt: "2026-12-01T07:00:00+09:00" };
+  const body = { email: `${sub}@example.com`, method: "registered_address", senderAuthenticated: true, receivedAt: "2026-12-01T07:00:00+09:00" };
   const p = await ec.preview({ db, stripe, body, now: DEC_2 });
   const r = await ec.confirm({ db, stripe, body: { ...body, key: p.key, requestId: `req-${tag}-mailcancel` }, actor: ACTOR, now: DEC_2, env: {} });
   assert.deepEqual([r.firstRefund, r.monthRefund.amount], [3000, plan.MONTHLY_PRICES[2]]);
@@ -286,7 +288,7 @@ test("email cancellation: the customer cancelled on their page after 09:00, but 
   const stripe = fakeStripe(sub);
   // On the page on 2 December: from January (December was paid).
   assert.equal((await ops.cancelSubscription({ db, stripe, subscriptionId: sub, now: DEC_2 })).firstUnchargedMonth, "2027-01");
-  const body = { email: `${sub}@example.com`, method: "registered_address", receivedAt: "2026-12-01T08:50:00+09:00" };
+  const body = { email: `${sub}@example.com`, method: "registered_address", senderAuthenticated: true, receivedAt: "2026-12-01T08:50:00+09:00" };
   const p = await ec.preview({ db, stripe, body, now: DEC_2 + 3600e3 });
   assert.equal(p.alreadyCancelled, false);
   const send = (requestId) => ec.confirm({ db, stripe, body: { ...body, key: p.key, requestId }, actor: ACTOR, now: DEC_2 + 3600e3, env: {} });
@@ -297,4 +299,42 @@ test("email cancellation: the customer cancelled on their page after 09:00, but 
   assert.equal(contract.firstUnchargedMonth, "2026-12");
   assert.equal(contract.cancelVia, "customer_page", "the original cancellation is kept");
   assert.equal((await db.collection(records.SHIPMENTS).doc(`${sub}_2026-12_1`).get()).data().status, "cancelled_before_shipping");
+});
+
+test("email cancellation: before 09:00, entered after one of the month's deliveries left → full refund, the rest stopped, the words say so", { skip }, async () => {
+  const ec = require("./coffee-subscription-email-cancel");
+  const tag = crypto.randomUUID().slice(0, 8);
+  const catalog = testCatalog(tag);
+  const [a, b] = Object.keys(catalog);
+  await db.collection("inventory").doc(a).set({ ready: 5, held: 0, sold: 0 });
+  await db.collection("inventory").doc(b).set({ ready: 5, held: 0, sold: 0 });
+  const sub = `sub_emumail5${tag}`;
+  await signedUpAndDecemberPaid(sub, catalog, [a, b]);
+  // The 5 December delivery left before the shop entered the email; the 20 December one is still planned.
+  await f.prepareShipment(db, { shipmentId: `${sub}_2026-12_1`, skus: [a, b], requestId: `req-${tag}-dec1p`, actor: ACTOR }, { now: DEC_2, catalog });
+  await f.shipShipment(db, { shipmentId: `${sub}_2026-12_1`, requestId: `req-${tag}-dec1s`, actor: ACTOR }, { now: DEC_2 });
+  assert.deepEqual(await stock(a), { ready: 3, held: 0, sold: 2 });
+  const stripe = fakeStripe(sub);
+  const later = Date.UTC(2026, 11, 7, 1);
+  const body = { email: `${sub}@example.com`, method: "registered_address", senderAuthenticated: true, receivedAt: "2026-12-01T08:10:00+09:00" };
+  const p = await ec.preview({ db, stripe, body, now: later });
+  assert.deepEqual(p.monthRefund, { month: "2026-12", amount: plan.MONTHLY_PRICES[2], shippedBefore: 1 });
+  const mails = [];
+  const r = await ec.confirm({ db, stripe, body: { ...body, key: p.key, requestId: `req-${tag}-partial` }, actor: ACTOR, now: later,
+    sendMail: async (m) => { mails.push(m); }, env: { SHOP_STAFF_EMAILS: "staff@example.com" } });
+  // The refund proposed is the whole month, as the terms say; the shipped delivery stays shipped, the other is stopped.
+  assert.deepEqual(r.monthRefund, { month: "2026-12", amount: plan.MONTHLY_PRICES[2], shippedBefore: 1 });
+  const contract = (await db.collection(records.SUBS).doc(sub).get()).data();
+  assert.deepEqual([contract.monthRefundProposal.amount, contract.monthRefundProposal.shippedBefore, contract.monthRefundProposal.status],
+    [plan.MONTHLY_PRICES[2], 1, "awaiting_ceo_approval"]);
+  const ships = async (n) => (await db.collection(records.SHIPMENTS).doc(`${sub}_2026-12_${n}`).get()).data().status;
+  assert.deepEqual([await ships(1), await ships(2)], ["shipped", "cancelled_before_shipping"]);
+  assert.deepEqual(await stock(a), { ready: 3, held: 0, sold: 2 }, "nothing taken back from the parcel that left, nothing released twice");
+  const customer = mails.find((m) => m.to !== "staff@example.com").text;
+  assert.match(customer, /2026年12月分のご請求（5,800円）は.*全額.*返金します/);
+  assert.match(customer, /すでに発送した1回分はそのままお受け取りください（お支払い・返品は不要です）。まだ発送していない分は発送しません。/);
+  assert.doesNotMatch(customer, /この月の発送は行いません/, "never says nothing ships when one already did");
+  assert.match(mails.find((m) => m.to === "staff@example.com").text, /すでに発送済み 1件/);
+  const kept = (await db.collection(ec.REQUESTS).doc(`req-${tag}-partial`).get()).data();
+  assert.equal(kept.senderCheck, "spf_dkim_dmarc_pass", "how the sender was checked is recorded");
 });

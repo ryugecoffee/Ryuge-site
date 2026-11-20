@@ -187,7 +187,7 @@ function Delivery({ d, beans, onChanged, onSignedOut }) {
 // A cancellation the customer asked for by email (they could not sign in to their page). The server checks who it is
 // (the registered address, or the postal code and the last 4 digits of the phone) and counts it from when the email
 // arrived; it never shows the stored details. Refunds are only proposed here: the CEO makes them in Stripe.
-const EMPTY_REQUEST = { email: "", method: "registered_address", postalCode: "", phoneLast4: "", receivedAt: "" };
+const EMPTY_REQUEST = { email: "", method: "registered_address", senderAuthenticated: false, postalCode: "", phoneLast4: "", receivedAt: "" };
 function EmailCancel({ onSignedOut }) {
   const ids = useRequestIds();
   const [form, setForm] = useState(EMPTY_REQUEST);
@@ -214,7 +214,7 @@ function EmailCancel({ onSignedOut }) {
   return (
     <section className="subm-card" aria-label="メールでの解約依頼">
       <h2>メールでの解約依頼</h2>
-      <p className="subm-note">管理ページにログインできないお客様から ryugecoffee@gmail.com に届いた解約のご依頼を処理します。登録のアドレスから届いた場合は、先に Gmail で差出人に警告（なりすましの疑い）がないことを確認してください。返金はここでは行われません（CEO が確認して Stripe で行います）。</p>
+      <p className="subm-note">管理ページにログインできないお客様から ryugecoffee@gmail.com に届いた解約のご依頼を処理します。返金はここでは行われません（CEO が確認して Stripe で行います）。</p>
       <form onSubmit={check}>
         <label className="subm-field"><span className="subm-label">ご登録のメールアドレス</span>
           <input type="email" value={form.email} onChange={(e) => edit({ email: e.target.value })} />
@@ -222,8 +222,13 @@ function EmailCancel({ onSignedOut }) {
         <fieldset className="subm-field">
           <legend className="subm-label">本人確認</legend>
           <label><input type="radio" name="ec-method" checked={form.method === "registered_address"} onChange={() => edit({ method: "registered_address" })} /> 登録のアドレスから届いた</label>
-          <label><input type="radio" name="ec-method" checked={form.method === "details"} onChange={() => edit({ method: "details" })} /> 別のアドレスから届いた（郵便番号と電話番号の下4桁で確認）</label>
+          <label><input type="radio" name="ec-method" checked={form.method === "details"} onChange={() => edit({ method: "details" })} /> 送信元を確認できない、または別のアドレスから届いた（郵便番号と電話番号の下4桁で確認）</label>
         </fieldset>
+        {form.method === "registered_address" && (
+          <label className="subm-field"><input type="checkbox" checked={form.senderAuthenticated} onChange={(e) => edit({ senderAuthenticated: e.target.checked })} />{" "}
+            Gmail の「メッセージのソースを表示」で SPF・DKIM・DMARC がすべて PASS で、警告（なりすましの疑い等）も出ていないことを確認した。
+            1つでも PASS でない・警告がある場合は、このメールに返信せず、登録のアドレス宛てに新しいメールを作成して郵便番号と電話番号の下4桁をお尋ねし、下の「送信元を確認できない…」で処理してください。</label>
+        )}
         {form.method === "details" && (
           <>
             <label className="subm-field"><span className="subm-label">郵便番号（お客様が書いたもの）</span>
@@ -235,7 +240,7 @@ function EmailCancel({ onSignedOut }) {
         <label className="subm-field"><span className="subm-label">メールの受信日時（日本時間・Gmail の表示どおり）</span>
           <input type="datetime-local" value={form.receivedAt} onChange={(e) => edit({ receivedAt: e.target.value })} />
         </label>
-        <button className="subm-secondary" type="submit" disabled={state.busy || !form.email.trim() || !form.receivedAt}>内容を確認</button>
+        <button className="subm-secondary" type="submit" disabled={state.busy || !form.email.trim() || !form.receivedAt || (form.method === "registered_address" && !form.senderAuthenticated)}>内容を確認</button>
       </form>
       {state.message && <p className="subm-alert" role="alert">{state.message}</p>}
       {p && (
@@ -243,7 +248,7 @@ function EmailCancel({ onSignedOut }) {
           <dl className="subm-facts">
             <div><dt>契約番号</dt><dd>{p.ref}</dd></div>
             <div><dt>ご請求</dt><dd>{p.alreadyCancelled ? "すでに解約済みです（お客様が管理ページで解約した等）。何も変わりません。" : `${monthLabel(p.firstUnchargedMonth)}以降は請求しません`}</dd></div>
-            {p.monthRefund && <div><dt>{monthLabel(p.monthRefund.month)}分</dt><dd>1日9時より前に届いたご依頼のため、{p.monthRefund.amount.toLocaleString("ja-JP")}円の返金を提案し、この月の未発送分を取りやめます</dd></div>}
+            {p.monthRefund && <div><dt>{monthLabel(p.monthRefund.month)}分</dt><dd>1日9時より前に届いたご依頼のため、{p.monthRefund.amount.toLocaleString("ja-JP")}円（全額）の返金を提案し、この月の未発送分を取りやめます{p.monthRefund.shippedBefore > 0 ? `。すでに発送済みの ${p.monthRefund.shippedBefore} 回分は、お客様にそのままお受け取りいただきます（お支払い・返品は不要）` : ""}</dd></div>}
             {p.firstRefund > 0 && <div><dt>初回分</dt><dd>初回発送前のため、{p.firstRefund.toLocaleString("ja-JP")}円の返金を提案し、発送を取りやめます</dd></div>}
           </dl>
           <button className="subm-primary" type="button" disabled={state.busy} onClick={confirm}>{p.alreadyCancelled ? "記録する" : "解約する"}</button>

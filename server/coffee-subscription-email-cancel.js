@@ -5,9 +5,11 @@
 // checked here and carried out with the very steps of the customer's own cancellation (coffee-subscription-stripe.js
 // cancelSubscription: Stripe stops charging, the first delivery's refund proposal, stock back), counted from when the
 // email arrived:
-//  - who: the registered email address finds the contract. An email sent from that address is the check (the staff
-//    look at Gmail's sender check first); from any other address, the postal code and the last 4 digits of the phone,
-//    as the customer wrote them, must match the contract. The answer is only "matches" or not: the stored details are
+//  - who: the registered email address finds the contract. An email sent from that address counts only when the staff
+//    confirm its sender was authenticated (Gmail「メッセージのソースを表示」: SPF, DKIM and DMARC all PASS, no warning;
+//    senderAuthenticated, recorded). Otherwise (a doubtful sender, or another address) the postal code and the last 4
+//    digits of the phone must match the contract; for a doubtful sender the shop asks for them by a new mail to the
+//    registered address, so only its real owner can answer. The answer is only "matches" or not: the stored details are
 //    never shown, and what was entered is never kept (only which check was used).
 //  - when: an email that arrived before 09:00 on the 1st counts as a cancellation before that month's charge. If the
 //    charge happened anyway because the shop entered it later, that month's deliveries are stopped and its amount is
@@ -44,6 +46,8 @@ function parse(body, now) {
   const postal = toDigits(body?.postalCode);
   const phone4 = toDigits(body?.phoneLast4);
   if (method === "details" && (postal.length !== 7 || phone4.length !== 4)) throw new EmailCancelError("DETAILS_REQUIRED");
+  // From the registered address: only with the sender authenticated (otherwise the details check is used).
+  if (method === "registered_address" && body?.senderAuthenticated !== true) throw new EmailCancelError("SENDER_CHECK_REQUIRED");
   const receivedAt = Date.parse(String(body?.receivedAt || ""));
   if (!Number.isFinite(receivedAt) || receivedAt > now + 60_000 || receivedAt < now - MAX_AGE_MS) throw new EmailCancelError("INVALID_RECEIVED_AT");
   return { email, method, postal, phone4, receivedAt };
@@ -62,10 +66,26 @@ async function verifiedContract(db, input) {
   return { id, contract: c };
 }
 
+// This month's deliveries that already left (before the shop entered the request): they stay with the customer.
+const SHIPPED = ["shipped", "delivered"];
+async function shippedThisMonth(db, subscriptionId, month) {
+  const all = await db.collection(records.SHIPMENTS).where("subscriptionId", "==", subscriptionId).get();
+  return all.docs.map((d) => d.data()).filter((s) => s.kind === "monthly" && s.month === month && SHIPPED.includes(s.status)).length;
+}
+
+// The month refunded in full (TERMS_JA.emailCancel): what has not left is not shipped; what already left is the shop's
+// delay, so it needs neither payment nor return. The words follow what was actually done (shippedBefore).
+function monthRefundText(m) {
+  const head = `${monthText(m.month)}分のご請求（${yen(m.amount)}）は、ご依頼が1日9時のご請求より前に届いていたため、全額をお支払いのカードへ返金します（${plan.REFUND_BUSINESS_DAYS}営業日以内に手続きします）。`;
+  return m.shippedBefore > 0
+    ? `${head}この月のお届けのうち、すでに発送した${m.shippedBefore}回分はそのままお受け取りください（お支払い・返品は不要です）。まだ発送していない分は発送しません。`
+    : `${head}この月の発送は行いません。`;
+}
+
 function customerText({ receivedAt, firstUnchargedMonth, monthRefund, firstRefund }) {
   return [
     `定期便の解約を、メールでのご依頼（${jstText(receivedAt)} 受信）により受け付けました。${monthText(firstUnchargedMonth)}以降のご請求はありません。`,
-    ...(monthRefund ? [`${monthText(monthRefund.month)}分のご請求（${yen(monthRefund.amount)}）は、ご依頼が1日9時のご請求より前に届いていたため、全額をお支払いのカードへ返金します（${plan.REFUND_BUSINESS_DAYS}営業日以内に手続きします）。この月の発送は行いません。`] : []),
+    ...(monthRefund ? [monthRefundText(monthRefund)] : []),
     ...(firstRefund ? [`初回の200gは発送前のため発送を取りやめ、初回分${yen(firstRefund)}を全額、お支払いのカードへ返金します（${plan.REFUND_BUSINESS_DAYS}営業日以内に手続きします）。`] : []),
     plan.TERMS_JA.noFee,
   ].join("\n");
@@ -79,7 +99,8 @@ async function preview({ db, stripe, body, now }) {
   const alreadyCancelled = Boolean(contract.cancelRequestedAt) && !(p.late && !contract.monthRefundProposal);
   return { ref: contractRef(id), alreadyCancelled, ended: p.ended, action: p.decision.action,
     endsAt: p.decision.cancelAt ? p.decision.cancelAt * 1000 : now, firstUnchargedMonth: p.late ? p.late.month : p.decision.firstUnchargedMonth,
-    monthRefund: p.late ? { month: p.late.month, amount: p.late.amount } : null, firstRefund: p.refundProposalAmount, key: p.key };
+    monthRefund: p.late ? { month: p.late.month, amount: p.late.amount, shippedBefore: await shippedThisMonth(db, id, p.late.month) } : null,
+    firstRefund: p.refundProposalAmount, key: p.key };
 }
 
 async function confirm({ db, stripe, body, actor, now, sendMail = async () => {}, env = process.env, log = console }) {
@@ -93,7 +114,8 @@ async function confirm({ db, stripe, body, actor, now, sendMail = async () => {}
   const prior = await records.retryOnContention(() => db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     if (snap.exists) return snap.data();
-    tx.create(ref, { subscriptionId: id, ref: contractRef(id), method: input.method, receivedAt: new Date(input.receivedAt), by: actor,
+    tx.create(ref, { subscriptionId: id, ref: contractRef(id), method: input.method,
+      senderCheck: input.method === "registered_address" ? "spf_dkim_dmarc_pass" : null, receivedAt: new Date(input.receivedAt), by: actor,
       status: "running", createdAt: new Date(now) });
     return null;
   }));
@@ -125,7 +147,7 @@ async function confirm({ db, stripe, body, actor, now, sendMail = async () => {}
         "メールでのご依頼による解約を受け付けました。返金の確認をお願いします。", "",
         `契約番号：${result.ref}`, `ご依頼の受信：${jstText(input.receivedAt)}`,
         ...(result.monthRefund ? [`返金の提案：${monthText(result.monthRefund.month)}分 ${yen(result.monthRefund.amount)}（1日9時より前に届いたご依頼の手続きが、請求の後になったため）`,
-          `この月の発送：未発送の分は取りやめ済み（準備中だった分の在庫は戻しています）${result.monthRefund.shippedBefore ? `。すでに発送済み ${result.monthRefund.shippedBefore}件` : ""}`] : []),
+          `この月の発送：未発送の分は取りやめ済み（準備中だった分の在庫は戻しています）${result.monthRefund.shippedBefore ? `。すでに発送済み ${result.monthRefund.shippedBefore}件（お客様には、そのまま受け取り・お支払いと返品は不要と案内しました）` : ""}`] : []),
         ...(result.firstRefund ? [`返金の提案：初回分 ${yen(result.firstRefund)}（初回発送前の解約）`] : []),
         "", `お客様には「${plan.REFUND_BUSINESS_DAYS}営業日以内に返金の手続き」とお伝えしています。CEOの確認後、Stripeで返金してください（自動では返金されません）。`,
       ];
@@ -154,4 +176,4 @@ function addRoutes(router, { getDb, getStripe, sendMail, env, clock, log }) {
   router.post("/email-cancel", handle((a) => confirm({ ...a, sendMail, env, log })));
 }
 
-module.exports = { REQUESTS, EmailCancelError, parse, verifiedContract, customerText, preview, confirm, addRoutes };
+module.exports = { REQUESTS, EmailCancelError, parse, verifiedContract, customerText, monthRefundText, preview, confirm, addRoutes };

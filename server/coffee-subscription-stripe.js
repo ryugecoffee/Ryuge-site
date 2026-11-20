@@ -198,7 +198,7 @@ async function cancelSubscription({ db, stripe, subscriptionId, now = Date.now()
     if (late) {
       for (const x of lateShipments) if (x.stop) tx.update(x.ref, { status: "cancelled_before_shipping", beans: null, updatedAt: new Date(now) });
       monthRefundProposal = { reason: "EMAIL_CANCEL_BEFORE_CHARGE", month: late.month, amount: late.amount, invoiceId: late.invoiceId,
-        shippedBefore: lateShipments.filter((x) => !x.stop).length, status: "awaiting_ceo_approval", createdAt: new Date(now) };
+        shippedBefore: lateShipments.filter((x) => ["shipped", "delivered"].includes(x.data.status)).length, status: "awaiting_ceo_approval", createdAt: new Date(now) };
       Object.assign(patch, { monthRefundProposal, needsReview: true, reviewReason: "REFUND_PROPOSAL" });
     }
     let refundProposal = null;
