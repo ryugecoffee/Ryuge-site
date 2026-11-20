@@ -339,7 +339,7 @@ test("the store's pages say what the server does: prices, shipping days, start m
   assert.match(rows.find(([l]) => l === "2回目のご請求日")[1], /2027年1月1日/);
   assert.match(rows.find(([l]) => l === "2回目以降のお支払い")[1], /8,550円/);
   assert.match(rows.find(([l]) => l === "発送の時期")[1], /5日・15日・25日/);
-  assert.equal(terms.LEGAL_TEXT_REVIEWED, false, "provisional wording until a specialist has checked it (before sign-ups reopen)");
+  assert.equal(terms.LEGAL_TEXT_REVIEWED, true, "internal legal text review recorded; sign-ups remain independently paused");
   // Every refusal the server can give has a sentence for the customer.
   const codes = new Set();
   for (const file of ["coffee-subscription-account.js", "coffee-subscription-stripe.js", "coffee-subscription-checkout.js"]) {

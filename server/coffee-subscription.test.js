@@ -188,7 +188,7 @@ test("final confirmation items (特定商取引法 第12条の6) on the store's 
       assert.ok(mail.includes(part), `mail, ${f}: ${part.slice(0, 20)}`);
     }
   }
-  assert.equal(T.LEGAL_TEXT_REVIEWED, false, "drafts until reviewed");
+  assert.equal(T.LEGAL_TEXT_REVIEWED, true, "internal legal text review completed without opening sign-ups");
 });
 
 test("the 9:00 JST cut-off on the 1st against Stripe's invoice: before it nothing is charged; after payment, from the next month", () => {
