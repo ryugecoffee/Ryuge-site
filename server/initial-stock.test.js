@@ -36,10 +36,11 @@ const plan = () => ({
   "inventory/enma-kindiio": 4,
 });
 
-test("only the 9 stock records the checkout uses can be written, with whole quantities 0–1000", () => {
+test("only the 11 stock records the checkout uses can be written, with whole quantities 0–1000", () => {
   assert.deepEqual(allowedPaths().sort(), [
     "inventory/enma-amarelo-bourbon", "inventory/enma-andes-blue", "inventory/enma-coffee-bag", "inventory/enma-jimma", "inventory/enma-karamo",
-    "inventory/enma-kindiio", "inventory/enma-quequesques", "inventory/enma-zen-dark-roast", "inventoryLots/brazil-amarelo-bourbon",
+    "inventory/enma-kindiio", "inventory/enma-quequesques", "inventory/enma-zen-dark-roast",
+    "inventory/mokkan-oku-yame-genmaicha", "inventory/mokkan-oku-yame-hojicha", "inventoryLots/brazil-amarelo-bourbon",
   ]);
   assert.throws(() => validPlan({ "inventory/woodbox-tea-bag": 5 }), /UNKNOWN_STOCK_RECORD/, "not a stock-managed product");
   assert.deepEqual(validPlan({ "inventory/enma-coffee-bag": 20 }), { "inventory/enma-coffee-bag": 20 }, "the coffee bag is counted stock");
@@ -66,7 +67,8 @@ test("preview reads everything, changes nothing, and shows what exists, what wou
   assert.deepEqual(preview.refused, ["inventory/enma-karamo"]);
   const withoutKaramo = await previewInitialStock(db, plan(), { projectId: PROJECT });
   assert.equal(Object.fromEntries(withoutKaramo.records.map((r) => [r.path, r.action]))["inventory/enma-karamo"], "keep");
-  assert.deepEqual(withoutKaramo.missingAfter, ["inventory/enma-coffee-bag"], "a stock record left out of the plan is reported");
+  assert.deepEqual(withoutKaramo.missingAfter, ["inventory/enma-coffee-bag", "inventory/mokkan-oku-yame-hojicha", "inventory/mokkan-oku-yame-genmaicha"],
+    "a stock record left out of the plan is reported");
   assert.match(withoutKaramo.planHash, /^[a-f0-9]{64}$/);
 });
 

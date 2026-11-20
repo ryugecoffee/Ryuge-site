@@ -7,13 +7,24 @@ price shown and the payment). Storefront numbers: `src/lib/shippingPolicy.js` `D
 |---|---|---|
 | Coffee beans 100 g (catalog `flatMail: true`), 1–2 bags | レターパックライト for now (mailbox, tracked; クリックポスト later) | ¥250 everywhere, Hokkaido, Kyushu and Okinawa included (Japan Post ¥430: the shop pays ¥180) |
 | The same beans, 3–15 bags | ゆうパック | the earlier regional fee: Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550 (the shop pays the rest) |
-| 16 bags or more | — | contact us (no payment; packing not measured) |
-| Any other product in the order (drip bags, tea, wooden boxes) | unchanged | the same regional fee |
+| 16 bags or more (counted in every order, also with tea or 閻魔 珈琲袋) | — | contact us (no payment; packing not measured) |
+| Any other product in the order (閻魔 珈琲袋, 木函のお茶, …), with or without beans | chosen by the shop when packing (below) | the same regional fee: Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550 |
 | 定期便 (100 g × 2 every delivery) | レターパックライト for now | included in the monthly price (unchanged) |
 | International | unchanged | `server/international-rates.js` |
 
 The customer's fee never depends on the box size or Japan Post's rate, so an unmeasured box can never make a wrong
 charge; it only changes what the shop pays (below).
+
+## 閻魔 珈琲袋・木函のお茶: how they are sent (CEO 2026-11-20)
+- 閻魔 珈琲袋 (`enma-coffee-bag`, 8 drip bags, ¥2,400) and 木函　奥八女ほうじ茶 / 玄米茶 (`mokkan-oku-yame-*`, ¥2,800) are
+  thicker than 3 cm: **never レターパックライト**, even one item, even with beans in the same order (they are not
+  `flatMail`; a test checks every cart that holds one).
+- One item: レターパックプラス if it fits and the envelope closes properly; otherwise ゆうパック.
+- Several items: choose レターパックプラス or ゆうパック from the packed size and weight.
+- Whether it really fits is checked before posting. The customer's fee is the regional fee above, whatever is used.
+- Provisional shipping weight of a 木函: box 81.2 g + tea 30 g + 5 g margin = 116.2 g → 120 g (`weightG`); the packing
+  material is not measured yet.
+- The name is 「閻魔 珈琲袋」 (formerly called 珈琲バッグ（折々）); 折々 holds no coffee product now.
 
 ## What the shop pays (Japan Post, rates of 2026-10-01, read 2026-11-19)
 - **レターパックライト ¥430** nationwide (CEO 2026-11-19, until the thin Click Post packing arrives): 34 × 24.8 cm,

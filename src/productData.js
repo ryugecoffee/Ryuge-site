@@ -568,11 +568,11 @@ export const PRODUCT_DATA = {
     },
     {
       id: "mokkan-oku-yame-hojicha",
-      image: "/images/woodbox-hojicha.jpg", // 既存の茶ギフト画像。実商品写真が揃ったら差替える
+      image: "/images/mokkan-oku-yame-hojicha.jpg", // 実写（CEO 撮影 IMG_5480、無加工。HEIC→JPEG の形式変換と位置情報の削除のみ）
       category: "woodbox",
       size: "30g",
       weight: { ja: "30g", en: "30 g", es: "30 g" },
-      weightG: 100, // 木函・梱包込みの配送重量は要実測
+      weightG: 120, // 木函81.2g＋お茶30g＋予備5g＝116.2g → 暫定120g（梱包材は実測待ち）
       title: {
         ja: "木函　奥八女ほうじ茶",
         en: "Mokkan Oku-Yame Hojicha",
@@ -597,16 +597,16 @@ export const PRODUCT_DATA = {
       },
       price: "¥2,800",
       priceNumber: 2800,
-      comingSoon: true, // CEO 2026-11-15: 配送重量の実測と販売開始の判断まで準備中
+      comingSoon: false, // CEO 2026-11-20: 販売再開（各5個まで。inventory/{sku} で上限を管理）
       isSoldOut: false,
     },
     {
       id: "mokkan-oku-yame-genmaicha",
-      image: "/images/woodbox.jpg", // 仮の木函イメージ。玄米茶の実商品写真に要差替え
+      image: "/images/mokkan-oku-yame-genmaicha.jpg", // 実写（CEO 撮影 IMG_5479、無加工。HEIC→JPEG の形式変換と位置情報の削除のみ）
       category: "woodbox",
       size: "30g",
       weight: { ja: "30g", en: "30 g", es: "30 g" },
-      weightG: 100, // 木函・梱包込みの配送重量は要実測
+      weightG: 120, // 木函81.2g＋お茶30g＋予備5g＝116.2g → 暫定120g（梱包材は実測待ち）
       title: {
         ja: "木函　奥八女玄米茶",
         en: "Mokkan Oku-Yame Genmaicha",
@@ -630,7 +630,7 @@ export const PRODUCT_DATA = {
       },
       price: "¥2,800",
       priceNumber: 2800,
-      comingSoon: true, // CEO 2026-11-15: 配送重量の実測と販売開始の判断まで準備中
+      comingSoon: false, // CEO 2026-11-20: 販売再開（各5個まで。inventory/{sku} で上限を管理）
       isSoldOut: false,
     },
   ],
