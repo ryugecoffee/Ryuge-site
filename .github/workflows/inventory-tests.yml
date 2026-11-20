@@ -8,6 +8,12 @@ on:
       - 'server/inventory.js'
       - 'server/coffee-subscription-fulfillment.js'
       - 'server/coffee-subscription-email-cancel.js'
+      # 珈琲の定期便: every server file, its texts and pages (the unit and emulator tests below cover them)
+      - 'server/coffee-subscription*'
+      - 'src/lib/coffeeSubscription*'
+      - 'src/pages/Subscription*'
+      - 'src/pages/LegalNotice.jsx'
+      - 'src/pages/RefundPolicy.jsx'
       - 'src/lib/subscriptionShippingAdmin.js'
       - 'src/pages/SubscriptionShippingAdminPage.jsx'
       - 'server/shop-staff-auth.js'

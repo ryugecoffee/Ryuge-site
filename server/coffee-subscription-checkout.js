@@ -79,7 +79,7 @@ function submitTerms(startMonth, frequency) {
   return `定期購入のお申し込みです。${T.term}`
     + `内容：当店おまかせの珈琲豆2種類（100g×2袋＝1回200g）を月${frequency}回お届けします。`
     + `本日のお支払いは初回200gの${plan.FIRST_DELIVERY_PRICE.toLocaleString("ja-JP")}円です（3営業日以内に発送）。`
-    + `${y}年${m}月1日から毎月1日に月額${plan.MONTHLY_PRICES[frequency].toLocaleString("ja-JP")}円（税込・全国一律送料込み）を自動でお支払いいただき、毎月${days}に発送します（土日祝は翌営業日）。`
+    + `${y}年${m}月1日から毎月1日に月額${plan.MONTHLY_PRICES[frequency].toLocaleString("ja-JP")}円（税込・全国一律送料込み）を自動でお支払いいただき、毎月${days}に発送します（土日祝・休業日は翌営業日）。`
     + plan.annualReferenceText(frequency, startMonth)
     + `配送回数の変更・スキップは前月${plan.CHANGE_DEADLINE_DAY}日までのお手続きで翌月分から反映します。`
     + "解約はいつでも管理ページから行えます。毎月1日9時のご請求より前に解約されると、その月以降のご請求はありません。"

@@ -207,3 +207,23 @@ test("the 9:00 JST cut-off on the 1st against Stripe's invoice: before it nothin
   const paid = plan.cancellationFor(at(10, 30), { status: "paid" });
   assert.deepEqual([paid.action, paid.cancelAt, paid.firstUnchargedMonth, paid.lastChargedMonth], ["CANCEL_AT", plan.billingStartUnix("2027-01"), "2027-01", "2026-12"]);
 });
+
+test("final check 2026-11-20: the legal page states when the monthly charges start; every place moves deliveries off closed days alike", async () => {
+  const fs = require("node:fs");
+  const pathx = require("node:path");
+  const plan = require("./coffee-subscription-plan");
+  const { submitTerms } = require("./coffee-subscription-checkout");
+  const legal = fs.readFileSync(pathx.join(__dirname, "..", "src", "pages", "LegalNotice.jsx"), "utf8");
+  // The rule in words is the rule in the code: 1st–15th → next month, 16th or later → the month after.
+  assert.match(legal, /お申し込み日（日本時間）が1〜15日の場合は翌月1日から、16日以降の場合は翌々月1日から/);
+  const jst = (y, m, d) => Date.UTC(y, m - 1, d, 12 - 9);
+  assert.deepEqual([plan.startMonthFor(jst(2026, 12, 15)), plan.startMonthFor(jst(2026, 12, 16))], ["2027-01", "2027-02"]);
+  const places = await customerTexts();
+  for (const [name, text] of Object.entries(places)) {
+    if (/土日祝/.test(text)) assert.doesNotMatch(text, /土日祝は翌営業日/, `${name}: closed days (休業日) are named with weekends and holidays`);
+  }
+  for (const f of [1, 2, 3, 4]) {
+    assert.match(submitTerms("2027-01", f), /土日祝・休業日は翌営業日/);
+    assert.ok([...submitTerms("2027-01", f)].length <= 1200, "Stripe's limit");
+  }
+});
