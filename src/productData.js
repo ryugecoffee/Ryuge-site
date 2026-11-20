@@ -65,7 +65,7 @@ export const ROAST_LEVEL = { "Light Roast": 0, "Medium Roast": 1, "Medium-Dark R
 // Subscriptions: new sign-ups paused (CEO, 2026-11-17; kept for the new 珈琲の定期便, 2026-11-18). The store shows the
 // notice and disables the buttons; api/create-subscription-checkout.js refuses every new subscription. Existing
 // subscriptions are not touched. To resume, set this to false in a reviewed PR.
-export const SUBSCRIPTIONS_PAUSED = true;
+export const SUBSCRIPTIONS_PAUSED = false;
 // The earlier subscription plans (Basic / Premium …, sold through api/create-subscription-checkout.js and the cart): closed
 // for good (CEO, 2026-11-19: no active contract left). Separate from SUBSCRIPTIONS_PAUSED, so that reopening sign-ups for
 // 珈琲の定期便 never reopens the earlier plans.
