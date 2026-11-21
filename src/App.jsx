@@ -132,6 +132,8 @@ export default function App() {
             <Route path="/subscription/manage" element={<SubscriptionManagePage />} />
             {/* 定期便の発送管理（店舗スタッフのメールログインで保護、検索対象外） */}
             <Route path="/admin/subscription-shipping" element={<SubscriptionShippingAdminPage />} />
+            {/* The same staff page for every order (通常注文 and 定期便); the old address keeps working (sign-in links). */}
+            <Route path="/admin/shipping" element={<SubscriptionShippingAdminPage />} />
           </Route>
 
           <Route path="/checkout" element={<CheckoutPage lang={lang} />} />

@@ -1,21 +1,22 @@
 import { Link } from "react-router-dom";
 
-// Shipping policy (CEO, 2026-11-17; domestic 2026-11-19). Amounts are charged as calculated by the payment server
+// Shipping policy (CEO, 2026-11-17; domestic 2026-11-19; lead time 2026-11-21: roasted after the order, aim for the next
+// day, within 3 working days as a rule, irregular closures, no fixed New Year closure). Amounts are charged as calculated by the payment server
 // (server/quote.js, server/domestic-shipping.js).
 const TEXT = {
   ja: {
     eyebrow: "配送・送料",
     title: "配送・送料について",
     lead:
-      "ご注文確定後、3〜7営業日以内に発送いたします。土日は出荷をお休みしております。ご注文後に焙煎・袋詰めする商品も、この期間内に発送します。発送時にメールでお知らせします。",
+      "珈琲豆はご注文後に焙煎・袋詰めします。通常はご注文の翌日の発送を目指し、原則3営業日以内に発送します。店舗は不定休です（年末年始の固定の休業日はありません）。急に長くお休みする場合は、その期間の発送予定を調整します。発送時にメールでお知らせします（追跡番号があるものは記載します）。定期便の2回目以降は、毎月の発送日に発送します。",
     sections: [
       {
         title: "国内送料（1回のご注文につき1回）",
-        body: "コーヒー豆（100g）1〜2袋：レターパックライトで全国一律250円（北海道・九州・沖縄も250円）\n3〜15袋：ゆうパックで、本州・四国250円／北海道・九州500円／沖縄550円\n16袋以上：お問い合わせください\n\nお届け先の都道府県とご注文の袋数から自動で計算し、お支払い前の合計に含めて表示します。商品ごとには加算しません。\nコーヒー豆以外の商品（一煎袋・ティーバッグなど）を含むご注文は、本州・四国250円／北海道・九州500円／沖縄550円です。",
+        body: "コーヒー豆（100g）1〜2袋：レターパックライトで全国一律250円（北海道・九州・沖縄も250円）\n3〜15袋：ゆうパックで、本州・四国250円／北海道・九州500円／沖縄550円\n16袋以上：お問い合わせください\n\nお届け先の都道府県とご注文の袋数から自動で計算し、お支払い前の合計に含めて表示します。商品ごとには加算しません。\nコーヒー豆以外の商品（閻魔 珈琲袋・木函のお茶など）を含むご注文は、本州・四国250円／北海道・九州500円／沖縄550円です。",
       },
       {
         title: "国内の配送方法",
-        body: "1〜2袋：レターパックライト（郵便受けへのお届け・追跡あり・日時指定不可）\n3〜15袋：ゆうパック（対面でのお届け・追跡あり）\n16袋以上のご注文はお問い合わせください。",
+        body: "コーヒー豆のみ1〜2袋：レターパックライト（郵便受けへのお届け・追跡あり・日時指定不可）\n3〜15袋：ゆうパック（対面でのお届け・追跡あり）\n閻魔 珈琲袋・木函のお茶を含むご注文（厚さ3cmを超えるため）：レターパックプラス（収まる場合）またはゆうパック（どちらも追跡あり）\n16袋以上のご注文はお問い合わせください。",
       },
       {
         title: "定期便は全国一律・送料込み",
@@ -43,15 +44,15 @@ const TEXT = {
     eyebrow: "Shipping",
     title: "Shipping & Delivery",
     lead:
-      "Orders are usually shipped within 3–7 business days after confirmation. We do not ship on weekends. Items roasted and packed after your order also ship within this period. We email you when your order ships.",
+      "Coffee beans are roasted and packed after your order. We aim to ship the day after your order and, as a rule, ship within 3 business days. The shop closes on irregular days (no fixed New Year closure); if it has to close for a longer time, the shipping dates in that period are adjusted. We email you when your order ships (with the tracking number when there is one). Subscription deliveries after the first ship on their monthly shipping days.",
     sections: [
       {
         title: "Shipping in Japan (once per order)",
-        body: "Coffee beans (100 g), 1–2 bags: Letter Pack Light, ¥250 anywhere in Japan (Hokkaido, Kyushu and Okinawa included)\n3–15 bags: Yu-Pack, Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550\n16 bags or more: please contact us\n\nCalculated from the delivery prefecture and the number of bags, and shown in the total before payment. Not charged per item.\nOrders with items other than coffee beans (drip bags, tea bags, etc.): Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550.",
+        body: "Coffee beans (100 g), 1–2 bags: Letter Pack Light, ¥250 anywhere in Japan (Hokkaido, Kyushu and Okinawa included)\n3–15 bags: Yu-Pack, Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550\n16 bags or more: please contact us\n\nCalculated from the delivery prefecture and the number of bags, and shown in the total before payment. Not charged per item.\nOrders with items other than coffee beans (ENMA Coffee Bag, Mokkan teas, etc.): Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550.",
       },
       {
         title: "Delivery method in Japan",
-        body: "1–2 bags: Letter Pack Light (delivered to your mailbox, tracked, no delivery time)\n3 bags or more: Yu-Pack (handed to you, tracked)\nFor 16 bags or more, please contact us.",
+        body: "Coffee beans only, 1–2 bags: Letter Pack Light (delivered to your mailbox, tracked, no delivery time)\n3–15 bags: Yu-Pack (handed to you, tracked)\nOrders with the ENMA Coffee Bag or Mokkan teas (thicker than 3 cm): Letter Pack Plus when it fits, otherwise Yu-Pack (both tracked)\nFor 16 bags or more, please contact us.",
       },
       {
         title: "Subscriptions: one price nationwide, shipping included",
@@ -79,15 +80,15 @@ const TEXT = {
     eyebrow: "Envío",
     title: "Envío y Entrega",
     lead:
-      "Los pedidos se envían normalmente dentro de 3–7 días hábiles tras la confirmación. No realizamos envíos los fines de semana. Los productos que se tuestan y envasan tras el pedido también se envían en este plazo. Te avisamos por correo cuando se envíe.",
+      "El café se tuesta y envasa tras tu pedido. Intentamos enviarlo al día siguiente del pedido y, por norma, lo enviamos en un plazo de 3 días hábiles. La tienda cierra en días irregulares (sin cierre fijo de Año Nuevo); si debe cerrar por un periodo largo, se ajustan las fechas de envío de ese periodo. Te avisamos por correo cuando se envíe (con el número de seguimiento si lo hay). Los envíos de la suscripción después del primero salen en sus días de envío mensuales.",
     sections: [
       {
         title: "Envío en Japón (una vez por pedido)",
-        body: "Café en grano (100 g), 1–2 bolsas: Letter Pack Light, ¥250 a todo Japón (también Hokkaido, Kyushu y Okinawa)\n3–15 bolsas: Yu-Pack, Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550\n16 bolsas o más: contáctanos\n\nSe calcula según la prefectura de entrega y el número de bolsas, y se muestra en el total antes del pago. No se cobra por artículo.\nPedidos con artículos que no son café en grano (bolsas de goteo, té, etc.): Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550.",
+        body: "Café en grano (100 g), 1–2 bolsas: Letter Pack Light, ¥250 a todo Japón (también Hokkaido, Kyushu y Okinawa)\n3–15 bolsas: Yu-Pack, Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550\n16 bolsas o más: contáctanos\n\nSe calcula según la prefectura de entrega y el número de bolsas, y se muestra en el total antes del pago. No se cobra por artículo.\nPedidos con artículos que no son café en grano (ENMA Coffee Bag, tés Mokkan, etc.): Honshu/Shikoku ¥250, Hokkaido/Kyushu ¥500, Okinawa ¥550.",
       },
       {
         title: "Método de envío en Japón",
-        body: "1–2 bolsas: Letter Pack Light (entrega en el buzón, con seguimiento, sin horario)\n3 bolsas o más: Yu-Pack (entrega en mano, con seguimiento)\nPara 16 bolsas o más, contáctanos.",
+        body: "Solo café en grano, 1–2 bolsas: Letter Pack Light (entrega en el buzón, con seguimiento, sin horario)\n3–15 bolsas: Yu-Pack (entrega en mano, con seguimiento)\nPedidos con ENMA Coffee Bag o tés Mokkan (más de 3 cm de grosor): Letter Pack Plus si cabe, si no Yu-Pack (ambos con seguimiento)\nPara 16 bolsas o más, contáctanos.",
       },
       {
         title: "Suscripciones: precio único en todo Japón, envío incluido",

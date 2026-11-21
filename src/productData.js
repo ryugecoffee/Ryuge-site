@@ -268,11 +268,12 @@ export const PRODUCT_SECTIONS = {
 };
 
 // Shown on the new beans: they are roasted after the order, not shipped at once.
-// Lead time: the store's usual 3–7 business days (src/pages/ShippingPage.jsx, the legal notice).
+// Lead time (CEO 2026-11-21, the same on src/pages/ShippingPage.jsx and the legal notice): aim for the day after the
+// order, within 3 working days as a rule.
 const MADE_TO_ORDER = {
-  ja: "生豆入荷済み。ご注文後に焙煎・袋詰めし、通常3〜7営業日以内に発送します（土日を除く）。発送時にメールでお知らせします。",
-  en: "Green beans in stock. Roasted and packed after your order, and usually shipped within 3–7 business days (not on weekends). We email you when it ships.",
-  es: "Granos verdes en stock. Se tuestan y envasan tras tu pedido y se envían normalmente en 3–7 días hábiles (sin fines de semana). Te avisamos por correo al enviarlo.",
+  ja: "生豆入荷済み。ご注文後に焙煎・袋詰めし、通常はご注文の翌日の発送を目指して、原則3営業日以内に発送します。発送時にメールでお知らせします。",
+  en: "Green beans in stock. Roasted and packed after your order; we aim to ship the next day and, as a rule, ship within 3 business days. We email you when it ships.",
+  es: "Granos verdes en stock. Se tuestan y envasan tras tu pedido; intentamos enviarlo al día siguiente y, por norma, lo enviamos en 3 días hábiles. Te avisamos por correo al enviarlo.",
 };
 
 export const PRODUCT_DATA = {

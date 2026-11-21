@@ -32,6 +32,7 @@ const records = require("./coffee-subscription-records");
 const { CATALOG } = require("./catalog");
 const { createRateLimiter, clientKey } = require("./rate-limit");
 const staffAuth = require("./shop-staff-auth");
+const notice = require("./shipping-notice");
 
 const PATH = "/internal/coffee-subscription/fulfillment";
 const OPS = "coffeeSubscriptionFulfillmentOps";
@@ -153,10 +154,11 @@ async function readRelease(tx, db, ...shipments) {
 const fingerprint = (parts) => crypto.createHash("sha256").update(JSON.stringify(parts)).digest("hex");
 
 // One operation in one transaction: the request record, the delivery, its contract and month, and the stock.
-async function operate(db, { action, shipmentId, requestId, actor, beans = null, tracking = null, reason = null }, now, step) {
+async function operate(db, { action, shipmentId, requestId, actor, beans = null, tracking = null, reason = null, method = null }, now, step) {
   if (!SHIPMENT_ID_RE.test(String(shipmentId || ""))) fail("INVALID_SHIPMENT");
   if (!REQUEST_RE.test(String(requestId || ""))) fail("INVALID_REQUEST_ID");
-  const print = fingerprint([action, shipmentId, beans ? beans.map((b) => b.sku) : null, tracking, reason]);
+  // The shipping method joins the fingerprint only when it is not the usual レターパックライト (earlier records stay valid).
+  const print = fingerprint([action, shipmentId, beans ? beans.map((b) => b.sku) : null, tracking, reason, ...(method && method !== SHIPPING_METHOD ? [method] : [])]);
   const opRef = db.collection(OPS).doc(requestId);
   const ref = db.collection(records.SHIPMENTS).doc(shipmentId);
   // Contention (nothing committed) is run again here: the request record makes a repeat a replay (records.retryOnContention).
@@ -175,7 +177,8 @@ async function operate(db, { action, shipmentId, requestId, actor, beans = null,
     const ctx = { tx, db, ref, shipment, contract, month: monthSnap?.exists ? monthSnap.data() : null, now, actor };
     const result = await step(ctx);
     if (result.applied !== false) {
-      tx.create(opRef, { action, shipmentId, fingerprint: print, actor, result, at: new Date(now) });
+      const { mail: _mail, ...stored } = result; // the customer's address for the mail is never kept in the request record
+      tx.create(opRef, { action, shipmentId, fingerprint: print, actor, result: stored, at: new Date(now) });
     }
     return result;
   }));
@@ -211,25 +214,35 @@ async function prepareShipment(db, { shipmentId, skus, requestId, actor }, { now
   });
 }
 
-async function shipShipment(db, { shipmentId, requestId, actor, trackingNumber = null }, { now = Date.now() } = {}) {
+// Shipped: the usual レターパックライト, or another domestic way chosen by staff (e.g. レターパックプラス for a thick parcel).
+// The customer's "shipped" mail is claimed in the same transaction (server/shipping-notice.js): sent once.
+const SUBSCRIPTION_METHODS = ["letterpack_light", "letterpack_plus", "yupack", "clickpost"];
+async function shipShipment(db, { shipmentId, requestId, actor, trackingNumber = null, method = SHIPPING_METHOD }, { now = Date.now() } = {}) {
   const tracking = trackingNumber === null || trackingNumber === undefined || trackingNumber === "" ? null : String(trackingNumber);
   if (tracking !== null && !TRACKING_RE.test(tracking)) fail("INVALID_TRACKING_NUMBER");
-  return operate(db, { action: "ship", shipmentId, requestId, actor, tracking }, now, async ({ tx, ref, shipment, contract, month }) => {
+  const shippingMethod = method || SHIPPING_METHOD;
+  if (!SUBSCRIPTION_METHODS.includes(shippingMethod)) fail("INVALID_SHIPPING_METHOD");
+  return operate(db, { action: "ship", shipmentId, requestId, actor, tracking, method: shippingMethod }, now, async ({ tx, ref, shipment, contract, month }) => {
     if (shipment.status === "shipped") return { ...summaryOf(shipmentId, "shipped"), applied: false };
     if (shipment.status !== "preparing") fail("INVALID_STATE", 409, shipment.status);
     // Checked again: the contract may have been cancelled or flagged since the bags were reserved.
     const blocked = blockers({ shipment, contract, month });
     if (blocked.length) fail("NOT_SHIPPABLE", 409, blocked);
     const stock = await readStock(tx, db, shipment.beans || []);
+    const claim = await notice.readClaim(tx, db, `subscription_${shipmentId}`);
     if (!(shipment.beans || []).length || !consistent(stock)) {
       // Stock and delivery disagree: nothing is taken twice or guessed; the delivery is flagged for the CEO.
       tx.update(ref, { needsReview: true, reviewReason: "INVENTORY_INCONSISTENCY", updatedAt: new Date(now) });
       return summaryOf(shipmentId, "preparing", { review: "INVENTORY_INCONSISTENCY", notify: true });
     }
     writeStock(tx, stock, "ship");
-    tx.update(ref, { status: "shipped", shippedAt: new Date(now), shippedBy: actor, shippingMethod: SHIPPING_METHOD, trackingNumber: tracking,
+    tx.update(ref, { status: "shipped", shippedAt: new Date(now), shippedBy: actor, shippingMethod, trackingNumber: tracking,
       updatedBy: actor, updatedAt: new Date(now) });
-    return summaryOf(shipmentId, "shipped", { beans: shipment.beans });
+    const email = String(contract?.email || "").trim();
+    const mailState = !email ? "no_email" : contract?.livemode !== true ? "skipped_test" : claim.exists ? "already" : "sending";
+    claim.create({ kind: "subscription", shipmentId, status: mailState === "sending" ? "sending" : mailState });
+    return summaryOf(shipmentId, "shipped", { beans: shipment.beans, mailStatus: mailState,
+      ...(mailState === "sending" ? { mail: { to: email, kind: shipment.kind, month: shipment.month || null, seq: shipment.seq ?? null, method: shippingMethod, trackingNumber: tracking } } : {}) });
   });
 }
 
@@ -338,6 +351,9 @@ async function workList(db, { from, to } = {}, { now = Date.now(), catalog = CAT
       preference: c?.preference?.text || "", prefecture: c?.shipping?.prefecture || "", livemode: c?.livemode === true,
     };
   }).sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")) || a.ref.localeCompare(b.ref) || String(a.shipmentId).localeCompare(String(b.shipmentId)));
+  // The customer's "shipped" mail, for shipped deliveries (sent once; a failed one may be sent again by staff).
+  const mails = await notice.mailStatus(db, deliveries.filter((d) => d.status === "shipped").map((d) => `subscription_${d.shipmentId}`));
+  for (const d of deliveries) d.mail = d.status === "shipped" ? mails[`subscription_${d.shipmentId}`] || null : null;
   const stock = await stockView(db, catalog);
   const toPrepare = deliveries.filter((d) => ["planned", "held"].includes(d.status) && !d.blockers.length);
   const bagsNeeded = toPrepare.length * BAGS_PER_DELIVERY;
@@ -357,6 +373,15 @@ async function shippingLabel(db, shipmentId) {
   if (!["preparing", "shipped"].includes(s.status) || !s.shipTo) fail("NOT_PREPARED", 409);
   return { shipmentId, ref: contractRef(s.subscriptionId), beans: s.beans || [], grams: s.grams || plan.GRAMS_PER_DELIVERY,
     shippingMethod: s.shippingMethod || SHIPPING_METHOD, shipTo: s.shipTo };
+}
+
+// The customer's "shipped" mail for a delivery (claimed by shipShipment, so sent once).
+async function sendSubscriptionShippedMail(db, { shipmentId, to, kind, month, seq, method, trackingNumber, beans }, sendMail, log = console) {
+  const { productNames } = require("./order-fulfillment");
+  const names = await productNames();
+  const which = kind === "first" ? "初回（200g）" : `${Number(String(month).slice(5))}月分の${seq}回目`;
+  const message = notice.subscriptionShippedMail({ to, which, beans: (beans || []).map((b) => names[b.sku] || b.sku), method, trackingNumber });
+  return notice.deliver(db, `subscription_${shipmentId}`, message, sendMail, log);
 }
 
 // ---- Router (signed-in staff only; the actor is the server's record of the session, never taken from the request) ----
@@ -402,14 +427,31 @@ function createRouter({ getDb, getStripe = () => null, notify = async () => {}, 
     return label;
   }));
   router.post("/prepare", handle((b, _r, actor) => prepareShipment(getDb(), { shipmentId: b.shipmentId, skus: b.skus, requestId: b.requestId, actor }, { now: clock() })));
-  router.post("/ship", handle((b, _r, actor) => shipShipment(getDb(), { shipmentId: b.shipmentId, requestId: b.requestId, trackingNumber: b.trackingNumber, actor }, { now: clock() })));
+  router.post("/ship", handle(async (b, _r, actor) => {
+    const r = await shipShipment(getDb(), { shipmentId: b.shipmentId, requestId: b.requestId, trackingNumber: b.trackingNumber, method: b.method, actor }, { now: clock() });
+    if (!r.mail) return r;
+    const { mail, ...out } = r;
+    return { ...out, mailStatus: await sendSubscriptionShippedMail(getDb(), { shipmentId: r.shipmentId, ...mail, beans: r.beans || [] }, sendMail, log) };
+  }));
+  // A failed "shipped" mail, sent again by staff (only from "failed", once).
+  router.post("/resend-mail", handle(async (b) => {
+    const snap = SHIPMENT_ID_RE.test(String(b.shipmentId || "")) ? await getDb().collection(records.SHIPMENTS).doc(b.shipmentId).get() : null;
+    if (!snap?.exists || snap.data().status !== "shipped") fail("UNKNOWN_SHIPMENT", 404);
+    if (!(await notice.claimRetry(getDb(), `subscription_${b.shipmentId}`))) fail("MAIL_NOT_FAILED", 409);
+    const s = snap.data();
+    const contract = (await getDb().collection(records.SUBS).doc(s.subscriptionId).get()).data() || {};
+    return { shipmentId: b.shipmentId, mailStatus: await sendSubscriptionShippedMail(getDb(), { shipmentId: b.shipmentId, to: String(contract.email || "").trim(),
+      kind: s.kind, month: s.month || null, seq: s.seq ?? null, method: s.shippingMethod, trackingNumber: s.trackingNumber, beans: s.beans || [] }, sendMail, log) };
+  }));
   router.post("/hold", handle((b, _r, actor) => holdShipment(getDb(), { shipmentId: b.shipmentId, requestId: b.requestId, reason: b.reason, actor }, { now: clock() })));
   router.post("/resume", handle((b, _r, actor) => resumeShipment(getDb(), { shipmentId: b.shipmentId, requestId: b.requestId, actor }, { now: clock() })));
   // A cancellation the customer asked for by email (server/coffee-subscription-email-cancel.js; loaded here, after this
   // module, because it builds on coffee-subscription-stripe.js, which uses this one).
   require("./coffee-subscription-email-cancel").addRoutes(router, { getDb, getStripe, sendMail, env, clock, log });
+  // Store orders on the same page, behind the same staff sign-in (server/order-fulfillment.js).
+  require("./order-fulfillment").addRoutes(router, { getDb, sendMail, clock, log });
   return router;
 }
 
-module.exports = { PATH, PAGE_PATH, OPS, LABEL_VIEWS, SHIPPING_METHOD, BAGS_PER_DELIVERY, HOLD_REASONS, OPEN_STATES, FulfillmentError, beanOf, beanSkus, validBeans, blockers, readRelease,
+module.exports = { PATH, PAGE_PATH, OPS, LABEL_VIEWS, SHIPPING_METHOD, SUBSCRIPTION_METHODS, sendSubscriptionShippedMail, BAGS_PER_DELIVERY, HOLD_REASONS, OPEN_STATES, FulfillmentError, beanOf, beanSkus, validBeans, blockers, readRelease,
   prepareShipment, shipShipment, holdShipment, resumeShipment, workList, stockView, shippingLabel, enabled, createRouter };

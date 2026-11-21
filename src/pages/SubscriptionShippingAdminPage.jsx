@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import OrderShippingPanel from "../components/OrderShippingPanel";
 import {
-  BLOCKER_TEXT, HOLD_TEXT, METHOD_TEXT, STATUS_TEXT, addDays, beanName, dayLabel, errorText, jstInputToIso, jstToday, monthLabel, newRequestId, shipmentLabel,
+  MAIL_TEXT, SUBSCRIPTION_METHODS, BLOCKER_TEXT, HOLD_TEXT, METHOD_TEXT, STATUS_TEXT, addDays, beanName, dayLabel, errorText, jstInputToIso, jstToday, monthLabel, newRequestId, shipmentLabel,
   shippingApi, staffSession,
 } from "../lib/subscriptionShippingAdmin";
 
@@ -75,6 +76,7 @@ function Delivery({ d, beans, onChanged, onSignedOut }) {
   const usable = beans.filter((b) => b.available > 0);
   const [pick, setPick] = useState({ a: "", b: "" });
   const [tracking, setTracking] = useState("");
+  const [method, setMethod] = useState("letterpack_light");
   const [reason, setReason] = useState("OUT_OF_STOCK");
   const [label, setLabel] = useState(null);
   const [state, setState] = useState({ busy: false, message: "", ok: "" });
@@ -88,7 +90,10 @@ function Delivery({ d, beans, onChanged, onSignedOut }) {
       const short = key === "prepare" && r.body.status === "held";
       if (short) setState({ busy: false, ok: "", message: `在庫が足りないため保留にしました（${(r.body.shortSkus || []).map(beanName).join("・")}）。在庫は確保していません。店舗に通知しました。` });
       else if (r.body.review) setState({ busy: false, ok: "", message: "在庫と発送記録が一致しないため、在庫は変更せず要確認にしました。店舗に通知しました。" });
-      else setState({ busy: false, message: "", ok: r.body.applied === false ? `${okText}（すでに処理済みでした）` : okText });
+      else {
+        const mail = r.body.mailStatus ? `（${MAIL_TEXT[r.body.mailStatus] || r.body.mailStatus}）` : "";
+        setState({ busy: false, message: "", ok: (r.body.applied === false ? `${okText}（すでに処理済みでした）` : okText) + mail });
+      }
       setLabel(null);
       onChanged();
       return;
@@ -99,11 +104,16 @@ function Delivery({ d, beans, onChanged, onSignedOut }) {
   }
   const prepare = () => run("prepare", (requestId) => shippingApi.prepare({ shipmentId: d.shipmentId, skus: [pick.a, pick.b], requestId }), "発送準備中にしました。");
   const ship = () => {
-    if (!window.confirm(`${d.ref}（${shipmentLabel(d)}）を発送済みにします。在庫が減ります。よろしいですか？`)) return;
-    run("ship", (requestId) => shippingApi.ship({ shipmentId: d.shipmentId, requestId, trackingNumber: tracking.trim() || null }), "発送済みにしました。");
+    const mailNote = d.livemode ? "お客様に発送メールが1回送られます。" : "テストのため、メールは送られません。";
+    if (!window.confirm(`${d.ref}（${shipmentLabel(d)}）を発送済みにします（${METHOD_TEXT[method]}）。在庫が減ります。${mailNote}よろしいですか？`)) return;
+    run("ship", (requestId) => shippingApi.ship({ shipmentId: d.shipmentId, requestId, method, trackingNumber: tracking.trim() || null }), "発送済みにしました。");
   };
   const hold = () => run("hold", (requestId) => shippingApi.hold({ shipmentId: d.shipmentId, requestId, reason }), "保留にしました。");
   const resume = () => run("resume", (requestId) => shippingApi.resume({ shipmentId: d.shipmentId, requestId }), "発送予定に戻しました。");
+  const resend = () => {
+    if (!window.confirm("発送メールをもう一度送ります（前回は送信に失敗しています）。よろしいですか？")) return;
+    run("resend", () => shippingApi.resendMail({ shipmentId: d.shipmentId }), "発送メールを再送しました。");
+  };
   async function showLabel() {
     setState({ busy: true, message: "", ok: "" });
     const r = await shippingApi.label(d.shipmentId);
@@ -129,10 +139,12 @@ function Delivery({ d, beans, onChanged, onSignedOut }) {
         {d.beans && <div><dt>選んだ豆</dt><dd>{d.beans.map((b) => beanName(b.sku)).join("・")}</dd></div>}
         <div><dt>配送方法</dt><dd>{METHOD_TEXT[d.shippingMethod] || d.shippingMethod}</dd></div>
         {d.status === "shipped" && <div><dt>追跡番号</dt><dd>{d.trackingNumber || "（未入力）"}</dd></div>}
+        {d.status === "shipped" && <div><dt>お客様へのメール</dt><dd>{MAIL_TEXT[d.mail] || "—"}</dd></div>}
         {d.holdReason && <div><dt>保留の理由</dt><dd>{HOLD_TEXT[d.holdReason] || d.holdReason}{d.shortSkus?.length ? `（${d.shortSkus.map(beanName).join("・")}）` : ""}</dd></div>}
         {d.review && <div><dt>要確認</dt><dd>{d.review === "INVENTORY_INCONSISTENCY" ? "在庫と発送記録の不一致" : d.review}</dd></div>}
       </dl>
       {blocked && d.status !== "shipped" && <p className="subm-alert">送れません：{d.blockers.map((c) => BLOCKER_TEXT[c] || c).join("、")}</p>}
+      {d.status === "shipped" && d.mail === "failed" && <button className="subm-secondary" type="button" disabled={state.busy} onClick={resend}>発送メールを再送</button>}
       {d.repeatedBeans.length > 0 && <p className="subm-note">前回と同じ豆を選んでいます：{d.repeatedBeans.map(beanName).join("・")}</p>}
       {state.message && <p className="subm-alert" role="alert">{state.message}</p>}
       {state.ok && <p className="subm-ok" role="status">{state.ok}</p>}
@@ -153,6 +165,11 @@ function Delivery({ d, beans, onChanged, onSignedOut }) {
       {d.status === "preparing" && (
         <div className="ship-actions">
           {label ? <Label label={label} onClose={() => setLabel(null)} /> : <button className="subm-secondary" type="button" disabled={state.busy} onClick={showLabel}>宛名を表示</button>}
+          <label className="subm-field"><span className="subm-label">配送方法（厚さ3cmを超えたらレターパックプラス等）</span>
+            <select value={method} onChange={(e) => setMethod(e.target.value)}>
+              {SUBSCRIPTION_METHODS.map((m) => <option key={m} value={m}>{METHOD_TEXT[m]}</option>)}
+            </select>
+          </label>
           <label className="subm-field"><span className="subm-label">追跡番号（任意）</span>
             <input inputMode="numeric" value={tracking} onChange={(e) => setTracking(e.target.value)} placeholder="1234-5678-9012" />
           </label>
@@ -282,8 +299,18 @@ function EmailCancel({ onSignedOut }) {
 
 const FILTERS = { todo: "対応が必要", all: "すべて", shipped: "発送済み" };
 
+const TABS = { orders: "通常注文", subscriptions: "定期便" };
+
 export default function SubscriptionShippingAdminPage() {
   const [signedIn, setSignedIn] = useState(() => Boolean(staffSession.get()));
+  // 通常注文 and 珈琲の定期便 on one page (the tab is kept in the address: ?tab=subscriptions).
+  const [tab, setTab] = useState(() => (new URLSearchParams(window.location.search).get("tab") === "subscriptions" ? "subscriptions" : "orders"));
+  const chooseTab = (k) => {
+    setTab(k);
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", k);
+    window.history.replaceState(null, "", url.pathname + url.search);
+  };
   const [range, setRange] = useState(() => ({ from: jstToday(), to: addDays(jstToday(), 14) }));
   const [filter, setFilter] = useState("todo");
   const [work, setWork] = useState(null);
@@ -343,7 +370,7 @@ export default function SubscriptionShippingAdminPage() {
       <div className="legal-page-shell">
         <main className="legal-main">
           <div className="legal-document subm ship-admin">
-            <h1>定期便 発送管理</h1>
+            <h1>発送管理（通常注文・定期便）</h1>
             <SignIn message={message} />
           </div>
         </main>
@@ -355,13 +382,18 @@ export default function SubscriptionShippingAdminPage() {
     <div className="legal-page-shell">
     <main className="legal-main">
     <div className="legal-document subm ship-admin">
-      <h1>定期便 発送管理</h1>
+      <h1>発送管理</h1>
+      <div className="subm-choices ship-filter" role="tablist" aria-label="注文の種類">
+        {Object.entries(TABS).map(([k, v]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`subm-choice${tab === k ? " active" : ""}`} onClick={() => chooseTab(k)}>{v}</button>)}
+        <button className="subm-secondary" type="button" onClick={signOut}>ログアウト</button>
+      </div>
+      {tab === "orders" && <OrderShippingPanel onSignedOut={signedOut} />}
+      {tab === "subscriptions" && (<>
       <p className="subm-note">2種類の豆を選んで「発送準備」（在庫を1袋ずつ確保）→ 梱包 →「発送済みにする」（ここで在庫が減ります）。土日祝の発送日は翌営業日に移っています。</p>
       <form className="ship-toolbar" onSubmit={(e) => { e.preventDefault(); load(); }}>
         <label className="subm-field"><span className="subm-label">から</span><input type="date" value={range.from} onChange={(e) => setRange({ ...range, from: e.target.value })} /></label>
         <label className="subm-field"><span className="subm-label">まで</span><input type="date" value={range.to} onChange={(e) => setRange({ ...range, to: e.target.value })} /></label>
         <button className="subm-secondary" type="submit" disabled={loading}>{loading ? "読み込み中…" : "更新"}</button>
-        <button className="subm-secondary" type="button" onClick={signOut}>ログアウト</button>
       </form>
       {message && <p className="subm-alert" role="alert">{message}</p>}
       {work && (
@@ -381,6 +413,7 @@ export default function SubscriptionShippingAdminPage() {
         </>
       )}
       <EmailCancel onSignedOut={signedOut} />
+      </>)}
     </div>
     </main>
     </div>

@@ -61,11 +61,21 @@ test("no free-shipping promise is left in the cart or the shipping page", () => 
   assert.doesNotMatch(shippingPage, /¥200|2個以上のご注文：送料無料/);
 });
 
-test("launch wording: made-to-order beans follow the usual 3–7 business days; no EMS left; no promise of a date we never send", () => {
+test("lead time (CEO 2026-11-21): roasted after the order, aim for the next day, within 3 working days; no EMS left; no promise of a date we never send", () => {
   const read = (...p) => fs.readFileSync(path.join(__dirname, "..", ...p), "utf8");
   const data = read("src", "productData.js");
-  assert.match(data, /ご注文後に焙煎・袋詰めし、通常3〜7営業日以内に発送します/);
-  assert.match(read("src", "pages", "LegalNotice.jsx"), /3〜7日以内に発送/, "the legal notice gives the same lead time");
+  const shipping = read("src", "pages", "ShippingPage.jsx");
+  const legal = read("src", "pages", "LegalNotice.jsx");
+  assert.match(data, /ご注文後に焙煎・袋詰めし、通常はご注文の翌日の発送を目指して、原則3営業日以内に発送します/);
+  assert.match(shipping, /通常はご注文の翌日の発送を目指し、原則3営業日以内に発送します。店舗は不定休です（年末年始の固定の休業日はありません）/);
+  assert.match(legal, /ご注文後、原則3営業日以内に発送いたします/, "the legal notice gives the same lead time");
+  // The old lead time and "no shipping at weekends" are gone, in every language.
+  for (const text of [data, shipping, legal]) {
+    assert.doesNotMatch(text, /3〜7|3–7|土日は出荷|土日を除く|not on weekends|do not ship on weekends|fines de semana/);
+  }
+  // "We email you when it ships" is what the shop's page does (server/shipping-notice.js, sent once per parcel).
+  assert.match(shipping, /発送時にメールでお知らせします/);
+  assert.match(read("server", "order-fulfillment.js"), /sendShippedMail/);
   for (const file of [["src", "productData.js"], ["src", "pages", "ShippingPage.jsx"]]) {
     assert.doesNotMatch(read(...file), /発送予定日を|発送予定日は|planned shipping date|fecha prevista de envío|shipping date is in your order confirmation/, file.join("/"));
   }

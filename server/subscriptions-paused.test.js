@@ -82,3 +82,10 @@ test("reopening 珈琲の定期便 never reopens the earlier plans: they have th
   assert.match(read("api", "create-subscription-checkout.js"), /if \(OLD_SUBSCRIPTION_PLANS_CLOSED \|\| SUBSCRIPTIONS_PAUSED\)/);
   assert.match(read("src", "pages", "CheckoutPage.jsx"), /hasSubscription && \(OLD_SUBSCRIPTION_PLANS_CLOSED \|\| SUBSCRIPTIONS_PAUSED\)/);
 });
+
+test("footer (CEO 2026-11-21): one link for subscribers, to 珈琲の定期便's own page, shown also while sign-ups are paused; no earlier-plan Stripe link", () => {
+  const footer = read("src", "components", "SiteFooter.jsx");
+  assert.doesNotMatch(footer, /billing\.stripe\.com/, "the earlier plans' Stripe login link is gone");
+  assert.match(footer, /<Link to="\/subscription\/manage">\{t\.coffeeSubscription\}<\/Link>/);
+  assert.doesNotMatch(footer, /SUBSCRIPTIONS_PAUSED/, "subscribers keep the link whatever the sign-up switch says");
+});

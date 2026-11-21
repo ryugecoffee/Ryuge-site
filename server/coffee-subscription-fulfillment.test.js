@@ -389,6 +389,11 @@ test("HTTP: staff sign in by a mailed link; every request (the address above all
     for (const path of ["/work", "/label/sub_http001_first"]) assert.equal((await get(path)).status, 401);
     // A cancellation asked by email is entered only by signed-in staff.
     for (const path of ["/email-cancel/preview", "/email-cancel"]) assert.equal((await post(path, { email: "a@example.com" })).status, 401);
+    // Store orders on the same page: the list, the address and every action only for signed-in staff.
+    for (const path of ["/orders?view=open", "/orders/pi_abcdefgh123/address"]) assert.equal((await get(path)).status, 401);
+    for (const path of ["/orders/prepare", "/orders/ship", "/orders/hold", "/orders/resume", "/orders/resend-mail", "/resend-mail"]) {
+      assert.equal((await post(path, { orderId: "pi_abcdefgh123", requestId: "r".repeat(20) })).status, 401, path);
+    }
     assert.equal((await get("/work", "x".repeat(43))).status, 401);
     assert.equal((await post("/prepare", { shipmentId: "sub_http001_first", skus: ["enma-jimma", "enma-karamo"], requestId: "req-http-000000" })).status, 401);
     // An address that is not listed gets the same answer and no mail.
