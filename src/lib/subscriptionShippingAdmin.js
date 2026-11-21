@@ -77,7 +77,7 @@ export const MAIL_TEXT = { sent: "発送メール送信済み", sending: "発送
   no_email: "メールアドレスがないため送信なし", already: "発送メール処理済み" };
 export const ORDER_STATUS_TEXT = { new: "新規", preparing: "発送準備中", shipped: "発送済み", held: "保留" };
 export const PAYMENT_TEXT = { paid: "決済済み", partially_refunded: "一部返金あり", refunded: "返金済み" };
-export const ORDER_BLOCKER_TEXT = { REFUNDED: "返金済みのため発送できません", NOT_PAID: "決済が完了していません", UNKNOWN_ORDER: "注文が見つかりません" };
+export const ORDER_BLOCKER_TEXT = { EARLIER_ORDER: "この画面より前の注文です（対象外。発送は従来どおり手作業で）", REFUNDED: "返金済みのため発送できません", NOT_PAID: "決済が完了していません", UNKNOWN_ORDER: "注文が見つかりません" };
 export const ORDER_WARNING_TEXT = { PARTIALLY_REFUNDED: "一部返金があります。発送する内容を確認してください" };
 export const ORDER_HOLD_TEXT = { CUSTOMER_REQUEST: "お客様のご依頼", ADDRESS_CHECK: "住所の確認", PAYMENT_CHECK: "決済の確認", OUT_OF_STOCK: "在庫不足", OTHER: "その他" };
 export const HOLD_TEXT = { OUT_OF_STOCK: "在庫不足", CUSTOMER_REQUEST: "お客様のご依頼", ADDRESS_CHECK: "住所の確認", PAYMENT_CHECK: "決済の確認", OTHER: "その他" };

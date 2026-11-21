@@ -27,6 +27,11 @@ const REQUEST_RE = /^[A-Za-z0-9_-]{12,100}$/;
 // The shop aims to ship the day after the order and promises within 3 working days (CEO 2026-11-21; 3 working days by
 // the same calendar as 珈琲の定期便's first delivery).
 const PROMISED_WORKING_DAYS = 3;
+// Orders paid before this page existed (JST day) were shipped by hand: they are listed under "all" only, as earlier
+// orders, and nothing can be done to them here (so no customer gets a late "shipped" mail). Lower it to take an earlier,
+// still unshipped order in.
+const ORDERS_FROM_DAY = "2026-11-21";
+const isEarlier = (order) => jstDay(toMs(order.paidAt)) < ORDERS_FROM_DAY;
 
 class OrderFulfillmentError extends Error {
   constructor(code, status = 400, detail = null) { super(code); this.code = code; this.status = status; this.detail = detail; }
@@ -41,6 +46,7 @@ const nextDay = (day) => { const d = new Date(`${day}T00:00:00Z`); d.setUTCDate(
 // Why an order may not be prepared or shipped now (empty: it may). A warning does not block.
 function blockers(order) {
   if (!order) return ["UNKNOWN_ORDER"];
+  if (isEarlier(order)) return ["EARLIER_ORDER"];
   if (order.status === "refunded") return ["REFUNDED"];
   if (!["paid", "partially_refunded"].includes(order.status)) return ["NOT_PAID"];
   return [];
@@ -169,12 +175,13 @@ async function workList(db, { view = "open" } = {}, { now = Date.now() } = {}) {
       name: o.customer?.name || "", prefecture: o.customer?.address?.state || "", city: o.customer?.address?.city || "",
       status: state, method: f.method || null, trackingNumber: f.trackingNumber || null, holdReason: f.holdReason || null,
       shippedAt: f.shippedAt ? toMs(f.shippedAt) : null, mail: state === "shipped" ? mails[`order_${o.id}`] || null : null,
-      aimDay: nextDay(paidDay), shipBy, late: state !== "shipped" && Boolean(shipBy) && jstDay(now) > shipBy,
+      aimDay: nextDay(paidDay), shipBy, late: state !== "shipped" && !isEarlier(o) && Boolean(shipBy) && jstDay(now) > shipBy,
       blockers: blockers(o), warnings: warnings(o),
     };
   });
-  const shown = rows.filter((r) => view === "all" || (view === "shipped" ? r.status === "shipped" : r.status !== "shipped" && !r.blockers.includes("REFUNDED")));
-  const counts = Object.fromEntries(STATES.map((s) => [s, rows.filter((r) => r.status === s).length]));
+  const shown = rows.filter((r) => view === "all" || (!r.blockers.includes("EARLIER_ORDER")
+    && (view === "shipped" ? r.status === "shipped" : r.status !== "shipped" && !r.blockers.includes("REFUNDED"))));
+  const counts = Object.fromEntries(STATES.map((s) => [s, rows.filter((r) => r.status === s && !r.blockers.includes("EARLIER_ORDER")).length]));
   return { orders: shown, counts, refundedOpen: rows.filter((r) => r.status !== "shipped" && r.blockers.includes("REFUNDED")).length };
 }
 
@@ -223,5 +230,5 @@ function addRoutes(router, { getDb, sendMail, clock, log }) {
   }));
 }
 
-module.exports = { ORDERS, OPS, ADDRESS_VIEWS, STATES, HOLD_REASONS, OrderFulfillmentError, blockers, stateOf, prepareOrder, shipOrder, holdOrder,
+module.exports = { ORDERS_FROM_DAY, ORDERS, OPS, ADDRESS_VIEWS, STATES, HOLD_REASONS, OrderFulfillmentError, blockers, stateOf, prepareOrder, shipOrder, holdOrder,
   resumeOrder, sendShippedMail, workList, orderAddress, addRoutes, ref, productNames };

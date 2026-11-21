@@ -182,3 +182,19 @@ test("珈琲の定期便: shipped by レターパックプラス, stock moves on
   // The usual way stays レターパックライト when nothing is chosen; an international way is not offered for it.
   await assert.rejects(f.shipShipment(db, { shipmentId: `sub_x${tag}_first`, requestId: rid(), actor: ACTOR, method: "intl_air_packet" }, { now: NOW }), { code: "INVALID_SHIPPING_METHOD" });
 });
+
+test("orders paid before this page existed: listed under all only, nothing can be done to them, no mail", { skip }, async () => {
+  const id = "pi_emu" + crypto.randomBytes(8).toString("hex");
+  const before = Date.UTC(2026, 10, 19, 3);
+  await orders.recordPaidOrder(db, null, { id, object: "payment_intent", status: "succeeded", amount: 2300, currency: "jpy", livemode: true, created: Math.floor(before / 1000),
+    metadata: { items: "enma-kindiio:1@2050", subtotal: "2050", shipping: "250", countryCode: "JP" },
+    latest_charge: { id: "ch_" + id.slice(3), created: Math.floor(before / 1000), billing_details: { name: "Earlier", email: "earlier@example.com", address: { country: "JP", state: "東京都", city: "港区" } } } });
+  for (const step of [of.prepareOrder, (d, a, o) => of.shipOrder(d, { ...a, method: "yupack" }, o)]) {
+    await assert.rejects(step(db, { orderId: id, requestId: rid(), actor: ACTOR }, { now: NOW }), (e) => e.code === "NOT_SHIPPABLE" && e.detail.includes("EARLIER_ORDER"));
+  }
+  assert.equal((await db.collection(notice.MAILS).doc(`order_${id}`).get()).exists, false);
+  const open = await of.workList(db, { view: "open" }, { now: NOW });
+  assert.ok(!open.orders.some((r) => r.orderId === id), "not on the to-do list");
+  const all = await of.workList(db, { view: "all" }, { now: NOW });
+  assert.deepEqual(all.orders.find((r) => r.orderId === id).blockers, ["EARLIER_ORDER"]);
+});
