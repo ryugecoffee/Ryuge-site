@@ -1,6 +1,7 @@
 import { trackBeginCheckout } from "../lib/analytics";
 import { OLD_SUBSCRIPTION_PLANS_CLOSED, SUBSCRIPTIONS_PAUSED, SUBSCRIPTIONS_PAUSED_TEXT } from "../productData";
 import { PAYMENT_API_BASE, stripePublishableKey } from "../lib/paymentEnv";
+import { japanesePhone } from "../lib/addressFormat";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useCart } from "../CartContext";
 import { useNavigate } from "react-router-dom";
@@ -62,6 +63,8 @@ const UI = {
     prefecture: "都道府県",
     address1Ja: "市区町村・番地",
     address2Ja: "建物名・部屋番号",
+    phoneJa: "電話番号（配送の連絡用）",
+    phoneInvalid: "電話番号は0から始まる10〜11桁の数字で入力してください（ハイフン可）。",
     processing: "処理中...",
     pay: "を支払う",
     startSubscription: "サブスクを開始する",
@@ -108,6 +111,8 @@ const UI = {
     prefecture: "Prefecture",
     address1Ja: "City, street address",
     address2Ja: "Building / Apt",
+    phoneJa: "Phone number (for delivery)",
+    phoneInvalid: "Please enter a Japanese phone number: 10–11 digits starting with 0 (hyphens allowed).",
     processing: "Processing...",
     pay: "Pay",
     startSubscription: "Start Subscription",
@@ -154,6 +159,8 @@ const UI = {
     prefecture: "Prefectura",
     address1Ja: "Ciudad, calle y número",
     address2Ja: "Edificio / Apartamento",
+    phoneJa: "Teléfono (para la entrega)",
+    phoneInvalid: "Introduce un teléfono japonés: 10–11 dígitos que empiecen por 0 (se admiten guiones).",
     processing: "Procesando...",
     pay: "Pagar",
     startSubscription: "Iniciar suscripción",
@@ -468,6 +475,13 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
       }
 
       // ── 通常決済 ─────────────────────────────────────
+      // Japan: a phone number for the delivery (the carrier may call); abroad it was already required.
+      const domesticPhone = isInternational ? null : japanesePhone(phone);
+      if (!isInternational && !domesticPhone) {
+        setError(t.phoneInvalid);
+        setLoading(false);
+        return;
+      }
       if (!stripe || !elements || !canPay) {
         setError(canPay ? t.cardNotReady : (quoteMessages.QUOTE_UNAVAILABLE));
         setLoading(false);
@@ -534,7 +548,8 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
             name,
             email,
             address: billingAddress,
-            ...(isInternational && phone ? { phone } : {}),
+            // Kept by Stripe and copied into the order record (server/orders.js) for the shipping label.
+            ...(isInternational ? (phone ? { phone } : {}) : { phone: domesticPhone }),
           },
         },
       });
@@ -557,10 +572,15 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           email,
           postalCode:    isInternational ? intlPostalCode : postalCode,
           address:       finalAddress,
+          // Each part on its own (the server puts the address together once: src/lib/addressFormat.js).
           prefecture:    isInternational ? "" : prefecture,
+          line1:         isInternational ? addressLine1 : addressLine1Ja,
+          line2:         isInternational ? addressLine2 : addressLine2Ja,
           city:          isInternational ? city : "",
           stateProvince: isInternational ? stateProvince : "",
-          phone:         isInternational ? phone : "",
+          phone:         isInternational ? phone : domesticPhone,
+          paymentIntentId,
+          shippingMethod: isInternational ? "intl_air_packet" : (quote.shippingDetail?.method || ""),
           countryCode:   country,
           countryName,
           couponCode:    couponStatus === "valid" ? couponCode : "",
@@ -582,6 +602,8 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           address:       isInternational
             ? [addressLine1, addressLine2].filter(Boolean).join(", ")
             : [addressLine1Ja, addressLine2Ja].filter(Boolean).join(" "),
+          line1:         isInternational ? addressLine1 : addressLine1Ja,
+          line2:         isInternational ? addressLine2 : addressLine2Ja,
           // 国際
           city:          isInternational ? city : "",
           stateProvince: isInternational ? stateProvince : "",
@@ -727,11 +749,11 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
 
           {/* 共通: 氏名・メール */}
           <input
-            type="text" placeholder={t.name} value={name}
+            type="text" placeholder={t.name} value={name} autoComplete="name"
             onChange={(e) => setName(e.target.value)} required style={inputStyle}
           />
           <input
-            type="email" placeholder={t.email} value={email}
+            type="email" placeholder={t.email} value={email} autoComplete="email"
             onChange={(e) => setEmail(e.target.value)} required style={inputStyle}
           />
 
@@ -754,12 +776,12 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           {!isInternational && (
             <>
               <input
-                type="text" placeholder={t.postalCode} value={postalCode}
+                type="text" placeholder={t.postalCode} value={postalCode} autoComplete="postal-code" inputMode="numeric"
                 onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, "").slice(0, 7))}
                 required style={inputStyle}
               />
               <select
-                value={prefecture}
+                value={prefecture} autoComplete="address-level1"
                 onChange={(e) => setPrefecture(e.target.value)}
                 style={{ ...inputStyle, background: "#111" }}
               >
@@ -768,12 +790,16 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
                 ))}
               </select>
               <input
-                type="text" placeholder={t.address1Ja} value={addressLine1Ja}
+                type="text" placeholder={t.address1Ja} value={addressLine1Ja} autoComplete="address-line1"
                 onChange={(e) => setAddressLine1Ja(e.target.value)} required style={inputStyle}
               />
               <input
-                type="text" placeholder={t.address2Ja} value={addressLine2Ja}
+                type="text" placeholder={t.address2Ja} value={addressLine2Ja} autoComplete="address-line2"
                 onChange={(e) => setAddressLine2Ja(e.target.value)} style={inputStyle}
+              />
+              <input
+                type="tel" placeholder={t.phoneJa} value={phone} autoComplete="tel" inputMode="tel"
+                onChange={(e) => setPhone(e.target.value)} required style={inputStyle}
               />
             </>
           )}
@@ -782,15 +808,15 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
           {isInternational && (
             <>
               <input
-                type="text" placeholder={t.addressLine1} value={addressLine1}
+                type="text" placeholder={t.addressLine1} value={addressLine1} autoComplete="address-line1"
                 onChange={(e) => setAddressLine1(e.target.value)} required style={inputStyle}
               />
               <input
-                type="text" placeholder={`${t.address2Ja} (optional)`} value={addressLine2}
+                type="text" placeholder={`${t.address2Ja} (optional)`} value={addressLine2} autoComplete="address-line2"
                 onChange={(e) => setAddressLine2(e.target.value)} style={inputStyle}
               />
               <input
-                type="text" placeholder={t.city} value={city}
+                type="text" placeholder={t.city} value={city} autoComplete="address-level2"
                 onChange={(e) => setCity(e.target.value)} required style={inputStyle}
               />
               <input
@@ -802,7 +828,7 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
                 onChange={(e) => setIntlPostalCode(e.target.value)} style={inputStyle}
               />
               <input
-                type="tel" placeholder={t.phone} value={phone}
+                type="tel" placeholder={t.phone} value={phone} autoComplete="tel"
                 onChange={(e) => setPhone(e.target.value)} required style={inputStyle}
               />
             </>
