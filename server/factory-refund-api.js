@@ -87,10 +87,17 @@ function verifyCeoApproval(approval, env, now) {
 }
 
 const toMillis = (v) => (v && typeof v.toMillis === "function" ? v.toMillis() : v instanceof Date ? v.getTime() : v ?? null);
+// The customer as Factory sees an order (refunds, the CEO's chat): name, email and address, never the phone (kept for
+// the shipping label on the shop's own page only, 2026-11-21).
+const customerForFactory = (c) => {
+  if (!c) return null;
+  const { phone: _phone, ...rest } = c;
+  return rest;
+};
 function orderSummary(id, o) {
   return {
     orderId: id, status: o.status, amount: o.amount, subtotal: o.subtotal, shipping: o.shipping, couponCode: o.couponCode || "",
-    items: o.items || [], customer: o.customer || null, countryCode: o.countryCode || "", livemode: o.livemode === true,
+    items: o.items || [], customer: customerForFactory(o.customer), countryCode: o.countryCode || "", livemode: o.livemode === true,
     paidAt: toMillis(o.paidAt), amountRefunded: o.amountRefunded || 0, needsReview: o.needsReview === true,
     refundLedger: o.refundLedger ? { lines: o.refundLedger.lines || {}, shippingRefunded: o.refundLedger.shippingRefunded === true,
       inFlight: Object.keys(o.refundLedger.pending || {}), external: o.refundLedger.external || {} } : null,

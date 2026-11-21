@@ -11,6 +11,12 @@ on:
       # Store orders on the shop's shipping page and the "shipped" mail (2026-11-21)
       - 'server/order-fulfillment*'
       - 'server/shipping-notice.js'
+      # The address put together once, the phone, the shop's new-order mail (2026-11-21)
+      - 'src/lib/addressFormat.js'
+      - 'server/order-notice.js'
+      - 'server/order-notice.test.js'
+      - 'server/address-format.test.js'
+      - 'src/pages/CheckoutCompletePage.jsx'
       - 'src/components/OrderShippingPanel.jsx'
       # 珈琲の定期便: every server file, its texts and pages (the unit and emulator tests below cover them)
       - 'server/coffee-subscription*'
@@ -135,7 +141,7 @@ jobs:
           server/coffee-subscription-plan.js server/coffee-subscription-records.js server/coffee-subscription-checkout.js
           server/coffee-subscription-stripe.js server/coffee-subscription-stripe-e2e.js server/coffee-subscription-calendar.js
           server/coffee-subscription-preference.js server/coffee-subscription-account.js server/factory-subscription-read.js
-          server/coffee-subscription-fulfillment.js server/coffee-subscription-email-cancel.js server/order-fulfillment.js server/shipping-notice.js src/components/OrderShippingPanel.jsx server/shop-staff-auth.js server/coffee-subscription-mail.js server/domestic-shipping.js src/pages/ShippingPage.jsx
+          server/coffee-subscription-fulfillment.js server/coffee-subscription-email-cancel.js server/order-fulfillment.js server/shipping-notice.js server/order-notice.js src/lib/addressFormat.js src/components/OrderShippingPanel.jsx server/shop-staff-auth.js server/coffee-subscription-mail.js server/domestic-shipping.js src/pages/ShippingPage.jsx
           src/components/CoffeeSubscriptionDetail.jsx src/components/SiteFooter.jsx
           src/lib/coffeeSubscriptionAccount.js src/lib/coffeeSubscriptionTerms.js src/pages/SubscriptionApplyPage.jsx src/pages/SubscriptionManagePage.jsx
           src/lib/subscriptionShippingAdmin.js src/pages/SubscriptionShippingAdminPage.jsx src/lib/cartExpiry.js src/components/CartExpiryNotice.jsx
@@ -143,7 +149,7 @@ jobs:
       - name: Build site preview
         run: npm run build
       - name: Unit tests
-        run: node --test server/catalog.test.js server/orders.test.js server/inventory-launch.test.js server/quote.test.js server/checkout-policy.test.js server/promo.test.js server/brazil-lot.test.js server/initial-stock.test.js server/refunds.test.js server/factory-refund-api.test.js server/subscriptions-paused.test.js server/coffee-subscription.test.js server/store-cards.test.js server/coffee-subscription-backend.test.js server/coffee-subscription-account.test.js server/factory-subscription-read.test.js server/product-detail.test.js server/inventory.test.js server/inventory-scenarios.test.js server/inventory-adjustments.test.js server/firestore-preview-checkout.test.js server/factory-inventory-api.test.js server/rate-limit.test.js server/coffee-subscription-fulfillment.test.js server/coffee-subscription-mail.test.js server/domestic-shipping.test.js server/cart-expiry.test.js
+        run: node --test server/catalog.test.js server/orders.test.js server/inventory-launch.test.js server/quote.test.js server/checkout-policy.test.js server/promo.test.js server/brazil-lot.test.js server/initial-stock.test.js server/refunds.test.js server/factory-refund-api.test.js server/subscriptions-paused.test.js server/coffee-subscription.test.js server/store-cards.test.js server/coffee-subscription-backend.test.js server/coffee-subscription-account.test.js server/factory-subscription-read.test.js server/product-detail.test.js server/inventory.test.js server/inventory-scenarios.test.js server/inventory-adjustments.test.js server/firestore-preview-checkout.test.js server/factory-inventory-api.test.js server/rate-limit.test.js server/coffee-subscription-fulfillment.test.js server/coffee-subscription-mail.test.js server/domestic-shipping.test.js server/cart-expiry.test.js server/address-format.test.js server/order-notice.test.js
       - name: Set up Java for Firestore emulator
         uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
