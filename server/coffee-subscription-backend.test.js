@@ -225,6 +225,8 @@ test("sign-up session: ¥3,000 now, the monthly price from 09:00 JST on the 1st 
   const [params, opts] = calls[0];
   assert.deepEqual(params.line_items, [{ price: "price_m3", quantity: 1 }, { price: "price_first", quantity: 1 }]);
   assert.equal(params.subscription_data.trial_end, plan.billingStartUnix("2027-01"));
+  assert.deepEqual(params.adaptive_pricing, { enabled: false }, "always charged in yen, as every page states (no currency conversion)");
+  assert.ok(params.custom_text.submit.message.includes(plan.TERMS_JA.stripeTrialLabel), "Stripe's 'N days free / trial' labels explained next to the button");
   assert.deepEqual(params.subscription_data.metadata, { kind: records.KIND, frequency: "3", startMonth: "2027-01" });
   assert.equal(params.metadata.preference, "深煎りが好き");
   assert.deepEqual(params.shipping_address_collection, { allowed_countries: ["JP"] });

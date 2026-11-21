@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { SUBSCRIPTIONS_PAUSED, SUBSCRIPTIONS_PAUSED_TEXT } from "../productData";
 import { PREFERENCE_ISSUE_TEXT, PREFERENCE_MAX_LENGTH, normalizePreference, preferenceIssues } from "../lib/subscriptionPreference";
 import { FIRST_PRICE, MONTHLY_PRICES, errorText, monthLabel, signUp, startMonthFor, yen } from "../lib/coffeeSubscriptionAccount";
-import { FREQUENCIES, LEGAL_TEXT_REVIEWED, confirmationRows } from "../lib/coffeeSubscriptionTerms";
+import { FREQUENCIES, LEGAL_TEXT_REVIEWED, TERMS_JA, confirmationRows } from "../lib/coffeeSubscriptionTerms";
 
 // 珈琲の定期便: the final confirmation screen before payment (特定商取引法 第12条の6, 定期購入). Everything the customer
 // agrees to is on this one screen, next to the button: what and how much, the first and the monthly price, when and how
@@ -55,7 +55,7 @@ export default function SubscriptionApplyPage() {
         <form className="legal-document subm" onSubmit={submit}>
           <p className="legal-eyebrow">Coffee Subscription</p>
           <h1>珈琲の定期便 お申し込み内容の確認</h1>
-          <p className="legal-lead">定期購入のお申し込みです。以下の内容をご確認のうえ、決済画面へお進みください。決済画面（Stripe）でお届け先とカードを入力し、「申し込む」を押した時点でお申し込みが確定します。</p>
+          <p className="legal-lead">定期購入のお申し込みです。以下の内容をご確認のうえ、決済画面へお進みください。決済画面（Stripe）でお届け先とカードを入力し、最後のボタン（Stripe の表示は「決済とトライアルの開始」）を押した時点でお申し込みが確定します。{TERMS_JA.stripeTrialLabel}</p>
           {!LEGAL_TEXT_REVIEWED && <p className="subm-note">※ 表示内容は確認中の暫定版です。</p>}
           {closed && <p className="subm-alert" role="status">{SUBSCRIPTIONS_PAUSED_TEXT.ja}</p>}
 
