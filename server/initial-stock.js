@@ -78,7 +78,9 @@ async function applyInitialStock(db, rawPlan, { projectId, expectedProjectId, pl
   if (note.length < 4 || note.length > 500) throw new Error("APPROVAL_REQUIRED");
   const paths = Object.keys(plan);
   const logRef = db.collection(LOG_COLLECTION).doc(approvedHash);
-  return db.runTransaction(async (tx) => {
+  // Contention (nothing committed) is run again: the log and the existing records make a repeat change nothing.
+  const { retryOnContention } = require("./coffee-subscription-records");
+  return retryOnContention(() => db.runTransaction(async (tx) => {
     const log = await tx.get(logRef);
     if (log.exists) return { applied: false, reason: "ALREADY_APPLIED", created: log.data().paths || [] };
     const snapshots = await Promise.all(paths.map((path) => tx.get(ref(db, path))));
@@ -91,7 +93,7 @@ async function applyInitialStock(db, rawPlan, { projectId, expectedProjectId, pl
     }
     tx.create(logRef, { projectId, paths, plan, approval: note, appliedAt: at });
     return { applied: true, created: paths };
-  });
+  }));
 }
 
 module.exports = { allowedPaths, validPlan, previewInitialStock, applyInitialStock, LOG_COLLECTION };

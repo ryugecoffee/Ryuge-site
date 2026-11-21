@@ -61,7 +61,7 @@ export default function LegalNotice({ lang = "ja" }) {
       timing: "支払時期",
       timingValue: "ご注文時にお支払いが確定します（定期便は下記のとおり）",
       delivery: "商品の引渡時期",
-      deliveryValue: "通常、ご注文から3〜7日以内に発送いたします",
+      deliveryValue: "ご注文後、原則3営業日以内に発送いたします（珈琲豆はご注文後に焙煎し、通常は翌日の発送を目指しています）。定期便は下記のとおりです",
       returns: "返品・交換について",
       returnsValue:
         "商品に欠陥がある場合を除き、返品・交換には応じかねます。不良品の場合は商品到着後7日以内にご連絡ください。",
@@ -100,7 +100,7 @@ export default function LegalNotice({ lang = "ja" }) {
       timing: "Payment Timing",
       timingValue: "Charged at the time of order",
       delivery: "Delivery",
-      deliveryValue: "Shipped within 3–7 days after order",
+      deliveryValue: "Shipped within 3 business days after the order as a rule (coffee is roasted after the order; we aim to ship the next day). Subscriptions: see below",
       returns: "Returns",
       returnsValue:
         "Returns are not accepted unless the product is defective. Please contact us within 7 days of delivery.",
@@ -139,7 +139,7 @@ export default function LegalNotice({ lang = "ja" }) {
       timing: "Momento del pago",
       timingValue: "Se cobra al realizar el pedido",
       delivery: "Entrega",
-      deliveryValue: "Envío en 3–7 días",
+      deliveryValue: "Por norma, envío en 3 días hábiles tras el pedido (el café se tuesta tras el pedido; intentamos enviarlo al día siguiente). Suscripciones: ver abajo",
       returns: "Devoluciones",
       returnsValue:
         "No se aceptan devoluciones salvo defectos del producto.",

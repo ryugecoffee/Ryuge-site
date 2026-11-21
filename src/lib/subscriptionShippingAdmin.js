@@ -44,6 +44,15 @@ export const shippingApi = {
   ship: (body) => request("POST", "/ship", body),
   hold: (body) => request("POST", "/hold", body),
   resume: (body) => request("POST", "/resume", body),
+  resendMail: (body) => request("POST", "/resend-mail", body),
+  // Store orders (server/order-fulfillment.js), behind the same staff sign-in.
+  orders: (view) => request("GET", `/orders?view=${encodeURIComponent(view)}`),
+  orderAddress: (orderId) => request("GET", `/orders/${encodeURIComponent(orderId)}/address`),
+  orderPrepare: (body) => request("POST", "/orders/prepare", body),
+  orderShip: (body) => request("POST", "/orders/ship", body),
+  orderHold: (body) => request("POST", "/orders/hold", body),
+  orderResume: (body) => request("POST", "/orders/resume", body),
+  orderResendMail: (body) => request("POST", "/orders/resend-mail", body),
   emailCancelPreview: (body) => request("POST", "/email-cancel/preview", body),
   emailCancel: (body) => request("POST", "/email-cancel", body),
 };
@@ -58,7 +67,19 @@ export const beanName = (sku) => NAMES[sku] || sku;
 
 export const STATUS_TEXT = { planned: "発送予定", preparing: "発送準備中", shipped: "発送済み", held: "保留", needs_review: "要確認（遅延入金）",
   cancelled_before_shipping: "発送取りやめ", delivered: "お届け済み" };
-export const METHOD_TEXT = { letterpack_light: "レターパックライト", clickpost: "クリックポスト" };
+export const METHOD_TEXT = { letterpack_light: "レターパックライト", letterpack_plus: "レターパックプラス", yupack: "ゆうパック", clickpost: "クリックポスト",
+  intl_air_packet: "国際エアパケット" };
+// Ways a 珈琲の定期便 delivery may go (domestic only; レターパックライト unless the parcel is too thick).
+export const SUBSCRIPTION_METHODS = ["letterpack_light", "letterpack_plus", "yupack", "clickpost"];
+export const ORDER_METHODS = { domestic: ["letterpack_light", "letterpack_plus", "yupack", "clickpost"], international: ["intl_air_packet"] };
+// The customer's "shipped" mail (server/shipping-notice.js): sent once per parcel.
+export const MAIL_TEXT = { sent: "発送メール送信済み", sending: "発送メール送信中", failed: "発送メールを送れませんでした", skipped_test: "テスト注文のためメールなし",
+  no_email: "メールアドレスがないため送信なし", already: "発送メール処理済み" };
+export const ORDER_STATUS_TEXT = { new: "新規", preparing: "発送準備中", shipped: "発送済み", held: "保留" };
+export const PAYMENT_TEXT = { paid: "決済済み", partially_refunded: "一部返金あり", refunded: "返金済み" };
+export const ORDER_BLOCKER_TEXT = { EARLIER_ORDER: "この画面より前の注文です（対象外。発送は従来どおり手作業で）", REFUNDED: "返金済みのため発送できません", NOT_PAID: "決済が完了していません", UNKNOWN_ORDER: "注文が見つかりません" };
+export const ORDER_WARNING_TEXT = { PARTIALLY_REFUNDED: "一部返金があります。発送する内容を確認してください" };
+export const ORDER_HOLD_TEXT = { CUSTOMER_REQUEST: "お客様のご依頼", ADDRESS_CHECK: "住所の確認", PAYMENT_CHECK: "決済の確認", OUT_OF_STOCK: "在庫不足", OTHER: "その他" };
 export const HOLD_TEXT = { OUT_OF_STOCK: "在庫不足", CUSTOMER_REQUEST: "お客様のご依頼", ADDRESS_CHECK: "住所の確認", PAYMENT_CHECK: "決済の確認", OTHER: "その他" };
 export const BLOCKER_TEXT = {
   CANCELLED: "発送取りやめ済み", SHIPMENT_NEEDS_REVIEW: "遅延入金の要確認（CEO確認後に「予定に戻す」）", UNKNOWN_SUBSCRIPTION: "契約が見つかりません",
@@ -79,7 +100,10 @@ export const ERROR_TEXT = {
   INVALID_BEANS: "豆を2種類選んでください。", SAME_BEANS: "同じ豆（同じ生豆の焙煎違いを含む）は組み合わせられません。",
   NOT_A_SUBSCRIPTION_BEAN: "定期便に使えない商品です。", ALREADY_PREPARING: "すでに発送準備中です。豆を変える場合は「準備をやめる」を押してください。",
   INVALID_STATE: "この発送の状態では、その操作はできません。画面を更新してください。", NOT_SHIPPABLE: "この発送は送れません。",
-  INVALID_TRACKING_NUMBER: "追跡番号は数字とハイフンで入力してください。", NOT_PREPARED: "発送準備中か発送済みの発送だけ、宛名を表示できます。",
+  INVALID_TRACKING_NUMBER: "追跡番号は英数字とハイフンで入力してください（定期便は数字とハイフン）。",
+  INVALID_SHIPPING_METHOD: "配送方法を選んでください。", MAIL_NOT_FAILED: "このメールは送信に失敗していないため、再送できません。",
+  INVALID_ORDER: "注文が見つかりません。", UNKNOWN_ORDER: "注文が見つかりません。", INVALID_VIEW: "表示の切り替えができませんでした。",
+  INVALID_REASON: "保留の理由を選んでください。", NOT_PREPARED: "発送準備中か発送済みの発送だけ、宛名を表示できます。",
   REQUEST_ID_CONFLICT: "操作が重なりました。画面を更新してください。", INVALID_RANGE: "期間が正しくありません。",
   // A cancellation asked by email (server/coffee-subscription-email-cancel.js).
   NOT_VERIFIED: "契約が見つからないか、本人確認の内容が一致しません。お客様に登録したメールアドレス・郵便番号・電話番号の下4桁をご確認いただいてください。",
