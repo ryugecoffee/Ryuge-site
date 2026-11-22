@@ -23,6 +23,11 @@ test("the recommendation badge is on Peru Andes Blue in every language; the 2-ba
   assert.notEqual(recommended[0].promo, true, "a recommendation, not a promotional (2-bag) bean");
   assert.equal(recommended[0].priceNumber, 1500, "its price is unchanged");
   assert.doesNotMatch(read("src", "productData.js"), /季節のおすすめ|Seasonal pick|Selección de temporada/);
+  // On a phone the longer label wraps inside the brush stroke (never cut at the card's edges, never inside 珈琲).
+  const css = read("src", "App.css");
+  const mobileRibbon = /\.enma-promotion-ribbon \{\s*width: 90%;[^}]*\}/.exec(css)[0];
+  assert.match(mobileRibbon, /white-space: normal;/);
+  assert.match(mobileRibbon, /word-break: keep-all;/);
   const zen = PRODUCT_DATA.enma.find((p) => p.id === "enma-zen-dark-roast");
   assert.equal(zen.isSoldOut, true, "Brazil is sold out");
   assert.equal(zen.promotion.active, false, "no longer recommended");
