@@ -346,6 +346,22 @@ test("featured stock transfer: real transactions — racing checkouts on the sam
   assert.ok(holds + moved <= 10, "never oversold");
 });
 
+test("approved featured stock: two server instances starting at once move the approved bags exactly once", { skip }, async () => {
+  const { applyApprovedTransfers, APPROVED_TRANSFERS } = require("./featured-stock");
+  const [entry] = APPROVED_TRANSFERS;
+  // Own collection roots (never real data).
+  const scoped = { collection: (name) => firestore.collection("emulatorApproved_" + name), runTransaction: (fn) => firestore.runTransaction(fn) };
+  await firestore.collection("emulatorApproved_inventory").doc(entry.from).set({ ready: 15, held: 0, sold: 4 });
+  const runs = await Promise.all([applyApprovedTransfers(scoped), applyApprovedTransfers(scoped), applyApprovedTransfers(scoped)]);
+  assert.equal(runs.filter(([r]) => r.applied === true).length, 1, "applied once");
+  for (const [r] of runs) if (!r.applied) assert.equal(r.reason, "ALREADY_DONE");
+  const read = async (sku) => (await firestore.collection("emulatorApproved_inventory").doc(sku).get()).data();
+  assert.deepEqual([(await read(entry.from)).ready, (await read(entry.from)).sold], [0, 4]);
+  assert.deepEqual([(await read(entry.to)).ready, (await read(entry.to)).held, (await read(entry.to)).sold], [15, 0, 0]);
+  const audit = (await firestore.collection("emulatorApproved_inventoryTransfers").doc(`approved-${entry.id}`).get()).data();
+  assert.deepEqual([audit.status, audit.quantity], ["applied", 15]);
+});
+
 test("initial stock: real transactions — two applies at once create each record once; an existing record is never touched", { skip }, async () => {
   const { previewInitialStock, applyInitialStock } = require("./initial-stock");
   // Own collection roots (never real data).

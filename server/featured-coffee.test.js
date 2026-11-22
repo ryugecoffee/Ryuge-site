@@ -18,7 +18,7 @@ const { parseItemsMetadata } = require("./orders");
 const { reserve, attachPaymentIntent, finish, availability, releaseWithoutPayment } = require("./inventory");
 const { promoKeys } = require("./promo");
 const { allowedPaths } = require("./initial-stock");
-const { validTransfer, previewFeaturedTransfer, applyFeaturedTransfer, LOG_COLLECTION } = require("./featured-stock");
+const { validTransfer, previewFeaturedTransfer, applyFeaturedTransfer, LOG_COLLECTION, APPROVED_TRANSFERS, applyApprovedTransfers } = require("./featured-stock");
 
 const SKU = "enma-featured-quequesques";
 const GUATEMALA = "enma-quequesques";
@@ -260,6 +260,50 @@ test("stock transfer: no other moves are possible", () => {
   no({ from: GUATEMALA, to: SKU, quantity: 1001 }, /INVALID_QUANTITY/);
   no({ from: GUATEMALA, to: GUATEMALA, quantity: 1 }, /INVALID_TRANSFER/);
   no(null, /INVALID_TRANSFER/);
+});
+
+test("the CEO-approved first stock (PR #43): all free regular Guatemala bags, at most 15, moved once after the deploy", async () => {
+  assert.deepEqual(APPROVED_TRANSFERS.map(({ id, from, to, maxQuantity }) => ({ id, from, to, maxQuantity })),
+    [{ id: "2026-11-22-quequesques-initial", from: GUATEMALA, to: SKU, maxQuantity: 15 }]);
+  assert.match(APPROVED_TRANSFERS[0].approval, /CEO承認 2026-11-22/);
+  // Production today: 15 free bags of the regular Guatemala.
+  const db = fakeFirestore({ [`inventory/${GUATEMALA}`]: { ready: 15, held: 0, sold: 0 } });
+  const [first] = await applyApprovedTransfers(db);
+  assert.deepEqual([first.applied, first.quantity], [true, 15]);
+  assert.deepEqual(stock(db, GUATEMALA), { ready: 0, held: 0, sold: 0 });
+  assert.deepEqual(stock(db, SKU), { ready: 15, held: 0, sold: 0 });
+  const audit = db.store.get(`${LOG_COLLECTION}/approved-2026-11-22-quequesques-initial`);
+  assert.deepEqual([audit.status, audit.quantity, audit.before.from.ready], ["applied", 15, 15]);
+  // A restart (or a second instance) changes nothing.
+  assert.equal((await applyApprovedTransfers(db))[0].reason, "ALREADY_DONE");
+  assert.deepEqual([stock(db, GUATEMALA).ready, stock(db, SKU).ready], [0, 15]);
+
+  // Never more than 15, and never a bag held by a checkout in progress.
+  const more = fakeFirestore({ [`inventory/${GUATEMALA}`]: { ready: 20, held: 0, sold: 0 } });
+  assert.equal((await applyApprovedTransfers(more))[0].quantity, 15);
+  assert.deepEqual(stock(more, GUATEMALA).ready, 5);
+  const busy = fakeFirestore({ [`inventory/${GUATEMALA}`]: { ready: 15, held: 2, sold: 3 } });
+  assert.equal((await applyApprovedTransfers(busy))[0].quantity, 13);
+  assert.deepEqual(stock(busy, GUATEMALA), { ready: 2, held: 2, sold: 3 });
+  // Nothing free yet: nothing written, tried again later.
+  const held = fakeFirestore({ [`inventory/${GUATEMALA}`]: { ready: 2, held: 2, sold: 0 } });
+  assert.equal((await applyApprovedTransfers(held))[0].reason, "NO_FREE_STOCK");
+  assert.equal(held.store.has(`${LOG_COLLECTION}/approved-2026-11-22-quequesques-initial`), false);
+  assert.equal(stock(held, SKU), undefined);
+  // The slot already has stock (moved by hand): nothing moves, and it is recorded so it never moves later.
+  const done = fakeFirestore({ [`inventory/${GUATEMALA}`]: { ready: 5, held: 0, sold: 0 }, [`inventory/${SKU}`]: { ready: 10, held: 0, sold: 0 } });
+  assert.equal((await applyApprovedTransfers(done))[0].reason, "TARGET_EXISTS");
+  assert.deepEqual([stock(done, GUATEMALA).ready, stock(done, SKU).ready], [5, 10]);
+  assert.equal(done.store.get(`${LOG_COLLECTION}/approved-2026-11-22-quequesques-initial`).status, "skipped");
+  // After the coffee in the slot changes, the old entry never runs.
+  const rotated = withFeatured(BASE_CATALOG, { ...CONFIG, product: PERU }).featured;
+  const later = fakeFirestore({ [`inventory/${GUATEMALA}`]: { ready: 15, held: 0, sold: 0 } });
+  assert.equal((await applyApprovedTransfers(later, { featured: rotated }))[0].reason, "NOT_CURRENT_SETTING");
+  assert.deepEqual(stock(later, GUATEMALA).ready, 15);
+  // The server runs it at start only with inventory on, never blocking, with a few retries.
+  const source = fs.readFileSync(path.join(__dirname, "index.js"), "utf8");
+  assert.match(source, /if \(INVENTORY_ENABLED\) \{\n\s+const applyApproved = async \(attempt\) => \{\n\s+try \{\n\s+const results = await featuredStock\.applyApprovedTransfers\(db\);/);
+  assert.match(source, /setTimeout\(\(\) => applyApproved\(1\), 5 \* 1000\)\.unref\?\.\(\);/);
 });
 
 test("the transfer route is off unless the inventory admin token is set, and checks it like initial stock", () => {

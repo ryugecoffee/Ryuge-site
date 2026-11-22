@@ -89,4 +89,58 @@ async function applyFeaturedTransfer(db, raw, { projectId, expectedProjectId, pl
   }));
 }
 
-module.exports = { validTransfer, previewFeaturedTransfer, applyFeaturedTransfer, TransferError, LOG_COLLECTION, MAX_QUANTITY };
+// ---- Transfers the CEO approved in a pull request, applied once by the server itself --------------------------------
+// So the first stock of a newly featured coffee needs no admin token: the exact move (which coffee, at most how many
+// bags) is written here, reviewed in the PR, and the CEO's merge is its approval. After the deploy the payment server
+// applies it once (audit record inventoryTransfers/approved-{id}; a restart or a second instance changes nothing).
+// - Only while the entry is still the featured setting (an old entry never runs after the coffee changes).
+// - Only free bags (ready - held), never more than maxQuantity; bags held by checkouts in progress stay put.
+// - Only the first stock of the slot: if the featured record already exists, nothing moves (recorded as skipped).
+// - No free bag yet (e.g. all held): nothing is written, it is tried again at the next start.
+const APPROVED_TRANSFERS = Object.freeze([
+  Object.freeze({
+    id: "2026-11-22-quequesques-initial",
+    from: "enma-quequesques",
+    to: "enma-featured-quequesques",
+    maxQuantity: 15,
+    approval: "CEO承認 2026-11-22：通常グアテマラ（enma-quequesques）の空き在庫15袋すべてを「今、飲んでほしい珈琲」へ移動（ryugecoffee/Ryuge-site PR #43）",
+  }),
+]);
+
+async function applyApprovedTransfer(db, entry, { featured = FEATURED, base = BASE_CATALOG } = {}) {
+  if (entry.from !== featured.product || entry.to !== featured.sku) return { id: entry.id, applied: false, reason: "NOT_CURRENT_SETTING" };
+  validTransfer({ from: entry.from, to: entry.to, quantity: entry.maxQuantity }, { base, featured });
+  const logRef = db.collection(LOG_COLLECTION).doc(`approved-${entry.id}`);
+  const { retryOnContention } = require("./coffee-subscription-records");
+  return retryOnContention(() => db.runTransaction(async (tx) => {
+    const log = await tx.get(logRef);
+    if (log.exists) return { id: entry.id, applied: false, reason: "ALREADY_DONE", status: log.data().status };
+    const [fromSnap, toSnap] = await Promise.all([tx.get(stockRef(db, entry.from)), tx.get(stockRef(db, entry.to))]);
+    const current = { from: stockOf(fromSnap), to: stockOf(toSnap) };
+    const at = new Date();
+    const record = { kind: "approved", id: entry.id, from: entry.from, to: entry.to, maxQuantity: entry.maxQuantity, approval: entry.approval, before: current, at };
+    if (current.to !== null) {
+      tx.create(logRef, { ...record, status: "skipped", reason: "TARGET_EXISTS" });
+      return { id: entry.id, applied: false, reason: "TARGET_EXISTS" };
+    }
+    if (!counted(current.from)) fail("UNKNOWN_OR_INVALID_SOURCE");
+    const quantity = Math.min(entry.maxQuantity, current.from.ready - current.from.held);
+    if (quantity < 1) return { id: entry.id, applied: false, reason: "NO_FREE_STOCK" };
+    const after = outcome({ quantity }, current);
+    tx.update(stockRef(db, entry.from), { ready: after.from.ready });
+    tx.create(stockRef(db, entry.to), { ...after.to, createdAt: at, createdBy: `featured-transfer:approved-${entry.id}` });
+    tx.create(logRef, { ...record, status: "applied", quantity, after });
+    return { id: entry.id, applied: true, quantity, after };
+  }));
+}
+
+async function applyApprovedTransfers(db, options = {}) {
+  const results = [];
+  for (const entry of options.entries || APPROVED_TRANSFERS) results.push(await applyApprovedTransfer(db, entry, options));
+  return results;
+}
+
+module.exports = {
+  validTransfer, previewFeaturedTransfer, applyFeaturedTransfer, TransferError, LOG_COLLECTION, MAX_QUANTITY,
+  APPROVED_TRANSFERS, applyApprovedTransfer, applyApprovedTransfers,
+};

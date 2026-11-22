@@ -468,6 +468,22 @@ function reconcileSoon() {
     .finally(() => { reconciling = false; });
 }
 if (INVENTORY_ENABLED) setInterval(reconcileSoon, 5 * 60 * 1000).unref?.();
+
+// 「今、飲んでほしい珈琲」: the stock move the CEO approved in the PR (server/featured-stock.js APPROVED_TRANSFERS), applied
+// once after the deploy. Never blocks the server; a failure is retried a few times, then at the next start.
+if (INVENTORY_ENABLED) {
+  const applyApproved = async (attempt) => {
+    try {
+      const results = await featuredStock.applyApprovedTransfers(db);
+      console.log("Featured stock (approved):", JSON.stringify(results.map(({ id, applied, reason, quantity }) => ({ id, applied, reason, quantity }))));
+      if (results.some((r) => r.reason === "NO_FREE_STOCK") && attempt < 5) setTimeout(() => applyApproved(attempt + 1), 60 * 1000).unref?.();
+    } catch (error) {
+      console.error("Featured stock (approved) failed:", error.message);
+      if (attempt < 5) setTimeout(() => applyApproved(attempt + 1), 60 * 1000).unref?.();
+    }
+  };
+  setTimeout(() => applyApproved(1), 5 * 1000).unref?.();
+}
 // Factory notices: shipping deadlines (due today/tomorrow, or past) and the retry of unsent notices, every 30 minutes.
 if (FACTORY_NOTIFY_ON) setInterval(() => factoryNotice(() => storeEvents.sweep(db)), 30 * 60 * 1000).unref?.();
 
