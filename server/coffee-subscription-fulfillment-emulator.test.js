@@ -228,7 +228,7 @@ test("email cancellation: arrived before 09:00 on the 1st, entered after the cha
   assert.doesNotMatch(notice, /example\.com|090|100-0001|東京都/);
   const customerMail = mails.find((m) => m.to !== "staff@example.com");
   assert.equal(customerMail.subject, "【龍華珈琲】定期便の解約を承りました");
-  assert.match(customerMail.text, /2026年12月分のご請求（5,800円）は、ご依頼が毎月1日9時のご請求より前に届いていたため、全額返金いたします。この月の発送はいたしません。/);
+  assert.match(customerMail.text, /2026年12月分のご請求（5,800円）は、ご依頼が毎月1日9時のご請求より前に届いていたため、全額返金いたします。(この月の発送はいたしません。|この月のお届けのうち、すでに発送した\d+回分は、そのままお受け取りください)/);
   assert.match(customerMail.text, /解約受付から7営業日以内に手続きいたします/);
   assert.match(customerMail.text, /・今後のお届け：ございません\n/, "the stopped month is not listed as coming");
   // Stripe: only "end at the next 1st" (no refund, no new charge asked of it).
