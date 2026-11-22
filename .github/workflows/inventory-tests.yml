@@ -149,7 +149,10 @@ jobs:
       - name: Build site preview
         run: npm run build
       - name: Unit tests
-        run: node --test server/catalog.test.js server/orders.test.js server/inventory-launch.test.js server/quote.test.js server/checkout-policy.test.js server/promo.test.js server/brazil-lot.test.js server/initial-stock.test.js server/refunds.test.js server/factory-refund-api.test.js server/factory-store-ops.test.js server/subscriptions-paused.test.js server/coffee-subscription.test.js server/store-cards.test.js server/coffee-subscription-backend.test.js server/coffee-subscription-account.test.js server/factory-subscription-read.test.js server/product-detail.test.js server/inventory.test.js server/inventory-scenarios.test.js server/inventory-adjustments.test.js server/firestore-preview-checkout.test.js server/factory-inventory-api.test.js server/rate-limit.test.js server/coffee-subscription-fulfillment.test.js server/coffee-subscription-mail.test.js server/domestic-shipping.test.js server/cart-expiry.test.js
+        run: node --test server/catalog.test.js server/orders.test.js server/inventory-launch.test.js server/quote.test.js server/checkout-policy.test.js server/promo.test.js server/brazil-lot.test.js server/initial-stock.test.js server/refunds.test.js server/factory-refund-api.test.js server/subscriptions-paused.test.js server/coffee-subscription.test.js server/store-cards.test.js server/coffee-subscription-backend.test.js server/coffee-subscription-account.test.js server/factory-subscription-read.test.js server/product-detail.test.js server/inventory.test.js server/inventory-scenarios.test.js server/inventory-adjustments.test.js server/firestore-preview-checkout.test.js server/factory-inventory-api.test.js server/rate-limit.test.js server/coffee-subscription-fulfillment.test.js server/coffee-subscription-mail.test.js server/domestic-shipping.test.js server/cart-expiry.test.js
+      # Factory orders and shipping, notices (2026-11-22): their own step, so the list above stays as it is.
+      - name: Unit tests (Factory store operations and notices)
+        run: node --test server/factory-store-ops.test.js
       - name: Set up Java for Firestore emulator
         uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
