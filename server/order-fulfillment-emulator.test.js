@@ -66,7 +66,7 @@ test("a paid store order: new → preparing → shipped; stock untouched (settle
   assert.equal(results.filter((r) => r.applied !== false).length, 1, "shipped once");
   assert.equal(sent.length, 1, "one mail");
   assert.equal(sent[0].to, "buyer@example.com");
-  assert.match(sent[0].subject, /ご注文の商品を発送しました/);
+  assert.equal(sent[0].subject, "【龍華珈琲】珈琲を発送いたしました");
   assert.match(sent[0].text, /ゆうパック[\s\S]*1234-5678-9012[\s\S]*trackings\.post\.japanpost\.jp/);
   assert.doesNotMatch(sent[0].text, /1-2-3|0900000000/, "no address or phone in the mail");
   assert.equal((await mailDoc(`order_${id}`)).status, "sent");
@@ -120,7 +120,7 @@ test("mails: a test order never mails; no email → nothing sent; a failed mail 
   const intl = await paidOrder({ country: "TW", items: "enma-jimma:2@1500" });
   const r3 = await shipLikeTheRoute(intl, { method: "intl_air_packet", trackingNumber: "RR123456789JP", sendMail: async (m) => { sent.push(m); } });
   assert.equal(r3.mailStatus, "sent");
-  assert.match(sent.at(-1).text, /has been shipped[\s\S]*International Air Packet[\s\S]*RR123456789JP/);
+  assert.match(sent.at(-1).text, /was shipped today[\s\S]*International Air Packet[\s\S]*RR123456789JP/);
 });
 
 test("hold and resume; the work list shows names but no street address; the address is read on request and each look recorded", { skip }, async () => {
@@ -177,8 +177,8 @@ test("珈琲の定期便: shipped by レターパックプラス, stock moves on
   }
   assert.deepEqual(await stockOf(a), { ready: 3, held: 0, sold: 2 }, "each delivery took its bag once, at shipping, as before");
   assert.equal(sent.length, 1, "only the live contract's delivery mailed, once");
-  assert.match(sent[0].subject, /珈琲の定期便を発送しました/);
-  assert.match(sent[0].text, /初回（200g）[\s\S]*レターパックプラス[\s\S]*1111-2222-3333[\s\S]*subscription\/manage/);
+  assert.equal(sent[0].subject, "【龍華珈琲】珈琲を発送いたしました");
+  assert.match(sent[0].text, /珈琲の定期便（初回）[\s\S]*・数量：2袋[\s\S]*レターパックプラス[\s\S]*・お問い合わせ番号：1111-2222-3333[\s\S]*trackings\.post\.japanpost\.jp/);
   // The usual way stays レターパックライト when nothing is chosen; an international way is not offered for it.
   await assert.rejects(f.shipShipment(db, { shipmentId: `sub_x${tag}_first`, requestId: rid(), actor: ACTOR, method: "intl_air_packet" }, { now: NOW }), { code: "INVALID_SHIPPING_METHOD" });
 });

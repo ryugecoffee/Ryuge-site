@@ -81,26 +81,27 @@ export const SUBSCRIPTIONS_PAUSED_SHORT_TEXT = { ja: "受付休止中", en: "Pau
 
 // 珈琲の定期便 (CEO, 2026-11-18): one subscription, the customer chooses how many deliveries a month. Every text shown
 // for it is here, so wording can be changed without touching the page. Prices: tax and shipping included, one price
-// nationwide (CEO, 2026-11-18). Not decided yet (do not state them as fixed): shipping days, the first month's payment
-// and first delivery, and what happens on cancellation. New sign-ups stay paused (SUBSCRIPTIONS_PAUSED above).
+// nationwide (CEO, 2026-11-18). The conditions (first payment at sign-up, monthly payment in advance on the 1st, changes
+// by the 25th, cancellation before 9:00 on the 1st) are the same as src/lib/coffeeSubscriptionTerms.js and the legal
+// notice; wording restyled 2026-11-23 (ja, en and es state the same points).
 export const COFFEE_SUBSCRIPTION = {
   id: "coffee-subscription",
   name: { ja: "珈琲の定期便", en: "Coffee Subscription", es: "Suscripción de café" },
   cardSummary: {
-    ja: "当店おまかせの珈琲豆2種類を、季節に合わせてお届けします",
+    ja: "当店おまかせの珈琲豆2種類を、季節に合わせてお届けいたします",
     en: "Two coffees of our choosing, delivered with the seasons",
     es: "Dos cafés elegidos por nosotros, al ritmo de las estaciones",
   },
   lead: {
-    ja: "毎回、当店おまかせの珈琲豆を2種類お届けします。",
-    en: "Each delivery brings two coffees chosen by us.",
-    es: "Cada envío incluye dos cafés elegidos por nosotros.",
+    ja: "毎回、当店おまかせの珈琲豆を2種類、100gずつお届けいたします。",
+    en: "Each delivery brings two coffees of our choosing, 100 g of each.",
+    es: "Cada envío incluye dos cafés elegidos por nosotros, 100 g de cada uno.",
   },
   perDelivery: { ja: "100g × 2袋（1回 200g）", en: "100 g × 2 bags (200 g per delivery)", es: "100 g × 2 bolsas (200 g por envío)" },
   selectionNote: {
-    ja: "銘柄は、季節や仕入れの状況に合わせて当店が選びます。",
+    ja: "銘柄は、季節や仕入れの状況に合わせて当店がお選びいたします。",
     en: "We choose the coffees according to the season and what we have sourced.",
-    es: "Elegimos los cafés según la estación y lo que hemos conseguido.",
+    es: "Elegimos los cafés según la temporada y lo que hemos podido conseguir.",
   },
   // deliveriesPerMonth × 200 g. Prices: tax and shipping included, the same everywhere in Japan.
   frequencies: [
@@ -110,28 +111,44 @@ export const COFFEE_SUBSCRIPTION = {
     { id: "monthly-4", deliveriesPerMonth: 4, priceNumber: 11200, gramsPerMonth: 800 },
   ],
   defaultFrequency: "monthly-1",
-  frequencyLabel: { ja: (n) => `月${n}回`, en: (n) => (n === 1 ? "Once a month" : `${n} times a month`), es: (n) => (n === 1 ? "1 vez al mes" : `${n} veces al mes`) },
+  firstPrice: 3000, // the first 200 g, paid once at sign-up (server/coffee-subscription-plan.js FIRST_DELIVERY_PRICE)
+  frequencyLabel: { ja: (n) => `月${n}回`, en: (n) => (n === 1 ? "Once a month" : n === 2 ? "Twice a month" : `${n} times a month`), es: (n) => (n === 1 ? "1 vez al mes" : `${n} veces al mes`) },
   labels: {
-    ja: { frequency: "配送回数", monthly: "月額", amount: "月間の配送量", perDelivery: "1回のお届け", perMonth: "/月", priceNote: "税込・全国一律送料込み" },
-    en: { frequency: "Deliveries", monthly: "Monthly", amount: "Coffee per month", perDelivery: "Each delivery", perMonth: "/month", priceNote: "Tax and shipping included, same price nationwide" },
-    es: { frequency: "Envíos", monthly: "Mensual", amount: "Café al mes", perDelivery: "Cada envío", perMonth: "/mes", priceNote: "Impuestos y envío incluidos, mismo precio en todo Japón" },
+    ja: { frequency: "配送回数", monthly: "月額", amount: "月間の配送量", perDelivery: "1回のお届け", perMonth: "/月", priceNote: "税込・全国一律送料込み", first: "初回のお支払い", firstNote: "初回200g分・お申し込み時に一度だけ（月額料金とは別）" },
+    en: { frequency: "Deliveries", monthly: "Monthly", amount: "Coffee per month", perDelivery: "Each delivery", perMonth: "/month", priceNote: "Tax and shipping included, same price nationwide", first: "First payment", firstNote: "For the first 200 g, paid once at sign-up (separate from the monthly price)" },
+    es: { frequency: "Envíos", monthly: "Mensual", amount: "Café al mes", perDelivery: "Cada envío", perMonth: "/mes", priceNote: "Impuestos y envío incluidos, mismo precio en todo Japón", first: "Primer pago", firstNote: "Por los primeros 200 g, una sola vez al suscribirse (aparte de la cuota mensual)" },
   },
   terms: {
-    ja: ["全国一律・送料込み（追加送料なし）", "配送回数は月1〜4回で途中変更できます", "スキップ自由", "解約自由", "最低継続回数なし", "国内配送のみ"],
-    en: ["One price nationwide, shipping included", "Change between 1 and 4 deliveries a month", "Skip whenever you like", "Cancel anytime", "No minimum term", "Delivery within Japan only"],
-    es: ["Precio único en todo Japón, envío incluido", "Cambia entre 1 y 4 envíos al mes", "Omite envíos libremente", "Cancela cuando quieras", "Sin permanencia mínima", "Solo envíos dentro de Japón"],
+    ja: ["日本国内のみのお届けで、全国一律・送料込みです（追加の送料はかかりません）", "配送回数は月1〜4回からお選びいただけ、ご契約後も変更できます", "月単位でスキップできます", "解約は、管理ページからいつでもお手続きいただけます", "最低継続回数・解約手数料はございません", "食品のため、お客様のご都合による返品・交換はお受けしておりません（破損・不足・誤りは、到着後7日以内にご連絡ください）"],
+    en: ["Delivery within Japan only, at one price throughout Japan with shipping included (no additional shipping charge)", "Choose 1–4 deliveries a month; you can change this after subscribing", "Skip a month when you wish", "Cancel at any time on your subscription page", "No minimum term and no cancellation fee", "As this is food, we cannot accept returns or exchanges for reasons of preference (please contact us within 7 days of arrival about damaged, missing or incorrect items)"],
+    es: ["Solo envíos dentro de Japón, con precio único en todo el país y envío incluido (sin gastos de envío adicionales)", "Elige de 1 a 4 envíos al mes; puedes cambiarlo después de suscribirte", "Puedes omitir un mes cuando lo necesites", "Cancela cuando quieras desde tu página de suscripción", "Sin permanencia mínima ni cargo por cancelación", "Al tratarse de alimentos, no aceptamos devoluciones ni cambios por preferencia (contáctanos en los 7 días posteriores a la llegada si algo llega dañado, incompleto o equivocado)"],
   },
-  // Billing and changes (CEO, 2026-11-18).
+  // Payment, changes and cancellation (CEO, 2026-11-18; the facts of src/lib/coffeeSubscriptionTerms.js).
   billing: {
-    ja: ["毎月、月初に月額を一括でお支払いいただきます", "配送回数の変更・スキップは、原則として翌月から反映されます", "変更の締切は前月25日です", "日割りの精算はありません"],
-    en: ["The monthly price is charged in full at the start of each month", "Changes to deliveries and skips normally apply from the following month", "The deadline for changes is the 25th of the previous month", "No pro-rated charges or refunds"],
-    es: ["El precio mensual se cobra completo al inicio de cada mes", "Los cambios de envíos y las omisiones se aplican normalmente desde el mes siguiente", "El plazo para cambios es el día 25 del mes anterior", "Sin cobros ni reembolsos prorrateados"],
+    ja: [
+      "初回分 3,000円（税込・送料込み）は、初回のお届け200g分として、お申し込み時にお支払いいただきます（月額料金とは別のお支払いです）",
+      "月額料金は、お申し込み日が1〜15日の場合は翌月から、16日以降の場合は翌々月から、毎月1日（日本時間9時）にその月のお届け分を先払いでお支払いいただきます",
+      "配送回数の変更・スキップは、前月25日までのお手続きで翌月分から、26日以降のお手続きは翌々月分から反映いたします",
+      "毎月1日のご請求（日本時間9時）より前に解約された場合、その月以降のご請求はございません（お支払い済みの月の分は予定どおりお届けし、日割りでの返金はございません）",
+    ],
+    en: [
+      "First payment: ¥3,000 (tax and shipping included) for the first 200 g delivery, paid at sign-up and separate from the monthly price",
+      "The monthly price is paid in advance for that month’s deliveries on the 1st of each month (9:00 JST), starting the following month for sign-ups on the 1st–15th, or the month after next for the 16th or later",
+      "Changes to deliveries and skips made by the 25th apply from the following month; those made on the 26th or later, from the month after next",
+      "Cancel before the charge at 9:00 JST on the 1st and that month and later months are not charged (months already paid are delivered as planned, with no pro-rated refunds)",
+    ],
+    es: [
+      "Primer pago: ¥3,000 (impuestos y envío incluidos) por el primer envío de 200 g, al suscribirte y aparte del precio mensual",
+      "El precio mensual se paga por adelantado el día 1 de cada mes (9:00, hora de Japón) por los envíos de ese mes, a partir del mes siguiente si te suscribes del 1 al 15, o del mes subsiguiente si lo haces el 16 o más tarde",
+      "Los cambios de envíos y las omisiones hechos hasta el día 25 se aplican desde el mes siguiente; los hechos a partir del día 26, desde el mes subsiguiente",
+      "Si cancelas antes del cobro de las 9:00 (hora de Japón) del día 1, ese mes y los siguientes no se cobran (los meses ya pagados se envían según lo previsto, sin reembolsos prorrateados)",
+    ],
   },
-  // Conditions still to be decided: announced when sign-ups reopen (never shown as fixed before that).
+  // Shown only while sign-ups are paused (SUBSCRIPTIONS_PAUSED); the confirmation screen states every condition.
   pendingNote: {
-    ja: "発送日、初月のお支払いと初回のお届け、解約時のお取り扱いは、受付再開時にご案内します。",
-    en: "Shipping days, the first month's payment and first delivery, and how cancellation is handled will be announced when sign-ups reopen.",
-    es: "Los días de envío, el pago y el primer envío del primer mes, y el tratamiento de la cancelación se anunciarán al reabrir las suscripciones.",
+    ja: "受付の再開時には、お申し込みの確認画面で、お支払い・発送・解約の条件をあらためてご案内いたします。",
+    en: "When sign-ups reopen, the confirmation screen will set out the payment, delivery and cancellation terms again before you subscribe.",
+    es: "Al reabrir las suscripciones, la pantalla de confirmación volverá a indicar las condiciones de pago, envío y cancelación antes de suscribirte.",
   },
   preference: {
     maxLength: 300,
@@ -143,31 +160,31 @@ export const COFFEE_SUBSCRIPTION = {
     },
     notes: {
       ja: [
-        "ご記入の内容は豆選びの参考にします。必ずご希望どおりになるとは限りません。",
-        "お名前・住所・電話番号・メールアドレス・カード番号などの個人情報や決済情報は書かないでください。",
-        "お申し込み後も変更できます。",
+        "ご記入の内容は、豆選びの参考にいたします。ご希望に沿えない場合もございます。",
+        "お名前・ご住所・電話番号・メールアドレス・カード番号などの個人情報や決済情報は、ご記入にならないようお願いいたします。",
+        "お申し込み後も、管理ページから変更できます。",
       ],
       en: [
-        "We use this as a guide when choosing your coffee; we cannot always match it exactly.",
-        "Please do not write personal or payment details (name, address, phone, email, card number).",
-        "You can change it after signing up.",
+        "We use this as a guide when choosing your coffee, though we cannot always follow it exactly.",
+        "Please do not include personal or payment details (name, address, phone number, email address, card number).",
+        "You can change it on your subscription page after signing up.",
       ],
       es: [
-        "Lo usamos como referencia al elegir tu café; no siempre podremos ajustarnos exactamente.",
-        "No escribas datos personales ni de pago (nombre, dirección, teléfono, correo, tarjeta).",
-        "Puedes cambiarlo después de suscribirte.",
+        "Lo tendremos en cuenta al elegir tu café, aunque no siempre podremos seguirlo con exactitud.",
+        "No incluyas datos personales ni de pago (nombre, dirección, teléfono, correo electrónico, número de tarjeta).",
+        "Puedes cambiarlo en tu página de suscripción después de suscribirte.",
       ],
     },
   },
   // For subscribers. Not available yet: shown as information only, never as working buttons.
   manage: {
-    title: { ja: "ご契約後の変更", en: "After you subscribe", es: "Después de suscribirte" },
+    title: { ja: "ご契約後のお手続き", en: "After you subscribe", es: "Después de suscribirte" },
     items: {
       ja: ["配送回数の変更", "スキップ", "解約"],
       en: ["Change deliveries per month", "Skip a delivery", "Cancel"],
       es: ["Cambiar envíos al mes", "Omitir un envío", "Cancelar"],
     },
-    unavailable: { ja: "受付再開時にご案内します（準備中）", en: "Available when sign-ups reopen (in preparation)", es: "Disponible al reabrir las suscripciones (en preparación)" },
+    unavailable: { ja: "受付再開時にご案内いたします（準備中）", en: "Available when sign-ups reopen (in preparation)", es: "Disponible al reabrir las suscripciones (en preparación)" },
     // While sign-ups are open: each item is done on the subscriber's own page (/subscription/manage).
     available: { ja: "管理ページから", en: "On your subscription page", es: "En tu página de suscripción" },
     link: { ja: "ご契約中の方：定期便の管理ページ", en: "Subscribers: your subscription page", es: "Suscriptores: tu página de suscripción" },

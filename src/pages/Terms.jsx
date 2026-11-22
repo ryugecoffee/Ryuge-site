@@ -18,6 +18,10 @@ export default function Terms({ lang = "ja" }) {
           body: "本サイトの内容は、予告なく変更・修正・削除される場合があります。掲載情報の正確性には努めますが、完全性を保証するものではありません。",
         },
         {
+          heading: "定期購入（珈琲の定期便）",
+          body: "珈琲の定期便は、解約のお手続きをいただくまで毎月継続する定期購入です。お支払い、発送、配送回数の変更・スキップ、解約および返金の条件は、お申し込み時の確認画面、「特定商取引法に基づく表記」および「返品・返金ポリシー」に記載のとおりです。",
+        },
+        {
           heading: "免責事項",
           body: "本サイトの利用により生じた損害について、当方に故意または重大な過失がある場合を除き、責任を負わないものとします。",
         },
@@ -50,6 +54,10 @@ export default function Terms({ lang = "ja" }) {
           body: "The content of this website may be changed, revised, or removed without prior notice. We strive for accuracy, but do not guarantee completeness.",
         },
         {
+          heading: "Coffee Subscription",
+          body: "The Coffee Subscription is a recurring purchase that continues every month until you cancel. The terms for payment, delivery, changes and skips, cancellation and refunds are as set out on the confirmation screen at sign-up, in the Legal Notice and in the Refund & Cancellation Policy.",
+        },
+        {
           heading: "Disclaimer",
           body: "We are not liable for damages arising from the use of this website except in cases of willful misconduct or gross negligence.",
         },
@@ -80,6 +88,10 @@ export default function Terms({ lang = "ja" }) {
         {
           heading: "Contenido del Sitio",
           body: "El contenido de este sitio puede cambiarse, revisarse o eliminarse sin previo aviso. Procuramos exactitud, pero no garantizamos integridad total.",
+        },
+        {
+          heading: "Suscripción de café",
+          body: "La Suscripción de café es una compra periódica que continúa cada mes hasta que usted la cancele. Las condiciones de pago, envío, cambios y omisiones, cancelación y reembolsos son las que figuran en la pantalla de confirmación al suscribirse, en el Aviso Legal y en la Política de Reembolsos y Cancelaciones.",
         },
         {
           heading: "Exención de Responsabilidad",

@@ -149,9 +149,11 @@ async function resumeOrder(db, { orderId, requestId, actor }, { now = Date.now()
 // The mail claimed by shipOrder, sent after its transaction (or a failed one sent again by staff).
 async function sendShippedMail(db, { orderId, to, order }, sendMail, log) {
   const n = await productNames();
-  const items = (order.items || []).map((i) => ({ name: n[i.id] || i.id, quantity: i.quantity }));
+  const { CATALOG } = require("./catalog");
+  const items = (order.items || []).map((i) => ({ name: n[i.id] || i.id, quantity: i.quantity, kind: CATALOG[i.id]?.kind || "other" }));
   const f = order.fulfillment || {};
-  const message = notice.orderShippedMail({ to, name: order.customer?.name, ref: ref(orderId), items, method: f.method, trackingNumber: f.trackingNumber,
+  // The day it was marked shipped (a mail sent again by staff keeps that day).
+  const message = notice.orderShippedMail({ to, items, method: f.method, trackingNumber: f.trackingNumber, shippedAt: f.shippedAt || Date.now(),
     english: String(order.countryCode || "JP").toUpperCase() !== "JP" });
   return notice.deliver(db, `order_${orderId}`, message, sendMail, log);
 }

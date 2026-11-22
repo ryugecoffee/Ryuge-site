@@ -22,6 +22,7 @@ const plan = require("./coffee-subscription-plan");
 const records = require("./coffee-subscription-records");
 const ops = require("./coffee-subscription-stripe");
 const checkout = require("./coffee-subscription-checkout");
+const subscriptionMail = require("./coffee-subscription-mail");
 const { normalizePreference, preferenceIssues } = require("./coffee-subscription-preference");
 const { CALENDAR } = require("./coffee-subscription-calendar");
 const { createRateLimiter, clientKey } = require("./rate-limit");
@@ -52,7 +53,6 @@ class AccountError extends Error {
 
 const hash = (value) => crypto.createHash("sha256").update(String(value)).digest("hex");
 const newToken = () => crypto.randomBytes(32).toString("base64url");
-const monthText = (m) => { const [y, mm] = String(m || "").split("-").map(Number); return y && mm ? `${y}年${mm}月` : String(m || ""); };
 const contractRef = (id) => `SUB-${String(id).replace(/^sub_/, "").slice(-6).toUpperCase()}`;
 const toMs = (v) => (v?.toMillis ? v.toMillis() : v instanceof Date ? v.getTime() : Number(v || 0));
 
@@ -380,12 +380,15 @@ function createRouter({ getDb, getStripe, sendMail, env = process.env, clock = D
     const result = await once({ db, auth, requestId: requestIdOf(req.body), action: "cancel", now, run: async () => {
       const r = await ops.cancelSubscription({ db, stripe, subscriptionId: auth.subscriptionId, now, expectKey: key });
       return { ok: true, action: r.action, endsAt: r.cancelAt ? r.cancelAt * 1000 : now, firstUnchargedMonth: r.firstUnchargedMonth,
-        refundProposal: r.refundProposal ? { amount: r.refundProposal.amount, status: r.refundProposal.status } : null };
+        refundProposal: r.refundProposal ? { amount: r.refundProposal.amount, status: r.refundProposal.status } : null,
+        ...(r.duplicate ? { duplicate: true } : {}) };
     } });
-    if (!result.repeated) {
-      await mail({ to: auth.contract.email, subject: "【龍華珈琲】定期便の解約を受け付けました",
-        text: `定期便の解約を受け付けました。${monthText(result.firstUnchargedMonth)}以降のご請求はありません。${result.refundProposal
-          ? `\n初回の200gは発送前のため発送を取りやめ、初回分${result.refundProposal.amount.toLocaleString("ja-JP")}円を全額、お支払いのカードへ返金します（${plan.REFUND_BUSINESS_DAYS}営業日以内に手続きします）。` : ""}\n\n龍華珈琲 / Ryuge Coffee` });
+    // One mail per cancellation: not for a repeated request, nor when the contract was already cancelled (e.g. by email).
+    if (!result.repeated && !result.duplicate) {
+      const upcoming = await subscriptionMail.upcomingDeliveries(db, auth.subscriptionId).catch(() => null);
+      await mail(subscriptionMail.cancelMail({ to: auth.contract.email, subscriptionId: auth.subscriptionId, acceptedAt: now,
+        firstUnchargedMonth: result.firstUnchargedMonth, voidedMonth: result.action === "VOID_AND_CANCEL_NOW" ? plan.monthOf(now) : null,
+        upcoming, firstRefund: result.refundProposal?.amount || 0 }));
       // The shop is told at once, so the refund (by hand, after the CEO's check) is made within the stated days. Contract
       // number and amount only.
       if (result.refundProposal) {

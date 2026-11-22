@@ -92,8 +92,14 @@ test("the mail: the plan, the start, the link to the customer's page; no address
   await deliver(db, e.paid, mails);
   const m = mails[0];
   assert.equal(m.to, "hanako@example.com");
-  assert.match(m.subject, /珈琲の定期便のお申し込みを承りました/);
-  for (const part of ["月3回", "8,550円", "2026年12月1日", "毎月 5日・15日・25日", "3,000円", "https://ryuge.biz/subscription/manage", "前月25日"]) {
+  // The CEO's wording (2026-11-23), with the contract's own figures.
+  assert.equal(m.subject, "【龍華珈琲】定期便のお申し込みを承りました");
+  for (const part of ["このたびは、龍華珈琲の定期便にお申し込みいただき、誠にありがとうございます。", "お申し込みと初回のお支払いが完了いたしました。",
+    "【お申し込み内容】", "・お届け内容：珈琲豆2種類・各100g", "・お届け回数：月3回", "・初回のお支払い：3,000円（税込・送料込み／決済済み）",
+    "・初回発送：お支払い完了後、3営業日以内", "・月額料金：8,550円（税込・送料込み）", "・月額のお支払い開始：2026年12月1日",
+    "初回のお支払いと、毎月のお支払いは別のものです。月額料金は上記の開始日から、毎月1日に自動決済されます。",
+    "【ご契約の管理】", "https://ryuge.biz/subscription/manage", "最低継続回数や解約手数料はございません。",
+    "詳しい条件は、お申し込み時の確認内容および当店の特定商取引法に基づく表記をご確認ください。", "龍華珈琲 / Ryuge Coffee"]) {
     assert.ok(m.text.includes(part), part);
   }
   for (const secret of ["鎌倉", "小町", "248-0006", "テスト 花子"]) assert.ok(!m.text.includes(secret), secret);

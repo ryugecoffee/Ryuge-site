@@ -226,7 +226,11 @@ test("email cancellation: arrived before 09:00 on the 1st, entered after the cha
   assert.deepEqual(mails.map((m) => m.to).sort(), [`${sub}@example.com`, "staff@example.com"].sort());
   const notice = mails.find((m) => m.to === "staff@example.com").text;
   assert.doesNotMatch(notice, /example\.com|090|100-0001|東京都/);
-  assert.match(mails.find((m) => m.to !== "staff@example.com").text, /2026年12月分のご請求（5,800円）は.*全額.*返金します（7営業日以内/);
+  const customerMail = mails.find((m) => m.to !== "staff@example.com");
+  assert.equal(customerMail.subject, "【龍華珈琲】定期便の解約を承りました");
+  assert.match(customerMail.text, /2026年12月分のご請求（5,800円）は、ご依頼が毎月1日9時のご請求より前に届いていたため、全額返金いたします。この月の発送はいたしません。/);
+  assert.match(customerMail.text, /解約受付から7営業日以内に手続きいたします/);
+  assert.match(customerMail.text, /・今後のお届け：ございません\n/, "the stopped month is not listed as coming");
   // Stripe: only "end at the next 1st" (no refund, no new charge asked of it).
   assert.ok(stripe.calls.every(([kind, at]) => kind === "update" && at === plan.billingStartUnix("2027-01")));
   const kept = (await db.collection(ec.REQUESTS).where("subscriptionId", "==", sub).get()).docs.map((d) => d.data());
@@ -332,9 +336,9 @@ test("email cancellation: before 09:00, entered after one of the month's deliver
   assert.deepEqual([await ships(1), await ships(2)], ["shipped", "cancelled_before_shipping"]);
   assert.deepEqual(await stock(a), { ready: 3, held: 0, sold: 2 }, "nothing taken back from the parcel that left, nothing released twice");
   const customer = mails.find((m) => m.to !== "staff@example.com").text;
-  assert.match(customer, /2026年12月分のご請求（5,800円）は.*全額.*返金します/);
-  assert.match(customer, /すでに発送した1回分はそのままお受け取りください（お支払い・返品は不要です）。まだ発送していない分は発送しません。/);
-  assert.doesNotMatch(customer, /この月の発送は行いません/, "never says nothing ships when one already did");
+  assert.match(customer, /2026年12月分のご請求（5,800円）は、ご依頼が毎月1日9時のご請求より前に届いていたため、全額返金いたします。/);
+  assert.match(customer, /すでに発送した1回分は、そのままお受け取りください（お支払い・ご返品は不要です）。まだ発送していない分は発送いたしません。/);
+  assert.doesNotMatch(customer, /この月の発送はいたしません/, "never says nothing ships when one already did");
   assert.match(mails.find((m) => m.to === "staff@example.com").text, /すでに発送済み 1件/);
   const kept = (await db.collection(ec.REQUESTS).doc(`req-${tag}-partial`).get()).data();
   assert.deepEqual(kept.senderCheck, ["fromAddressMatches", "spfDkimDmarcPass", "dkimDomainAligned"], "how the sender was checked is recorded");

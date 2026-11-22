@@ -4229,6 +4229,22 @@ html[lang="es"] .story-body {
 .subm-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
 .subm-list li { display: grid; grid-template-columns: 1fr auto auto; gap: 14px; padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); font-size: 0.84rem; color: rgba(255, 255, 255, 0.8); }
 .subm-confirm { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 8px; border: 1px solid rgba(217, 130, 111, 0.45); background: rgba(217, 130, 111, 0.06); }
+/* The payment summary on the confirmation screen, the Stripe "trial" note, the cancellation summary (2026-11-23) */
+.subm-pay { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.subm-pay-item { display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.03); }
+.subm-pay-label { font-size: 0.76rem; letter-spacing: 0.06em; color: rgba(255, 255, 255, 0.6); }
+.subm-pay-item strong { font-size: 1.25rem; font-weight: 500; letter-spacing: 0.02em; color: #f4efe6; }
+.subm-pay-item strong em { font-style: normal; font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); margin-left: 2px; }
+.subm-pay-item small { font-size: 0.76rem; line-height: 1.6; color: rgba(255, 255, 255, 0.55); }
+.subm-callout { padding: 14px 16px; border-radius: 8px; border: 1px solid rgba(244, 239, 230, 0.25); background: rgba(244, 239, 230, 0.05); }
+.subm-callout strong { display: block; margin-bottom: 6px; font-size: 0.86rem; font-weight: 500; color: rgba(255, 255, 255, 0.9); }
+.subm-callout p { margin: 0; font-size: 0.84rem; line-height: 1.8; color: rgba(255, 255, 255, 0.75); }
+.subm-summary { margin: 0; display: flex; flex-direction: column; }
+.subm-summary div { display: grid; grid-template-columns: 9.5em 1fr; gap: 14px; padding: 10px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.07); }
+.subm-summary dt { font-size: 0.8rem; letter-spacing: 0.04em; color: rgba(255, 255, 255, 0.55); }
+.subm-summary dd { margin: 0; font-size: 0.9rem; line-height: 1.75; color: rgba(255, 255, 255, 0.88); }
+.subm-done { display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 8px; border: 1px solid rgba(120, 190, 140, 0.35); background: rgba(120, 190, 140, 0.07); }
+.subm-done h3 { margin: 0; font-size: 1rem; font-weight: 500; color: #cfe9d6; }
 @media (max-width: 640px) {
   .subm-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .subm-terms .legal-row { grid-template-columns: 1fr; gap: 4px; }
@@ -4236,6 +4252,10 @@ html[lang="es"] .story-body {
   .subm-primary { width: 100%; }
   .subm-list li { grid-template-columns: 1fr auto; }
   .subm-list li span:last-child { grid-column: 1 / -1; color: rgba(255, 255, 255, 0.55); }
+  .subm-pay { grid-template-columns: 1fr; }
+  .subm-summary div { grid-template-columns: 1fr; gap: 2px; }
+  .subm-facts div { flex-direction: column; gap: 2px; }
+  .subm-facts dd { text-align: left; }
 }
 
 /* 珈琲の定期便 ④: the shop's shipping page (/admin/subscription-shipping) */

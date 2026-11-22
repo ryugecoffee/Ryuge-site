@@ -19,6 +19,7 @@
 // The registered address is mailed the confirmation; the shop is told of any refund proposal (contract number, amounts).
 
 const plan = require("./coffee-subscription-plan");
+const subscriptionMail = require("./coffee-subscription-mail");
 const records = require("./coffee-subscription-records");
 const ops = require("./coffee-subscription-stripe");
 
@@ -142,7 +143,10 @@ async function confirm({ db, stripe, body, actor, now, sendMail = async () => {}
   }
   if (!result.alreadyCancelled) {
     try {
-      await sendMail({ to: records.normalizeEmail(contract.email), subject: "【龍華珈琲】定期便の解約を受け付けました", text: `${result.customerText}\n\n龍華珈琲 / Ryuge Coffee` });
+      const upcoming = await subscriptionMail.upcomingDeliveries(db, id).catch(() => null);
+      await sendMail(subscriptionMail.cancelMail({ to: records.normalizeEmail(contract.email), subscriptionId: id, acceptedAt: now, receivedAt: input.receivedAt,
+        firstUnchargedMonth: result.firstUnchargedMonth, voidedMonth: result.action === "VOID_AND_CANCEL_NOW" ? plan.monthOf(now) : null,
+        upcoming, firstRefund: result.firstRefund, monthRefund: result.monthRefund }));
     } catch (error) { log.error("Email cancellation: customer mail failed:", String(error?.message || "").slice(0, 120)); }
     const staff = staffEmails(env);
     if (staff.length && (result.firstRefund || result.monthRefund)) {

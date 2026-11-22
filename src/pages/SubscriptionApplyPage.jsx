@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { SUBSCRIPTIONS_PAUSED, SUBSCRIPTIONS_PAUSED_TEXT } from "../productData";
 import { PREFERENCE_ISSUE_TEXT, PREFERENCE_MAX_LENGTH, normalizePreference, preferenceIssues } from "../lib/subscriptionPreference";
 import { FIRST_PRICE, MONTHLY_PRICES, errorText, monthLabel, signUp, startMonthFor, yen } from "../lib/coffeeSubscriptionAccount";
-import { FREQUENCIES, LEGAL_TEXT_REVIEWED, TERMS_JA, confirmationRows } from "../lib/coffeeSubscriptionTerms";
+import { FREQUENCIES, LEGAL_TEXT_REVIEWED, TERMS_JA, confirmationRows, paymentSummary } from "../lib/coffeeSubscriptionTerms";
 
 // 珈琲の定期便: the final confirmation screen before payment (特定商取引法 第12条の6, 定期購入). Everything the customer
 // agrees to is on this one screen, next to the button: what and how much, the first and the monthly price, when and how
@@ -21,6 +21,7 @@ export default function SubscriptionApplyPage() {
   const [state, setState] = useState({ busy: false, message: "", changed: false });
   const issues = preferenceIssues(preference);
   const rows = useMemo(() => confirmationRows(frequency, startMonth), [frequency, startMonth]);
+  const pay = paymentSummary(frequency, startMonth);
   const closed = SUBSCRIPTIONS_PAUSED;
 
   useEffect(() => {
@@ -43,7 +44,7 @@ export default function SubscriptionApplyPage() {
     if (r.body.startMonth !== startMonth) {
       setStartMonth(r.body.startMonth);
       setAgreed(false);
-      setState({ busy: false, message: "日付が変わったため、2回目のご請求日が変わりました。内容をもう一度ご確認ください。", changed: true });
+      setState({ busy: false, message: "日付が変わったため、月額のお支払い開始日が変わりました。お手数ですが、内容をもう一度ご確認ください。", changed: true });
       return;
     }
     window.location.assign(r.body.url);
@@ -55,7 +56,7 @@ export default function SubscriptionApplyPage() {
         <form className="legal-document subm" onSubmit={submit}>
           <p className="legal-eyebrow">Coffee Subscription</p>
           <h1>珈琲の定期便 お申し込み内容の確認</h1>
-          <p className="legal-lead">定期購入のお申し込みです。以下の内容をご確認のうえ、決済画面へお進みください。決済画面（Stripe）でお届け先とカードを入力し、最後のボタン（Stripe の表示は「決済とトライアルの開始」）を押した時点でお申し込みが確定します。{TERMS_JA.stripeTrialLabel}</p>
+          <p className="legal-lead">定期購入のお申し込みです。以下の内容をご確認のうえ、決済画面へお進みください。決済画面（Stripe）でお届け先とカード情報をご入力いただき、最後のボタンを押した時点でお申し込みが確定いたします。</p>
           {!LEGAL_TEXT_REVIEWED && <p className="subm-note">※ 表示内容は確認中の暫定版です。</p>}
           {closed && <p className="subm-alert" role="status">{SUBSCRIPTIONS_PAUSED_TEXT.ja}</p>}
 
@@ -70,6 +71,13 @@ export default function SubscriptionApplyPage() {
               ))}
             </div>
           </fieldset>
+
+          <div className="subm-pay" aria-label="お支払いの概要">
+            <div className="subm-pay-item"><span className="subm-pay-label">{pay.today.label}</span><strong>{pay.today.amount}</strong><small>{pay.today.note}</small></div>
+            <div className="subm-pay-item"><span className="subm-pay-label">{pay.monthly.label}</span><strong>{pay.monthly.amount}<em>／月</em></strong><small>{pay.monthly.note}</small></div>
+            <div className="subm-pay-item"><span className="subm-pay-label">{pay.start.label}</span><strong>{pay.start.value}</strong><small>{pay.start.note}</small></div>
+          </div>
+          <p className="subm-text">初回のお支払いと、毎月のお支払いは別のものです。最低継続回数・解約手数料はございません。</p>
 
           <dl className="legal-table subm-terms" aria-label="お申し込み内容">
             {rows.map(([label, value]) => (
@@ -89,15 +97,20 @@ export default function SubscriptionApplyPage() {
             {issues.map((i) => <small key={i} className="subm-error">{PREFERENCE_ISSUE_TEXT.ja?.[i] || i}</small>)}
           </label>
 
+          <div className="subm-callout" role="note">
+            <strong>決済画面の「無料トライアル」表示について</strong>
+            <p>{TERMS_JA.stripeTrialLabel}決済画面の最後のボタンは「決済とトライアルの開始」と表示されます。</p>
+          </div>
+
           <label className="subm-agree">
             <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} disabled={closed} />
-            <span>定期購入であること、初回 {yen(FIRST_PRICE)}、{monthLabel(startMonth)}1日から毎月 {yen(MONTHLY_PRICES[frequency])} のお支払い、変更・解約の方法を確認しました。</span>
+            <span>定期購入であること、本日の初回分 {yen(FIRST_PRICE)}、{monthLabel(startMonth)}1日から毎月 {yen(MONTHLY_PRICES[frequency])} のお支払い、変更・解約・返金の条件を確認しました。</span>
           </label>
           {state.message && <p className={state.changed ? "subm-alert" : "subm-error"} role="alert">{state.message}</p>}
           <button type="submit" className="subm-primary" disabled={closed || !agreed || issues.length > 0 || state.busy}>
             {closed ? "現在、お申し込みを休止しています" : state.busy ? "決済画面を準備しています…" : "決済画面へ進む（まだ確定しません）"}
           </button>
-          <p className="subm-note">お支払いは Stripe の決済画面で行います。決済画面でも、ご請求の内容が表示されます。</p>
+          <p className="subm-note">お支払いは Stripe の決済画面で承ります。決済画面にも、ご請求の内容が表示されます。</p>
           <p className="subm-note"><Link to="/legal" className="text-link">特定商取引法に基づく表記</Link>・<Link to="/refund" className="text-link">返品・返金について</Link>・<Link to="/subscription/manage" className="text-link">定期便の管理ページ</Link></p>
         </form>
       </main>
