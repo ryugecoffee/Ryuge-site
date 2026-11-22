@@ -50,7 +50,11 @@ test("tampered or unknown input refused; the browser's price, shipping and categ
   assert.deepEqual([old.shipping, old.total], [550, 4500 + 550]);
   assert.throws(() => quoteOrder([{ id: "enma-jimma", quantity: 16 }], { prefecture: "沖縄県" }), (e) => e instanceof QuoteError && e.code === "DOMESTIC_CONTACT_LARGE_ORDER" && e.contact === true);
   assert.throws(() => quoteOrder([{ id: "enma-jimma", quantity: 2.5 }], { prefecture: "東京都" }), /INVALID_ITEMS/);
-  assert.throws(() => quoteOrder([{ id: "enma-zen-dark-roast", quantity: 3 }], { prefecture: "東京都" }), /PROMO_LIMIT/, "promo limit unchanged");
+  // The promotional Brazil is sold out (CEO 2026-11-22): refused as not on sale. The promo limit is unchanged for when
+  // it is sold again (tested on a copy of the catalogue with it on sale).
+  assert.throws(() => quoteOrder([{ id: "enma-zen-dark-roast", quantity: 1 }], { prefecture: "東京都" }), /PRODUCT_NOT_AVAILABLE/, "sold out");
+  const onSale = { ...CATALOG, "enma-zen-dark-roast": { ...CATALOG["enma-zen-dark-roast"], availableForSale: true } };
+  assert.throws(() => quoteOrder([{ id: "enma-zen-dark-roast", quantity: 3 }], { prefecture: "東京都" }, undefined, onSale), /PROMO_LIMIT/, "promo limit unchanged");
 });
 
 test("which products go by Letter Pack Light: exactly the 100 g bean bags of the catalogue", () => {
