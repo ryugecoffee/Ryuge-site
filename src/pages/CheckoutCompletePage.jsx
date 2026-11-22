@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { PAYMENT_API_BASE } from "../lib/paymentEnv";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { trackPurchase } from "../lib/analytics";
+import { addressText, domesticAddressLines } from "../lib/addressFormat";
 
 const UI = {
   ja: {
@@ -122,10 +123,12 @@ export default function CheckoutCompletePage() {
   const countryName   = source.countryName   || "";
   const isInternational = source.isInternational || (countryCode && countryCode !== "JP");
 
-  // 国内 / 海外で住所フォーマットを切り替え
-  const fullAddress = isInternational
-    ? [address, city, stateProvince, postalCode, countryName || countryCode].filter(Boolean).join(", ")
-    : [postalCode, prefecture, address].filter(Boolean).join(" ");
+  // The address put together once (src/lib/addressFormat.js): 〒 / prefecture + line 1 / building, or one line abroad.
+  // Pages opened from an older checkout have only `address` (line 1 and line 2 together).
+  const parts = { countryCode: isInternational ? countryCode : "JP", postalCode, prefecture, city, stateProvince, countryName,
+    ...(source.line1 !== undefined ? { line1: source.line1, line2: source.line2 || "" } : { address }) };
+  const domesticLines = isInternational ? [] : domesticAddressLines(parts);
+  const fullAddress = isInternational ? addressText(parts) : domesticLines.join(" ");
 
   const mapUrl = fullAddress
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`
@@ -486,9 +489,8 @@ export default function CheckoutCompletePage() {
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {!isInternational && postalCode && <p style={{ margin: 0 }}>〒{postalCode}</p>}
               {!isInternational
-                ? <p style={{ margin: 0 }}>{prefecture}　{address}</p>
+                ? domesticLines.map((line) => <p key={line} style={{ margin: 0 }}>{line}</p>)
                 : <p style={{ margin: 0, whiteSpace: "pre-line" }}>{fullAddress}</p>
               }
 

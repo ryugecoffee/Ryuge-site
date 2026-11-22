@@ -14,6 +14,7 @@ const { quoteOrder, QuoteError, COUPONS, CONTACT_EMAIL, PROMO_MAX_BAGS } = requi
 const { promoKeys } = require("./promo");
 const orders = require("./orders");
 const initialStock = require("./initial-stock");
+const { orderNotice } = require("./order-notice");
 const refunds = require("./refunds");
 const factoryRefundApi = require("./factory-refund-api");
 const coffeeSubscription = require("./coffee-subscription-records");
@@ -715,17 +716,27 @@ orderRateSweep.unref?.();
 app.post("/order-complete", orderRateLimit, async (req, res) => {
   try {
     const {
-      items, name, email, postalCode, address, prefecture,
+      items, name, email, postalCode, address, prefecture, line1, line2,
       countryCode = "JP", countryName,
       city, stateProvince, phone,
-      couponCode,
+      couponCode, paymentIntentId, shippingMethod,
       total, shipping, lang,
     } = req.body;
 
-    // 国内・海外でアドレスフォーマットを分ける
-    const fullAddress = countryCode && countryCode !== "JP"
-      ? [address, city, stateProvince, postalCode, countryName || countryCode].filter(Boolean).join(", ")
-      : [postalCode, prefecture, address].filter(Boolean).join(" ");
+    // The address put together once (src/lib/addressFormat.js): 〒 / prefecture + line 1 / building in Japan (each
+    // part once), the earlier one line abroad. Older storefront builds send only `address`.
+    let fullAddress;
+    try {
+      const { addressText } = await import("../src/lib/addressFormat.js");
+      fullAddress = addressText({ countryCode: countryCode || "JP", postalCode, prefecture, city, stateProvince, countryName,
+        ...(typeof line1 === "string" ? { line1, line2: typeof line2 === "string" ? line2 : "" } : { address }) });
+    } catch (error) {
+      // Never lose the mails over the formatting: the earlier one-line form.
+      console.error("order-complete address format:", error.message);
+      fullAddress = countryCode && countryCode !== "JP"
+        ? [address, city, stateProvince, postalCode, countryName || countryCode].filter(Boolean).join(", ")
+        : [postalCode, address].filter(Boolean).join(" ");
+    }
 
     try {
       await sendUnifiedReceiptEmail("order", {
@@ -743,14 +754,9 @@ app.post("/order-complete", orderRateLimit, async (req, res) => {
     }
 
     try {
-      await sendAdminNotificationEmail("order", {
-        name,
-        email,
-        address: fullAddress,
-        items: Array.isArray(items) ? items : [],
-        total,
-        shipping,
-      });
+      // The shop's mail, in the order staff read it (server/order-notice.js); the phone only here, never in a list.
+      const notice = orderNotice({ paymentIntentId, name, email, phone, addressText: fullAddress, items, shipping, total, couponCode, shippingMethod });
+      await transporter.sendMail({ from: `"Ryuge Coffee" <${process.env.EMAIL_USER}>`, to: "ryugecoffee@gmail.com, ryuka2452533@icloud.com", ...notice });
     } catch (mailErr) {
       console.error("order-complete admin mail error:", mailErr);
     }

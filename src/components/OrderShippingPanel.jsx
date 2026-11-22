@@ -3,6 +3,7 @@ import {
   MAIL_TEXT, METHOD_TEXT, ORDER_BLOCKER_TEXT, ORDER_HOLD_TEXT, ORDER_METHODS, ORDER_STATUS_TEXT, ORDER_WARNING_TEXT, PAYMENT_TEXT,
   beanName, dayLabel, errorText, newRequestId, shippingApi,
 } from "../lib/subscriptionShippingAdmin";
+import { PHONE_MISSING, addressText } from "../lib/addressFormat";
 
 // Store orders (one-time purchases) on the shop's shipping page: 新規 → 発送準備中 → 発送済み (or 保留). Stock is not
 // touched here (it was settled when the order was paid). 発送済み mails the customer once (the server makes sure).
@@ -92,8 +93,12 @@ function Order({ o, onChanged, onSignedOut }) {
 
       {!blocked && (address ? (
         <div className="ship-label" role="region" aria-label="宛名">
-          <p className="subm-text">〒{address.address.postalCode}<br />{address.address.state}{address.address.city}{address.address.line1}{address.address.line2 ? ` ${address.address.line2}` : ""}
-            {address.countryCode && address.countryCode !== "JP" ? ` ${address.countryCode}` : ""}<br />{address.name} 様<br />{address.phone}</p>
+          {/* The address put together once (src/lib/addressFormat.js); a missing phone reads 未登録, never made up. */}
+          <p className="subm-text" style={{ whiteSpace: "pre-line" }}>{addressText({ countryCode: address.countryCode || "JP", postalCode: address.address.postalCode,
+            prefecture: address.address.state, city: address.address.city, stateProvince: address.address.state, countryName: address.address.country,
+            line1: [address.countryCode && address.countryCode !== "JP" ? "" : address.address.city, address.address.line1].filter(Boolean).join(""),
+            line2: address.address.line2 || "" })}</p>
+          <p className="subm-text">{address.name} 様<br />電話番号：{address.phone || PHONE_MISSING.ja}</p>
           <button className="subm-secondary" type="button" onClick={() => setAddress(null)}>宛名を閉じる</button>
         </div>
       ) : o.status !== "shipped" && <button className="subm-secondary" type="button" disabled={state.busy} onClick={showAddress}>宛名を表示</button>)}
