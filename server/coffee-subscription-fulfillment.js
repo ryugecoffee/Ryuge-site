@@ -375,6 +375,18 @@ async function shippingLabel(db, shipmentId) {
     shippingMethod: s.shippingMethod || SHIPPING_METHOD, shipTo: s.shipTo };
 }
 
+// Shipped, then the claimed mail sent: the one way a delivery is marked shipped (the shop's page and Factory alike).
+async function shipShipmentAndNotify(db, { shipmentId, requestId, actor, trackingNumber = null, method }, { sendMail, log = console, now = Date.now(), onMailFailed = null } = {}) {
+  const r = await shipShipment(db, { shipmentId, requestId, actor, trackingNumber, method }, { now });
+  if (!r.mail) return r;
+  const { mail, ...out } = r;
+  const mailStatus = await sendSubscriptionShippedMail(db, { shipmentId: r.shipmentId, ...mail, beans: r.beans || [] }, sendMail, log);
+  if (mailStatus === "failed" && onMailFailed) {
+    await Promise.resolve(onMailFailed({ kind: "subscription", id: r.shipmentId, ref: contractRef(String(r.shipmentId).replace(/_(first|\d{4}-\d{2}_[1-4])$/, "")) })).catch(() => {});
+  }
+  return { ...out, mailStatus };
+}
+
 // The customer's "shipped" mail for a delivery (claimed by shipShipment, so sent once).
 async function sendSubscriptionShippedMail(db, { shipmentId, to, kind, month, seq, method, trackingNumber, beans }, sendMail, log = console) {
   const { productNames } = require("./order-fulfillment");
@@ -387,7 +399,7 @@ async function sendSubscriptionShippedMail(db, { shipmentId, to, kind, month, se
 // ---- Router (signed-in staff only; the actor is the server's record of the session, never taken from the request) ----
 const enabled = (env) => staffAuth.configFrom(env).enabled;
 
-function createRouter({ getDb, getStripe = () => null, notify = async () => {}, sendMail = async () => {}, env = process.env, clock = Date.now, log = console,
+function createRouter({ getDb, getStripe = () => null, notify = async () => {}, sendMail = async () => {}, onMailFailed = null, env = process.env, clock = Date.now, log = console,
   limiter = createRateLimiter({ limit: 60, windowMs: 60 * 1000 }), loginLimiter } = {}) {
   const router = express.Router();
   router.use((req, res, next) => {
@@ -427,12 +439,9 @@ function createRouter({ getDb, getStripe = () => null, notify = async () => {}, 
     return label;
   }));
   router.post("/prepare", handle((b, _r, actor) => prepareShipment(getDb(), { shipmentId: b.shipmentId, skus: b.skus, requestId: b.requestId, actor }, { now: clock() })));
-  router.post("/ship", handle(async (b, _r, actor) => {
-    const r = await shipShipment(getDb(), { shipmentId: b.shipmentId, requestId: b.requestId, trackingNumber: b.trackingNumber, method: b.method, actor }, { now: clock() });
-    if (!r.mail) return r;
-    const { mail, ...out } = r;
-    return { ...out, mailStatus: await sendSubscriptionShippedMail(getDb(), { shipmentId: r.shipmentId, ...mail, beans: r.beans || [] }, sendMail, log) };
-  }));
+  router.post("/ship", handle((b, _r, actor) => shipShipmentAndNotify(getDb(),
+    { shipmentId: b.shipmentId, requestId: b.requestId, trackingNumber: b.trackingNumber, method: b.method, actor },
+    { sendMail, log, now: clock(), onMailFailed })));
   // A failed "shipped" mail, sent again by staff (only from "failed", once).
   router.post("/resend-mail", handle(async (b) => {
     const snap = SHIPMENT_ID_RE.test(String(b.shipmentId || "")) ? await getDb().collection(records.SHIPMENTS).doc(b.shipmentId).get() : null;
@@ -449,9 +458,9 @@ function createRouter({ getDb, getStripe = () => null, notify = async () => {}, 
   // module, because it builds on coffee-subscription-stripe.js, which uses this one).
   require("./coffee-subscription-email-cancel").addRoutes(router, { getDb, getStripe, sendMail, env, clock, log });
   // Store orders on the same page, behind the same staff sign-in (server/order-fulfillment.js).
-  require("./order-fulfillment").addRoutes(router, { getDb, sendMail, clock, log });
+  require("./order-fulfillment").addRoutes(router, { getDb, sendMail, clock, log, onMailFailed });
   return router;
 }
 
-module.exports = { PATH, PAGE_PATH, OPS, LABEL_VIEWS, SHIPPING_METHOD, SUBSCRIPTION_METHODS, sendSubscriptionShippedMail, BAGS_PER_DELIVERY, HOLD_REASONS, OPEN_STATES, FulfillmentError, beanOf, beanSkus, validBeans, blockers, readRelease,
+module.exports = { PATH, PAGE_PATH, OPS, contractRef, LABEL_VIEWS, SHIPPING_METHOD, SUBSCRIPTION_METHODS, sendSubscriptionShippedMail, shipShipmentAndNotify, BAGS_PER_DELIVERY, HOLD_REASONS, OPEN_STATES, FulfillmentError, beanOf, beanSkus, validBeans, blockers, readRelease,
   prepareShipment, shipShipment, holdShipment, resumeShipment, workList, stockView, shippingLabel, enabled, createRouter };

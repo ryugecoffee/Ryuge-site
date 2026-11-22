@@ -22,11 +22,23 @@ const coffeeSubscriptionCheckout = require("./coffee-subscription-checkout");
 const coffeeSubscriptionAccount = require("./coffee-subscription-account");
 const coffeeSubscriptionMail = require("./coffee-subscription-mail");
 const coffeeSubscriptionFulfillment = require("./coffee-subscription-fulfillment");
+const factoryNotify = require("./factory-notify");
+const storeEvents = require("./store-events");
 const { createRateLimiter, clientKey } = require("./rate-limit");
 
 const app = express();
 const INVENTORY_ENABLED = process.env.INVENTORY_ENABLED === "true";
 const INVENTORY_STRIPE_WEBHOOK_SECRET = process.env.STRIPE_INVENTORY_WEBHOOK_SECRET;
+const shopMail = (message) => transporter.sendMail({ from: `"Ryuge Coffee" <${process.env.EMAIL_USER}>`, ...message });
+
+// Notices to Factory (server/store-events.js, server/factory-notify.js): off unless FACTORY_NOTIFY_URL and
+// FACTORY_NOTIFY_HMAC_SECRET are set. Each is kept, then sent, after the shop's own work and never in its way: a notice
+// that fails is logged and retried later; it never fails a payment, a webhook or a shipment.
+const FACTORY_NOTIFY_ON = factoryNotify.config().enabled;
+function factoryNotice(run) {
+  if (!FACTORY_NOTIFY_ON) return;
+  setImmediate(() => Promise.resolve().then(run).catch((error) => console.error("Factory notice failed:", String(error?.message || "").slice(0, 120))));
+}
 
 // Stripe requires the exact raw signed request body, before express.json().
 // Active whenever its signing secret is set: paid orders are recorded (orders/{paymentIntentId}, server/orders.js);
@@ -52,8 +64,10 @@ app.post("/stripe-inventory-webhook", express.raw({ type: "application/json" }),
   try {
     if (event.type === "payment_intent.succeeded") {
       // The paid order is kept first, whatever happens to the stock step.
-      await orders.recordPaidOrder(db, stripe, object);
+      const recorded = await orders.recordPaidOrder(db, stripe, object);
       if (INVENTORY_ENABLED && reservationId) await inventory.finish(db, reservationId, object.id, "paid");
+      // A resend is told once only (the notice id is the order's).
+      if (recorded.recorded || recorded.reason === "DUPLICATE") factoryNotice(() => storeEvents.orderPaid(db, object.id));
     } else if (event.type === "payment_intent.canceled") {
       if (INVENTORY_ENABLED && reservationId) await inventory.finish(db, reservationId, object.id, "released");
     } else if (event.type === "charge.refunded" || event.type === "charge.refund.updated") {
@@ -66,11 +80,13 @@ app.post("/stripe-inventory-webhook", express.raw({ type: "application/json" }),
       await coffeeSubscription.handleEvent(db, event, subscriptionConfig);
       // The confirmation mail with the link to the customer's page, once the sign-up is complete (sent once).
       await coffeeSubscriptionMail.sendWelcomeIfReady({ db, event, siteUrl: subscriptionConfig.siteUrl,
-        sendMail: (message) => transporter.sendMail({ from: `"Ryuge Coffee" <${process.env.EMAIL_USER}>`, ...message }) });
+        sendMail: shopMail });
+      factoryNotice(() => storeEvents.subscriptionInvoice(db, event));
     }
     return res.json({ received: true });
   } catch (error) {
     console.error("Stripe webhook failed:", event.type, error.message);
+    factoryNotice(() => storeEvents.webhookFailed(db, event));
     // Non-2xx makes Stripe retry rather than silently losing the stock update or the order.
     return res.status(500).json({ error: "INVENTORY_WEBHOOK_FAILED" });
   }
@@ -80,7 +96,9 @@ app.post("/stripe-inventory-webhook", express.raw({ type: "application/json" }),
 // body for the signature, so it is mounted before express.json(). Off (404) unless FACTORY_REFUND_API_ENABLED=true,
 // FACTORY_REFUND_HMAC_SECRET and FACTORY_CEO_USER_ID are set on Render.
 app.post(factoryRefundApi.PATH, express.raw({ type: "application/json", limit: "8kb" }),
-  factoryRefundApi.createHandler({ getDb: () => db, getStripe: () => stripe }));
+  factoryRefundApi.createHandler({ getDb: () => db, getStripe: () => stripe, sendMail: shopMail,
+    onMailFailed: (failure) => factoryNotice(() => storeEvents.mailFailed(db, failure)),
+    onStockShort: async (notice) => { factoryNotice(() => storeEvents.stockShort(db, notice)); await sendFulfillmentNotice(notice); } }));
 
 app.use(express.json());
 app.use(cors());
@@ -97,8 +115,12 @@ app.use(coffeeSubscriptionAccount.PATH, coffeeSubscriptionAccount.createRouter({
 // (server/shop-staff-auth.js). Stock shortages and inconsistencies are mailed to the shop (contract number and beans only).
 // Cancellations asked by email are entered there too (server/coffee-subscription-email-cancel.js).
 app.use(coffeeSubscriptionFulfillment.PATH, coffeeSubscriptionFulfillment.createRouter({ getDb: () => db, getStripe: () => stripe,
-  notify: (notice) => sendFulfillmentNotice(notice),
-  sendMail: (message) => transporter.sendMail({ from: `"Ryuge Coffee" <${process.env.EMAIL_USER}>`, ...message }) }));
+  notify: async (notice) => {
+    factoryNotice(() => storeEvents.stockShort(db, notice));
+    await sendFulfillmentNotice(notice);
+  },
+  onMailFailed: (failure) => factoryNotice(() => storeEvents.mailFailed(db, failure)),
+  sendMail: shopMail }));
 
 console.log("FIREBASE_PROJECT_ID exists:", !!process.env.FIREBASE_PROJECT_ID);
 console.log("FIREBASE_CLIENT_EMAIL exists:", !!process.env.FIREBASE_CLIENT_EMAIL);
@@ -445,6 +467,8 @@ function reconcileSoon() {
     .finally(() => { reconciling = false; });
 }
 if (INVENTORY_ENABLED) setInterval(reconcileSoon, 5 * 60 * 1000).unref?.();
+// Factory notices: shipping deadlines (due today/tomorrow, or past) and the retry of unsent notices, every 30 minutes.
+if (FACTORY_NOTIFY_ON) setInterval(() => factoryNotice(() => storeEvents.sweep(db)), 30 * 60 * 1000).unref?.();
 
 app.post("/inventory/reconcile", async (req, res) => {
   if (!INVENTORY_ENABLED) return res.status(404).end();

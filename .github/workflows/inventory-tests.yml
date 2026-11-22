@@ -52,6 +52,12 @@ on:
       - 'server/refunds.js'
       - 'server/factory-refund-api.js'
       - 'server/factory-refund-api.test.js'
+      # Factory: orders and shipping, notices (2026-11-22)
+      - 'server/factory-store-ops.js'
+      - 'server/factory-notify.js'
+      - 'server/store-events.js'
+      - 'server/factory-store-ops.test.js'
+      - 'server/factory-store-ops-emulator.test.js'
       - 'server/refunds.test.js'
       - 'docs/refunds.md'
       - 'server/initial-stock.test.js'
@@ -135,7 +141,7 @@ jobs:
         run: npm ci --prefix server
       - name: Lint inventory and sandbox payment code
         run: >
-          npx eslint server/inventory.js server/catalog.js server/initial-stock.js server/refunds.js server/factory-refund-api.js server/orders.js server/quote.js server/promo.js server/international-rates.js src/lib/shippingPolicy.js src/pages/CheckoutPage.jsx server/inventory-adjustments.js
+          npx eslint server/inventory.js server/catalog.js server/initial-stock.js server/refunds.js server/factory-refund-api.js server/factory-store-ops.js server/factory-notify.js server/store-events.js server/orders.js server/quote.js server/promo.js server/international-rates.js src/lib/shippingPolicy.js src/pages/CheckoutPage.jsx server/inventory-adjustments.js
           server/factory-inventory-api.js server/firestore-preview-checkout.js
           server/sandbox-checkout.js server/staging-entry.js server/resp-client.js server/rate-limit.js
           server/coffee-subscription-plan.js server/coffee-subscription-records.js server/coffee-subscription-checkout.js
@@ -159,4 +165,7 @@ jobs:
         run: >
           npx --yes firebase-tools@13.35.1 emulators:exec --only firestore
           --project demo-ryuge-inventory
-          "node --test server/inventory-firestore-emulator.test.js server/coffee-subscription-emulator.test.js server/coffee-subscription-fulfillment-emulator.test.js server/order-fulfillment-emulator.test.js"
+          "node --test --test-concurrency=1 server/inventory-firestore-emulator.test.js server/coffee-subscription-emulator.test.js server/coffee-subscription-fulfillment-emulator.test.js server/order-fulfillment-emulator.test.js server/factory-store-ops-emulator.test.js"
+      # Factory orders and shipping, notices (2026-11-22): their own step, so the unit test list above stays as it is.
+      - name: Unit tests (Factory store operations and notices)
+        run: node --test server/factory-store-ops.test.js
