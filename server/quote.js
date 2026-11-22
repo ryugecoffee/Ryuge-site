@@ -12,7 +12,7 @@
 // No rate -> no payment (the customer is asked to contact us). Duties, import taxes and local fees are the buyer's.
 // International orders: coffee beans only, 2-6 bags, at most 600 g of coffee; 7+ bags -> contact us.
 // Promo beans: at most 2 bags per order (and per customer across orders, see server/promo.js).
-const { priceItems } = require("./catalog");
+const { priceItems, CATALOG } = require("./catalog");
 const DOMESTIC = require("./domestic-shipping");
 const INTERNATIONAL = require("./international-rates");
 
@@ -90,10 +90,11 @@ function applyCoupon(subtotal, shipping, couponCode) {
 }
 
 // -> { items, subtotal, shipping, total, shippingDetail, countryCode, prefecture, coupon } or throws QuoteError.
-function quoteOrder(cartItems, { countryCode = "JP", prefecture = "", couponCode = "", now = Date.now() } = {}, international = INTERNATIONAL) {
+// `catalog` is for tests only (e.g. the sold-out Brazil lot put back on sale); the server always uses CATALOG.
+function quoteOrder(cartItems, { countryCode = "JP", prefecture = "", couponCode = "", now = Date.now() } = {}, international = INTERNATIONAL, catalog = CATALOG) {
   let items;
   try {
-    items = priceItems(cartItems);
+    items = priceItems(cartItems, catalog);
   } catch (error) {
     throw new QuoteError(error.message);
   }

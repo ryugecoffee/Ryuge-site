@@ -21,10 +21,10 @@ const CATALOG = Object.freeze({
   // CEO final prices (2026-11-17). The Brazil Amarelo Bourbon is sold as two products from the same green beans: the
   // promotional "Zen dark roast" (¥1,000, 2 per customer) and the regular medium-dark roast (¥1,300). They have their
   // own sales caps, orders and promo rules, and share one lot so together they never sell more than can be roasted.
-  "enma-zen-dark-roast": { price: 1000, weightG: 120, kind: "beans", contentG: 100, flatMail: true, availableForSale: true, managedStock: true, requiresInventory: true, promo: true, lot: "brazil-amarelo-bourbon" },
-  "enma-amarelo-bourbon": { price: 1300, weightG: 120, kind: "beans", contentG: 100, flatMail: true, availableForSale: true, managedStock: true, requiresInventory: true, lot: "brazil-amarelo-bourbon" },
+  "enma-zen-dark-roast": { price: 1000, weightG: 120, kind: "beans", contentG: 100, flatMail: true, availableForSale: false, managedStock: true, requiresInventory: true, promo: true, lot: "brazil-amarelo-bourbon" },
+  "enma-amarelo-bourbon": { price: 1300, weightG: 120, kind: "beans", contentG: 100, flatMail: true, availableForSale: false, managedStock: true, requiresInventory: true, lot: "brazil-amarelo-bourbon" },
   "enma-jimma": { price: 1500, weightG: 120, kind: "beans", contentG: 100, flatMail: true, availableForSale: true, managedStock: true, requiresInventory: true },
-  "enma-quequesques": { price: 1500, weightG: 120, kind: "beans", contentG: 100, flatMail: true, availableForSale: true, managedStock: true, requiresInventory: true },
+  "enma-quequesques": { price: 1000, weightG: 120, kind: "beans", contentG: 100, flatMail: true, availableForSale: true, managedStock: true, requiresInventory: true },
   "enma-andes-blue": { price: 1500, weightG: 120, kind: "beans", contentG: 100, flatMail: true, availableForSale: true, managedStock: true, requiresInventory: true },
   "enma-karamo": { price: 1800, weightG: 120, kind: "beans", contentG: 100, flatMail: true, availableForSale: true, managedStock: true },
   "enma-kindiio": { price: 2050, weightG: 120, kind: "beans", contentG: 100, flatMail: true, availableForSale: true, managedStock: true },

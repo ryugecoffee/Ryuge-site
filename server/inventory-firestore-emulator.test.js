@@ -287,7 +287,11 @@ test("promotional beans: two simultaneous orders from one customer cannot both p
 });
 
 test("Brazil lot: the regular and the promotional Brazil, ordered at the same moment, never sell more than the lot", { skip }, async () => {
-  const { lotItems, priceItems } = require("./catalog");
+  const { CATALOG, lotItems, priceItems } = require("./catalog");
+  // Both Brazil products are sold out since 2026-11-22 (CEO); the lot rule is kept for when they are sold again, so it is
+  // tested on a copy of the catalogue with them back on sale (the real catalogue refuses them: server/brazil-lot.test.js).
+  const onSale = { ...CATALOG };
+  for (const id of ["enma-zen-dark-roast", "enma-amarelo-bourbon"]) onSale[id] = { ...CATALOG[id], availableForSale: true };
   // Own collection roots (never real data).
   const scoped = { collection: (name) => firestore.collection("emulatorLotTest_" + name), runTransaction: (fn) => firestore.runTransaction(fn) };
   // Each product has its own sales cap (10 + 10), but only 12 bags can be roasted from the purchase.
@@ -295,8 +299,8 @@ test("Brazil lot: the regular and the promotional Brazil, ordered at the same mo
   await firestore.collection("emulatorLotTest_inventory").doc("enma-amarelo-bourbon").set({ ready: 10, held: 0, sold: 0 });
   await firestore.collection("emulatorLotTest_inventoryLots").doc("brazil-amarelo-bourbon").set({ ready: 12, held: 0, sold: 0 });
   const order = (id, quantity) => {
-    const items = priceItems([{ id, quantity }]);
-    return inventory.reserve(scoped, items.map(({ id: sku, quantity: q }) => ({ id: sku, quantity: q })), null, null, lotItems(items));
+    const items = priceItems([{ id, quantity }], onSale);
+    return inventory.reserve(scoped, items.map(({ id: sku, quantity: q }) => ({ id: sku, quantity: q })), null, null, lotItems(items, onSale));
   };
   // 4 + 4 + 4 + 4 bags at once: only 3 orders (12 bags) fit the lot.
   const attempts = await Promise.allSettled([

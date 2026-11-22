@@ -3708,6 +3708,13 @@ html[lang="es"] .story-body {
     padding: 8px 6px;
     font-size: 11px;
     letter-spacing: .12em;
+    /* 2026-11-22: "今、飲んでほしい珈琲" / "Coffee We Recommend Now" / "El café que recomendamos ahora" are longer than
+       the old label: on a phone they wrap inside the brush stroke instead of being cut at the card's edges. */
+    white-space: normal;
+    word-break: keep-all; /* Japanese breaks at 「、」, never inside 珈琲 */
+    text-align: center;
+    line-height: 1.35;
+    letter-spacing: .06em;
   }
 
   .enma-coming-soon-badge {

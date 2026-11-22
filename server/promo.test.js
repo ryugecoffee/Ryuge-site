@@ -73,8 +73,13 @@ test("a canceled or abandoned checkout gives the promotional bags back", async (
 });
 
 test("one order cannot carry more than 2 promotional bags; capped products need inventory on", () => {
-  assert.throws(() => quoteOrder([{ id: "enma-zen-dark-roast", quantity: 3 }], { prefecture: "東京都" }), /PROMO_LIMIT/);
-  assert.equal(quoteOrder([{ id: "enma-zen-dark-roast", quantity: 2 }], { prefecture: "東京都" }).total, 2000 + 250);
+  // The only promotional bean (Brazil Zen dark roast) is sold out since 2026-11-22 (CEO): no order is accepted at all.
+  assert.throws(() => quoteOrder([{ id: "enma-zen-dark-roast", quantity: 1 }], { prefecture: "東京都" }), /PRODUCT_NOT_AVAILABLE/);
+  // The 2-bag rule itself is unchanged for when it is sold again (a copy of the catalogue with it on sale).
+  const { CATALOG } = require("./catalog");
+  const onSale = { ...CATALOG, "enma-zen-dark-roast": { ...CATALOG["enma-zen-dark-roast"], availableForSale: true } };
+  assert.throws(() => quoteOrder([{ id: "enma-zen-dark-roast", quantity: 3 }], { prefecture: "東京都" }, undefined, onSale), /PROMO_LIMIT/);
+  assert.equal(quoteOrder([{ id: "enma-zen-dark-roast", quantity: 2 }], { prefecture: "東京都" }, undefined, onSale).total, 2000 + 250);
   const source = fs.readFileSync(path.join(__dirname, "index.js"), "utf8");
   const route = source.slice(source.indexOf('app.post("/create-payment-intent"'), source.indexOf('app.post("/calc-shipping"'));
   assert.match(route, /if \(!INVENTORY_ENABLED && quote\.items\.some\(\(item\) => item\.requiresInventory\)\) \{\n\s+return res\.status\(400\)\.json\(\{ error: "PRODUCT_NOT_AVAILABLE" \}\);/);

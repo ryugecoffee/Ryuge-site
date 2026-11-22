@@ -3,6 +3,7 @@
 // 2026-11-18: tea cards in two columns (like the coffee cards), 折々 three across with the subscription larger,
 // and the promotional badge reworded "季節のおすすめ" while the 2-bag limit stays (shown in the detail; enforced by
 // the server as before).
+// 2026-11-22 (CEO): the Brazil promo is sold out; the recommended coffee is now Peru Andes Blue, "今、飲んでほしい珈琲".
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -12,10 +13,24 @@ const root = path.join(__dirname, "..");
 const read = (...p) => fs.readFileSync(path.join(root, ...p), "utf8");
 const data = () => import(path.join(root, "src", "productData.js"));
 
-test("the badge reads as a seasonal pick; the 2-bag limit is stated in the detail in every language", async () => {
+test("the recommendation badge is on Peru Andes Blue in every language; the 2-bag limit is stated in the detail", async () => {
   const { PRODUCT_DATA, DETAIL_TEXT } = await data();
+  const label = { ja: "今、飲んでほしい珈琲", en: "Coffee We Recommend Now", es: "El café que recomendamos ahora" };
+  const recommended = PRODUCT_DATA.enma.filter((p) => p.promotion?.active);
+  assert.deepEqual(recommended.map((p) => p.id), ["enma-andes-blue"], "one recommended coffee: Peru Andes Blue");
+  assert.deepEqual(recommended[0].promotion.label, label);
+  assert.equal(recommended[0].isSoldOut, false);
+  assert.notEqual(recommended[0].promo, true, "a recommendation, not a promotional (2-bag) bean");
+  assert.equal(recommended[0].priceNumber, 1500, "its price is unchanged");
+  assert.doesNotMatch(read("src", "productData.js"), /季節のおすすめ|Seasonal pick|Selección de temporada/);
+  // On a phone the longer label wraps inside the brush stroke (never cut at the card's edges, never inside 珈琲).
+  const css = read("src", "App.css");
+  const mobileRibbon = /\.enma-promotion-ribbon \{\s*width: 90%;[^}]*\}/.exec(css)[0];
+  assert.match(mobileRibbon, /white-space: normal;/);
+  assert.match(mobileRibbon, /word-break: keep-all;/);
   const zen = PRODUCT_DATA.enma.find((p) => p.id === "enma-zen-dark-roast");
-  assert.deepEqual(zen.promotion.label, { ja: "季節のおすすめ", en: "Seasonal pick", es: "Selección de temporada" });
+  assert.equal(zen.isSoldOut, true, "Brazil is sold out");
+  assert.equal(zen.promotion.active, false, "no longer recommended");
   assert.equal(zen.promo, true, "still limited");
   assert.equal(DETAIL_TEXT.ja.promoNote, "この豆は、お一人様2袋までのご購入となります（これまでのご注文を含みます）。");
   for (const lang of ["en", "es"]) assert.match(DETAIL_TEXT[lang].promoNote, /2/, lang);

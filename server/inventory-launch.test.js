@@ -8,7 +8,7 @@ const path = require("node:path");
 const { CATALOG, priceItems, managedItems } = require("./catalog");
 const { reconcileExpired } = require("./inventory");
 
-test("only counted, packed products are stock-gated; the storefront and the server agree on which", () => {
+test("only counted, packed products are stock-gated; the storefront and the server agree on which", async () => {
   const priced = priceItems([{ id: "enma-karamo", quantity: 2 }, { id: "enma-coffee-bag", quantity: 1 }, { id: "woodbox-tea-bag", quantity: 1 }]);
   assert.deepEqual(managedItems(priced), [{ id: "enma-karamo", quantity: 2 }, { id: "enma-coffee-bag", quantity: 1 }],
     "the coffee bag is counted stock (CEO 2026-11-17); the hojicha bag has no stock record, gating it would refuse every order");
@@ -20,7 +20,13 @@ test("only counted, packed products are stock-gated; the storefront and the serv
   const required = Object.keys(CATALOG).filter((id) => CATALOG[id].requiresInventory === true);
   assert.deepEqual([...requiredOnPage].sort(), [...required].sort());
   for (const id of required) assert.equal(CATALOG[id].managedStock, true, `${id} needs a stock record`);
-  for (const id of managed) assert.equal(CATALOG[id].availableForSale, true, `${id} is managed but not on sale`);
+  // Every counted product is on sale, except one the store shows as sold out (CEO 2026-11-22: both Brazil products).
+  // Its stock record stays (the shared lot, paid orders), but the server refuses it and the store offers no cart button.
+  const { PRODUCT_DATA } = await import(path.join(__dirname, "..", "src", "productData.js"));
+  const soldOut = new Set(Object.values(PRODUCT_DATA).flat().filter((p) => p && p.isSoldOut === true).map((p) => p.id));
+  const notOnSale = managed.filter((id) => CATALOG[id].availableForSale !== true);
+  assert.deepEqual(notOnSale.sort(), ["enma-amarelo-bourbon", "enma-zen-dark-roast"]);
+  for (const id of notOnSale) assert.ok(soldOut.has(id), `${id} is managed but not on sale, and not shown as sold out`);
 });
 
 test("checkout reserves only the managed part of the cart, and abandoned holds are settled without a scheduler", () => {

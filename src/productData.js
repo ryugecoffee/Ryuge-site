@@ -311,8 +311,8 @@ export const PRODUCT_DATA = {
       requiresInventory: true, // = server/catalog.js requiresInventory: "近日公開" until inventory is on
       notice: MADE_TO_ORDER,
       promo: true, // promotional bean: at most 2 bags per customer (server/catalog.js promo)
-      promotion: { active: true, label: { ja: "季節のおすすめ", en: "Seasonal pick", es: "Selección de temporada" } },
-      isSoldOut: false,
+      promotion: { active: false, label: { ja: "今、飲んでほしい珈琲", en: "Coffee We Recommend Now", es: "El café que recomendamos ahora" } },
+      isSoldOut: true,
     },
     {
       // Regular product (CEO 2026-11-17): the same Brazil beans, medium-dark roast.
@@ -339,7 +339,7 @@ export const PRODUCT_DATA = {
       comingSoon: false, // on sale with inventory on (sales cap per product + the shared Brazil lot)
       requiresInventory: true, // = server/catalog.js requiresInventory: "近日公開" until inventory is on
       notice: MADE_TO_ORDER,
-      isSoldOut: false,
+      isSoldOut: true,
     },
     {
       id: "enma-jimma",
@@ -384,8 +384,8 @@ export const PRODUCT_DATA = {
       grade: { ja: "SHB", en: "SHB", es: "SHB" },
       arrival: { ja: "2026年7月", en: "July 2026", es: "julio de 2026" },
       drying: { ja: "天日乾燥", en: "Sun-dried", es: "Secado al sol" },
-      price: "¥1,500",
-      priceNumber: 1500,
+      price: "¥1,000",
+      priceNumber: 1000,
       roast: { ja: "浅煎り", en: "Light Roast", es: "Tueste claro" },
       flavorNotes: { ja: ["グリーンアップル","シトラス","ブラウンシュガー"], en: ["Green Apple","Citrus","Brown Sugar"], es: ["Manzana verde","Cítricos","Azúcar moreno"] },
       comingSoon: false, // on sale with inventory on (sales cap per product)
@@ -417,6 +417,7 @@ export const PRODUCT_DATA = {
       comingSoon: false, // on sale with inventory on (sales cap per product)
       requiresInventory: true, // = server/catalog.js requiresInventory: "近日公開" until inventory is on
       notice: MADE_TO_ORDER,
+      promotion: { active: true, label: { ja: "今、飲んでほしい珈琲", en: "Coffee We Recommend Now", es: "El café que recomendamos ahora" } },
       isSoldOut: false,
     },
     {
