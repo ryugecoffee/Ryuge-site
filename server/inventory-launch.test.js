@@ -13,20 +13,28 @@ test("only counted, packed products are stock-gated; the storefront and the serv
   assert.deepEqual(managedItems(priced), [{ id: "enma-karamo", quantity: 2 }, { id: "enma-coffee-bag", quantity: 1 }],
     "the coffee bag is counted stock (CEO 2026-11-17); the hojicha bag has no stock record, gating it would refuse every order");
   const page = fs.readFileSync(path.join(__dirname, "..", "src", "pages", "ProductsPage.jsx"), "utf8");
-  const listed = /const INVENTORY_MANAGED_SKUS = new Set\(\[([^\]]*)\]\);/.exec(page)[1].match(/"([a-z0-9-]+)"/g).map((s) => s.slice(1, -1));
+  // The featured slot's SKU comes from the setting (FEATURED_COFFEE.sku), the rest are listed by name.
+  const { PRODUCT_DATA, FEATURED_COFFEE } = await import(path.join(__dirname, "..", "src", "productData.js"));
+  const skuSet = (name) => {
+    const body = new RegExp(`const ${name} = new Set\\(\\[FEATURED_COFFEE\\.sku, ([^\\]]*)\\]\\);`).exec(page)[1];
+    return [FEATURED_COFFEE.sku, ...body.match(/"([a-z0-9-]+)"/g).map((s) => s.slice(1, -1))];
+  };
+  const listed = skuSet("INVENTORY_MANAGED_SKUS");
   const managed = Object.keys(CATALOG).filter((id) => CATALOG[id].managedStock === true);
   assert.deepEqual([...listed].sort(), [...managed].sort());
-  const requiredOnPage = /const REQUIRES_INVENTORY_SKUS = new Set\(\[([^\]]*)\]\);/.exec(page)[1].match(/"([a-z0-9-]+)"/g).map((s) => s.slice(1, -1));
+  const requiredOnPage = skuSet("REQUIRES_INVENTORY_SKUS");
   const required = Object.keys(CATALOG).filter((id) => CATALOG[id].requiresInventory === true);
   assert.deepEqual([...requiredOnPage].sort(), [...required].sort());
   for (const id of required) assert.equal(CATALOG[id].managedStock, true, `${id} needs a stock record`);
-  // Every counted product is on sale, except one the store shows as sold out (CEO 2026-11-22: both Brazil products).
-  // Its stock record stays (the shared lot, paid orders), but the server refuses it and the store offers no cart button.
-  const { PRODUCT_DATA } = await import(path.join(__dirname, "..", "src", "productData.js"));
-  const soldOut = new Set(Object.values(PRODUCT_DATA).flat().filter((p) => p && p.isSoldOut === true).map((p) => p.id));
+  // Every counted product is on sale, except one the store shows as sold out (CEO 2026-11-22: both Brazil products), or
+  // the regular product of the featured coffee (hidden while it is sold as 「今、飲んでほしい珈琲」, server/featured.js).
+  // Its stock record stays (paid orders, lot), but the server refuses it and the store offers no cart button.
+  const all = Object.values(PRODUCT_DATA).flat().filter((p) => p && p.id);
+  const soldOut = new Set(all.filter((p) => p.isSoldOut === true).map((p) => p.id));
+  const featuredSource = new Set(all.filter((p) => p.featuredAs && p.hidden === true).map((p) => p.id));
   const notOnSale = managed.filter((id) => CATALOG[id].availableForSale !== true);
-  assert.deepEqual(notOnSale.sort(), ["enma-amarelo-bourbon", "enma-zen-dark-roast"]);
-  for (const id of notOnSale) assert.ok(soldOut.has(id), `${id} is managed but not on sale, and not shown as sold out`);
+  assert.deepEqual(notOnSale.sort(), ["enma-amarelo-bourbon", "enma-quequesques", "enma-zen-dark-roast"]);
+  for (const id of notOnSale) assert.ok(soldOut.has(id) || featuredSource.has(id), `${id} is managed but not on sale, and neither sold out nor featured`);
 });
 
 test("checkout reserves only the managed part of the cart, and abandoned holds are settled without a scheduler", () => {

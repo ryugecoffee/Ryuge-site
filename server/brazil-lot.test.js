@@ -71,15 +71,17 @@ test("final prices and roasts: the server charges exactly what the store shows",
 });
 
 test("Guatemala Quequesques (light roast): 100 g at ¥1,000 incl. tax, shown and charged the same (CEO 2026-11-22)", async () => {
-  assert.deepEqual([CATALOG["enma-quequesques"].price, CATALOG["enma-quequesques"].contentG, CATALOG["enma-quequesques"].availableForSale], [1000, 100, true]);
+  // Sold as 「今、飲んでほしい珈琲」 (its featured SKU, server/featured.js); the regular SKU keeps ¥1,000 for its return.
+  const SLOT = "enma-featured-quequesques";
+  assert.deepEqual([CATALOG["enma-quequesques"].price, CATALOG[SLOT].price, CATALOG[SLOT].contentG, CATALOG[SLOT].availableForSale], [1000, 1000, 100, true]);
   const { PRODUCT_DATA } = await import(path.join(__dirname, "..", "src", "productData.js"));
-  const guatemala = PRODUCT_DATA.enma.find((p) => p.id === "enma-quequesques");
+  const guatemala = PRODUCT_DATA.enma.find((p) => p.id === SLOT);
   assert.deepEqual([guatemala.price, guatemala.priceNumber, guatemala.size, guatemala.roast.ja, guatemala.isSoldOut], ["¥1,000", 1000, "100g", "浅煎り", false]);
   // What /quote shows and /create-payment-intent charges (both quoteOrder): 1 bag by Letter Pack Light ¥250.
-  const one = quoteOrder([{ id: "enma-quequesques", quantity: 1, price: 1500 }], { prefecture: "東京都" });
+  const one = quoteOrder([{ id: SLOT, quantity: 1, price: 1500 }], { prefecture: "東京都" });
   assert.deepEqual([one.subtotal, one.shipping, one.total], [1000, 250, 1250], "the browser's price is never read");
-  assert.equal(itemsMetadata(one.items), "enma-quequesques:1@1000", "the paid order is recorded at ¥1,000");
-  const two = quoteOrder([{ id: "enma-quequesques", quantity: 2 }], { prefecture: "北海道" });
+  assert.equal(itemsMetadata(one.items), `${SLOT}:1@1000`, "the paid order is recorded at ¥1,000");
+  const two = quoteOrder([{ id: SLOT, quantity: 2 }], { prefecture: "北海道" });
   assert.deepEqual([two.subtotal, two.total], [2000, 2250]);
 });
 
@@ -88,7 +90,7 @@ test("sold out (CEO 2026-11-22): both Brazil products are refused before any pay
     assert.equal(CATALOG[id].availableForSale, false, id);
     assert.throws(() => priceItems([{ id, quantity: 1 }]), /PRODUCT_NOT_AVAILABLE/, id);
     // Alone or with a product that is on sale, the whole order is refused (400): nothing is quoted, held or charged.
-    for (const cart of [[{ id, quantity: 1 }], [{ id: "enma-quequesques", quantity: 1 }, { id, quantity: 1 }]]) {
+    for (const cart of [[{ id, quantity: 1 }], [{ id: "enma-jimma", quantity: 1 }, { id, quantity: 1 }]]) {
       assert.throws(() => quoteOrder(cart, { prefecture: "東京都" }), (e) => e instanceof QuoteError && e.code === "PRODUCT_NOT_AVAILABLE" && e.status === 400, id);
       assert.throws(() => quoteOrder(cart, { countryCode: "TW" }), (e) => e instanceof QuoteError && e.code === "PRODUCT_NOT_AVAILABLE", `${id} abroad`);
     }

@@ -4,7 +4,7 @@ import { PAYMENT_API_BASE, classifyAvailability } from "../lib/paymentEnv";
 import { useLocation } from "react-router-dom";
 import SiteFooter from "../components/SiteFooter";
 import BeanConcierge from "../components/BeanConcierge";
-import { PRODUCT_DATA, PRODUCT_SECTIONS, DETAIL_TEXT, ROAST_LEVEL, SUBSCRIPTIONS_PAUSED, SUBSCRIPTIONS_PAUSED_SHORT_TEXT, COFFEE_SUBSCRIPTION, loc } from "../productData";
+import { PRODUCT_DATA, PRODUCT_SECTIONS, DETAIL_TEXT, ROAST_LEVEL, SUBSCRIPTIONS_PAUSED, SUBSCRIPTIONS_PAUSED_SHORT_TEXT, COFFEE_SUBSCRIPTION, FEATURED_COFFEE, loc } from "../productData";
 import CoffeeSubscriptionDetail from "../components/CoffeeSubscriptionDetail";
 import { useCart } from "../CartContext";
 import { trackViewItem } from "../lib/analytics";
@@ -32,10 +32,11 @@ const PAGE_TEXT = {
 
 // Temporary checkout preview handles only these two stocked coffee SKUs.
 // Do not infer "sold out" for untracked products from a missing API quantity.
-// Must equal the products with managedStock: true in server/catalog.js (a server test checks it).
-const INVENTORY_MANAGED_SKUS = new Set(["enma-karamo", "enma-kindiio", "enma-coffee-bag", "enma-zen-dark-roast", "enma-amarelo-bourbon", "enma-jimma", "enma-quequesques", "enma-andes-blue", "mokkan-oku-yame-hojicha", "mokkan-oku-yame-genmaicha"]);
+// Must equal the products with managedStock: true in server/catalog.js (a server test checks it). The featured slot's
+// SKU (「今、飲んでほしい珈琲」, server/featured-coffee.json) is added from the setting, so changing the coffee needs no edit here.
+const INVENTORY_MANAGED_SKUS = new Set([FEATURED_COFFEE.sku, "enma-karamo", "enma-kindiio", "enma-coffee-bag", "enma-zen-dark-roast", "enma-amarelo-bourbon", "enma-jimma", "enma-quequesques", "enma-andes-blue", "mokkan-oku-yame-hojicha", "mokkan-oku-yame-genmaicha"]);
 // Sold only while the payment server has inventory on (a sales cap must hold): requiresInventory in server/catalog.js.
-const REQUIRES_INVENTORY_SKUS = new Set(["enma-zen-dark-roast", "enma-amarelo-bourbon", "enma-jimma", "enma-quequesques", "enma-andes-blue", "mokkan-oku-yame-hojicha", "mokkan-oku-yame-genmaicha"]);
+const REQUIRES_INVENTORY_SKUS = new Set([FEATURED_COFFEE.sku, "enma-zen-dark-roast", "enma-amarelo-bourbon", "enma-jimma", "enma-quequesques", "enma-andes-blue", "mokkan-oku-yame-hojicha", "mokkan-oku-yame-genmaicha"]);
 // Promotional beans: at most 2 bags per customer (the payment server enforces it across orders).
 const PROMO_MAX_BAGS = 2;
 
@@ -66,6 +67,8 @@ export default function ProductsPage({ lang }) {
   const detailText = DETAIL_TEXT[lang] || DETAIL_TEXT.ja;
   const products = PRODUCT_DATA;
   const activeWoodbox = products.woodbox.filter((item) => !item.archived && !item.hidden);
+  // Coffee: the featured slot first; a coffee's regular product is hidden while it is featured (productData.js).
+  const listedEnma = products.enma.filter((item) => !item.hidden);
   // Bag series items still listed on their own (the coffee bag moved to Enma; the tea bag is hidden for now).
   const listedBags = (products.bag || []).filter((item) => !item.hidden);
 
@@ -249,7 +252,7 @@ export default function ProductsPage({ lang }) {
           </div>
 
           <div className="products-enma-grid">
-            {products.enma.map((item) => (
+            {listedEnma.map((item) => (
               <article
                 key={item.id}
                 className="products-enma-static-card enma-product-card"

@@ -12,9 +12,11 @@ const { CATALOG } = require("./catalog");
 const MAX_QUANTITY = 1000;
 const LOG_COLLECTION = "inventoryInitialStock";
 
-// "inventory/enma-jimma", ..., "inventoryLots/brazil-amarelo-bourbon"
+// "inventory/enma-jimma", ..., "inventoryLots/brazil-amarelo-bourbon". Never the featured slot (server/featured.js): its
+// bags are the same beans as its regular product and only arrive by the featured stock transfer, so they are never
+// registered twice.
 function allowedPaths(catalog = CATALOG) {
-  const products = Object.keys(catalog).filter((id) => catalog[id].managedStock === true).map((id) => `inventory/${id}`);
+  const products = Object.keys(catalog).filter((id) => catalog[id].managedStock === true && catalog[id].featured !== true).map((id) => `inventory/${id}`);
   const lots = [...new Set(Object.values(catalog).map((p) => p.lot).filter(Boolean))].map((lot) => `inventoryLots/${lot}`);
   return [...products, ...lots];
 }

@@ -318,6 +318,34 @@ test("Brazil lot: the regular and the promotional Brazil, ordered at the same mo
   assert.ok(regular.held <= 10 && zen.held <= 10, "each product keeps its own cap");
 });
 
+test("featured stock transfer: real transactions — racing checkouts on the same coffee never oversell or lose a bag", { skip }, async () => {
+  const { previewFeaturedTransfer, applyFeaturedTransfer } = require("./featured-stock");
+  const { FEATURED } = require("./catalog");
+  // Own collection roots (never real data).
+  const scoped = { collection: (name) => firestore.collection("emulatorFeatured_" + name), runTransaction: (fn) => firestore.runTransaction(fn) };
+  const read = async (sku) => (await firestore.collection("emulatorFeatured_inventory").doc(sku).get()).data() || null;
+  await firestore.collection("emulatorFeatured_inventory").doc(FEATURED.product).set({ ready: 10, held: 0, sold: 0 });
+  const move = { from: FEATURED.product, to: FEATURED.sku, quantity: 6 };
+  const { planHash } = await previewFeaturedTransfer(scoped, move, { projectId: "demo-ryuge-inventory" });
+  const approval = { projectId: "demo-ryuge-inventory", expectedProjectId: "demo-ryuge-inventory", planHash, approval: "CEO承認（エミュレーター）" };
+  // The approved move and six one-bag checkouts on the regular product, all at once.
+  const results = await Promise.allSettled([
+    applyFeaturedTransfer(scoped, move, approval),
+    ...Array.from({ length: 6 }, () => inventory.reserve(scoped, [{ id: FEATURED.product, quantity: 1 }])),
+  ]);
+  const regular = await read(FEATURED.product);
+  const featured = await read(FEATURED.sku);
+  const moved = results[0].status === "fulfilled" ? move.quantity : 0;
+  if (results[0].status === "rejected") assert.match(results[0].reason.message, /PLAN_CHANGED|NOT_ENOUGH_FREE_STOCK/);
+  const holds = results.slice(1).filter((r) => r.status === "fulfilled").length;
+  for (const r of results.slice(1)) if (r.status === "rejected") assert.match(r.reason.message, /OUT_OF_STOCK/);
+  assert.equal(regular.held, holds);
+  assert.ok(regular.held <= regular.ready, "never more held than there are bags");
+  assert.equal(regular.ready + (featured ? featured.ready : 0), 10, "every bag counted exactly once");
+  assert.equal(featured ? featured.ready : 0, moved);
+  assert.ok(holds + moved <= 10, "never oversold");
+});
+
 test("initial stock: real transactions — two applies at once create each record once; an existing record is never touched", { skip }, async () => {
   const { previewInitialStock, applyInitialStock } = require("./initial-stock");
   // Own collection roots (never real data).

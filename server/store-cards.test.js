@@ -13,25 +13,19 @@ const root = path.join(__dirname, "..");
 const read = (...p) => fs.readFileSync(path.join(root, ...p), "utf8");
 const data = () => import(path.join(root, "src", "productData.js"));
 
-test("the recommendation badge is on Peru Andes Blue in every language; the 2-bag limit is stated in the detail", async () => {
-  const { PRODUCT_DATA, DETAIL_TEXT } = await data();
+test("「今、飲んでほしい珈琲」: one featured slot, first in the list, in every language, with the 2-bag limit", async () => {
+  const { PRODUCT_DATA, DETAIL_TEXT, FEATURED_COFFEE } = await data();
   const label = { ja: "今、飲んでほしい珈琲", en: "Coffee We Recommend Now", es: "El café que recomendamos ahora" };
-  const recommended = PRODUCT_DATA.enma.filter((p) => p.promotion?.active);
-  assert.deepEqual(recommended.map((p) => p.id), ["enma-andes-blue"], "one recommended coffee: Peru Andes Blue");
+  const listed = PRODUCT_DATA.enma.filter((p) => !p.hidden);
+  const recommended = listed.filter((p) => p.promotion?.active);
+  assert.deepEqual(recommended.map((p) => p.id), [FEATURED_COFFEE.sku], "only the featured slot carries the badge");
+  assert.equal(listed[0].id, FEATURED_COFFEE.sku, "the top-left card, where 禅の深煎り was");
   assert.deepEqual(recommended[0].promotion.label, label);
   assert.equal(recommended[0].isSoldOut, false);
-  assert.notEqual(recommended[0].promo, true, "a recommendation, not a promotional (2-bag) bean");
-  assert.equal(recommended[0].priceNumber, 1500, "its price is unchanged");
-  assert.doesNotMatch(read("src", "productData.js"), /季節のおすすめ|Seasonal pick|Selección de temporada/);
-  // On a phone the longer label wraps inside the brush stroke (never cut at the card's edges, never inside 珈琲).
-  const css = read("src", "App.css");
-  const mobileRibbon = /\.enma-promotion-ribbon \{\s*width: 90%;[^}]*\}/.exec(css)[0];
-  assert.match(mobileRibbon, /white-space: normal;/);
-  assert.match(mobileRibbon, /word-break: keep-all;/);
-  const zen = PRODUCT_DATA.enma.find((p) => p.id === "enma-zen-dark-roast");
-  assert.equal(zen.isSoldOut, true, "Brazil is sold out");
-  assert.equal(zen.promotion.active, false, "no longer recommended");
-  assert.equal(zen.promo, true, "still limited");
+  assert.equal(recommended[0].promo, true, "2 bags per customer in total (server/featured.js)");
+  assert.ok(!listed.some((p) => p.id === "enma-zen-dark-roast"), "禅の深煎り is no longer listed");
+  assert.doesNotMatch(read("src", "productData.js"), /季節のおすすめ|Seasonal pick|Selección de temporada|今、飲んでほしい珈琲/,
+    "the label lives only in server/featured-coffee.json");
   assert.equal(DETAIL_TEXT.ja.promoNote, "この豆は、お一人様2袋までのご購入となります（これまでのご注文を含みます）。");
   for (const lang of ["en", "es"]) assert.match(DETAIL_TEXT[lang].promoNote, /2/, lang);
   assert.doesNotMatch(read("src", "productData.js"), /プロモ・お一人様|Promo · max|Promo · máx|プロモーション豆/);

@@ -61,10 +61,11 @@ const fail = (code, status, detail) => { throw new FulfillmentError(code, status
 const integer = (v) => (Number.isSafeInteger(v) && v >= 0 ? v : 0);
 const contractRef = (id) => `SUB-${String(id).replace(/^sub_/, "").slice(-6).toUpperCase()}`;
 
-// Beans a delivery may hold: 100 g roasted beans sold from counted stock.
+// Beans a delivery may hold: 100 g roasted beans sold from counted stock. Never the featured slot (server/featured.js):
+// its stock is the shop's ¥1,000 offer only; the regular product's own stock stays usable for deliveries.
 function beanOf(sku, catalog = CATALOG) {
   const p = Object.prototype.hasOwnProperty.call(catalog, sku) ? catalog[sku] : null;
-  return p && p.kind === "beans" && p.managedStock === true && p.contentG === 100 ? { sku, lot: p.lot || null } : null;
+  return p && p.kind === "beans" && p.managedStock === true && p.contentG === 100 && p.featured !== true ? { sku, lot: p.lot || null } : null;
 }
 const beanSkus = (catalog = CATALOG) => Object.keys(catalog).filter((sku) => beanOf(sku, catalog));
 

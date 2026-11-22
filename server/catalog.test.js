@@ -51,7 +51,8 @@ test("the server catalogue matches the storefront: same price, and on sale exact
   for (const [id, product] of shop) {
     assert.ok(CATALOG[id], `${id} is missing from server/catalog.js`);
     assert.equal(CATALOG[id].price, product.priceNumber, `${id} price`);
-    const onSale = !product.comingSoon && !product.archived && !product.isSoldOut;
+    // A coffee in the 「今、飲んでほしい珈琲」 slot (featuredAs) is sold only as its featured product meanwhile.
+    const onSale = !product.comingSoon && !product.archived && !product.isSoldOut && !product.featuredAs;
     assert.equal(CATALOG[id].availableForSale, onSale, `${id} on sale`);
   }
   for (const id of Object.keys(CATALOG)) assert.ok(shop.has(id), `${id} is not in the storefront`);

@@ -97,6 +97,10 @@ on:
       - 'server/sandbox-checkout.js'
       - 'server/staging-entry.js'
       - 'src/pages/ProductsPage.jsx'
+      # 「今、飲んでほしい珈琲」 featured slot (2026-11-22)
+      - 'server/featured*'
+      - 'api/coffee-concierge.js'
+      - 'docs/featured-coffee.md'
       - '.github/workflows/inventory-tests.yml'
 permissions:
   contents: read
@@ -135,6 +139,8 @@ jobs:
           node --check server/staging-entry.js
           node --check server/inventory-firestore-emulator.test.js
           node --check server/rate-limit.js
+          node --check server/featured.js
+          node --check server/featured-stock.js
       - name: Install site dependencies
         run: npm ci
       - name: Install payment server dependencies
@@ -151,6 +157,7 @@ jobs:
           src/components/CoffeeSubscriptionDetail.jsx src/components/SiteFooter.jsx
           src/lib/coffeeSubscriptionAccount.js src/lib/coffeeSubscriptionTerms.js src/pages/SubscriptionApplyPage.jsx src/pages/SubscriptionManagePage.jsx
           src/lib/subscriptionShippingAdmin.js src/pages/SubscriptionShippingAdminPage.jsx src/lib/cartExpiry.js src/components/CartExpiryNotice.jsx
+          server/featured.js server/featured-stock.js src/productData.js api/coffee-concierge.js
           server/*.test.js
       - name: Build site preview
         run: npm run build
@@ -169,3 +176,6 @@ jobs:
       # Factory orders and shipping, notices (2026-11-22): their own step, so the unit test list above stays as it is.
       - name: Unit tests (Factory store operations and notices)
         run: node --test server/factory-store-ops.test.js
+      # 「今、飲んでほしい珈琲」 featured slot (2026-11-22): its own step, so the lists above stay as they are.
+      - name: Unit tests (featured coffee slot)
+        run: node --test server/featured-coffee.test.js
