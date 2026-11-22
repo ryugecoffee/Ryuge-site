@@ -156,6 +156,20 @@ async function sendShippedMail(db, { orderId, to, order }, sendMail, log) {
   return notice.deliver(db, `order_${orderId}`, message, sendMail, log);
 }
 
+// Shipped, then the claimed mail sent: the one way an order is marked shipped (the shop's page and Factory alike).
+// onMailFailed is told when the customer's mail could not be sent (the shop is notified; the parcel stays shipped).
+async function shipOrderAndNotify(db, { orderId, requestId, actor, method, trackingNumber }, { sendMail, log = console, now = Date.now(), onMailFailed = null } = {}) {
+  const r = await shipOrder(db, { orderId, requestId, actor, method, trackingNumber }, { now });
+  let mailStatus = r.mailStatus || null;
+  if (r.mail) {
+    const fresh = (await db.collection(ORDERS).doc(r.orderId).get()).data();
+    mailStatus = await sendShippedMail(db, { orderId: r.orderId, to: r.mail.to, order: fresh }, sendMail, log);
+    if (mailStatus === "failed" && onMailFailed) await Promise.resolve(onMailFailed({ kind: "order", id: r.orderId, ref: ref(r.orderId) })).catch(() => {});
+  }
+  const { mail: _m, ...out } = r;
+  return { ...out, mailStatus };
+}
+
 // ---- The work list (names yes, street addresses no) -----------------------------------------------------------
 async function workList(db, { view = "open" } = {}, { now = Date.now() } = {}) {
   if (!["open", "shipped", "all"].includes(view)) fail("INVALID_VIEW");
@@ -196,7 +210,7 @@ async function orderAddress(db, orderId, actor, now = Date.now()) {
 }
 
 // ---- Routes (mounted by coffee-subscription-fulfillment.js after its staff sign-in check) ------------------------
-function addRoutes(router, { getDb, sendMail, clock, log }) {
+function addRoutes(router, { getDb, sendMail, clock, log, onMailFailed = null }) {
   const handle = (fn) => async (req, res) => {
     try {
       return res.json(await fn(req.body || {}, req, req.staff.actor));
@@ -211,16 +225,9 @@ function addRoutes(router, { getDb, sendMail, clock, log }) {
   router.post("/orders/prepare", handle((b, _r, actor) => prepareOrder(getDb(), { orderId: b.orderId, requestId: b.requestId, actor }, { now: clock() })));
   router.post("/orders/hold", handle((b, _r, actor) => holdOrder(getDb(), { orderId: b.orderId, requestId: b.requestId, reason: b.reason, actor }, { now: clock() })));
   router.post("/orders/resume", handle((b, _r, actor) => resumeOrder(getDb(), { orderId: b.orderId, requestId: b.requestId, actor }, { now: clock() })));
-  router.post("/orders/ship", handle(async (b, _r, actor) => {
-    const r = await shipOrder(getDb(), { orderId: b.orderId, requestId: b.requestId, actor, method: b.method, trackingNumber: b.trackingNumber }, { now: clock() });
-    let mailStatus = r.mailStatus || null;
-    if (r.mail) {
-      const fresh = (await getDb().collection(ORDERS).doc(r.orderId).get()).data();
-      mailStatus = await sendShippedMail(getDb(), { orderId: r.orderId, to: r.mail.to, order: fresh }, sendMail, log);
-    }
-    const { mail: _m, ...out } = r;
-    return { ...out, mailStatus };
-  }));
+  router.post("/orders/ship", handle((b, _r, actor) => shipOrderAndNotify(getDb(),
+    { orderId: b.orderId, requestId: b.requestId, actor, method: b.method, trackingNumber: b.trackingNumber },
+    { sendMail, log, now: clock(), onMailFailed })));
   // A failed shipping mail, sent again (only from "failed", once).
   router.post("/orders/resend-mail", handle(async (b) => {
     if (!ORDER_ID_RE.test(String(b.orderId || ""))) fail("INVALID_ORDER");
@@ -231,4 +238,4 @@ function addRoutes(router, { getDb, sendMail, clock, log }) {
 }
 
 module.exports = { ORDERS_FROM_DAY, ORDERS, OPS, ADDRESS_VIEWS, STATES, HOLD_REASONS, OrderFulfillmentError, blockers, stateOf, prepareOrder, shipOrder, holdOrder,
-  resumeOrder, sendShippedMail, workList, orderAddress, addRoutes, ref, productNames };
+  resumeOrder, sendShippedMail, shipOrderAndNotify, workList, orderAddress, addRoutes, ref, productNames };

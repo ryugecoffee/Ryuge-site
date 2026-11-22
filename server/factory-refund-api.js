@@ -15,6 +15,7 @@
 const crypto = require("node:crypto");
 const refunds = require("./refunds");
 const subscriptionRead = require("./factory-subscription-read");
+const storeOps = require("./factory-store-ops");
 const { createRateLimiter, clientKey } = require("./rate-limit");
 
 const PATH = "/internal/factory/order-refund";
@@ -29,6 +30,10 @@ const READ_ONLY_OPS = new Set(["orders.search", "orders.get"]);
 // 珈琲の定期便 (server/factory-subscription-read.js): read only, behind their own switch FACTORY_SUBSCRIPTION_READ_ENABLED
 // (refused before anything is stored while it is off); contact details also need the CEO's fresh view record.
 const SUBSCRIPTION_OPS = new Set(["subscriptions.list", "subscriptions.get", "subscriptions.schedule", "subscriptions.contact"]);
+// The shop's sales and parcels (server/factory-store-ops.js, 2026-11-22): reading behind FACTORY_STORE_READ_ENABLED,
+// 発送準備・発送済み behind FACTORY_STORE_SHIP_ENABLED and the CEO's approval record. Each refused before anything is stored.
+const STORE_READ_OPS = new Set(["store.overview", "fulfillment.list"]);
+const STORE_SHIP_OPS = new Set(["fulfillment.prepare", "fulfillment.ship"]);
 const refundOpsEnabled = (env) => env.FACTORY_REFUND_OPS_ENABLED === "true";
 
 function enabled(env) {
@@ -62,6 +67,10 @@ const FIELDS = {
   "subscriptions.get": ["nonce", "op", "subscription"],
   "subscriptions.schedule": ["nonce", "op", "range"],
   "subscriptions.contact": ["nonce", "op", "subscription", "view"],
+  "store.overview": ["nonce", "op", "range"],
+  "fulfillment.list": ["nonce", "op", "view", "kind"],
+  "fulfillment.prepare": ["nonce", "op", "target", "skus", "approval"],
+  "fulfillment.ship": ["nonce", "op", "target", "method", "trackingNumber", "approval"],
 };
 
 function parse(rawBody) {
@@ -127,13 +136,18 @@ async function searchOrders(db, query = {}) {
   return docs.map((d) => orderSummary(d.id, d.data())).sort((a, b) => (b.paidAt || 0) - (a.paidAt || 0)).slice(0, limit);
 }
 
-async function process_({ db, stripe, env, rawBody, timestamp, signature, now }) {
+async function process_({ db, stripe, env, rawBody, timestamp, signature, now, sendMail = async () => {}, log = console, onMailFailed = null, onStockShort = null }) {
   if (!enabled(env)) deny("DISABLED");
   if (!verifySignature({ secret: env.FACTORY_REFUND_HMAC_SECRET, timestamp, signature, rawBody, now })) deny("INVALID_FACTORY_SIGNATURE");
   const body = parse(rawBody);
   // Before the nonce is stored: a refused refund operation leaves no trace in Firestore and never reaches Stripe.
   if (SUBSCRIPTION_OPS.has(body.op)) {
     if (!subscriptionRead.readEnabled(env)) deny("SUBSCRIPTION_READ_DISABLED");
+  } else if (STORE_READ_OPS.has(body.op)) {
+    if (!storeOps.readEnabled(env)) deny("STORE_READ_DISABLED");
+  } else if (STORE_SHIP_OPS.has(body.op)) {
+    if (!storeOps.shipEnabled(env)) deny("STORE_SHIP_DISABLED");
+    verifyCeoApproval(body.approval, env, now);
   } else if (!READ_ONLY_OPS.has(body.op) && !refundOpsEnabled(env)) deny("REFUND_OPS_DISABLED");
   // One-time nonce: a captured request is refused the second time, whatever it asks.
   try {
@@ -169,6 +183,13 @@ async function process_({ db, stripe, env, rawBody, timestamp, signature, now })
     case "subscriptions.get": return subscriptionRead.getSubscription(db, body.subscription, now);
     case "subscriptions.schedule": return subscriptionRead.schedule(db, body.range, now);
     case "subscriptions.contact": return subscriptionRead.contact(db, body.subscription, body.view, env, now);
+    case "store.overview": return storeOps.overview(db, body.range, now);
+    case "fulfillment.list": return storeOps.list(db, { view: body.view, kind: body.kind }, now);
+    case "fulfillment.prepare":
+      return storeOps.prepare(db, { target: body.target, skus: body.skus, approval: body.approval }, { actor: "factory-ceo:" + env.FACTORY_CEO_USER_ID, now, onStockShort });
+    case "fulfillment.ship":
+      return storeOps.ship(db, { target: body.target, method: body.method, trackingNumber: body.trackingNumber, approval: body.approval },
+        { actor: "factory-ceo:" + env.FACTORY_CEO_USER_ID, now, sendMail, log, onMailFailed });
     default: return deny("INVALID_OPERATION");
   }
 }
@@ -176,25 +197,30 @@ async function process_({ db, stripe, env, rawBody, timestamp, signature, now })
 const STATUS = {
   INVALID_FACTORY_SIGNATURE: 401, REFUND_OPS_DISABLED: 403, CEO_APPROVAL_REQUIRED: 403, CEO_APPROVAL_EXPIRED: 403, REPLAYED_REQUEST: 409,
   BODY_TOO_LARGE: 413, INVALID_JSON: 400, INVALID_FIELDS: 400, INVALID_OPERATION: 400, NONCE_REQUIRED: 400, INVALID_QUERY: 400,
-  SUBSCRIPTION_READ_DISABLED: 403, CEO_VIEW_REQUIRED: 403, CEO_VIEW_EXPIRED: 403, UNKNOWN_SUBSCRIPTION: 404, AMBIGUOUS_SUBSCRIPTION: 409, INVALID_RANGE: 400,
+  SUBSCRIPTION_READ_DISABLED: 403, STORE_READ_DISABLED: 403, STORE_SHIP_DISABLED: 403, CEO_VIEW_REQUIRED: 403, CEO_VIEW_EXPIRED: 403, UNKNOWN_SUBSCRIPTION: 404, AMBIGUOUS_SUBSCRIPTION: 409, INVALID_RANGE: 400,
 };
 const REFUND_CONFLICTS = ["PLAN_CHANGED", "EXCEEDS_REMAINING_QUANTITY", "SHIPPING_ALREADY_REFUNDED", "ALREADY_FULLY_REFUNDED",
   "EXTERNAL_REFUNDS_PRESENT", "EXCEEDS_STRIPE_REFUNDABLE", "EXCEEDS_ORDER_TOTAL", "REFUND_ID_CONFLICT"];
 
-function createHandler({ getDb, getStripe, env = process.env, limiter = createRateLimiter({ limit: 30, windowMs: 60 * 1000 }), clock = Date.now, log = console } = {}) {
+function createHandler({ getDb, getStripe, env = process.env, limiter = createRateLimiter({ limit: 30, windowMs: 60 * 1000 }), clock = Date.now, log = console,
+  sendMail = async () => {}, onMailFailed = null, onStockShort = null } = {}) {
   return async function factoryOrderRefund(req, res) {
     res.setHeader("Cache-Control", "no-store");
     if (!enabled(env)) return res.status(404).end();
     if (!limiter(clientKey(req).key)) return res.status(429).json({ error: "RATE_LIMITED" });
     try {
       const result = await process_({ db: getDb(), stripe: getStripe(), env, rawBody: req.body, now: clock(),
-        timestamp: req.get("x-factory-timestamp"), signature: req.get("x-factory-signature") });
+        timestamp: req.get("x-factory-timestamp"), signature: req.get("x-factory-signature"), sendMail, log, onMailFailed, onStockShort });
       return res.json({ ok: true, ...result });
     } catch (error) {
       if (error instanceof ApiError || error instanceof subscriptionRead.ReadError) {
         const status = STATUS[error.code] || 400;
         if (status === 401 || status === 403 || status === 409) log.warn("Factory refund request refused:", error.code);
         return res.status(status).json({ error: error.code });
+      }
+      // The shop's own refusals (shipping state, beans, method, tracking number), passed on as they are.
+      if (error instanceof storeOps.StoreOpsError || error?.constructor?.name === "OrderFulfillmentError" || error?.constructor?.name === "FulfillmentError") {
+        return res.status(error.status || 400).json({ error: error.code, detail: error.detail ?? null });
       }
       if (error instanceof refunds.RefundError) {
         return res.status(REFUND_CONFLICTS.includes(error.code) ? 409 : 400).json({ error: error.code, detail: error.detail ?? null });
