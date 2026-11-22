@@ -59,7 +59,7 @@ test("tampered or unknown input refused; the browser's price, shipping and categ
 
 test("which products go by Letter Pack Light: exactly the 100 g bean bags of the catalogue", () => {
   const flat = Object.entries(CATALOG).filter(([, p]) => p.flatMail).map(([id]) => id).sort();
-  assert.deepEqual(flat, ["enma-amarelo-bourbon", "enma-andes-blue", "enma-jimma", "enma-karamo", "enma-kindiio", "enma-quequesques", "enma-zen-dark-roast"]);
+  assert.deepEqual(flat, ["enma-amarelo-bourbon", "enma-andes-blue", "enma-featured-quequesques", "enma-jimma", "enma-karamo", "enma-kindiio", "enma-quequesques", "enma-zen-dark-roast"]);
   for (const id of flat) assert.deepEqual([CATALOG[id].kind, CATALOG[id].contentG], ["beans", 100], id);
 });
 

@@ -15,9 +15,13 @@
 // (server/domestic-shipping.js).
 // managedStock: true = sold from counted, packed bags (inventory/{sku}); with inventory on, checkout reserves them and
 // refuses past zero. Others are not stock-gated. Must equal INVENTORY_MANAGED_SKUS in src/pages/ProductsPage.jsx.
+// featured: the 「今、飲んでほしい珈琲」 slot (server/featured.js, set in server/featured-coffee.json). CATALOG below is the
+// regular catalogue plus that slot: the featured SKU (always ¥1,000) on sale, its regular product off sale meanwhile.
 const { validItems } = require("./inventory");
+const { withFeatured } = require("./featured");
+const FEATURED_CONFIG = require("./featured-coffee.json");
 
-const CATALOG = Object.freeze({
+const BASE_CATALOG = Object.freeze({
   // CEO final prices (2026-11-17). The Brazil Amarelo Bourbon is sold as two products from the same green beans: the
   // promotional "Zen dark roast" (¥1,000, 2 per customer) and the regular medium-dark roast (¥1,300). They have their
   // own sales caps, orders and promo rules, and share one lot so together they never sell more than can be roasted.
@@ -42,6 +46,8 @@ const CATALOG = Object.freeze({
   "mokkan-oku-yame-hojicha": { price: 2800, weightG: 120, kind: "tea", contentG: 30, availableForSale: true, managedStock: true, requiresInventory: true },
   "mokkan-oku-yame-genmaicha": { price: 2800, weightG: 120, kind: "tea", contentG: 30, availableForSale: true, managedStock: true, requiresInventory: true },
 });
+
+const { catalog: CATALOG, featured: FEATURED } = withFeatured(BASE_CATALOG, FEATURED_CONFIG);
 
 // Browser cart -> priced items. Only id and quantity are taken from the browser.
 // Throws INVALID_ITEMS, UNKNOWN_PRODUCT or PRODUCT_NOT_AVAILABLE (answered as 400, nothing is charged).
@@ -83,4 +89,4 @@ function lotItems(items, catalog = CATALOG) {
   return [...totals].map(([id, quantity]) => ({ id, quantity }));
 }
 
-module.exports = { CATALOG, priceItems, itemsMetadata, managedItems, lotOf, lotItems };
+module.exports = { CATALOG, BASE_CATALOG, FEATURED, priceItems, itemsMetadata, managedItems, lotOf, lotItems };

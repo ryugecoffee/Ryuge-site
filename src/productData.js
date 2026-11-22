@@ -1,3 +1,4 @@
+import FEATURED_CONFIG from "../server/featured-coffee.json" with { type: "json" };
 // A product field may be one string (same in every language) or { ja, en, es }.
 export function loc(value, lang) {
   if (value && typeof value === "object" && !Array.isArray(value)) return value[lang] ?? value.ja ?? value.en ?? "";
@@ -311,8 +312,10 @@ export const PRODUCT_DATA = {
       requiresInventory: true, // = server/catalog.js requiresInventory: "近日公開" until inventory is on
       notice: MADE_TO_ORDER,
       promo: true, // promotional bean: at most 2 bags per customer (server/catalog.js promo)
-      promotion: { active: false, label: { ja: "今、飲んでほしい珈琲", en: "Coffee We Recommend Now", es: "El café que recomendamos ahora" } },
       isSoldOut: true,
+      // CEO 2026-11-22: removed from the list and from the featured slot. Kept here (hidden) for past orders' names;
+      // the server keeps refusing it (server/catalog.js availableForSale: false), stock and order history stay.
+      hidden: true,
     },
     {
       // Regular product (CEO 2026-11-17): the same Brazil beans, medium-dark roast.
@@ -417,7 +420,6 @@ export const PRODUCT_DATA = {
       comingSoon: false, // on sale with inventory on (sales cap per product)
       requiresInventory: true, // = server/catalog.js requiresInventory: "近日公開" until inventory is on
       notice: MADE_TO_ORDER,
-      promotion: { active: true, label: { ja: "今、飲んでほしい珈琲", en: "Coffee We Recommend Now", es: "El café que recomendamos ahora" } },
       isSoldOut: false,
     },
     {
@@ -800,3 +802,37 @@ export const PRODUCT_DATA = {
 },
   ],
 };
+
+// The featured slot (CEO, 2026-11-22; its label is in server/featured-coffee.json): permanent, first in the coffee list (where 禅の深煎り was).
+// Always 100 g at ¥1,000 incl. tax; the coffee in it is `product` in server/featured-coffee.json (the one setting, shared
+// with the payment server: server/featured.js, docs/featured-coffee.md). The featured coffee is its own product (SKU
+// "enma-featured-…", own price, stock and orders); its regular product stays in this data for past orders' names but is
+// hidden and not sold while it is featured.
+const FEATURED_SKU = `enma-featured-${FEATURED_CONFIG.product.replace(/^enma-/, "")}`;
+export const FEATURED_COFFEE = Object.freeze({
+  product: FEATURED_CONFIG.product,
+  sku: FEATURED_SKU,
+  priceNumber: FEATURED_CONFIG.priceYen,
+  label: FEATURED_CONFIG.label,
+});
+{
+  const source = PRODUCT_DATA.enma.find((p) => p.id === FEATURED_CONFIG.product);
+  if (!source) throw new Error(`Featured coffee ${FEATURED_CONFIG.product} is not in PRODUCT_DATA.enma`);
+  const featured = {
+    ...source,
+    id: FEATURED_SKU,
+    featuredFrom: source.id,
+    price: `¥${FEATURED_CONFIG.priceYen.toLocaleString("en-US")}`,
+    priceNumber: FEATURED_CONFIG.priceYen,
+    size: `${FEATURED_CONFIG.contentG}g`,
+    weight: `${FEATURED_CONFIG.contentG}g`,
+    promo: true, // 2 bags per customer in total, every featured coffee and 禅の深煎り counted together (server/featured.js)
+    promotion: { active: true, label: FEATURED_CONFIG.label },
+    comingSoon: false,
+    isSoldOut: false,
+  };
+  delete featured.regularPriceNumber;
+  source.hidden = true;
+  source.featuredAs = FEATURED_SKU;
+  PRODUCT_DATA.enma.unshift(featured);
+}

@@ -57,13 +57,14 @@ function buildCatalog() {
         (p.ingredients ? ` / 原材料: ${loc(p.ingredients, "ja")}` : "") +
         (p.flavorNotes?.ja ? ` / 風味（${{ direction: "焙煎の方向性・カッピング未確認", tea: "生産者の情報" }[p.flavorBasis] || "仕入れ先情報"}）: ${p.flavorNotes.ja.join("・")}` : "") +
         (p.summary?.ja ? ` / ${p.summary.ja}` : "") +
+        (p.promotion?.active ? ` / ※${p.promotion.label?.ja}（おすすめ枠・100g 1,000円）` : "") +
         (p.isSoldOut ? " / ※売り切れ" : "") +
         (p.comingSoon ? " / ※準備中・注文不可" : "") +
         (p.requiresInventory ? " / ※販売開始前の場合あり（ストアで「近日公開」の間は注文不可）" : "") +
         (p.promo ? " / ※プロモーション豆：お一人様2袋まで" : "")
     );
   };
-  (PRODUCT_DATA.enma || []).forEach((p) => push(p, "閻魔"));
+  (PRODUCT_DATA.enma || []).filter((p) => !p.hidden).forEach((p) => push(p, "閻魔"));
   (PRODUCT_DATA.woodbox || []).filter((p) => !p.archived && !p.hidden).forEach((p) => push(p, "木函"));
   // Hidden products (e.g. the hojicha bag, CEO 2026-11-17) are not offered.
   (PRODUCT_DATA.bag || []).filter((p) => !p.hidden).forEach((p) => push(p, "袋シリーズ"));

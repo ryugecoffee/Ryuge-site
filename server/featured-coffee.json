@@ -1,0 +1,11 @@
+{
+  "_how_to_change": "docs/featured-coffee.md: change only `product`, then move stock with /internal/inventory/featured-transfer.",
+  "product": "enma-quequesques",
+  "priceYen": 1000,
+  "contentG": 100,
+  "label": {
+    "ja": "今、飲んでほしい珈琲",
+    "en": "Coffee We Recommend Now",
+    "es": "El café que recomendamos ahora"
+  }
+}

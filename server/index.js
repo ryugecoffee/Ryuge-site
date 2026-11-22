@@ -14,6 +14,7 @@ const { quoteOrder, QuoteError, COUPONS, CONTACT_EMAIL, PROMO_MAX_BAGS } = requi
 const { promoKeys } = require("./promo");
 const orders = require("./orders");
 const initialStock = require("./initial-stock");
+const featuredStock = require("./featured-stock");
 const { orderNotice } = require("./order-notice");
 const refunds = require("./refunds");
 const factoryRefundApi = require("./factory-refund-api");
@@ -467,6 +468,22 @@ function reconcileSoon() {
     .finally(() => { reconciling = false; });
 }
 if (INVENTORY_ENABLED) setInterval(reconcileSoon, 5 * 60 * 1000).unref?.();
+
+// 「今、飲んでほしい珈琲」: the stock move the CEO approved in the PR (server/featured-stock.js APPROVED_TRANSFERS), applied
+// once after the deploy. Never blocks the server; a failure is retried a few times, then at the next start.
+if (INVENTORY_ENABLED) {
+  const applyApproved = async (attempt) => {
+    try {
+      const results = await featuredStock.applyApprovedTransfers(db);
+      console.log("Featured stock (approved):", JSON.stringify(results.map(({ id, applied, reason, quantity }) => ({ id, applied, reason, quantity }))));
+      if (results.some((r) => r.reason === "NO_FREE_STOCK") && attempt < 5) setTimeout(() => applyApproved(attempt + 1), 60 * 1000).unref?.();
+    } catch (error) {
+      console.error("Featured stock (approved) failed:", error.message);
+      if (attempt < 5) setTimeout(() => applyApproved(attempt + 1), 60 * 1000).unref?.();
+    }
+  };
+  setTimeout(() => applyApproved(1), 5 * 1000).unref?.();
+}
 // Factory notices: shipping deadlines (due today/tomorrow, or past) and the retry of unsent notices, every 30 minutes.
 if (FACTORY_NOTIFY_ON) setInterval(() => factoryNotice(() => storeEvents.sweep(db)), 30 * 60 * 1000).unref?.();
 
@@ -520,6 +537,39 @@ app.post("/internal/inventory/initial-stock", async (req, res) => {
     }
     console.error("Initial stock failed:", error.message);
     return res.status(500).json({ error: "INITIAL_STOCK_FAILED" });
+  }
+});
+
+// 「今、飲んでほしい珈琲」: move free bags between a coffee and its featured product (server/featured-stock.js,
+// docs/featured-coffee.md). preview -> CEO approval -> apply. Off (404) unless INVENTORY_ADMIN_TOKEN is set, like the
+// initial stock registration above; the caller sends it in X-Inventory-Admin-Token.
+const featuredTransferLimit = createRateLimiter({ limit: 10, windowMs: 60 * 1000 });
+app.post("/internal/inventory/featured-transfer", async (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  const token = process.env.INVENTORY_ADMIN_TOKEN;
+  if (!token || token.length < 32) return res.status(404).end();
+  if (!featuredTransferLimit(clientKey(req).key)) return res.status(429).json({ error: "RATE_LIMITED" });
+  const supplied = req.headers["x-inventory-admin-token"];
+  const digest = (value) => require("node:crypto").createHash("sha256").update(String(value)).digest();
+  if (typeof supplied !== "string" || !require("node:crypto").timingSafeEqual(digest(token), digest(supplied))) {
+    return res.status(403).json({ error: "FORBIDDEN" });
+  }
+  const projectId = process.env.FIREBASE_PROJECT_ID || "";
+  const { mode, transfer, planHash, approval, expectedProjectId } = req.body || {};
+  try {
+    if (mode === "preview") return res.json(await featuredStock.previewFeaturedTransfer(db, transfer, { projectId }));
+    if (mode === "apply") {
+      const result = await featuredStock.applyFeaturedTransfer(db, transfer, { projectId, expectedProjectId, planHash, approval });
+      console.log("Featured stock transfer:", JSON.stringify({ applied: result.applied, plan: result.plan }));
+      return res.json({ projectId, ...result });
+    }
+    return res.status(400).json({ error: "INVALID_MODE" });
+  } catch (error) {
+    if (error instanceof featuredStock.TransferError) {
+      return res.status(["PLAN_CHANGED", "NOT_ENOUGH_FREE_STOCK"].includes(error.message) ? 409 : 400).json({ error: error.message });
+    }
+    console.error("Featured stock transfer failed:", error.message);
+    return res.status(500).json({ error: "FEATURED_TRANSFER_FAILED" });
   }
 });
 
