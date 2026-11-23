@@ -36,6 +36,14 @@ const SUBSCRIPTION_OPS = new Set(["subscriptions.list", "subscriptions.get", "su
 const STORE_READ_OPS = new Set(["store.overview", "fulfillment.list", "inventory.status"]);
 const STORE_SHIP_OPS = new Set(["fulfillment.prepare", "fulfillment.ship"]);
 const refundOpsEnabled = (env) => env.FACTORY_REFUND_OPS_ENABLED === "true";
+// factory.features (2026-11-23): which of the switches above are on, as booleans only, so Factory's list of what it
+// can do (ChatGPT factory_capabilities, Jennifer) shows what will really answer. It reads no order, contract or
+// customer data and changes nothing; it answers whenever the signed connection itself is valid.
+const FEATURE_OPS = new Set(["factory.features"]);
+const features = (env) => ({
+  storeRead: storeOps.readEnabled(env), subscriptionRead: subscriptionRead.readEnabled(env), storeShip: storeOps.shipEnabled(env),
+  refundOps: refundOpsEnabled(env), inventory: env.INVENTORY_ENABLED === "true",
+});
 
 function enabled(env) {
   return env.FACTORY_REFUND_API_ENABLED === "true" &&
@@ -73,6 +81,7 @@ const FIELDS = {
   "inventory.status": ["nonce", "op", "lowThreshold"],
   "fulfillment.prepare": ["nonce", "op", "target", "skus", "approval"],
   "fulfillment.ship": ["nonce", "op", "target", "method", "trackingNumber", "approval"],
+  "factory.features": ["nonce", "op"],
 };
 
 function parse(rawBody) {
@@ -150,7 +159,9 @@ async function process_({ db, stripe, env, rawBody, timestamp, signature, now, s
   if (!verifySignature({ secret: env.FACTORY_REFUND_HMAC_SECRET, timestamp, signature, rawBody, now })) deny("INVALID_FACTORY_SIGNATURE");
   const body = parse(rawBody);
   // Before the nonce is stored: a refused refund operation leaves no trace in Firestore and never reaches Stripe.
-  if (SUBSCRIPTION_OPS.has(body.op)) {
+  if (FEATURE_OPS.has(body.op)) {
+    // Booleans only (see FEATURE_OPS): no switch of its own.
+  } else if (SUBSCRIPTION_OPS.has(body.op)) {
     if (!subscriptionRead.readEnabled(env)) deny("SUBSCRIPTION_READ_DISABLED");
   } else if (STORE_READ_OPS.has(body.op)) {
     if (!storeOps.readEnabled(env)) deny("STORE_READ_DISABLED");
@@ -166,6 +177,7 @@ async function process_({ db, stripe, env, rawBody, timestamp, signature, now, s
   }
   const request = { orderId: body.orderId, lines: body.lines, refundShipping: body.refundShipping, acknowledgeExternalRefunds: body.acknowledgeExternalRefunds };
   switch (body.op) {
+    case "factory.features": return { features: features(env) };
     case "orders.search": return { orders: await searchOrders(db, body.query) };
     case "orders.get": {
       if (!/^pi_[A-Za-z0-9]{6,80}$/.test(String(body.orderId))) deny("INVALID_QUERY");
