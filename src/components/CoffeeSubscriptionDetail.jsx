@@ -56,6 +56,10 @@ export default function CoffeeSubscriptionDetail({ lang }) {
           </dd>
         </div>
         <div>
+          <dt>{labels.first}</dt>
+          <dd><strong>{yen(SUB.firstPrice)}</strong><small>{labels.firstNote}</small></dd>
+        </div>
+        <div>
           <dt>{labels.amount}</dt>
           <dd><strong>{selected.gramsPerMonth}g</strong><small>{frequencyName(selected.deliveriesPerMonth)}</small></dd>
         </div>

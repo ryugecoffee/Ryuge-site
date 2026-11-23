@@ -1,15 +1,43 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { PREFERENCE_ISSUE_TEXT, PREFERENCE_MAX_LENGTH, normalizePreference, preferenceIssues } from "../lib/subscriptionPreference";
-import { TERMS_JA } from "../lib/coffeeSubscriptionTerms";
-import { MONTHLY_PRICES, PREFECTURES, accountApi, dateLabel, errorText, monthLabel, newRequestId, session, shortDate, yen } from "../lib/coffeeSubscriptionAccount";
+import { REFUND_BUSINESS_DAYS, TERMS_JA } from "../lib/coffeeSubscriptionTerms";
+import { FIRST_PRICE, MONTHLY_PRICES, PREFECTURES, accountApi, dateLabel, errorText, monthLabel, newRequestId, session, shortDate, yen } from "../lib/coffeeSubscriptionAccount";
 
 // 珈琲の定期便: the customer's own page. Sign-in by a link mailed to the subscription's email (15 minutes, once), then
 // a 30-minute session in this tab. Every change is checked by the payment server (server/coffee-subscription-account.js):
 // what is shown here is only what the server answered.
 
-const STATUS_TEXT = { trialing: "お申し込み済み（月額のお支払い開始前）", active: "ご利用中", past_due: "お支払いを確認中", unpaid: "お支払いが確認できていません",
+const STATUS_TEXT = { trialing: "ご契約中（月額のお支払い開始前）", active: "ご契約中", past_due: "お支払いを確認中", unpaid: "お支払いが確認できていません",
   canceled: "終了", incomplete_record: "確認中" };
+// Deliveries still to come (the server's records): planned, being prepared, held or being rescheduled.
+const UPCOMING = ["planned", "held", "preparing", "needs_review"];
+const todayKey = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+const endDay = (ms) => new Date(ms + 9 * 3600e3).toISOString().slice(0, 10);
+const REFUND_STATUS_TEXT = { refunded: "返金済みです。", approved: "返金のお手続き中です。" };
+
+// The next monthly charge and the next delivery, from what the server answered (nothing is guessed in the browser).
+function nextCharge(me) {
+  if (me.cancellation || me.status === "canceled") return null;
+  return me.months.find((m) => !m.skipped && !m.charge && m.billingDate >= todayKey()) || null;
+}
+function nextDelivery(me) {
+  const recorded = me.shipments.filter((s) => UPCOMING.includes(s.status) && (s.plannedDate || s.shipBy))
+    .map((s) => ({ date: s.plannedDate || s.shipBy, by: !s.plannedDate, preparing: s.status === "preparing" }))
+    .sort((a, b) => a.date.localeCompare(b.date))[0];
+  if (recorded) return recorded;
+  if (me.cancellation || me.status === "canceled") return null;
+  const month = me.months.find((m) => !m.skipped && m.shippingDates.length);
+  return month ? { date: month.shippingDates[0], afterPayment: !month.charge } : null;
+}
+function upcomingShipments(me, beforeMonth = null) {
+  return me.shipments.filter((s) => UPCOMING.includes(s.status) && s.kind !== "first" && (!beforeMonth || !s.month || s.month < beforeMonth));
+}
+const remainingText = (list) => {
+  const dated = list.filter((s) => s.plannedDate && s.status !== "needs_review").map((s) => dateLabel(s.plannedDate));
+  return `あと${list.length}回お届けいたします${dated.length ? `（${dated.join("・")}発送予定）` : ""}。発送の際は、メールでお知らせいたします。`;
+};
+const deliveriesText = (list) => (list.length ? `お支払い済みの分として、${remainingText(list)}` : "ございません。");
 const CHARGE_TEXT = { paid: "お支払い済み", not_charged: "請求なし", payment_failed: "お支払い未完了" };
 const SHIPMENT_TEXT = { planned: "発送予定", needs_review: "確認中", held: "確認中", preparing: "発送準備中", shipped: "発送済み", delivered: "お届け済み", cancelled_before_shipping: "発送取りやめ" };
 
@@ -153,51 +181,92 @@ function AddressSection({ me, act, busy }) {
   );
 }
 
-function CancelSection({ me, reload, setNotice }) {
+// 解約 (2026-11-23): before confirming, four things apart — when the contract ends, the charges after it, the deliveries
+// still to come, and the refund; after it, a clear "completed" summary. Every figure is the server's (preview / records).
+function CancelSection({ me, reload }) {
   const [preview, setPreview] = useState(null);
+  const [done, setDone] = useState(null);
+  const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const rid = useRequestId();
+  const firstShipped = me.shipments.some((s) => s.kind === "first" && ["shipped", "delivered"].includes(s.status));
+
   if (me.cancellation) {
+    const c = me.cancellation;
+    const upcoming = upcomingShipments(me, c.firstUnchargedMonth);
     return (
-      <section className="subm-card"><h2>解約</h2>
-        <p className="subm-text">解約を受け付けました。{me.cancellation.firstUnchargedMonth ? `${monthLabel(me.cancellation.firstUnchargedMonth)}以降のご請求はありません。` : ""}</p>
-        {me.cancellation.refundProposal && <p className="subm-text">初回の200gは発送を取りやめました。初回分（{yen(me.cancellation.refundProposal.amount)}）は全額、お支払いのカードへ返金します（解約から7営業日以内に手続きします）。</p>}
+      <section className="subm-card" aria-labelledby="cancel-h">
+        <h2 id="cancel-h">解約</h2>
+        <div className="subm-done" role="status">
+          <h3>{done ? "解約のお手続きが完了いたしました" : "解約のお手続きは完了しています"}</h3>
+          {done && <p className="subm-text">ご登録のメールアドレスへ、解約内容のご案内をお送りいたしました。</p>}
+          <dl className="subm-summary">
+            <div><dt>契約終了日</dt><dd>{c.endsAt ? `${dateLabel(endDay(c.endsAt))}（この日のご請求はございません）` : "—"}</dd></div>
+            <div><dt>以後のご請求</dt><dd>ございません。{c.firstUnchargedMonth ? `${monthLabel(c.firstUnchargedMonth)}分以降のご請求はございません。` : ""}</dd></div>
+            <div><dt>今後のお届け</dt><dd>{deliveriesText(upcoming)}</dd></div>
+            <div><dt>ご返金</dt><dd>{c.refundProposal
+              ? `初回分${yen(c.refundProposal.amount)}を全額返金いたします。${REFUND_STATUS_TEXT[c.refundProposal.status] || `返金はお支払い時のカードへ行い、解約受付から${REFUND_BUSINESS_DAYS}営業日以内に手続きいたします。`}`
+              : "返金の対象となるお支払いはございません。"}</dd></div>
+          </dl>
+        </div>
       </section>
     );
   }
   if (me.status === "canceled") return null;
   async function open() {
-    setBusy(true);
+    setBusy(true); setError("");
     const r = await accountApi.call("GET", "/cancel");
     setBusy(false);
-    if (r.status === 200) setPreview(r.body); else setNotice({ error: errorText(r.body?.error) });
+    if (r.status === 200) setPreview(r.body); else setError(errorText(r.body?.error));
   }
   async function confirm() {
-    setBusy(true);
+    setBusy(true); setError("");
     const r = await accountApi.call("POST", "/cancel", { key: preview.key, requestId: rid.current() });
     setBusy(false);
-    if (r.status === 200) { rid.next(); setPreview(null); await reload(); setNotice({ ok: "解約を受け付けました。確認のメールをお送りしました。" }); return; }
-    if (r.body?.error === "CANCEL_CHANGED") { rid.next(); setNotice({ error: errorText("CANCEL_CHANGED") }); open(); return; }
-    setNotice({ error: errorText(r.body?.error) });
+    if (r.status === 200) { rid.next(); setPreview(null); setDone(r.body); await reload(); return; }
+    if (r.body?.error === "CANCEL_CHANGED") { rid.next(); setError(errorText("CANCEL_CHANGED")); open(); return; }
+    setError(errorText(r.body?.error));
   }
-  const endText = (p) => (p.action === "CANCEL_AT" ? `${dateLabel(new Date(p.endsAt + 9 * 3600e3).toISOString().slice(0, 10))}で終了します。` : "すぐに終了します。");
+  const endsText = (p) => (p.action === "CANCEL_AT"
+    ? `${dateLabel(endDay(p.endsAt))}（日本時間9時）。この日のご請求はございません。`
+    : "本日、ただちに終了いたします。");
+  const refundText = (p) => {
+    if (p.firstNotShipped) return `初回の200gはまだ発送前のため、発送を取りやめ、初回分${yen(p.refundProposalAmount)}を全額返金いたします。返金はお支払い時のカードへ行い、解約受付から${REFUND_BUSINESS_DAYS}営業日以内に手続きいたします（カードへの反映時期は、カード会社によって異なります）。`;
+    if (firstShipped || p.lastPaidMonth) return "初回分は発送済みのため、返金の対象にはなりません。お支払い済みの月額料金についても、日割りでの返金はございません。";
+    return "返金の対象となるお支払いはございません。";
+  };
+  const deliveryText = (p) => {
+    const upcoming = upcomingShipments(me, p.firstUnchargedMonth);
+    const parts = [];
+    if (p.firstNotShipped) parts.push("初回分の発送は取りやめます。");
+    if (p.action === "VOID_AND_CANCEL_NOW") parts.push("お支払いが完了していない今月分は発送いたしません。");
+    if (p.lastPaidMonth) parts.push(`お支払い済みの${monthLabel(p.lastPaidMonth)}分は、予定どおりお届けいたします。${upcoming.length ? remainingText(upcoming) : ""}`);
+    else if (upcoming.length && !p.firstNotShipped) parts.push(`お支払い済みの分として、${remainingText(upcoming)}`);
+    else parts.push("以後のお届けはございません。");
+    return parts.join("");
+  };
   return (
     <section className="subm-card" aria-labelledby="cancel-h">
       <h2 id="cancel-h">解約</h2>
+      {error && <p className="subm-alert" role="alert">{error}</p>}
       {!preview ? (
         <>
-          <p className="subm-text">いつでも解約できます。毎月1日のご請求（日本時間9時）より前であれば、その月以降のご請求はありません。解約手数料・違約金はありません。</p>
-          <button type="button" className="subm-secondary danger" onClick={open} disabled={busy}>解約の内容を確認する</button>
+          <p className="subm-text">いつでもお手続きいただけます。毎月1日のご請求（日本時間9時）より前に解約された場合、その月以降のご請求はございません。最低継続回数・解約手数料・違約金はございません。</p>
+          <button type="button" className="subm-secondary danger" onClick={open} disabled={busy}>{busy ? "確認しています…" : "解約の内容を確認する"}</button>
         </>
       ) : (
-        <div className="subm-confirm" role="dialog" aria-label="解約の確認">
-          <p className="subm-text"><strong>{endText(preview)}</strong></p>
-          <p className="subm-text">{monthLabel(preview.firstUnchargedMonth)}以降のご請求はありません。{preview.lastPaidMonth ? `お支払い済みの${monthLabel(preview.lastPaidMonth)}分のお届けは、予定どおり発送します。` : ""}</p>
-          {preview.action === "VOID_AND_CANCEL_NOW" && <p className="subm-text">お支払いが完了していない今月分のご請求は取り消します（今月分は発送しません）。</p>}
-          {preview.firstNotShipped && <p className="subm-text">初回の200gはまだ発送前のため発送を取りやめ、初回分（{yen(preview.refundProposalAmount)}）を全額、お支払いのカードへ返金します（解約から7営業日以内に手続きします）。</p>}
+        <div className="subm-confirm" role="dialog" aria-label="解約内容のご確認">
+          <p className="subm-text"><strong>以下の内容で解約いたします。まだ解約は確定していません。</strong></p>
+          <dl className="subm-summary">
+            <div><dt>契約終了日</dt><dd>{endsText(preview)}</dd></div>
+            <div><dt>以後のご請求</dt><dd>ございません。{monthLabel(preview.firstUnchargedMonth)}分以降のご請求はございません。{preview.action === "VOID_AND_CANCEL_NOW" ? "お支払いが完了していない今月分のご請求は取り消します。" : ""}</dd></div>
+            <div><dt>今後のお届け</dt><dd>{deliveryText(preview)}</dd></div>
+            <div><dt>ご返金</dt><dd>{refundText(preview)}</dd></div>
+          </dl>
+          <p className="subm-note">解約手数料・違約金はございません。解約後に、確認のメールをお送りいたします。</p>
           <div className="subm-actions">
-            <button type="button" className="subm-primary danger" onClick={confirm} disabled={busy}>{busy ? "手続きしています…" : "解約する"}</button>
-            <button type="button" className="subm-secondary" onClick={() => setPreview(null)} disabled={busy}>やめる</button>
+            <button type="button" className="subm-primary danger" onClick={confirm} disabled={busy}>{busy ? "手続きしています…" : "この内容で解約する"}</button>
+            <button type="button" className="subm-secondary" onClick={() => setPreview(null)} disabled={busy}>解約をやめる</button>
           </div>
         </div>
       )}
@@ -286,7 +355,7 @@ export default function SubscriptionManagePage() {
         <div className="legal-document subm">
           <p className="legal-eyebrow">Coffee Subscription</p>
           <h1>珈琲の定期便 管理ページ</h1>
-          {params.get("started") && <p className="subm-ok">お申し込みありがとうございます。ご登録のメールアドレスでログインすると、お届けの予定を確認・変更できます。</p>}
+          {params.get("started") && <p className="subm-ok">お申し込みいただき、誠にありがとうございます。ご登録のメールアドレスでログインいただくと、お届けの予定をご確認・ご変更いただけます。</p>}
           {notice?.ok && <p className="subm-ok" role="status">{notice.ok}</p>}
           {notice?.error && phase !== "signin" && <p className="subm-alert" role="alert">{notice.error}</p>}
           {phase === "signin" && <SignIn notice={notice?.error} />}
@@ -296,10 +365,16 @@ export default function SubscriptionManagePage() {
               <section className="subm-card" aria-labelledby="status-h">
                 <h2 id="status-h">ご契約の状況</h2>
                 <dl className="subm-facts">
-                  <div><dt>状態</dt><dd>{STATUS_TEXT[me.status] || me.status}</dd></div>
-                  <div><dt>配送回数</dt><dd>月{me.frequency}回（{yen(MONTHLY_PRICES[me.frequency])}/月・税込・送料込み）</dd></div>
+                  <div><dt>状態</dt><dd>{me.cancellation ? "解約のお手続き済み" : STATUS_TEXT[me.status] || me.status}</dd></div>
+                  <div><dt>お届け</dt><dd>月{me.frequency}回・各回200g（珈琲豆2種類・各100g）</dd></div>
+                  <div><dt>月額料金</dt><dd>{yen(MONTHLY_PRICES[me.frequency])}／月（税込・送料込み）</dd></div>
                   <div><dt>月額のお支払い開始</dt><dd>{monthLabel(me.startMonth)}1日</dd></div>
+                  <div><dt>次回のご請求</dt><dd>{(() => { const n = nextCharge(me); return n ? `${dateLabel(n.billingDate)}・${yen(n.amount)}` : "ございません"; })()}</dd></div>
+                  <div><dt>次回の発送予定</dt><dd>{(() => { const d = nextDelivery(me); return d ? `${dateLabel(d.date)}${d.by ? "まで" : ""}${d.preparing ? "（発送準備中）" : d.afterPayment ? "（その月のお支払い後）" : ""}` : "ございません"; })()}</dd></div>
                 </dl>
+                {me.status === "trialing" && !me.cancellation && (
+                  <p className="subm-text">初回分（{yen(FIRST_PRICE)}）はお支払い済みです。月額料金のお支払いは {monthLabel(me.startMonth)}1日から始まり、それまでに月額のご請求はございません。決済画面の「トライアル」は、この月額のお支払いが始まるまでの期間を指します。</p>
+                )}
                 {me.paymentIssue && <p className="subm-alert">お支払いが確認できていません。カード情報をご確認ください。お支払いが確認できるまで、その月の発送は行いません。</p>}
                 <div className="subm-actions">
                   <button type="button" className="subm-secondary" onClick={openPortal} disabled={busy || !me.portalAvailable}>カード変更・請求書の確認</button>
@@ -316,7 +391,7 @@ export default function SubscriptionManagePage() {
               )}
               <PreferenceSection key={`p-${me.preference}`} me={me} act={act} busy={busy} />
               <AddressSection key={`a-${JSON.stringify(me.shipping)}`} me={me} act={act} busy={busy} />
-              <CancelSection me={me} reload={reload} setNotice={setNotice} />
+              <CancelSection me={me} reload={reload} />
             </>
           )}
           <p className="subm-note"><Link to="/subscription/apply" className="text-link">お申し込み内容（定期購入の条件）</Link>・<Link to="/legal" className="text-link">特定商取引法に基づく表記</Link></p>

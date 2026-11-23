@@ -77,13 +77,13 @@ function submitTerms(startMonth, frequency) {
   const days = plan.SHIPPING_DAYS[frequency].map((d) => `${d}日`).join("・");
   const T = plan.TERMS_JA;
   return `定期購入のお申し込みです。${T.term}${T.stripeTrialLabel}`
-    + `内容：当店おまかせの珈琲豆2種類（100g×2袋＝1回200g）を月${frequency}回お届けします。`
-    + `本日のお支払いは初回200gの${plan.FIRST_DELIVERY_PRICE.toLocaleString("ja-JP")}円です（3営業日以内に発送）。`
-    + `${y}年${m}月1日から毎月1日に月額${plan.MONTHLY_PRICES[frequency].toLocaleString("ja-JP")}円（税込・全国一律送料込み）を自動でお支払いいただき、毎月${days}に発送します（土日祝・休業日は翌営業日）。`
+    + `【本日のお支払い】初回分${plan.FIRST_DELIVERY_PRICE.toLocaleString("ja-JP")}円（初回200g・税込・送料込み、3営業日以内に発送）。`
+    + `【月額料金】月${frequency}回・各回200g（珈琲豆2種類・100g×2袋）で月額${plan.MONTHLY_PRICES[frequency].toLocaleString("ja-JP")}円（税込・全国一律送料込み）。`
+    + `${y}年${m}月1日から毎月1日に先払いで自動決済し、毎月${days}に発送いたします（土日祝・休業日は翌営業日）。`
     + plan.annualReferenceText(frequency, startMonth)
-    + `配送回数の変更・スキップは前月${plan.CHANGE_DEADLINE_DAY}日までのお手続きで翌月分から反映します。`
-    + "解約はいつでも管理ページから行えます。毎月1日9時のご請求より前に解約されると、その月以降のご請求はありません。"
-    + T.emailCancelShort + T.noFee + "お支払い済みの月の分はお届けし、日割りの返金はありません。" + T.refund + T.returns;
+    + `配送回数の変更・スキップは前月${plan.CHANGE_DEADLINE_DAY}日までのお手続きで翌月分から反映いたします。`
+    + "【解約】管理ページからいつでも。毎月1日9時のご請求より前に解約された場合、その月以降のご請求はございません。"
+    + T.emailCancelShort + T.noFee + "お支払い済みの月の分はお届けし、日割りの返金はございません。【返金】" + T.refund + T.returns;
 }
 
 async function createCheckout({ db, stripe, config, input, now = Date.now(), waitMs = WAIT_FOR_OTHER_MS }) {

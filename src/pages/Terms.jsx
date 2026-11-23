@@ -15,7 +15,15 @@ export default function Terms({ lang = "ja" }) {
         },
         {
           heading: "掲載情報について",
-          body: "本サイトの内容は、予告なく変更・修正・削除される場合があります。掲載情報の正確性には努めますが、完全性を保証するものではありません。",
+          body: "本サイトの掲載情報（商品のご紹介など）は、変更・修正・削除される場合があります。掲載情報の正確性には努めますが、完全性を保証するものではありません。ご契約の条件の変更は、次の「本規約・ご契約条件の変更」に従います。",
+        },
+        {
+          heading: "本規約・ご契約条件の変更",
+          body: "当店は、民法第548条の4その他の法令に従い、本規約を変更することがあります。変更する場合は、変更後の内容および効力発生日を、効力発生日より前に本サイトでお知らせいたします。定期便の料金・お届け・解約・返金の条件を変更する場合は、ご契約中のお客様へ、ご登録のメールアドレスにも事前にお知らせいたします。",
+        },
+        {
+          heading: "定期購入（珈琲の定期便）",
+          body: "珈琲の定期便は、解約のお手続きをいただくまで毎月継続する定期購入です。お支払い、発送、配送回数の変更・スキップ、解約および返金の条件は、お申し込み時の確認画面、「特定商取引法に基づく表記」および「返品・返金ポリシー」に記載のとおりです。",
         },
         {
           heading: "免責事項",
@@ -47,7 +55,15 @@ export default function Terms({ lang = "ja" }) {
         },
         {
           heading: "Site Content",
-          body: "The content of this website may be changed, revised, or removed without prior notice. We strive for accuracy, but do not guarantee completeness.",
+          body: "The information on this website (such as product descriptions) may be changed, revised or removed. We strive for accuracy, but do not guarantee completeness. Changes to the conditions of a contract follow the section “Changes to These Terms and to Contract Conditions”.",
+        },
+        {
+          heading: "Changes to These Terms and to Contract Conditions",
+          body: "We may change these terms in accordance with the law, including Article 548-4 of the Civil Code of Japan. If we do, we will publish the changed terms and their effective date on this website before that date. If we change the price, deliveries, or cancellation or refund conditions of the coffee subscription, we will also notify customers with an active subscription in advance at their registered email address.",
+        },
+        {
+          heading: "Coffee Subscription",
+          body: "The Coffee Subscription is a recurring purchase that continues every month until you cancel. The terms for payment, delivery, changes and skips, cancellation and refunds are as set out on the confirmation screen at sign-up, in the Legal Notice and in the Refund & Cancellation Policy.",
         },
         {
           heading: "Disclaimer",
@@ -79,7 +95,15 @@ export default function Terms({ lang = "ja" }) {
         },
         {
           heading: "Contenido del Sitio",
-          body: "El contenido de este sitio puede cambiarse, revisarse o eliminarse sin previo aviso. Procuramos exactitud, pero no garantizamos integridad total.",
+          body: "La información publicada en este sitio (como la presentación de productos) puede cambiarse, revisarse o eliminarse. Procuramos su exactitud, pero no garantizamos que sea completa. Los cambios en las condiciones de un contrato se rigen por la sección «Cambios en estos términos y en las condiciones del contrato».",
+        },
+        {
+          heading: "Cambios en estos términos y en las condiciones del contrato",
+          body: "Podemos modificar estos términos de conformidad con la ley, incluido el artículo 548-4 del Código Civil de Japón. En tal caso, publicaremos en este sitio el contenido modificado y su fecha de entrada en vigor antes de dicha fecha. Si cambiamos el precio, los envíos o las condiciones de cancelación o reembolso de la suscripción de café, también lo comunicaremos con antelación por correo electrónico a los clientes con una suscripción activa.",
+        },
+        {
+          heading: "Suscripción de café",
+          body: "La Suscripción de café es una compra periódica que continúa cada mes hasta que usted la cancele. Las condiciones de pago, envío, cambios y omisiones, cancelación y reembolsos son las que figuran en la pantalla de confirmación al suscribirse, en el Aviso Legal y en la Política de Reembolsos y Cancelaciones.",
         },
         {
           heading: "Exención de Responsabilidad",

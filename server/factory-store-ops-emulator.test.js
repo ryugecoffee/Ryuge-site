@@ -199,7 +199,7 @@ test("a 珈琲の定期便 delivery: prepared and shipped from Factory with the 
   assert.deepEqual([shipped.status, shipped.mailStatus], ["shipped", "sent"]);
   assert.doesNotMatch(JSON.stringify(shipped), PERSONAL);
   assert.equal(mails.length, 1);
-  assert.match(mails[0].subject, /珈琲の定期便を発送しました/);
+  assert.equal(mails[0].subject, "【龍華珈琲】珈琲を発送いたしました");
   assert.deepEqual((await db.collection("inventory").doc(a).get()).data(), { ready: 3, held: 0, sold: 1 }, "one bag each, at shipping");
 
   // Out of stock: held, the shop told (and Factory, once), nothing sold.

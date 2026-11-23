@@ -389,11 +389,13 @@ async function shipShipmentAndNotify(db, { shipmentId, requestId, actor, trackin
 }
 
 // The customer's "shipped" mail for a delivery (claimed by shipShipment, so sent once).
-async function sendSubscriptionShippedMail(db, { shipmentId, to, kind, month, seq, method, trackingNumber, beans }, sendMail, log = console) {
+async function sendSubscriptionShippedMail(db, { shipmentId, to, kind, month, seq, method, trackingNumber, beans, shippedAt }, sendMail, log = console) {
   const { productNames } = require("./order-fulfillment");
   const names = await productNames();
-  const which = kind === "first" ? "初回（200g）" : `${Number(String(month).slice(5))}月分の${seq}回目`;
-  const message = notice.subscriptionShippedMail({ to, which, beans: (beans || []).map((b) => names[b.sku] || b.sku), method, trackingNumber });
+  const which = kind === "first" ? "初回" : `${Number(String(month).slice(5))}月分・${seq}回目`;
+  const contract = contractRef(String(shipmentId).replace(/_(first|\d{4}-\d{2}_[1-4])$/, ""));
+  const message = notice.subscriptionShippedMail({ to, contract, which, beans: (beans || []).map((b) => names[b.sku] || b.sku), method, trackingNumber,
+    shippedAt: shippedAt || Date.now() });
   return notice.deliver(db, `subscription_${shipmentId}`, message, sendMail, log);
 }
 
@@ -451,7 +453,8 @@ function createRouter({ getDb, getStripe = () => null, notify = async () => {}, 
     const s = snap.data();
     const contract = (await getDb().collection(records.SUBS).doc(s.subscriptionId).get()).data() || {};
     return { shipmentId: b.shipmentId, mailStatus: await sendSubscriptionShippedMail(getDb(), { shipmentId: b.shipmentId, to: String(contract.email || "").trim(),
-      kind: s.kind, month: s.month || null, seq: s.seq ?? null, method: s.shippingMethod, trackingNumber: s.trackingNumber, beans: s.beans || [] }, sendMail, log) };
+      kind: s.kind, month: s.month || null, seq: s.seq ?? null, method: s.shippingMethod, trackingNumber: s.trackingNumber, beans: s.beans || [],
+      shippedAt: s.shippedAt || null }, sendMail, log) };
   }));
   router.post("/hold", handle((b, _r, actor) => holdShipment(getDb(), { shipmentId: b.shipmentId, requestId: b.requestId, reason: b.reason, actor }, { now: clock() })));
   router.post("/resume", handle((b, _r, actor) => resumeShipment(getDb(), { shipmentId: b.shipmentId, requestId: b.requestId, actor }, { now: clock() })));

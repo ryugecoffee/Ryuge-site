@@ -82,6 +82,8 @@ app.post("/stripe-inventory-webhook", express.raw({ type: "application/json" }),
       // The confirmation mail with the link to the customer's page, once the sign-up is complete (sent once).
       await coffeeSubscriptionMail.sendWelcomeIfReady({ db, event, siteUrl: subscriptionConfig.siteUrl,
         sendMail: shopMail });
+      // A paid month: the payment notice (once per month; never fails the webhook; nothing about the charge changes).
+      await coffeeSubscriptionMail.sendMonthlyPaidNoticeIfReady({ db, event, siteUrl: subscriptionConfig.siteUrl, sendMail: shopMail });
       factoryNotice(() => storeEvents.subscriptionInvoice(db, event));
     }
     return res.json({ received: true });

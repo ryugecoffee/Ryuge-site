@@ -19,10 +19,17 @@ test("the CEO's prices and amounts: 1–4 deliveries, 200 g each, tax and shippi
   assert.equal(S.name.ja, "珈琲の定期便");
   assert.equal(S.perDelivery.ja, "100g × 2袋（1回 200g）");
   assert.match(S.lead.ja, /当店おまかせの珈琲豆を2種類/);
-  assert.match(S.selectionNote.ja, /季節や仕入れの状況に合わせて当店が選びます/);
+  assert.match(S.selectionNote.ja, /季節や仕入れの状況に合わせて当店がお選びいたします/);
   assert.equal(S.labels.ja.priceNote, "税込・全国一律送料込み");
-  assert.deepEqual(S.terms.ja, ["全国一律・送料込み（追加送料なし）", "配送回数は月1〜4回で途中変更できます", "スキップ自由", "解約自由", "最低継続回数なし", "国内配送のみ"]);
-  assert.deepEqual(S.billing.ja, ["毎月、月初に月額を一括でお支払いいただきます", "配送回数の変更・スキップは、原則として翌月から反映されます", "変更の締切は前月25日です", "日割りの精算はありません"]);
+  // The panel's points (2026-11-23 wording): nationwide one price, 1–4 deliveries, skips, cancelling, no minimum or fee, returns.
+  const terms = S.terms.ja.join("\n");
+  for (const part of ["全国一律・送料込み", "月1〜4回", "スキップ", "いつでもお手続き", "最低継続回数・解約手数料はございません", "返品・交換はお受けしておりません"]) {
+    assert.ok(terms.includes(part), part);
+  }
+  assert.equal(S.billing.ja.length, 4);
+  // The panel shows the first payment apart from the monthly price, the same amount the server charges.
+  assert.equal(S.firstPrice, require("./coffee-subscription-plan").FIRST_DELIVERY_PRICE);
+  for (const lang of ["ja", "en", "es"]) assert.ok(S.labels[lang].first && S.labels[lang].firstNote, `first payment label ${lang}`);
   assert.equal(subscriptionFrequency("monthly-3").priceNumber, 8550);
   assert.equal(subscriptionFrequency("unknown").id, S.defaultFrequency, "an unknown choice falls back to the default");
   assert.equal(S.frequencyLabel.ja(2), "月2回");
@@ -46,11 +53,22 @@ test("the old plans are gone; one card in 折々 shows the new subscription; eve
   assert.equal(S.preference.placeholder.ja, "例：酸味が少なく、苦味のある珈琲が好きです。フルーティーな珈琲を試してみたいです。");
 });
 
-test("conditions not decided yet are announced later, never stated as fixed; shipping is one price nationwide", async () => {
+test("the store's panel states the decided conditions as the code does (2026-11-23); shipping is one price nationwide", async () => {
   const { COFFEE_SUBSCRIPTION: S } = await data();
-  assert.equal(S.pendingNote.ja, "発送日、初月のお支払いと初回のお届け、解約時のお取り扱いは、受付再開時にご案内します。");
+  assert.equal(S.pendingNote.ja, "受付の再開時には、お申し込みの確認画面で、お支払い・発送・解約の条件をあらためてご案内いたします。");
   const texts = JSON.stringify(S);
-  assert.doesNotMatch(texts, /発送日は|毎月\d+日(に|発送)|初回.{0,6}(\d+日|月末)/);
+  // The first payment apart from the monthly price, the start month rule, 先払い, the 25th for changes, 9:00 on the 1st for cancelling.
+  const billing = S.billing.ja.join("\n");
+  assert.match(billing, /初回分 3,000円（税込・送料込み）.*月額料金とは別のお支払い/);
+  assert.match(billing, /1〜15日の場合は翌月から、16日以降の場合は翌々月から、毎月1日にその月のお届け分を先払いでお支払いいただきます（日本時間9時にご請求を確定し、その後カード決済）/);
+  assert.match(billing, /前月25日までのお手続きで翌月分から/);
+  assert.match(billing, /毎月1日のご請求（日本時間9時）より前に解約された場合、その月以降のご請求はございません/);
+  assert.doesNotMatch(texts, /スキップ自由|解約自由|原則として/);
+  // The invoice is issued at 9:00 JST; the card is charged after it. No text says the payment itself happens at 9:00.
+  for (const file of [["src", "productData.js"], ["src", "pages", "LegalNotice.jsx"], ["src", "pages", "RefundPolicy.jsx"], ["src", "lib", "coffeeSubscriptionTerms.js"]]) {
+    const text = read(...file);
+    assert.doesNotMatch(text, /1日（日本時間9時）に|1日（日本時間9時）。以後|\(9:00 JST\), in advance|charge at 9:00 JST|cobro de las 9:00|\(9:00, hora de Japón\)/, file.join("/"));
+  }
   assert.doesNotMatch(texts, /北海道|九州|沖縄|追加送料がかかり|基本送料|1,700|1700/);
   // Everywhere the store talks about subscription shipping: one price nationwide, shipping included.
   for (const file of [["src", "App.jsx"], ["src", "pages", "ShippingPage.jsx"], ["src", "lib", "seo.js"], ["api", "coffee-concierge.js"]]) {
@@ -105,7 +123,6 @@ async function customerTexts() {
   const { pathToFileURL } = require("node:url");
   const readx = (...p) => fsx.readFileSync(pathx.join(__dirname, "..", ...p), "utf8");
   const { submitTerms } = require("./coffee-subscription-checkout");
-  const { welcomeMail } = require("./coffee-subscription-mail");
   const T = await import(pathToFileURL(pathx.join(__dirname, "..", "src", "lib", "coffeeSubscriptionTerms.js")).href);
   const legal = readx("src", "pages", "LegalNotice.jsx");
   return {
@@ -114,7 +131,6 @@ async function customerTexts() {
       .replace(/\$\{CHANGE_DEADLINE_DAY\}/g, "25"),
     refundPolicy: readx("src", "pages", "RefundPolicy.jsx"),
     stripePage: [1, 2, 3, 4].map((f) => submitTerms("2027-01", f)).join("\n"),
-    mail: welcomeMail({ to: "a@example.com", contract: { frequency: 2, startMonth: "2027-01" }, siteUrl: "https://ryuge.biz" }).text,
   };
 }
 
@@ -123,8 +139,8 @@ test("cancellation and refund wording is the same everywhere the customer reads 
   for (const [name, text] of Object.entries(places)) {
     assert.match(text, /毎月1日(の|9時の)ご請求(（日本時間9時）)?より前/, `${name}: the cancellation cut-off`);
     assert.match(text, /初回(の)?200g(を|の)?発送(する)?前/, `${name}: the first delivery not yet shipped`);
-    assert.match(text, /初回分3,000円を全額.*返金します（解約から7営業日以内に手続きします）/, `${name}: the first payment refunded in full within 7 business days`);
-    assert.match(text, /解約手数料・違約金はありません/, `${name}: no cancellation fee`);
+    assert.match(text, /初回分3,000円を全額返金いたします。返金はお支払い時のカードへ行い、解約受付から7営業日以内に手続きいたします/, `${name}: the first payment refunded in full within 7 business days`);
+    assert.match(text, /解約手数料・違約金はございません/, `${name}: no cancellation fee`);
     assert.doesNotMatch(text, /原則として返金/, `${name}: no "in principle" refund left`);
     // Cancelling by email when signing in is not possible (server/coffee-subscription-email-cancel.js does this).
     assert.match(text, /ryugecoffee@gmail\.com へ(件名「定期便の解約希望」でご連絡いただいても|のメールでも)解約でき/, `${name}: cancelling by email`);
@@ -166,11 +182,11 @@ test("final confirmation items (特定商取引法 第12条の6) on the store's 
   assert.equal(T.REFUND_BUSINESS_DAYS, plan.REFUND_BUSINESS_DAYS);
   for (const f of [1, 2, 3, 4]) {
     const rows = Object.fromEntries(T.confirmationRows(f, "2027-01"));
-    for (const label of ["商品・分量", "初回のお支払い", "2回目以降のお支払い", "2回目のご請求日", "お支払い方法", "発送の時期", "契約期間", "1年間の参考", "変更・スキップ", "解約", "返品", "お届け地域"]) {
+    for (const label of ["商品・分量", "初回のお届け", "毎月のお届け", "初回のお支払い", "月額料金", "月額のお支払い開始日", "お支払い方法", "契約期間", "1年間の参考", "変更・スキップ", "解約", "返金", "返品", "お届け地域"]) {
       assert.ok(rows[label], `${f}: ${label}`);
     }
     assert.equal(rows["返品"], plan.TERMS_JA.returns);
-    assert.match(rows["契約期間"], /期間の定めのない定期購入です（解約されるまで毎月続きます）/);
+    assert.match(rows["契約期間"], /期間の定めのない定期購入です（解約のお手続きをいただくまで、毎月継続いたします）/);
     // The year from the first monthly charge: first payment + 12 monthly charges; the same figure on Stripe's page.
     const a = plan.annualReference(f, "2027-01");
     assert.equal(a.total, 3000 + plan.MONTHLY_PRICES[f] * 12);
@@ -179,14 +195,18 @@ test("final confirmation items (特定商取引法 第12条の6) on the store's 
     assert.ok(rows["1年間の参考"].includes(`合計 ${a.total.toLocaleString("ja-JP")}円`) && rows["1年間の参考"].includes("2027年1月〜2027年12月"));
     const stripe = submitTerms("2027-01", f);
     assert.ok(stripe.length <= 1200, `Stripe's limit: ${stripe.length}`);
-    for (const part of [`月${f}回`, "100g×2袋", "3,000円", `月額${plan.MONTHLY_PRICES[f].toLocaleString("ja-JP")}円`, "毎月1日", "3営業日以内に発送",
+    for (const part of [`月${f}回`, "100g×2袋", "3,000円", `月額${plan.MONTHLY_PRICES[f].toLocaleString("ja-JP")}円`, "毎月1日", "3営業日以内に発送", "2027年1月1日から", "先払い",
       plan.TERMS_JA.term, plan.annualReferenceText(f, "2027-01"), "前月25日", "毎月1日9時のご請求より前", plan.TERMS_JA.noFee, plan.TERMS_JA.refund, plan.TERMS_JA.returns]) {
       assert.ok(stripe.includes(part), `Stripe page, ${f}: ${part}`);
     }
+    // The sign-up mail (CEO wording, 2026-11-23) states the figures and points to the full terms (the confirmation screen and
+    // the legal notice) instead of repeating them; what it does state matches them.
     const mail = welcomeMail({ to: "a@example.com", contract: { frequency: f, startMonth: "2027-01" }, siteUrl: "https://ryuge.biz" }).text;
-    for (const part of [plan.TERMS_JA.term, plan.TERMS_JA.noFee, plan.TERMS_JA.refund, plan.TERMS_JA.returns, plan.annualReferenceText(f, "2027-01")]) {
-      assert.ok(mail.includes(part), `mail, ${f}: ${part.slice(0, 20)}`);
+    for (const part of [`・お届け回数：月${f}回`, `・月額料金：${plan.MONTHLY_PRICES[f].toLocaleString("ja-JP")}円（税込・送料込み）`, "・月額のお支払い開始：2027年1月1日",
+      "・初回のお支払い：3,000円", "最低継続回数や解約手数料はございません。", "特定商取引法に基づく表記をご確認ください"]) {
+      assert.ok(mail.includes(part), `mail, ${f}: ${part}`);
     }
+    assert.match(rows["月額のお支払い開始日"], /2027年1月1日/);
   }
   assert.equal(T.LEGAL_TEXT_REVIEWED, true, "internal legal text review completed without opening sign-ups");
 });
