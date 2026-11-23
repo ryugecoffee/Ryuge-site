@@ -13,6 +13,7 @@
 | `inventory.status` | 在庫（商品・ロットごと）、最近の入荷・調整、定期便の豆の必要数、未発送の通常注文、在庫記録の照合（2026-11-23、読み取りのみ） | `FACTORY_STORE_READ_ENABLED=true` |
 | `fulfillment.prepare` | 発送準備（通常注文は状態のみ。定期便は豆2種類を1袋ずつ確保） | `FACTORY_STORE_SHIP_ENABLED=true` と CEO の承認 |
 | `fulfillment.ship` | 発送済み（配送方法・追跡番号）。お客様への発送メールは1回だけ | `FACTORY_STORE_SHIP_ENABLED=true` と CEO の承認 |
+| `factory.features` | 上の各スイッチ（売上・発送の照会、定期便の照会、発送、返金、在庫）が有効かどうかを true / false だけで返す。Factory の「今できること」の一覧（ChatGPT の `factory_capabilities`）が実際の状態を表示するため（2026-11-23）。注文・契約・お客様の情報は読まず、何も変えない | 署名付きの接続が有効なこと（専用のスイッチなし） |
 
 - **照会と発送は別のスイッチ**です。照会を ON にしても発送はできません。どちらも未設定なら 403 になり、何も記録されません。
 - **発送準備・発送済みには CEO の承認記録が必須**です（承認者が `FACTORY_CEO_USER_ID` と一致し、承認から15分以内）。足りなければ、ワンタイム番号の記録より前に拒否します。

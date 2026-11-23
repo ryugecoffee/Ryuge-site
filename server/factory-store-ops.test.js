@@ -477,3 +477,22 @@ test("inventory.status: contracts are counted once each, by their current state"
   assert.equal(contractState({ status: "incomplete_record" }), "trialing", "recorded from the sign-up invoice before Stripe's status");
   assert.equal(contractState({ status: "paused" }), null, "not one of the five: told in a note, not counted");
 });
+
+test("factory.features: the switches as booleans only, for a valid signed call; nothing else is read or changed", async (t) => {
+  const on = { ...BASE_ENV, FACTORY_STORE_READ_ENABLED: "true", INVENTORY_ENABLED: "true" };
+  const cases = [
+    [BASE_ENV, { storeRead: false, subscriptionRead: false, storeShip: false, refundOps: false, inventory: false }],
+    [on, { storeRead: true, subscriptionRead: false, storeShip: false, refundOps: false, inventory: true }],
+    [{ ...on, FACTORY_SUBSCRIPTION_READ_ENABLED: "TRUE", FACTORY_STORE_SHIP_ENABLED: "yes" }, { storeRead: true, subscriptionRead: false, storeShip: false, refundOps: false, inventory: true }],
+    [{ ...on, FACTORY_SUBSCRIPTION_READ_ENABLED: "true", FACTORY_STORE_SHIP_ENABLED: "true", FACTORY_REFUND_OPS_ENABLED: "true" }, { storeRead: true, subscriptionRead: true, storeShip: true, refundOps: true, inventory: true }],
+  ];
+  for (const [env, want] of cases) {
+    const { db, sent, call } = await apiServer(t, env);
+    assert.deepEqual(await call({ op: "factory.features" }), [200, { ok: true, features: want }], JSON.stringify(want));
+    assert.deepEqual([...db.store.keys()].map((k) => k.split("/")[0]), ["factoryRefundRequests"], "only the one-time nonce is kept");
+    assert.equal(sent.length, 0);
+  }
+  const { db, call } = await apiServer(t, on);
+  assert.equal((await call({ op: "factory.features", subscription: "SUB-ABCDEF" }))[1].error, "INVALID_FIELDS", "it takes no parameters");
+  assert.equal(db.store.size, 0);
+});
