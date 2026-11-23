@@ -32,7 +32,8 @@ const READ_ONLY_OPS = new Set(["orders.search", "orders.get"]);
 const SUBSCRIPTION_OPS = new Set(["subscriptions.list", "subscriptions.get", "subscriptions.schedule", "subscriptions.contact"]);
 // The shop's sales and parcels (server/factory-store-ops.js, 2026-11-22): reading behind FACTORY_STORE_READ_ENABLED,
 // 発送準備・発送済み behind FACTORY_STORE_SHIP_ENABLED and the CEO's approval record. Each refused before anything is stored.
-const STORE_READ_OPS = new Set(["store.overview", "fulfillment.list"]);
+// inventory.status (2026-11-23): the stock and its reconciliation, read only, in the same reading group.
+const STORE_READ_OPS = new Set(["store.overview", "fulfillment.list", "inventory.status"]);
 const STORE_SHIP_OPS = new Set(["fulfillment.prepare", "fulfillment.ship"]);
 const refundOpsEnabled = (env) => env.FACTORY_REFUND_OPS_ENABLED === "true";
 
@@ -69,6 +70,7 @@ const FIELDS = {
   "subscriptions.contact": ["nonce", "op", "subscription", "view"],
   "store.overview": ["nonce", "op", "range"],
   "fulfillment.list": ["nonce", "op", "view", "kind"],
+  "inventory.status": ["nonce", "op", "lowThreshold"],
   "fulfillment.prepare": ["nonce", "op", "target", "skus", "approval"],
   "fulfillment.ship": ["nonce", "op", "target", "method", "trackingNumber", "approval"],
 };
@@ -192,6 +194,7 @@ async function process_({ db, stripe, env, rawBody, timestamp, signature, now, s
     case "subscriptions.contact": return subscriptionRead.contact(db, body.subscription, body.view, env, now);
     case "store.overview": return storeOps.overview(db, body.range, now);
     case "fulfillment.list": return storeOps.list(db, { view: body.view, kind: body.kind }, now);
+    case "inventory.status": return storeOps.inventoryStatus(db, { lowThreshold: body.lowThreshold }, now, { inventoryEnabled: env.INVENTORY_ENABLED === "true" });
     case "fulfillment.prepare":
       return storeOps.prepare(db, { target: body.target, skus: body.skus, approval: body.approval }, { actor: "factory-ceo:" + env.FACTORY_CEO_USER_ID, now, onStockShort });
     case "fulfillment.ship":

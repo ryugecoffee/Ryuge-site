@@ -59,6 +59,8 @@ on:
       - 'server/store-events.js'
       - 'server/factory-store-ops.test.js'
       - 'server/factory-store-ops-emulator.test.js'
+      # Factory: the stock and its reconciliation, read only (2026-11-23)
+      - 'server/factory-inventory-status.js'
       - 'server/refunds.test.js'
       - 'docs/refunds.md'
       - 'server/initial-stock.test.js'
@@ -148,7 +150,7 @@ jobs:
         run: npm ci --prefix server
       - name: Lint inventory and sandbox payment code
         run: >
-          npx eslint server/inventory.js server/catalog.js server/initial-stock.js server/refunds.js server/factory-refund-api.js server/factory-store-ops.js server/factory-notify.js server/store-events.js server/orders.js server/quote.js server/promo.js server/international-rates.js src/lib/shippingPolicy.js src/pages/CheckoutPage.jsx server/inventory-adjustments.js
+          npx eslint server/inventory.js server/catalog.js server/initial-stock.js server/refunds.js server/factory-refund-api.js server/factory-store-ops.js server/factory-inventory-status.js server/factory-notify.js server/store-events.js server/orders.js server/quote.js server/promo.js server/international-rates.js src/lib/shippingPolicy.js src/pages/CheckoutPage.jsx server/inventory-adjustments.js
           server/factory-inventory-api.js server/firestore-preview-checkout.js
           server/sandbox-checkout.js server/staging-entry.js server/resp-client.js server/rate-limit.js
           server/coffee-subscription-plan.js server/coffee-subscription-records.js server/coffee-subscription-checkout.js

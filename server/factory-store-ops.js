@@ -4,6 +4,8 @@
 // (server/factory-refund-api.js: service signature, one-time nonce, exact fields):
 //   store.overview     sales for a period (store orders and 珈琲の定期便), what waits to ship, what is late
 //   fulfillment.list   parcels: store orders and 定期便 deliveries, open / due soon / late / shipped
+//   inventory.status   stock per product and lot, recent adjustments, 定期便 bean needs, and the ledger reconciled with
+//                      open checkouts and deliveries (server/factory-inventory-status.js; read only, 2026-11-23)
 //   fulfillment.prepare, fulfillment.ship   only with the CEO's approval record (who, which request, when; 15 min)
 // Two switches, so reading never brings acting with it: FACTORY_STORE_READ_ENABLED and FACTORY_STORE_SHIP_ENABLED.
 // The shipping itself is the shop page's own code (#39), not a copy: order-fulfillment.js (a store order: no stock
@@ -13,6 +15,7 @@
 
 const of = require("./order-fulfillment");
 const plan = require("./coffee-subscription-plan");
+const stockStatus = require("./factory-inventory-status");
 
 const readEnabled = (env) => env.FACTORY_STORE_READ_ENABLED === "true";
 const shipEnabled = (env) => env.FACTORY_STORE_SHIP_ENABLED === "true";
@@ -90,6 +93,13 @@ async function overview(db, input, now = Date.now()) {
   };
 }
 
+// Stock and its reconciliation (read only). lowThreshold: a product with this many bags or fewer left is "low".
+async function inventoryStatus(db, { lowThreshold } = {}, now = Date.now(), { inventoryEnabled = true } = {}) {
+  const low = lowThreshold === undefined ? stockStatus.DEFAULT_LOW : lowThreshold;
+  if (!Number.isSafeInteger(low) || low < 1 || low > stockStatus.MAX_LOW) fail("INVALID_QUERY");
+  return stockStatus.status(db, { lowThreshold: low, now, inventoryEnabled });
+}
+
 function target(input) {
   const kind = input?.kind;
   const id = String(input?.id || "");
@@ -125,4 +135,4 @@ async function ship(db, { target: t, method, trackingNumber, approval }, { actor
     { sendMail, log, now, onMailFailed })) };
 }
 
-module.exports = { readEnabled, shipEnabled, StoreOpsError, range, list, overview, target, prepare, ship };
+module.exports = { readEnabled, shipEnabled, StoreOpsError, range, list, overview, inventoryStatus, target, prepare, ship };

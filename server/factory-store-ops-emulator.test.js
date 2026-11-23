@@ -5,6 +5,7 @@
 //  - reading: sales, open parcels, deadlines, without anything personal
 //  - 発送準備 / 発送済み: only with the CEO's approval; once per approval; the shop page's own steps and its one mail
 //  - notices: new payment, low stock, deadlines, mail failures, stock shortages; once each
+//  - inventory.status (2026-11-23): a ledger built by the shop's own steps agrees with its records; a wrong held is found
 // Mail goes to a stub (never sent). Skipped unless FIRESTORE_EMULATOR_HOST is set. Never production data.
 const test = require("node:test");
 const assert = require("node:assert/strict");
@@ -68,11 +69,11 @@ async function paidOrder({ livemode = true, paidAt = NOW - 3600e3, items = "enma
   return { id, email };
 }
 
-async function apiServer(t, { sendMail, env = ENV } = {}) {
+async function apiServer(t, { sendMail, env = ENV, database = null } = {}) {
   const mails = [];
   const shortages = [];
   const app = express();
-  app.post(api.PATH, express.raw({ type: "application/json", limit: "8kb" }), api.createHandler({ getDb: () => db, getStripe: () => null, env, clock: () => NOW,
+  app.post(api.PATH, express.raw({ type: "application/json", limit: "8kb" }), api.createHandler({ getDb: () => database || db, getStripe: () => null, env, clock: () => NOW,
     log: { warn() {}, error() {} }, sendMail: sendMail || (async (m) => { mails.push(m); }),
     onMailFailed: (failure) => events.mailFailed(db, failure, deps()),
     onStockShort: async (n) => { shortages.push(n); await events.stockShort(db, n, deps()); } }));
@@ -244,4 +245,127 @@ test("notices: a new paid order once (Stripe resends too), low stock once per le
   assert.doesNotMatch(overdue[0].raw, PERSONAL);
   assert.equal(noticesFor(`deadline.overdue:${a.id}`).length, 1, "the first order (also unshipped), once");
   assert.ok(receiver.got.every((n) => n.ok), "every notice signed");
+});
+
+// ---- inventory.status on real Firestore ---------------------------------------------------------------------------
+test("inventory.status: a ledger built by the shop's own steps agrees with its records; a corrupted held is found, nothing repaired", { skip }, async (t) => {
+  const admin = require("firebase-admin");
+  const inventory = require("./inventory");
+  const { lotItems } = require("./catalog");
+  const initialStock = require("./initial-stock");
+  const featuredStock = require("./featured-stock");
+  const { adjustInventory } = require("./inventory-adjustments");
+  const of = require("./order-fulfillment");
+  const f = require("./coffee-subscription-fulfillment");
+  const ops = require("./coffee-subscription-stripe");
+  // Its own emulator project, so the catalogue's real stock records start empty and no other test's counters mix in.
+  const project = `demo-ryuge-status-${crypto.randomBytes(4).toString("hex")}`;
+  const own = admin.firestore(admin.initializeApp({ projectId: project }, `inventory-status-${project}`));
+  const { call } = await apiServer(t, { database: own, env: { ...ENV, INVENTORY_ENABLED: "true" } });
+  const BRAZIL = "brazil-amarelo-bourbon";
+  const stock = async (sku) => (await own.collection("inventory").doc(sku).get()).data();
+  const actor = "factory-ceo:" + CEO;
+
+  // 1. Arrivals: the CEO's initial registration, the approved move into the featured slot, one more arrival.
+  const counted = { "inventory/enma-jimma": 10, "inventory/enma-karamo": 6, "inventory/enma-kindiio": 6, "inventory/enma-andes-blue": 5, "inventory/enma-quequesques": 20,
+    "inventory/enma-zen-dark-roast": 4, "inventory/enma-amarelo-bourbon": 6, "inventory/enma-coffee-bag": 3, "inventory/mokkan-oku-yame-hojicha": 5,
+    "inventory/mokkan-oku-yame-genmaicha": 5, [`inventoryLots/${BRAZIL}`]: 8 };
+  const preview = await initialStock.previewInitialStock(own, counted, { projectId: project });
+  assert.equal((await initialStock.applyInitialStock(own, counted, { projectId: project, expectedProjectId: project, planHash: preview.planHash, approval: "CEO承認（テスト）" })).applied, true);
+  assert.equal((await featuredStock.applyApprovedTransfers(own))[0].quantity, 15);
+  assert.equal((await adjustInventory(own, { sku: "enma-jimma", action: "stock_in", quantity: 4, requestId: `req-status-${project}`, trustedActor: actor })).applied, true);
+
+  // 2. Store checkouts, as /create-payment-intent and the Stripe webhook run them.
+  const checkout = async (items, { pay = null, record = false } = {}) => {
+    const pi = "pi_status" + crypto.randomBytes(6).toString("hex");
+    const reservation = await inventory.reserve(own, items, null, null, lotItems(items));
+    await inventory.attachPaymentIntent(own, reservation, pi);
+    if (record) {
+      const paidAt = Math.floor((NOW - 3600e3) / 1000);
+      assert.deepEqual(await orders.recordPaidOrder(own, null, { id: pi, object: "payment_intent", status: "succeeded", amount: 3250, currency: "jpy", livemode: true, created: paidAt,
+        metadata: { items: items.map((i) => `${i.id}:${i.quantity}@1500`).join(","), subtotal: "3000", shipping: "250", countryCode: "JP", inventoryReservationId: reservation },
+        latest_charge: { id: "ch_" + pi.slice(3), created: paidAt, billing_details: { name: "Test Buyer", email: "buyer-status@example.com", phone: "0900000000",
+          address: { country: "JP", postal_code: "2470062", state: "神奈川県", city: "鎌倉市", line1: "1-2-3" } } } }), { recorded: true });
+    }
+    if (pay) assert.equal(await inventory.finish(own, reservation, pi, pay), true);
+    return pi;
+  };
+  const notShipped = await checkout([{ id: "enma-jimma", quantity: 2 }], { pay: "paid", record: true }); // paid, physically perhaps posted, not marked shipped
+  const brazil = await checkout([{ id: "enma-zen-dark-roast", quantity: 1 }, { id: "enma-amarelo-bourbon", quantity: 1 }], { pay: "paid", record: true });
+  await of.shipOrder(own, { orderId: brazil, requestId: `req-ship-${project}`, actor, method: "yupack", trackingNumber: null }, { now: NOW });
+  await checkout([{ id: "enma-featured-quequesques", quantity: 2 }]); // a checkout still open
+  await checkout([{ id: "enma-amarelo-bourbon", quantity: 1 }], { pay: "released" }); // a payment cancelled
+
+  // 3. 珈琲の定期便: sign-ups, a delivery shipped, one being prepared, one cancelled before shipping, a skip.
+  const CONFIG = { priceIds: { 1: "price_m1", 2: "price_m2", 3: "price_m3", 4: "price_m4" }, calendar: CALENDAR };
+  const signUp = async (sub, frequency) => {
+    const meta = { kind: records.KIND, frequency: String(frequency), startMonth: "2026-12" };
+    await records.handleEvent(own, { type: "checkout.session.completed", data: { object: { id: `cs_${sub}`, mode: "subscription", subscription: sub, customer: "cus_s", livemode: true,
+      customer_details: { email: `${sub}@example.com`, name: "Test Buyer" }, metadata: meta,
+      collected_information: { shipping_details: { name: "Test Buyer", address: { postal_code: "100-0001", state: "東京都", city: "千代田区", line1: "1-2-3", country: "JP" } } } } } }, CONFIG);
+    await records.handleEvent(own, { type: "invoice.paid", data: { object: { id: `in_first_${sub}`, customer: "cus_s", livemode: true, billing_reason: "subscription_create", amount_paid: 3000,
+      status_transitions: { paid_at: Math.floor(NOW / 1000) - 3600 }, parent: { subscription_details: { subscription: sub, metadata: meta } },
+      lines: { data: [{ type: "subscription", pricing: { price_details: { price: `price_m${frequency}` } }, period: { start: plan.billingStartUnix("2026-12"), end: plan.billingStartUnix("2027-01") } }] } } } }, CONFIG);
+    return `${sub}_first`;
+  };
+  // Stripe is a stand-in (nothing is sent anywhere): a subscription in its sign-up period, no invoice this month.
+  const stripe = { subscriptions: { retrieve: async (id) => ({ id, status: "trialing", schedule: null, cancel_at: null }), update: async () => ({}), cancel: async () => ({}) },
+    subscriptionSchedules: { create: async () => ({ id: "sub_sched_status" }), retrieve: async () => ({ id: "sub_sched_status", phases: [] }), update: async () => ({}), release: async () => ({}) },
+    invoices: { list: async () => ({ data: [] }), voidInvoice: async () => ({}) } };
+  const tag = crypto.randomBytes(3).toString("hex");
+  const [s1, s2, s3, s4] = [`sub_stat1${tag}`, `sub_stat2${tag}`, `sub_stat3${tag}`, `sub_stat4${tag}`];
+  const shipped = await signUp(s1, 2);
+  await records.handleEvent(own, { type: "customer.subscription.updated", data: { object: { id: s1, status: "active", metadata: { kind: records.KIND },
+    items: { data: [{ price: "price_m2" }] }, customer: "cus_s" } } }, CONFIG);
+  await f.prepareShipment(own, { shipmentId: shipped, skus: ["enma-karamo", "enma-kindiio"], requestId: `req-${tag}-p1`, actor }, { now: NOW });
+  await f.shipShipment(own, { shipmentId: shipped, requestId: `req-${tag}-s1`, actor, trackingNumber: "1111-2222-3333" }, { now: NOW });
+  const preparing = await signUp(s2, 1);
+  await f.prepareShipment(own, { shipmentId: preparing, skus: ["enma-jimma", "enma-amarelo-bourbon"], requestId: `req-${tag}-p2`, actor }, { now: NOW });
+  const cancelled = await signUp(s3, 1);
+  await f.prepareShipment(own, { shipmentId: cancelled, skus: ["enma-karamo", "enma-andes-blue"], requestId: `req-${tag}-p3`, actor }, { now: NOW });
+  assert.equal((await stock("enma-karamo")).held, 1);
+  await ops.cancelSubscription({ db: own, stripe, subscriptionId: s3, now: NOW });
+  assert.equal((await own.collection(records.SHIPMENTS).doc(cancelled).get()).data().status, "cancelled_before_shipping");
+  await signUp(s4, 1);
+  await ops.requestPlanChange({ db: own, stripe, subscriptionId: s4, request: { skip: "2026-12" }, config: CONFIG, now: NOW });
+
+  // 4. What Factory reads.
+  const before = (await own.collection("inventory").get()).docs.map((d) => [d.id, d.data()]);
+  const [status, answer] = await call({ op: "inventory.status" });
+  assert.equal(status, 200);
+  assert.doesNotMatch(JSON.stringify(answer), PERSONAL);
+  const item = (sku) => { const i = answer.items.find((x) => x.sku === sku); return [i.ready, i.held, i.sold, i.available, i.state]; };
+  assert.deepEqual(item("enma-jimma"), [12, 1, 2, 11, "in_stock"], "10 + 4 arrived − 2 paid; 1 held for the delivery being prepared");
+  assert.deepEqual(item("enma-karamo"), [5, 0, 1, 5, "in_stock"], "1 shipped; the cancelled delivery's bag given back");
+  assert.deepEqual(item("enma-kindiio"), [5, 0, 1, 5, "in_stock"]);
+  assert.deepEqual(item("enma-andes-blue"), [5, 0, 0, 5, "in_stock"]);
+  assert.deepEqual(item("enma-featured-quequesques"), [15, 2, 0, 13, "in_stock"], "moved in, 2 held by the open checkout");
+  assert.deepEqual(item("enma-quequesques"), [5, 0, 0, 5, "not_for_sale"], "the regular product: what was not moved");
+  assert.deepEqual(item("enma-zen-dark-roast"), [3, 0, 1, 3, "not_for_sale"]);
+  assert.deepEqual(item("enma-amarelo-bourbon"), [5, 1, 1, 4, "not_for_sale"]);
+  assert.deepEqual(item("enma-coffee-bag"), [3, 0, 0, 3, "low"]);
+  assert.deepEqual(answer.lots, [{ lot: BRAZIL, skus: ["enma-zen-dark-roast", "enma-amarelo-bourbon"], ready: 6, held: 1, sold: 2, available: 5 }]);
+  const shop = await inventory.availability(own, answer.items.map((i) => i.sku), (id) => require("./catalog").lotOf(id));
+  for (const i of answer.items) assert.equal(i.available, shop[i.sku], `${i.sku}: what /inventory/availability gives`);
+  assert.deepEqual(answer.adjustments.slice(0, 3).map(({ sku, action, quantity, by }) => ({ sku, action, quantity, by })), [
+    { sku: "enma-jimma", action: "stock_in", quantity: 4, by: "ceo" },
+    { sku: "enma-quequesques", action: "transfer_out", quantity: 15, by: "system" },
+    { sku: "enma-featured-quequesques", action: "transfer_in", quantity: 15, by: "system" },
+  ]);
+  assert.deepEqual(answer.adjustments.slice(3).map((r) => [r.action, r.by]), Array(10).fill(["initial_stock", "ceo"]), "the 10 products registered (the lot is in lots)");
+  assert.deepEqual(answer.subscriptions.contracts, { active: 1, trialing: 2, pastDue: 0, cancelRequested: 1, ended: 0 });
+  assert.deepEqual(answer.subscriptions.thisMonth, { month: "2026-11", deliveriesLeft: 2, bagsNeeded: 4 });
+  const { note: _note, ...next } = answer.subscriptions.nextMonth;
+  assert.deepEqual(next, { month: "2026-12", deliveries: 3, bagsNeeded: 6, skipped: 1 });
+  assert.deepEqual(answer.subscriptions.preparing, { shipments: 1, bagsHeld: 2 });
+  assert.deepEqual(answer.openOrders, { count: 1, oldestPaidAt: new Date(Math.floor((NOW - 3600e3) / 1000) * 1000).toISOString() }, `${notShipped}: paid, not marked shipped`);
+  assert.deepEqual([answer.checks.ok, answer.checks.findings], [true, []]);
+  assert.deepEqual((await own.collection("inventory").get()).docs.map((d) => [d.id, d.data()]), before, "reading changed nothing");
+
+  // 5. A held count changed by hand: found, with the ledger's and the expected number; nothing repaired.
+  await own.collection("inventory").doc("enma-jimma").update({ held: 3 });
+  const [, wrong] = await call({ op: "inventory.status" });
+  assert.equal(wrong.checks.ok, false);
+  assert.deepEqual(wrong.checks.findings.map(({ sku, field, ledger, expected }) => ({ sku, field, ledger, expected })), [{ sku: "enma-jimma", field: "held", ledger: 3, expected: 1 }]);
+  assert.equal((await stock("enma-jimma")).held, 3);
 });
