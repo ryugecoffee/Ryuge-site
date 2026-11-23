@@ -76,6 +76,7 @@ export default function SubscriptionApplyPage() {
             <div className="subm-pay-item"><span className="subm-pay-label">{pay.today.label}</span><strong>{pay.today.amount}</strong><small>{pay.today.note}</small></div>
             <div className="subm-pay-item"><span className="subm-pay-label">{pay.monthly.label}</span><strong>{pay.monthly.amount}<em>／月</em></strong><small>{pay.monthly.note}</small></div>
             <div className="subm-pay-item"><span className="subm-pay-label">{pay.start.label}</span><strong>{pay.start.value}</strong><small>{pay.start.note}</small></div>
+            <div className="subm-pay-item"><span className="subm-pay-label">{pay.annual.label}</span><strong>{pay.annual.amount}</strong><small>{pay.annual.note}</small></div>
           </div>
           <p className="subm-text">初回のお支払いと、毎月のお支払いは別のものです。最低継続回数・解約手数料はございません。</p>
 
@@ -86,7 +87,7 @@ export default function SubscriptionApplyPage() {
           </dl>
 
           <label className="subm-field">
-            <span className="subm-label">メールアドレス（ご連絡と管理ページのログインに使います）</span>
+            <span className="subm-label">メールアドレス（お申し込み・毎月のお支払い・発送のご連絡と、管理ページのログインに使います）</span>
             <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={closed} />
           </label>
           <label className="subm-field">
@@ -104,7 +105,7 @@ export default function SubscriptionApplyPage() {
 
           <label className="subm-agree">
             <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} disabled={closed} />
-            <span>定期購入であること、本日の初回分 {yen(FIRST_PRICE)}、{monthLabel(startMonth)}1日から毎月 {yen(MONTHLY_PRICES[frequency])} のお支払い、変更・解約・返金の条件を確認しました。</span>
+            <span>定期購入であること、本日の初回分 {yen(FIRST_PRICE)}、{monthLabel(startMonth)}1日から毎月 {yen(MONTHLY_PRICES[frequency])} のお支払い、変更・解約・返金の条件を確認しました。お申し込み・お支払いの確認（特定商取引法に基づく通知を含みます）・発送のご連絡を、上記のメールアドレスへお送りすることに同意します。</span>
           </label>
           {state.message && <p className={state.changed ? "subm-alert" : "subm-error"} role="alert">{state.message}</p>}
           <button type="submit" className="subm-primary" disabled={closed || !agreed || issues.length > 0 || state.busy}>

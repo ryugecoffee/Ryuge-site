@@ -393,7 +393,8 @@ async function sendSubscriptionShippedMail(db, { shipmentId, to, kind, month, se
   const { productNames } = require("./order-fulfillment");
   const names = await productNames();
   const which = kind === "first" ? "初回" : `${Number(String(month).slice(5))}月分・${seq}回目`;
-  const message = notice.subscriptionShippedMail({ to, which, beans: (beans || []).map((b) => names[b.sku] || b.sku), method, trackingNumber,
+  const contract = contractRef(String(shipmentId).replace(/_(first|\d{4}-\d{2}_[1-4])$/, ""));
+  const message = notice.subscriptionShippedMail({ to, contract, which, beans: (beans || []).map((b) => names[b.sku] || b.sku), method, trackingNumber,
     shippedAt: shippedAt || Date.now() });
   return notice.deliver(db, `subscription_${shipmentId}`, message, sendMail, log);
 }

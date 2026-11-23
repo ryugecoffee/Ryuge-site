@@ -116,7 +116,8 @@ async function ownerContract(db, emailKey) {
 function loginMail({ to, link }) {
   return { to, subject: "【龍華珈琲】定期便 管理ページのログインリンク",
     text: ["龍華珈琲の定期便 管理ページへのログインリンクです。", "", link, "",
-      "このリンクの有効期限は15分で、1回だけ使えます。", "お心当たりがない場合は、このメールを破棄してください。", "", "龍華珈琲 / Ryuge Coffee"].join("\n") };
+      "このリンクの有効期限は15分で、1回だけ使えます。", "お心当たりがない場合は、このメールを破棄してください。", "",
+      "ご不明な点は、ryugecoffee@gmail.com までお問い合わせください。", "", "龍華珈琲 / Ryuge Coffee"].join("\n") };
 }
 
 async function requestLogin({ db, config, sendMail, email, now }) {
@@ -340,7 +341,7 @@ function createRouter({ getDb, getStripe, sendMail, env = process.env, clock = D
     } });
     if (!result.repeated) {
       const what = action === "skip" ? `${month} のお届けをスキップ` : action === "unskip" ? `${month} のスキップを取り消し` : `${month} から月${request.frequency}回に変更`;
-      await mail({ to: auth.contract.email, subject: "【龍華珈琲】定期便の変更を受け付けました", text: `定期便の変更を受け付けました: ${what}。\n管理ページ: ${config.siteUrl}/subscription/manage\n\n龍華珈琲 / Ryuge Coffee` });
+      await mail({ to: auth.contract.email, subject: "【龍華珈琲】定期便の変更を受け付けました", text: `定期便の変更を受け付けました: ${what}。\n管理ページ: ${config.siteUrl}/subscription/manage\n\nご不明な点は、ryugecoffee@gmail.com までお問い合わせください。\n\n龍華珈琲 / Ryuge Coffee` });
     }
     return result;
   }));
@@ -386,7 +387,7 @@ function createRouter({ getDb, getStripe, sendMail, env = process.env, clock = D
     // One mail per cancellation: not for a repeated request, nor when the contract was already cancelled (e.g. by email).
     if (!result.repeated && !result.duplicate) {
       const upcoming = await subscriptionMail.upcomingDeliveries(db, auth.subscriptionId).catch(() => null);
-      await mail(subscriptionMail.cancelMail({ to: auth.contract.email, subscriptionId: auth.subscriptionId, acceptedAt: now,
+      await mail(subscriptionMail.cancelMail({ to: auth.contract.email, subscriptionId: auth.subscriptionId, acceptedAt: now, endsAt: result.endsAt,
         firstUnchargedMonth: result.firstUnchargedMonth, voidedMonth: result.action === "VOID_AND_CANCEL_NOW" ? plan.monthOf(now) : null,
         upcoming, firstRefund: result.refundProposal?.amount || 0 }));
       // The shop is told at once, so the refund (by hand, after the CEO's check) is made within the stated days. Contract

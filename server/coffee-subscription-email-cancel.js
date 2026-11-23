@@ -144,7 +144,7 @@ async function confirm({ db, stripe, body, actor, now, sendMail = async () => {}
   if (!result.alreadyCancelled) {
     try {
       const upcoming = await subscriptionMail.upcomingDeliveries(db, id).catch(() => null);
-      await sendMail(subscriptionMail.cancelMail({ to: records.normalizeEmail(contract.email), subscriptionId: id, acceptedAt: now, receivedAt: input.receivedAt,
+      await sendMail(subscriptionMail.cancelMail({ to: records.normalizeEmail(contract.email), subscriptionId: id, acceptedAt: now, receivedAt: input.receivedAt, endsAt: result.endsAt,
         firstUnchargedMonth: result.firstUnchargedMonth, voidedMonth: result.action === "VOID_AND_CANCEL_NOW" ? plan.monthOf(now) : null,
         upcoming, firstRefund: result.firstRefund, monthRefund: result.monthRefund }));
     } catch (error) { log.error("Email cancellation: customer mail failed:", String(error?.message || "").slice(0, 120)); }

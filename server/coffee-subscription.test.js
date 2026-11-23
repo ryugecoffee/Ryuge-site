@@ -60,10 +60,15 @@ test("the store's panel states the decided conditions as the code does (2026-11-
   // The first payment apart from the monthly price, the start month rule, 先払い, the 25th for changes, 9:00 on the 1st for cancelling.
   const billing = S.billing.ja.join("\n");
   assert.match(billing, /初回分 3,000円（税込・送料込み）.*月額料金とは別のお支払い/);
-  assert.match(billing, /1〜15日の場合は翌月から、16日以降の場合は翌々月から、毎月1日（日本時間9時）にその月のお届け分を先払い/);
+  assert.match(billing, /1〜15日の場合は翌月から、16日以降の場合は翌々月から、毎月1日にその月のお届け分を先払いでお支払いいただきます（日本時間9時にご請求を確定し、その後カード決済）/);
   assert.match(billing, /前月25日までのお手続きで翌月分から/);
   assert.match(billing, /毎月1日のご請求（日本時間9時）より前に解約された場合、その月以降のご請求はございません/);
   assert.doesNotMatch(texts, /スキップ自由|解約自由|原則として/);
+  // The invoice is issued at 9:00 JST; the card is charged after it. No text says the payment itself happens at 9:00.
+  for (const file of [["src", "productData.js"], ["src", "pages", "LegalNotice.jsx"], ["src", "pages", "RefundPolicy.jsx"], ["src", "lib", "coffeeSubscriptionTerms.js"]]) {
+    const text = read(...file);
+    assert.doesNotMatch(text, /1日（日本時間9時）に|1日（日本時間9時）。以後|\(9:00 JST\), in advance|charge at 9:00 JST|cobro de las 9:00|\(9:00, hora de Japón\)/, file.join("/"));
+  }
   assert.doesNotMatch(texts, /北海道|九州|沖縄|追加送料がかかり|基本送料|1,700|1700/);
   // Everywhere the store talks about subscription shipping: one price nationwide, shipping included.
   for (const file of [["src", "App.jsx"], ["src", "pages", "ShippingPage.jsx"], ["src", "lib", "seo.js"], ["api", "coffee-concierge.js"]]) {

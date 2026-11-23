@@ -274,6 +274,9 @@ test("cancel: preview first, confirmed with its key; a changed situation is show
   assert.match(customer[0].text, /・解約受付日：\d{4}年\d{1,2}月\d{1,2}日/);
   assert.match(customer[0].text, /・今後の月額請求：ございません（2026年12月分以降のご請求はございません）/);
   assert.match(customer[0].text, /・今後のお届け：ございません/, "the first delivery was stopped; nothing paid is left to ship");
+  assert.match(customer[0].text, /・契約終了日：2026年12月1日（この日以降のご請求はございません）/);
+  assert.match(customer[0].text, /・ご返金：ございます（下記のとおり）/);
+  assert.match(customer[0].text, /ご不明な点は、ryugecoffee@gmail\.com までお問い合わせください。/);
   assert.match(customer[0].text, /【ご返金について】\n初回分3,000円は全額返金いたします。\n返金はお支払い時のカードへ行い、解約受付から7営業日以内に手続きいたします。カードへの反映時期は、カード会社によって異なります。/);
   assert.doesNotMatch(customer[0].text, /〒|様\n/, "no address in the mail");
   const shop = t.mails.filter((m) => /返金の確認/.test(m.subject));
@@ -348,7 +351,8 @@ test("the store's pages say what the server does: prices, shipping days, start m
   assert.match(rows.find(([l]) => l === "初回のお支払い")[1], /3,000円.*月額料金とは別のお支払い/);
   // The summary above the rows: today's first payment, the monthly price and the exact date the monthly charges start.
   const pay = terms.paymentSummary(3, "2027-01");
-  assert.deepEqual([pay.today.amount, pay.monthly.amount, pay.start.value], ["3,000円", "8,550円", "2027年1月1日"]);
+  assert.deepEqual([pay.today.amount, pay.monthly.amount, pay.start.value, pay.annual.amount], ["3,000円", "8,550円", "2027年1月1日", "105,600円"]);
+  assert.match(pay.annual.note, /2027年1月〜2027年12月・お届け計37回/);
   assert.equal(terms.LEGAL_TEXT_REVIEWED, true, "internal legal text review recorded; sign-ups remain independently paused");
   // Every refusal the server can give has a sentence for the customer.
   const codes = new Set();

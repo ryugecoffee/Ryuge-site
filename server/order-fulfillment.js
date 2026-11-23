@@ -153,7 +153,7 @@ async function sendShippedMail(db, { orderId, to, order }, sendMail, log) {
   const items = (order.items || []).map((i) => ({ name: n[i.id] || i.id, quantity: i.quantity, kind: CATALOG[i.id]?.kind || "other" }));
   const f = order.fulfillment || {};
   // The day it was marked shipped (a mail sent again by staff keeps that day).
-  const message = notice.orderShippedMail({ to, items, method: f.method, trackingNumber: f.trackingNumber, shippedAt: f.shippedAt || Date.now(),
+  const message = notice.orderShippedMail({ to, ref: ref(orderId), items, method: f.method, trackingNumber: f.trackingNumber, shippedAt: f.shippedAt || Date.now(),
     english: String(order.countryCode || "JP").toUpperCase() !== "JP" });
   return notice.deliver(db, `order_${orderId}`, message, sendMail, log);
 }

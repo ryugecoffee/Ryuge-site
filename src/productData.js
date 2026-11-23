@@ -127,21 +127,21 @@ export const COFFEE_SUBSCRIPTION = {
   billing: {
     ja: [
       "初回分 3,000円（税込・送料込み）は、初回のお届け200g分として、お申し込み時にお支払いいただきます（月額料金とは別のお支払いです）",
-      "月額料金は、お申し込み日が1〜15日の場合は翌月から、16日以降の場合は翌々月から、毎月1日（日本時間9時）にその月のお届け分を先払いでお支払いいただきます",
+      "月額料金は、お申し込み日が1〜15日の場合は翌月から、16日以降の場合は翌々月から、毎月1日にその月のお届け分を先払いでお支払いいただきます（日本時間9時にご請求を確定し、その後カード決済）",
       "配送回数の変更・スキップは、前月25日までのお手続きで翌月分から、26日以降のお手続きは翌々月分から反映いたします",
       "毎月1日のご請求（日本時間9時）より前に解約された場合、その月以降のご請求はございません（お支払い済みの月の分は予定どおりお届けし、日割りでの返金はございません）",
     ],
     en: [
       "First payment: ¥3,000 (tax and shipping included) for the first 200 g delivery, paid at sign-up and separate from the monthly price",
-      "The monthly price is paid in advance for that month’s deliveries on the 1st of each month (9:00 JST), starting the following month for sign-ups on the 1st–15th, or the month after next for the 16th or later",
+      "The monthly price is paid in advance for that month’s deliveries on the 1st of each month (invoice issued at 9:00 JST, card charged after that), starting the following month for sign-ups on the 1st–15th, or the month after next for the 16th or later",
       "Changes to deliveries and skips made by the 25th apply from the following month; those made on the 26th or later, from the month after next",
-      "Cancel before the charge at 9:00 JST on the 1st and that month and later months are not charged (months already paid are delivered as planned, with no pro-rated refunds)",
+      "Cancel before the invoice is issued at 9:00 JST on the 1st and that month and later months are not charged (months already paid are delivered as planned, with no pro-rated refunds)",
     ],
     es: [
       "Primer pago: ¥3,000 (impuestos y envío incluidos) por el primer envío de 200 g, al suscribirte y aparte del precio mensual",
-      "El precio mensual se paga por adelantado el día 1 de cada mes (9:00, hora de Japón) por los envíos de ese mes, a partir del mes siguiente si te suscribes del 1 al 15, o del mes subsiguiente si lo haces el 16 o más tarde",
+      "El precio mensual se paga por adelantado el día 1 de cada mes (la factura se emite a las 9:00, hora de Japón, y el cargo a la tarjeta se realiza después) por los envíos de ese mes, a partir del mes siguiente si te suscribes del 1 al 15, o del mes subsiguiente si lo haces el 16 o más tarde",
       "Los cambios de envíos y las omisiones hechos hasta el día 25 se aplican desde el mes siguiente; los hechos a partir del día 26, desde el mes subsiguiente",
-      "Si cancelas antes del cobro de las 9:00 (hora de Japón) del día 1, ese mes y los siguientes no se cobran (los meses ya pagados se envían según lo previsto, sin reembolsos prorrateados)",
+      "Si cancelas antes de la emisión de la factura a las 9:00 (hora de Japón) del día 1, ese mes y los siguientes no se cobran (los meses ya pagados se envían según lo previsto, sin reembolsos prorrateados)",
     ],
   },
   // Shown only while sign-ups are paused (SUBSCRIPTIONS_PAUSED); the confirmation screen states every condition.

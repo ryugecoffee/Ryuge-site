@@ -4230,7 +4230,7 @@ html[lang="es"] .story-body {
 .subm-list li { display: grid; grid-template-columns: 1fr auto auto; gap: 14px; padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); font-size: 0.84rem; color: rgba(255, 255, 255, 0.8); }
 .subm-confirm { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 8px; border: 1px solid rgba(217, 130, 111, 0.45); background: rgba(217, 130, 111, 0.06); }
 /* The payment summary on the confirmation screen, the Stripe "trial" note, the cancellation summary (2026-11-23) */
-.subm-pay { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.subm-pay { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .subm-pay-item { display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.03); }
 .subm-pay-label { font-size: 0.76rem; letter-spacing: 0.06em; color: rgba(255, 255, 255, 0.6); }
 .subm-pay-item strong { font-size: 1.25rem; font-weight: 500; letter-spacing: 0.02em; color: #f4efe6; }

@@ -43,7 +43,7 @@ export function confirmationRows(frequency, startMonth) {
     ["毎月のお届け", `月${frequency}回・各回200g（月${frequency * 200}g）。毎月 ${days} に発送いたします（土日祝・休業日は翌営業日）。`],
     ["初回のお支払い", `${yen(FIRST_PRICE)}（税込・送料込み）。お申し込み時に、初回のお届け分としてお支払いいただきます。月額料金とは別のお支払いです。`],
     ["月額料金", `${yen(MONTHLY_PRICES[frequency])}／月（税込・全国一律送料込み）。毎月1日に、その月のお届け分を先払いでお支払いいただきます。日割りはございません。`],
-    ["月額のお支払い開始日", `${monthLabel(startMonth)}1日（日本時間9時）。以後、毎月1日に自動決済されます。`],
+    ["月額のお支払い開始日", `${monthLabel(startMonth)}1日。以後、毎月1日に自動決済されます（日本時間9時にご請求を確定し、その後カード決済を行います）。`],
     ["お支払い方法", "クレジットカード（Stripe の決済画面でご入力いただきます）。"],
     ["契約期間", TERMS_JA.term],
     ["1年間の参考", annualReferenceText(frequency, startMonth)],
@@ -61,5 +61,7 @@ export function paymentSummary(frequency, startMonth) {
     today: { label: "本日のお支払い（初回分）", amount: yen(FIRST_PRICE), note: "初回200gのお届け分・税込・送料込み" },
     monthly: { label: "月額料金", amount: yen(MONTHLY_PRICES[frequency]), note: `月${frequency}回・各回200g・税込・送料込み` },
     start: { label: "月額のお支払い開始日", value: `${monthLabel(startMonth)}1日`, note: "以後、毎月1日に自動決済" },
+    annual: { label: "1年間の参考（初回分＋月額12か月）", amount: yen(FIRST_PRICE + MONTHLY_PRICES[frequency] * 12),
+      note: `${monthLabel(startMonth)}〜${monthLabel(addMonths(startMonth, 11))}・お届け計${1 + frequency * 12}回（スキップ・回数変更で変わります）` },
   };
 }

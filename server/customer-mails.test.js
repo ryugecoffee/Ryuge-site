@@ -12,7 +12,7 @@ const ACCEPTED = Date.UTC(2026, 10, 23, 1); // 2026-11-23 10:00 JST
 const NO_PERSONAL = /〒|様\n|0900000000|1-2-3/;
 
 test("C. shipped (store order, coffee beans, with a tracking number): the CEO's text, every line", () => {
-  const m = notice.orderShippedMail({ to: "a@example.com", items: [{ name: "エチオピア ジンマ", quantity: 2, kind: "beans" }], method: "clickpost",
+  const m = notice.orderShippedMail({ to: "a@example.com", ref: "R-1A2B3C4D", items: [{ name: "エチオピア ジンマ", quantity: 2, kind: "beans" }], method: "clickpost",
     trackingNumber: "1234-5678-9012", shippedAt: SHIPPED_AT });
   assert.equal(m.subject, "【龍華珈琲】珈琲を発送いたしました");
   assert.equal(m.text, [
@@ -20,6 +20,7 @@ test("C. shipped (store order, coffee beans, with a tracking number): the CEO's 
     "本日、珈琲豆を発送いたしました。",
     "",
     "【発送内容】",
+    "・ご注文番号：R-1A2B3C4D",
     "・商品：エチオピア ジンマ",
     "・数量：2袋",
     "・発送日：2026年12月5日",
@@ -31,6 +32,8 @@ test("C. shipped (store order, coffee beans, with a tracking number): the CEO's 
     "",
     "お届けまで、今しばらくお待ちください。",
     "珈琲とともに、穏やかな時間をお過ごしいただけますように。",
+    "",
+    "ご不明な点は、ryugecoffee@gmail.com までお問い合わせください。",
     "",
     "龍華珈琲 / Ryuge Coffee",
   ].join("\n"));
@@ -61,9 +64,9 @@ test("C. shipped: international orders get the same content in English", () => {
 });
 
 test("C. shipped (珈琲の定期便): the two beans, 2 bags, which delivery", () => {
-  const m = notice.subscriptionShippedMail({ to: "a@example.com", which: "12月分・1回目", beans: ["ペルー", "グアテマラ"], method: "letterpack_plus", trackingNumber: "1111-2222-3333", shippedAt: SHIPPED_AT });
+  const m = notice.subscriptionShippedMail({ to: "a@example.com", contract: "SUB-BCDEF9", which: "12月分・1回目", beans: ["ペルー", "グアテマラ"], method: "letterpack_plus", trackingNumber: "1111-2222-3333", shippedAt: SHIPPED_AT });
   assert.equal(m.subject, "【龍華珈琲】珈琲を発送いたしました");
-  assert.match(m.text, /・商品：珈琲の定期便（12月分・1回目） ペルー・グアテマラ（各100g）\n・数量：2袋\n・発送日：2026年12月5日\n・配送方法：レターパックプラス\n・お問い合わせ番号：1111-2222-3333/);
+  assert.match(m.text, /・契約番号：SUB-BCDEF9\n・商品：珈琲の定期便（12月分・1回目） ペルー・グアテマラ（各100g）\n・数量：2袋\n・発送日：2026年12月5日\n・配送方法：レターパックプラス\n・お問い合わせ番号：1111-2222-3333/);
   const unnamed = notice.subscriptionShippedMail({ to: "a@example.com", which: "初回", beans: [], method: "clickpost", trackingNumber: null, shippedAt: SHIPPED_AT });
   assert.match(unnamed.text, /・商品：珈琲の定期便（初回） 珈琲豆2種類（各100g）\n・数量：2袋/);
   assert.doesNotMatch(unnamed.text, /お問い合わせ番号/);
@@ -72,7 +75,7 @@ test("C. shipped (珈琲の定期便): the two beans, 2 bags, which delivery", (
 const cancel = (over = {}) => subMail.cancelMail({ to: "a@example.com", subscriptionId: "sub_1AbCdEf9", acceptedAt: ACCEPTED, firstUnchargedMonth: "2026-12", upcoming: [], ...over }).text;
 
 test("B. cancelled before the first delivery shipped: the refund section, the CEO's text", () => {
-  const m = subMail.cancelMail({ to: "a@example.com", subscriptionId: "sub_1AbCdEf9", acceptedAt: ACCEPTED, firstUnchargedMonth: "2026-12", upcoming: [], firstRefund: 3000 });
+  const m = subMail.cancelMail({ to: "a@example.com", subscriptionId: "sub_1AbCdEf9", acceptedAt: ACCEPTED, endsAt: Date.UTC(2026, 11, 1, 0), firstUnchargedMonth: "2026-12", upcoming: [], firstRefund: 3000 });
   assert.equal(m.subject, "【龍華珈琲】定期便の解約を承りました");
   assert.equal(m.text, [
     "龍華珈琲の定期便をご利用いただき、誠にありがとうございました。",
@@ -81,8 +84,10 @@ test("B. cancelled before the first delivery shipped: the refund section, the CE
     "【解約内容】",
     "・契約番号：SUB-BCDEF9",
     "・解約受付日：2026年11月23日",
+    "・契約終了日：2026年12月1日（この日以降のご請求はございません）",
     "・今後の月額請求：ございません（2026年12月分以降のご請求はございません）",
     "・今後のお届け：ございません",
+    "・ご返金：ございます（下記のとおり）",
     "",
     "【ご返金について】",
     "初回分3,000円は全額返金いたします。",
@@ -91,13 +96,18 @@ test("B. cancelled before the first delivery shipped: the refund section, the CE
     "これまで龍華珈琲をご利用いただき、心より御礼申し上げます。",
     "またいつか、珈琲を通じてお会いできましたら幸いです。",
     "",
+    "ご不明な点は、ryugecoffee@gmail.com までお問い合わせください。",
+    "",
     "龍華珈琲 / Ryuge Coffee",
   ].join("\n"));
 });
 
 test("B. after the first delivery: no refund section; a paid month's deliveries listed; an unpaid month voided; email cancellations", () => {
   const shipped = cancel();
-  assert.doesNotMatch(shipped, /ご返金|返金いたします/, "no refund promised when none applies");
+  assert.doesNotMatch(shipped, /【ご返金について】|返金いたします/, "no refund promised when none applies");
+  assert.match(shipped, /・ご返金：ございません（初回分は発送済みのため返金の対象外です。お支払い済みの月額料金の日割り返金もございません）/);
+  assert.match(shipped, /・契約終了日：2026年11月23日（解約受付日に終了いたしました）/, "ended now (no later end date given)");
+  assert.match(cancel({ endsAt: Date.UTC(2027, 0, 1, 0), firstUnchargedMonth: "2027-01" }), /・契約終了日：2027年1月1日（この日以降のご請求はございません）/);
   assert.match(shipped, /・今後のお届け：ございません\n/);
   const paidMonth = cancel({ firstUnchargedMonth: "2027-01", upcoming: [{ date: "2026-12-05", status: "planned" }, { date: "2026-12-20", status: "preparing" }] });
   assert.match(paidMonth, /・今後の月額請求：ございません（2027年1月分以降のご請求はございません）/);
