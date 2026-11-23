@@ -10,6 +10,7 @@
 | --- | --- | --- |
 | `store.overview` | 期間（最大92日、日本時間）の売上（通常注文・定期便の初回・月額）、未発送・期限切れの件数 | `FACTORY_STORE_READ_ENABLED=true` |
 | `fulfillment.list` | 発送対象の一覧（`open` 未発送 / `soon` 今日・明日が期限 / `late` 期限切れ / `shipped` 発送済み）。通常注文・定期便をまとめて表示 | `FACTORY_STORE_READ_ENABLED=true` |
+| `inventory.status` | 在庫（商品・ロットごと）、最近の入荷・調整、定期便の豆の必要数、未発送の通常注文、在庫記録の照合（2026-11-23、読み取りのみ） | `FACTORY_STORE_READ_ENABLED=true` |
 | `fulfillment.prepare` | 発送準備（通常注文は状態のみ。定期便は豆2種類を1袋ずつ確保） | `FACTORY_STORE_SHIP_ENABLED=true` と CEO の承認 |
 | `fulfillment.ship` | 発送済み（配送方法・追跡番号）。お客様への発送メールは1回だけ | `FACTORY_STORE_SHIP_ENABLED=true` と CEO の承認 |
 
@@ -18,6 +19,14 @@
 - **1つの承認につき1回だけ実行**します（承認IDをリクエストIDとして使用）。同じ承認を再送しても最初の結果が返り、メールは再送されません。同じ承認で別の内容を送ると `REQUEST_ID_CONFLICT` で拒否します。
 - 処理そのものは店舗の発送ページ（#39）と同じコードです。通常注文では在庫は動かず（決済時に処理済み）、定期便は従来どおりの在庫手順です。実行者は `factory-ceo:<CEOのID>` として記録されます。
 - **Factory に返す情報には個人情報を含めません。** 注文番号、金額、商品名、都道府県のみで、氏名・メール・電話・番地は返しません。
+
+### `inventory.status`（在庫の照会と照合、`server/factory-inventory-status.js`）
+
+- 送る内容は `{}` か `{ "lowThreshold": 1〜20 }`（残りがこの袋数以下なら `low`。省略時は3）だけです。ほかの項目は `INVALID_FIELDS` で拒否します。
+- **読み取りのみ**です。在庫・注文・定期便を一切変更せず、Stripe との照合（`reconcileExpired`）も実行しません。
+- `available` は `/inventory/availability` と同じ数（ロットの商品はロットの残りとの小さい方）です。
+- `checks` は、各商品とロットの `held`（確保中の袋）が「未完了のカート確保」＋「発送準備中の定期便」と一致するか、`held` が `ready` を超えていないかを照合します。合わなければ `findings` に記録の値（`ledger`）とあるべき値（`expected`）を返します。決済済み・未発送の通常注文は在庫を確保しないため、照合の対象外です。
+- `sold`・`ready` は始まりの数が記録に残っていない在庫があるため照合せず、その理由を `notes` に返します。
 - 2026-11-21 より前の注文は対象外です（`EARLIER_ORDER`、従来どおり）。
 
 ## 2. 店舗 → Factory（自動通知）
