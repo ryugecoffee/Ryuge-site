@@ -8,8 +8,10 @@
   function gtag(){dataLayer.push(arguments);}
   window.gtag = gtag;
   gtag('js', new Date());
-
- gtag('config', 'G-R1FTS64TB1');
+  // Only the production site reports to GA4: preview and sandbox builds (Stripe test mode) send nothing.
+  // page_view is sent by the app on every route (src/lib/analytics.js pageview), so config does not send one too.
+  if (/(^|\.)ryuge\.biz$/.test(location.hostname)) gtag('config', 'G-R1FTS64TB1', { send_page_view: false });
+  else window['ga-disable-G-R1FTS64TB1'] = true;
 </script>
     <meta charset="UTF-8" />
     <meta

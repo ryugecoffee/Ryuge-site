@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { trackAddToCart } from "./lib/analytics";
+import { trackAddToCart, trackRemoveFromCart } from "./lib/analytics";
 import { CART_IDLE_MS, ITEMS_KEY, TOUCHED_KEY, readStoredCart } from "./lib/cartExpiry";
 
 const CartContext = createContext(null);
@@ -157,6 +157,8 @@ export function CartProvider({ children }) {
   };
 
   const setItem = (product, quantity) => {
+    const before = cartItems.find((item) => item.id === product.id)?.quantity || 0;
+    const after = quantity > 0 ? capped(product, quantity) : 0;
     setCartItems((prev) => {
       const next = [
         ...prev.filter((item) => item.id !== product.id),
@@ -179,15 +181,20 @@ export function CartProvider({ children }) {
       return next;
     });
     changed();
+    // GA4: the product page sets the quantity directly; the difference is what was added or taken out.
+    if (after > before) trackAddToCart(product, after - before);
+    else if (after < before) trackRemoveFromCart(product, before - after);
   };
 
   const removeFromCart = (id) => {
+    const removed = cartItems.find((item) => item.id === id);
     setCartItems((prev) => {
       const next = prev.filter((item) => item.id !== id);
       saveCart(next);
       return next;
     });
     changed();
+    if (removed) trackRemoveFromCart(removed, removed.quantity || 1);
   };
 
   const updateQuantity = (id, quantity) => {
@@ -195,6 +202,10 @@ export function CartProvider({ children }) {
       removeFromCart(id);
       return;
     }
+    const current = cartItems.find((item) => item.id === id);
+    const after = current ? capped(current, quantity) : 0;
+    if (current && after > current.quantity) trackAddToCart(current, after - current.quantity);
+    else if (current && after < current.quantity) trackRemoveFromCart(current, current.quantity - after);
     setCartItems((prev) => {
       const next = prev.map((item) =>
         item.id === id ? { ...item, quantity: capped(item, quantity) } : item

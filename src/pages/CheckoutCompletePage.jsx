@@ -140,11 +140,9 @@ export default function CheckoutCompletePage() {
       source.paymentIntentId ||  // 通常購入: CheckoutPage から渡される Stripe PaymentIntent ID
       source.orderId ||
       source.sessionId ||
-      sessionId ||               // 定期便: URL の session_id
-      `order-${Date.now()}`;     // フォールバック（可能な限り使いたくない）
-
-    const sentKey = `ga_purchase_${transactionId}`;
-    if (sessionStorage.getItem(sentKey)) return;
+      sessionId;                 // 定期便: URL の session_id
+    // 決済のIDがない（直接このURLを開いた等）ときは送らない。作ったIDでは二重計測を防げないため。
+    if (!transactionId) return;
 
     // 通常購入: items 配列からイベントを組み立て
     // 定期便: items が空なので planTitle から仮想 item を作成
@@ -167,9 +165,9 @@ export default function CheckoutCompletePage() {
       cartItems: purchaseItems,
       shipping: source.shipping || 0,
       tax: 0,
+      // 決済サーバーの実際の請求額（クーポン・送料込み）。ない古い画面では商品＋送料から計算。
+      value: Number.isFinite(source.total) && source.total > 0 && source.paymentIntentId ? source.total : undefined,
     });
-
-    sessionStorage.setItem(sentKey, "1");
   }, [source, sessionId, isSubscription]);
 
   if (fetching) {
