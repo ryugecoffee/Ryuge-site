@@ -18,6 +18,10 @@ export default function PrivacyPolicy({ lang = "ja" }) {
           body: "法令に基づく場合を除き、本人の同意なく個人情報を第三者に提供しません。",
         },
         {
+          heading: "アクセス解析ツールについて",
+          body: "本サイトでは、サイトの利用状況を把握し改善するため、Google LLC の Google アナリティクスを利用しています。Google アナリティクスは Cookie 等を使用して、閲覧したページ、ご利用の端末・ブラウザ、おおよその地域、購入の有無などの情報を、個人を特定しない形で収集します。収集された情報は Google のプライバシーポリシーに基づいて管理されます。ブラウザの設定や Google アナリティクス オプトアウト アドオンにより、収集を停止できます。",
+        },
+        {
           heading: "管理",
           body: "個人情報への不正アクセス、漏えい、滅失、改ざん等を防止するため、適切な管理を行います。",
         },
@@ -50,6 +54,10 @@ export default function PrivacyPolicy({ lang = "ja" }) {
           body: "We do not provide personal information to third parties without consent, except where required by law.",
         },
         {
+          heading: "Access Analytics",
+          body: "This site uses Google Analytics by Google LLC to understand and improve how the site is used. Google Analytics uses cookies and similar technologies to collect, without identifying you personally, information such as the pages you view, your device and browser, your approximate region and whether a purchase was made. The information is handled under Google's Privacy Policy. You can stop the collection through your browser settings or the Google Analytics Opt-out Browser Add-on.",
+        },
+        {
           heading: "Data Management",
           body: "We take appropriate measures to prevent unauthorized access, leakage, loss, alteration, or misuse of personal information.",
         },
@@ -80,6 +88,10 @@ export default function PrivacyPolicy({ lang = "ja" }) {
         {
           heading: "Divulgación a Terceros",
           body: "No proporcionamos información personal a terceros sin consentimiento, salvo cuando la ley lo exija.",
+        },
+        {
+          heading: "Análisis de Acceso",
+          body: "Este sitio utiliza Google Analytics de Google LLC para comprender y mejorar el uso del sitio. Google Analytics utiliza cookies y tecnologías similares para recopilar, sin identificarle personalmente, información como las páginas que visita, su dispositivo y navegador, su región aproximada y si realizó una compra. La información se gestiona conforme a la Política de Privacidad de Google. Puede detener la recopilación desde la configuración de su navegador o con el complemento de inhabilitación de Google Analytics.",
         },
         {
           heading: "Gestión de Datos",
