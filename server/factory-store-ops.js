@@ -72,6 +72,26 @@ async function list(db, { view = "open", kind = "all" } = {}, now = Date.now()) 
   return { view, kind, today, parcels: shown.slice(0, 100), total: shown.length };
 }
 
+// Store orders by product for a period: quantity, revenue (unit price × quantity, as charged per item) and the number of
+// orders. Only SKUs, catalog names and numbers: nothing about the customer. Coupons and shipping are on the order, not
+// on items, so the sum of revenue is the items' subtotal, not orders.amount.
+function productSales(orders, names = {}) {
+  const bySku = new Map();
+  for (const o of orders) {
+    for (const item of Array.isArray(o.items) ? o.items : []) {
+      const sku = String(item?.id || "");
+      const quantity = Number(item?.quantity) || 0;
+      if (!sku || quantity <= 0) continue;
+      const row = bySku.get(sku) || { sku, name: names[sku] || sku, quantity: 0, revenue: 0, orders: 0 };
+      row.quantity += quantity;
+      row.revenue += quantity * (Number(item?.unitPrice) || 0);
+      row.orders += 1;
+      bySku.set(sku, row);
+    }
+  }
+  return [...bySku.values()].sort((a, b) => b.revenue - a.revenue || b.quantity - a.quantity).slice(0, 50);
+}
+
 // Sales and work for a period (JST days, at most 92).
 async function overview(db, input, now = Date.now()) {
   const { from, to } = range(input, now);
@@ -87,6 +107,7 @@ async function overview(db, input, now = Date.now()) {
   return {
     from, to,
     orders: { count: orders.length, amount: sum(orders, (o) => o.amount), refunded: sum(orders, (o) => o.amountRefunded), shipping: sum(orders, (o) => o.shipping) },
+    products: productSales(orders, await of.productNames()),
     subscriptions: { firstCount: firsts.length, firstAmount: firsts.length * plan.FIRST_DELIVERY_PRICE, monthlyCount: months.length, monthlyAmount: sum(months, (m) => m.amount) },
     toShip: { total: open.total, late: open.parcels.filter((p) => p.late).length, orders: open.parcels.filter((p) => p.kind === "order").length,
       subscriptions: open.parcels.filter((p) => p.kind === "subscription").length },
@@ -135,4 +156,4 @@ async function ship(db, { target: t, method, trackingNumber, approval }, { actor
     { sendMail, log, now, onMailFailed })) };
 }
 
-module.exports = { readEnabled, shipEnabled, StoreOpsError, range, list, overview, inventoryStatus, target, prepare, ship };
+module.exports = { readEnabled, shipEnabled, StoreOpsError, range, list, productSales, overview, inventoryStatus, target, prepare, ship };

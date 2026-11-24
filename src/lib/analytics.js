@@ -43,12 +43,22 @@ function once(key) {
 // ──────────────────────────────────────
 // page_view
 // ──────────────────────────────────────
+// 決済・ログイン用の値は GA4 に送らない（URL の # 以降も送らない）。
+const PRIVATE_PARAMS = ["session_id", "payment_intent", "payment_intent_client_secret", "redirect_status", "login", "token"];
+function cleanPath(path) {
+  const [pathname, query = ""] = String(path || "/").split("?");
+  const params = new URLSearchParams(query);
+  for (const key of PRIVATE_PARAMS) params.delete(key);
+  const rest = params.toString();
+  return rest ? `${pathname}?${rest}` : pathname;
+}
+
 export function pageview(path) {
   if (!isGtagAvailable()) return;
+  const clean = cleanPath(path);
   window.gtag("event", "page_view", {
-    page_path: path,
-    // #login=<token> などのURLの#以降は送らない
-    page_location: window.location.origin + path,
+    page_path: clean,
+    page_location: window.location.origin + clean,
     page_title: document.title,
   });
 }
@@ -178,6 +188,20 @@ export function trackPurchase({ transactionId, cartItems = [], shipping = 0, tax
   });
   try { localStorage.setItem(key, "1"); sessionStorage.setItem(key, "1"); } catch { /* ignore */ }
   return true;
+}
+
+// ──────────────────────────────────────
+// purchase（珈琲の定期便）— Stripe の申し込み完了から戻ったとき。取引IDは Checkout Session の ID で、同じ申し込みは1回だけ。
+// 金額は申し込み時の初回のお支払い（月額は毎月サーバー側で請求され、サイトの訪問とは結び付かないため送らない）。
+// ──────────────────────────────────────
+export function trackSubscriptionStart(sessionId, firstPrice) {
+  if (!/^cs_(live|test)_[A-Za-z0-9]{8,200}$/.test(String(sessionId || "")) || !(firstPrice > 0)) return false;
+  return trackPurchase({
+    transactionId: sessionId,
+    cartItems: [{ id: "coffee-subscription-first", name: "珈琲の定期便（初回）", category: "subscription", price: firstPrice, quantity: 1 }],
+    shipping: 0,
+    value: firstPrice,
+  });
 }
 
 // ──────────────────────────────────────

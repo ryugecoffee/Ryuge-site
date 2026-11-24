@@ -105,6 +105,8 @@ test("reading: sales and open parcels, with the order number, products and prefe
   assert.equal(s2, 200);
   assert.ok(ov.orders.count >= 1 && ov.orders.amount >= 3250);
   assert.ok(ov.toShip.total >= 1);
+  const jimma = ov.products.find((p) => p.sku === "enma-jimma");
+  assert.ok(jimma && jimma.quantity >= 2 && jimma.revenue >= 3000, "products: per SKU from the paid orders");
   assert.doesNotMatch(JSON.stringify(ov), PERSONAL);
   assert.equal((await call({ op: "fulfillment.list", view: "everything", kind: "all" }))[1].error, "INVALID_QUERY");
   assert.equal((await call({ op: "store.overview", range: { from: "2026-01-01", to: "2026-11-22" } }))[1].error, "INVALID_RANGE");

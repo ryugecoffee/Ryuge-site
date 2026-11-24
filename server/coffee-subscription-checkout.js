@@ -129,7 +129,8 @@ async function createCheckout({ db, stripe, config, input, now = Date.now(), wai
       custom_text: { submit: { message: submitTerms(startMonth, frequency) } },
       expires_at: Math.floor(now / 1000) + CHECKOUT_MINUTES * 60,
       metadata: { ...metadata, preference },
-      success_url: `${config.siteUrl}/subscription/manage?started=1`,
+      // {CHECKOUT_SESSION_ID} is filled in by Stripe: the page sends the first payment to GA4 once, with this id.
+      success_url: `${config.siteUrl}/subscription/manage?started=1&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${config.siteUrl}/products#oriori`,
     }, { idempotencyKey: `coffee-sub-${reservation.nonce}` });
   } catch (error) {

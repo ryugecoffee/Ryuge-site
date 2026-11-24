@@ -496,3 +496,19 @@ test("factory.features: the switches as booleans only, for a valid signed call; 
   assert.equal((await call({ op: "factory.features", subscription: "SUB-ABCDEF" }))[1].error, "INVALID_FIELDS", "it takes no parameters");
   assert.equal(db.store.size, 0);
 });
+
+test("store.overview products: quantity and item revenue per SKU from the paid orders, nothing about the customer", () => {
+  const orders = [
+    { items: [{ id: "enma-jimma", quantity: 2, unitPrice: 1500 }, { id: "bag-drip", quantity: 1, unitPrice: 800 }], name: "Test Buyer", email: "a@example.com" },
+    { items: [{ id: "enma-jimma", quantity: 1, unitPrice: 1500 }] },
+    { items: [{ id: "", quantity: 1, unitPrice: 9 }, { id: "x", quantity: 0, unitPrice: 9 }] },
+    { items: "not a list" },
+  ];
+  const rows = storeOps.productSales(orders, { "enma-jimma": "閻魔　エチオピア ジンマ" });
+  assert.deepEqual(rows, [
+    { sku: "enma-jimma", name: "閻魔　エチオピア ジンマ", quantity: 3, revenue: 4500, orders: 2 },
+    { sku: "bag-drip", name: "bag-drip", quantity: 1, revenue: 800, orders: 1 },
+  ]);
+  assert.doesNotMatch(JSON.stringify(rows), /Test Buyer|example\.com/);
+  assert.deepEqual(storeOps.productSales([]), []);
+});
