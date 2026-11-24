@@ -1,4 +1,4 @@
-import { trackBeginCheckout } from "../lib/analytics";
+import { trackAddPaymentInfo, trackAddShippingInfo, trackBeginCheckout } from "../lib/analytics";
 import { OLD_SUBSCRIPTION_PLANS_CLOSED, SUBSCRIPTIONS_PAUSED, SUBSCRIPTIONS_PAUSED_TEXT } from "../productData";
 import { PAYMENT_API_BASE, stripePublishableKey } from "../lib/paymentEnv";
 import { japanesePhone } from "../lib/addressFormat";
@@ -426,10 +426,22 @@ function CheckoutForm({ cartItems, onSuccess, lang = "ja" }) {
     }
   };
 
+  // GA4: 画面を開いたとき begin_checkout、お届け先が決まり送料が出たとき add_shipping_info（同じカートで1回ずつ）。
+  useEffect(() => {
+    if (!hasSubscription && cartItems?.length) trackBeginCheckout(cartItems);
+  }, [hasSubscription, cartItems]);
+  useEffect(() => {
+    // 都道府県・国には初期値があるため、住所の入力が始まってから（送料はお届け先で決まる）。
+    const chosen = (isInternational ? addressLine1 : addressLine1Ja).trim().length >= 3;
+    if (!hasSubscription && cartItems?.length && chosen && quote.status === "ok") {
+      trackAddShippingInfo(cartItems, quote.total, isInternational ? "intl_air_packet" : (quote.shippingDetail?.method || "domestic"));
+    }
+  }, [hasSubscription, isInternational, addressLine1, addressLine1Ja, quote, cartItems]);
+
   // ── フォーム送信 ─────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
-    trackBeginCheckout(cartItems);
+    trackAddPaymentInfo(cartItems, quote.status === "ok" ? quote.total : undefined);
     setLoading(true);
     setError("");
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { PREFERENCE_ISSUE_TEXT, PREFERENCE_MAX_LENGTH, normalizePreference, preferenceIssues } from "../lib/subscriptionPreference";
 import { REFUND_BUSINESS_DAYS, TERMS_JA } from "../lib/coffeeSubscriptionTerms";
+import { trackSubscriptionStart } from "../lib/analytics";
 import { FIRST_PRICE, MONTHLY_PRICES, PREFECTURES, accountApi, dateLabel, errorText, monthLabel, newRequestId, session, shortDate, yen } from "../lib/coffeeSubscriptionAccount";
 
 // 珈琲の定期便: the customer's own page. Sign-in by a link mailed to the subscription's email (15 minutes, once), then
@@ -276,6 +277,10 @@ function CancelSection({ me, reload }) {
 
 export default function SubscriptionManagePage() {
   const [params] = useSearchParams();
+  // GA4: Stripe の申し込みが完了して戻ったとき（session_id 付き）だけ、初回のお支払いを purchase として1回送る。
+  useEffect(() => {
+    if (params.get("started")) trackSubscriptionStart(params.get("session_id"), FIRST_PRICE);
+  }, [params]);
   const [phase, setPhase] = useState(session.get() ? "loading" : "signin");
   const [me, setMe] = useState(null);
   const [notice, setNotice] = useState(null);

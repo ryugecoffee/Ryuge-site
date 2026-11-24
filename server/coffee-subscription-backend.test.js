@@ -232,7 +232,7 @@ test("sign-up session: ¥3,000 now, the monthly price from 09:00 JST on the 1st 
   assert.deepEqual(params.shipping_address_collection, { allowed_countries: ["JP"] });
   assert.deepEqual(params.phone_number_collection, { enabled: true }, "a phone number for the delivery");
   assert.match(params.custom_text.submit.message, /【本日のお支払い】初回分3,000円（初回200g.*【月額料金】月3回・各回200g.*月額8,550円.*2027年1月1日から毎月1日に先払いで自動決済/, "the terms next to Stripe's pay button");
-  assert.equal(params.success_url, "https://ryuge.biz/subscription/manage?started=1");
+  assert.equal(params.success_url, "https://ryuge.biz/subscription/manage?started=1&session_id={CHECKOUT_SESSION_ID}");
   assert.match(opts.idempotencyKey, /^coffee-sub-[0-9a-f]{24}$/);
   assert.equal(params.expires_at, jstAt(2026, 11, 20) / 1000 + 30 * 60, "the Checkout page lives 30 minutes");
   // One running subscription per email; preferences with personal details are refused; frequency 1–4 only.
